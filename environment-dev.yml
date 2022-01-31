@@ -1,0 +1,12 @@
+name: recast
+channels:
+  - conda-forge
+  - astra-toolbox
+dependencies:
+  - cmake
+  - cppzmq
+  - eigen
+  - pybind11
+  - boost
+  - fftw
+  - libastra

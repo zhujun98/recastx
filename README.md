@@ -23,7 +23,18 @@ software (such as, but not exclusively, RECAST3D).
 
 ## Installation
 
-For installation instructions, see the [installation documentation].
+```sh
+# On Ra
+module load gcc/9.3.0
+conda create -n recast python==3.7.10
+
+conda activate recast
+conda install -c conda-forge cmake cppzmq eigen boost fftw libastra
+
+git clone --recursive <repo>
+mkdir build && cd build
+cmake ../ -DCMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"} -DCMAKE_BUILD_TYPE=RELEASE
+```
 
 ## Authors
 
@@ -38,6 +49,7 @@ Contributions by:
 - Allard Hendriksen (@ahendriksen)
 - Adriaan Graas (@adriaangraas)
 - Daan Pelt (@dmpelt)
+- Jun Zhu (@psi.ch)
 
 ## Contributing
 

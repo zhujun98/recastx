@@ -7,7 +7,7 @@
 namespace tomop {
 
 struct ParameterBoolPacket : public PacketBase<ParameterBoolPacket> {
-    static const auto desc = packet_desc::parameter_bool;
+    static constexpr auto desc = packet_desc::parameter_bool;
     ParameterBoolPacket() = default;
     ParameterBoolPacket(int32_t a, std::string b, bool c)
         : scene_id(a), parameter_name(b), value(c) {}
@@ -16,7 +16,7 @@ struct ParameterBoolPacket : public PacketBase<ParameterBoolPacket> {
 };
 
 struct ParameterFloatPacket : public PacketBase<ParameterFloatPacket> {
-    static const auto desc = packet_desc::parameter_float;
+    static constexpr auto desc = packet_desc::parameter_float;
     ParameterFloatPacket() = default;
     ParameterFloatPacket(int32_t a, std::string b, float c)
         : scene_id(a), parameter_name(b), value(c) {}
@@ -25,7 +25,7 @@ struct ParameterFloatPacket : public PacketBase<ParameterFloatPacket> {
 };
 
 struct ParameterEnumPacket : public PacketBase<ParameterEnumPacket> {
-    static const auto desc = packet_desc::parameter_enum;
+    static constexpr auto desc = packet_desc::parameter_enum;
     ParameterEnumPacket() = default;
     ParameterEnumPacket(int32_t a, std::string b, std::vector<std::string> c)
         : scene_id(a), parameter_name(b), values(c) {}
@@ -35,7 +35,7 @@ struct ParameterEnumPacket : public PacketBase<ParameterEnumPacket> {
 };
 
 struct TrackerPacket : public PacketBase<TrackerPacket> {
-    static const auto desc = packet_desc::tracker;
+    static constexpr auto desc = packet_desc::tracker;
     TrackerPacket() = default;
     TrackerPacket(int32_t a, std::string b, float c)
         : scene_id(a), parameter_name(b), value(c) {}
@@ -44,7 +44,7 @@ struct TrackerPacket : public PacketBase<TrackerPacket> {
 };
 
 struct BenchmarkPacket : public PacketBase<BenchmarkPacket> {
-    static const auto desc = packet_desc::benchmark;
+    static constexpr auto desc = packet_desc::benchmark;
     BenchmarkPacket() = default;
     BenchmarkPacket(int32_t a, std::string b, float c)
         : scene_id(a), parameter_name(b), value(c) {}

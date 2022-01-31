@@ -1,3 +1,10 @@
+.idea
 
+*__pycache__*
+*.so
+*.egg-info
+
+cmake-build-debug
+cmake-build-debug-*
 build
 */build
