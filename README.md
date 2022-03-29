@@ -36,6 +36,29 @@ mkdir build && cd build
 cmake ../ -DCMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"} -DCMAKE_BUILD_TYPE=RELEASE
 ```
 
+## Running
+
+To run it on the Ra cluster, currently we still need the GUI installed from conda:
+```sh
+conda install -c cicwi -c astra-toolbox/label/dev recast3d tomopackets slicerecon
+```
+
+**Step 1**: Start the GUI in a [NoMachine](https://www.psi.ch/en/photon-science-data-services/remote-interactive-access
+) client. 
+```
+vglrun recast3d
+```
+**Step 2**: ssh to the Ra cluster and start the reconstruction server by
+```
+cd RECAST3D
+./build/slicerecon/slicerecon_server
+```
+**Step 3**: ssh to the same node in another terminal and push the test data 
+to the reconstruction server by
+```
+python examples/adapters/random_adapter.py
+```
+
 ## Authors
 
 RECAST3D is developed by the Computational Imaging group at CWI. Original author:
