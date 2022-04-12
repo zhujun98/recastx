@@ -36,7 +36,7 @@ def push_zero_projections(resolution, host="localhost", port=5558):
     pub.send(packet_flat)
 
     # Create and send projection data consisting of zeros
-    proj_data = np.zeros((proj_count, rows, cols))
+    proj_data = np.random.rand(proj_count, rows, cols)
     for i in np.arange(0, proj_count):
         packet_proj = tomop.projection_packet(2, i, [rows, cols],
                                               proj_data[i, :, :].ravel())
