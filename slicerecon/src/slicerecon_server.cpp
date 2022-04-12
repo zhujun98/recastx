@@ -74,49 +74,44 @@ int main(int argc, char** argv)
     // 1. setup reconstructor
     auto recon = std::make_unique<slicerecon::reconstructor>(params);
 
-    // 2. listen to projection stream
-    // projection callback, push to projection stream
-    // all raw data
-    auto proj =
-    slicerecon::projection_server(host, port, *recon, use_reqrep ? ZMQ_REP : ZMQ_PULL);
+    // 2. listen to projection stream projection callback, push to projection stream all raw data
+    auto proj = slicerecon::projection_server(host, port, *recon, use_reqrep ? ZMQ_REP : ZMQ_PULL);
     proj.serve();
 
     // 3. connect with (recast3d) visualization server
     auto viz = slicerecon::visualization_server("slicerecon test",
                                                 "tcp://"s + recast_host + ":5555"s,
                                                 "tcp://"s + recast_host + ":5556"s);
-    viz.set_slice_callback(
-    [&](auto x, auto idx) { return recon->reconstruct_slice(x); });
+    viz.set_slice_callback([&](auto x, auto idx) { return recon->reconstruct_slice(x); });
     recon->add_listener(&viz);
 
-    auto plugin_one =
-    slicerecon::plugin("tcp://*:5650", "tcp://localhost:5651");
+    auto plugin_one = slicerecon::plugin("tcp://*:5650", "tcp://localhost:5651");
     plugin_one.set_slice_callback(
-    [](auto shape, auto data,
-       auto index) -> std::pair<std::array<int32_t, 2>, std::vector<float>> {
-        for (auto& x : data) {
-            if (x <= 3) {
-                x = 0;
+        [](auto shape, auto data, auto index) -> std::pair<std::array<int32_t, 2>, std::vector<float>> {
+            for (auto& x : data) {
+                if (x <= 3) {
+                    x = 0;
+                }
+                else {
+                    x = 17;
+                }
             }
-            else {
-                x = 17;
-            }
+
+            return {shape, data};
         }
+    );
 
-        return {shape, data};
-    });
-
-    auto plugin_two =
-    slicerecon::plugin("tcp://*:5651", "tcp://"s + recast_host + ":5555"s);
+    auto plugin_two = slicerecon::plugin("tcp://*:5651", "tcp://"s + recast_host + ":5555"s);
     plugin_two.set_slice_callback(
-    [](auto shape, auto data,
-       auto index) -> std::pair<std::array<int32_t, 2>, std::vector<float>> {
-        for (auto& x : data) {
-            (void)x;
-        }
+        [](auto shape, auto data,
+        auto index) -> std::pair<std::array<int32_t, 2>, std::vector<float>> {
+            for (auto& x : data) {
+                (void)x;
+            }
 
-        return {shape, data};
-    });
+            return {shape, data};
+        }
+    );
 
     if (plugin) {
         viz.register_plugin("tcp://localhost:5650");

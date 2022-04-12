@@ -24,42 +24,42 @@ class ReconstructionProtocol : public SceneModuleProtocol {
     read_packet(tomop::packet_desc desc, memory_buffer& buffer,
                 zmq::socket_t& socket, SceneList& /* scenes_ */) override {
         switch (desc) {
-        case packet_desc::slice_data: {
-            auto packet = std::make_unique<SliceDataPacket>();
-            packet->deserialize(std::move(buffer));
-            message_succes(socket);
-            return packet;
-        }
+            case packet_desc::slice_data: {
+                auto packet = std::make_unique<SliceDataPacket>();
+                packet->deserialize(std::move(buffer));
+                message_succes(socket);
+                return packet;
+            }
 
-        case packet_desc::partial_slice_data: {
-            auto packet = std::make_unique<PartialSliceDataPacket>();
-            packet->deserialize(std::move(buffer));
-            message_succes(socket);
-            return packet;
-        }
+            case packet_desc::partial_slice_data: {
+                auto packet = std::make_unique<PartialSliceDataPacket>();
+                packet->deserialize(std::move(buffer));
+                message_succes(socket);
+                return packet;
+            }
 
-        case packet_desc::volume_data: {
-            auto packet = std::make_unique<VolumeDataPacket>();
-            packet->deserialize(std::move(buffer));
-            message_succes(socket);
-            return packet;
-        }
+            case packet_desc::volume_data: {
+                auto packet = std::make_unique<VolumeDataPacket>();
+                packet->deserialize(std::move(buffer));
+                message_succes(socket);
+                return packet;
+            }
 
-        case packet_desc::partial_volume_data: {
-            auto packet = std::make_unique<PartialVolumeDataPacket>();
-            packet->deserialize(std::move(buffer));
-            message_succes(socket);
-            return packet;
-        }
+            case packet_desc::partial_volume_data: {
+                auto packet = std::make_unique<PartialVolumeDataPacket>();
+                packet->deserialize(std::move(buffer));
+                message_succes(socket);
+                return packet;
+            }
 
-        case packet_desc::group_request_slices: {
-            auto packet = std::make_unique<GroupRequestSlicesPacket>();
-            packet->deserialize(std::move(buffer));
-            message_succes(socket);
-            return packet;
-        }
+            case packet_desc::group_request_slices: {
+                auto packet = std::make_unique<GroupRequestSlicesPacket>();
+                packet->deserialize(std::move(buffer));
+                message_succes(socket);
+                return packet;
+            }
 
-        default: { return nullptr; }
+            default: { return nullptr; }
         }
     }
 

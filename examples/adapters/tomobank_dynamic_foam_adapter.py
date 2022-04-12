@@ -26,7 +26,7 @@ import tomopy
     J. Buurlage, licensed with GPL 3.
     
     Call this file with,
-      slicerecon_push_aps32id.py /path/to/dk_MCFG_1_p_s1_.h5
+    python tomobank_dynamic_foam_adapter.py /path/to/dk_MCFG_1_p_s1_.h5
     
     Adriaan
 '''

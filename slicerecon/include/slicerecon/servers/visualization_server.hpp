@@ -61,10 +61,11 @@ class visualization_server : public listener, public util::bench_listener {
         }
     }
 
-    visualization_server(
-        std::string name, std::string hostname = "tcp://localhost:5555",
-        std::string subscribe_hostname = "tcp://localhost:5556")
-        : context_(1), socket_(context_, ZMQ_REQ),
+    visualization_server(std::string name, 
+                         std::string hostname = "tcp://localhost:5555",
+                         std::string subscribe_hostname = "tcp://localhost:5556")
+        : context_(1), 
+          socket_(context_, ZMQ_REQ),
           subscribe_socket_(context_, ZMQ_SUB) {
         using namespace std::chrono_literals;
 
@@ -81,12 +82,13 @@ class visualization_server : public listener, public util::bench_listener {
         auto poll_result = zmq::poll(items, 1, 1000ms);
 
         if (poll_result <= 0) {
-            throw tomop::server_error("Could not connect to server");
+            throw tomop::server_error("Could not connect to server: " + hostname);
         } else {
             //  get the reply.
             zmq::message_t reply;
             socket_.recv(&reply);
             scene_id_ = *(int32_t*)reply.data();
+            std::cout << scene_id_ << std::endl;
         }
 
         subscribe(subscribe_hostname);
@@ -143,7 +145,8 @@ class visualization_server : public listener, public util::bench_listener {
             tomop::packet_desc::kill_scene,
             tomop::packet_desc::parameter_float,
             tomop::packet_desc::parameter_bool,
-            tomop::packet_desc::parameter_enum};
+            tomop::packet_desc::parameter_enum
+        };
 
         for (auto descriptor : descriptors) {
             int32_t filter[] = {

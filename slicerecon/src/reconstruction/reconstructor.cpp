@@ -143,8 +143,7 @@ slice_data parallel_beam_solver::reconstruct_slice(orientation x,
 
     // From the ASTRA geometry, get the vectors, modify, and reset them
     int i = 0;
-    for (auto [rx, ry, rz, dx, dy, dz, pxx, pxy, pxz, pyx, pyy, pyz] :
-         vectors_) {
+    for (auto [rx, ry, rz, dx, dy, dz, pxx, pxy, pxz, pyx, pyy, pyz] : vectors_) {
         auto r = Eigen::Vector3f(rx, ry, rz);
         auto d = Eigen::Vector3f(dx, dy, dz);
         auto px = Eigen::Vector3f(pxx, pxy, pxz);
