@@ -7,9 +7,7 @@ import tomop as tp
 import numpy as np
 import argparse
 import h5py
-import dxchange
 import dxchange.reader as dxreader
-import matplotlib.pyplot as plt
 import tomopy
 
 '''
@@ -30,36 +28,6 @@ import tomopy
     
     Adriaan
 '''
-
-
-def get_dx_dims(fname, dataset):
-    """
-    Read array size of a specific group of Data Exchange file.ls 
-
-    Parameters
-    ----------
-    fname : str
-        String defining the path of file or file name.
-    dataset : str
-        Path to the dataset inside hdf5 file where data is located.
-
-    Returns
-    -------
-    ndarray
-        Data set size.
-    """
-
-    grp = '/'.join(['exchange', dataset])
-
-    with h5py.File(fname, "r") as f:
-        try:
-            data = f[grp]
-        except KeyError:
-            return None
-
-        shape = data.shape
-
-    return shape
 
 
 def main(arg):
@@ -104,17 +72,21 @@ def main(arg):
                                            # reconstructions from a sampled 180 shot
     print("Note: call the SliceRecon server with --group-size", proj_count, "to get reconstruction from 180 degrees angles")
 
-    data_size = get_dx_dims(fname, 'data')
+    with h5py.File(fname, 'r') as fp:
+        data_size = fp['exchange/data'].shape
 
-    # Select sinogram range to reconstruct.
-    ssino = int(data_size[1] * nsino)
-    sino_start = ssino-nsinoheight/2*pow(2, binning)
-    sino_end = ssino+nsinoheight/2*pow(2, binning)
-    sino = (int(sino_start), int(sino_end))
+        # Select sinogram range to reconstruct.
+        ssino = int(data_size[1] * nsino)
+        sino_start = int(ssino - nsinoheight / 2 * pow(2, binning))
+        sino_end = int(ssino + nsinoheight / 2 * pow(2, binning))
+ 
+        flat = fp['exchange/data_white'][:, sino_start:sino_end, :]
+        print("Loaded flat images:", flat.shape)
+        dark = fp['exchange/data_dark'][:, sino_start:sino_end, :]
+        print("Loaded dark images:", dark.shape)
 
-    # Read APS 32-BM raw data, for the sake of darks and flats
-    print("Reading flats, darks ...")
-    proj, flat, dark, _ = dxchange.read_aps_32id(fname, proj=1, sino=sino) # angles give nonsense values
+        # Detector dimensions
+        rows, cols = flat.shape[1:]
 
     # Phase retrieval for tomobank id 00080
     # sample_detector_distance = 25
@@ -127,10 +99,6 @@ def main(arg):
     # @todo Fix center of rotation shift!
     # rot_center = data.shape[2]/2
 
-    # Detector dimensions
-    rows = proj.shape[1]
-    cols = proj.shape[2]
-
     # parallel beam data is easy, the geometry volume is never bigger than the projection volume
     rx = np.ceil(data_size[2] / 2)  # max radius in the x,y plane
     rz = np.ceil(data_size[1] / 2)  # max radius in the z axis
@@ -141,7 +109,7 @@ def main(arg):
         window_min_point = [-rx, -rx, -rz]  # x,y,z
         window_max_point = [rx, rx, rz]  # x,y,z
 
-        angles = np.linspace(0, 2*np.pi, proj_count, endpoint=False) # np.mod(theta[0:nproj], np.pi)
+        angles = np.linspace(0, 2*np.pi, proj_count, endpoint=False)
 
         pub.send(tp.geometry_specification_packet(scene_id, window_min_point, window_max_point))
         pub.send(tp.parallel_beam_geometry_packet(scene_id, rows, cols, proj_count, angles))
@@ -157,15 +125,10 @@ def main(arg):
         # for i in np.arange(0, 2):
         #     pub.send(tp.projection_packet(1, i, [rows, cols], np.ascontiguousarray(flat[i, :, :].flatten())))
 
-    # I'm circumventing the dxchange.read_aps_32id, as it cannot select specific projections (always loading the full
-    # dataset)
-    exchange_base = "exchange"
-    tomo_grp = '/'.join([exchange_base, 'data'])
-
     j = 0
     for i in np.arange(1, data_size[0], subsampling):
         print("Pushing ", i, " of ", data_size[0])
-        data = dxreader.read_hdf5(fname, tomo_grp, slc=((int(i),int(i)+1), sino))
+        data = dxreader.read_hdf5(fname, "exchange/data", slc=((int(i),int(i)+1), (sino_start, sino_end)))
 
         # Flat-field correction of raw data.
         data = tomopy.normalize(data, flat, dark)
@@ -182,7 +145,6 @@ def main(arg):
         packet_type = 2 # projection packet
         pub.send(tp.projection_packet(packet_type, j, [rows, cols], np.ascontiguousarray(data[0].flatten())))
         j = j+1
-
 
         # Here is a validation FBP-gridrec reconstruction, locally with TomoPy. 
         # rec = tomopy.recon(

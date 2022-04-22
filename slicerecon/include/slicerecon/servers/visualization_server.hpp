@@ -84,11 +84,11 @@ class visualization_server : public listener, public util::bench_listener {
         if (poll_result <= 0) {
             throw tomop::server_error("Could not connect to server: " + hostname);
         } else {
-            //  get the reply.
             zmq::message_t reply;
             socket_.recv(&reply);
             scene_id_ = *(int32_t*)reply.data();
             std::cout << scene_id_ << std::endl;
+            // std::cout << std::string(static_cast<char*>(reply.data()), reply.size()) << std::endl;
         }
 
         subscribe(subscribe_hostname);
