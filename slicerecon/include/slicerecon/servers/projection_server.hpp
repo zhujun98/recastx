@@ -48,12 +48,12 @@ class projection_server {
 
                 switch (desc) {
                     case tomop::packet_desc::scan_settings: {
-                        auto mbuffer = tomop::memory_buffer(update.size(),
-                                                            (char*)update.data());
+                        auto mbuffer = tomop::memory_buffer(update.size(), (char*)update.data());
                         auto packet = std::make_unique<tomop::ScanSettingsPacket>();
                         packet->deserialize(std::move(mbuffer));
 
-                        pool_.set_scan_settings(packet->darks, packet->flats,
+                        pool_.set_scan_settings(packet->darks, 
+                                                packet->flats,
                                                 packet->already_linear);
                         break;
                     }
@@ -73,21 +73,17 @@ class projection_server {
                         memcpy(&idx, buffer + index, sizeof(int32_t));
                         index += sizeof(int32_t);
 
-                        memcpy(&shape, buffer + index,
-                            sizeof(std::array<int32_t, 2>));
+                        memcpy(&shape, buffer + index, sizeof(std::array<int32_t, 2>));
                         index += sizeof(std::array<int32_t, 2>);
 
                         // the first 4 bytes of the buffer are the size of the data,
                         // so we skip ahead (its equal to reduce(shape))
-                        pool_.push_projection((proj_kind)type, idx, shape,
-                                            buffer + index + sizeof(int));
+                        pool_.push_projection((proj_kind)type, idx, shape, buffer + index + sizeof(int));
                         break;
                     }
                     case tomop::packet_desc::geometry_specification: {
-                        auto mbuffer = tomop::memory_buffer(update.size(),
-                                                            (char*)update.data());
-                        auto packet =
-                            std::make_unique<tomop::GeometrySpecificationPacket>();
+                        auto mbuffer = tomop::memory_buffer(update.size(), (char*)update.data());
+                        auto packet = std::make_unique<tomop::GeometrySpecificationPacket>();
                         packet->deserialize(std::move(mbuffer));
 
                         geom_.volume_min_point = packet->volume_min_point;
@@ -97,17 +93,15 @@ class projection_server {
                             util::log
                                 << LOG_FILE << util::lvl::warning
                                 << "Geometry specification received while "
-                                "reconstruction is already initialized (ignored)"
+                                   "reconstruction is already initialized (ignored)"
                                 << util::end_log;
                         }
 
                         break;
                     }
                     case tomop::packet_desc::parallel_beam_geometry: {
-                        auto mbuffer = tomop::memory_buffer(update.size(),
-                                                            (char*)update.data());
-                        auto packet =
-                            std::make_unique<tomop::ParallelBeamGeometryPacket>();
+                        auto mbuffer = tomop::memory_buffer(update.size(), (char*)update.data());
+                        auto packet = std::make_unique<tomop::ParallelBeamGeometryPacket>();
 
                         packet->deserialize(std::move(mbuffer));
 
@@ -119,8 +113,8 @@ class projection_server {
 
                         if (packet->proj_count != (int)packet->angles.size()) {
                             throw server_error("Invalid geometry specification "
-                                            "received: projection count is not "
-                                            "equal to number of angles");
+                                               "received: projection count is not "
+                                               "equal to number of angles");
                         }
 
                         geom_.rows = packet->rows;
@@ -135,10 +129,8 @@ class projection_server {
                         break;
                     }
                     case tomop::packet_desc::parallel_vec_geometry: {
-                        auto mbuffer = tomop::memory_buffer(update.size(),
-                                                            (char*)update.data());
-                        auto packet =
-                            std::make_unique<tomop::ParallelVecGeometryPacket>();
+                        auto mbuffer = tomop::memory_buffer(update.size(), (char*)update.data());
+                        auto packet = std::make_unique<tomop::ParallelVecGeometryPacket>();
                         packet->deserialize(std::move(mbuffer));
 
                         if (packet->rows < 0 || packet->cols < 0) {
@@ -150,8 +142,8 @@ class projection_server {
                         if (packet->proj_count !=
                             (int)(packet->vectors.size() / 12)) {
                             throw server_error("Invalid geometry specification "
-                                            "received: projection count is not "
-                                            "equal to number of vectors");
+                                               "received: projection count is not "
+                                               "equal to number of vectors");
                         }
 
                         geom_.rows = packet->rows;
@@ -166,10 +158,8 @@ class projection_server {
                         break;
                     }
                     case tomop::packet_desc::cone_beam_geometry: {
-                        auto mbuffer = tomop::memory_buffer(update.size(),
-                                                            (char*)update.data());
-                        auto packet =
-                            std::make_unique<tomop::ConeBeamGeometryPacket>();
+                        auto mbuffer = tomop::memory_buffer(update.size(), (char*)update.data());
+                        auto packet = std::make_unique<tomop::ConeBeamGeometryPacket>();
                         packet->deserialize(std::move(mbuffer));
 
                         if (packet->rows < 0 || packet->cols < 0) {
@@ -180,8 +170,8 @@ class projection_server {
 
                         if (packet->proj_count != (int)packet->angles.size()) {
                             throw server_error("Invalid geometry specification "
-                                            "received: projection count is not "
-                                            "equal to number of angles");
+                                               "received: projection count is not "
+                                               "equal to number of angles");
                         }
 
                         geom_.rows = packet->rows;
@@ -199,10 +189,8 @@ class projection_server {
                         break;
                     }
                     case tomop::packet_desc::cone_vec_geometry: {
-                        auto mbuffer = tomop::memory_buffer(update.size(),
-                                                            (char*)update.data());
-                        auto packet =
-                            std::make_unique<tomop::ConeVecGeometryPacket>();
+                        auto mbuffer = tomop::memory_buffer(update.size(), (char*)update.data());
+                        auto packet = std::make_unique<tomop::ConeVecGeometryPacket>();
                         packet->deserialize(std::move(mbuffer));
 
                         if (packet->rows < 0 || packet->cols < 0) {
@@ -214,8 +202,8 @@ class projection_server {
                         if (packet->proj_count !=
                             (int)(packet->vectors.size() / 12)) {
                             throw server_error("Invalid geometry specification "
-                                            "received: projection count is not "
-                                            "equal to number of vectors");
+                                               "received: projection count is not "
+                                               "equal to number of vectors");
                         }
 
                         geom_.rows = packet->rows;
@@ -231,7 +219,8 @@ class projection_server {
                     }
                     default: {
                         util::log << LOG_FILE << util::lvl::warning
-                                << "Unknown package received" << util::end_log;
+                                  << "Unknown package received" 
+                                  << util::end_log;
                         break;
                     }
                 }
@@ -257,6 +246,6 @@ class projection_server {
     std::thread serve_thread_;
 
     acquisition::geometry geom_ = {};
-}; // namespace slicerecon
+};
 
 } // namespace slicerecon

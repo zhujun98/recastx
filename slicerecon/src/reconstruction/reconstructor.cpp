@@ -458,8 +458,7 @@ void reconstructor::initialize(acquisition::geometry geom) {
 
     if (geom_.parallel) {
         // make reconstruction object par
-        alg_ =
-            std::make_unique<detail::parallel_beam_solver>(parameters_, geom_);
+        alg_ = std::make_unique<detail::parallel_beam_solver>(parameters_, geom_);
     } else {
         // make reconstruction object cb
         alg_ = std::make_unique<detail::cone_beam_solver>(parameters_, geom_);

@@ -166,97 +166,95 @@ class visualization_server : public listener, public util::bench_listener {
                     kill = true;
                 } else {
                     auto desc = ((tomop::packet_desc*)update.data())[0];
-                    auto buffer = tomop::memory_buffer(update.size(),
-                                                       (char*)update.data());
+                    auto buffer = tomop::memory_buffer(update.size(), (char*)update.data());
 
                     switch (desc) {
-                    case tomop::packet_desc::kill_scene: {
-                        auto packet =
-                            std::make_unique<tomop::KillScenePacket>();
-                        packet->deserialize(std::move(buffer));
+                        case tomop::packet_desc::kill_scene: {
+                            auto packet =
+                                std::make_unique<tomop::KillScenePacket>();
+                            packet->deserialize(std::move(buffer));
 
-                        if (packet->scene_id != scene_id_) {
-                            std::cout << "Received kill request with wrong "
-                                         "scene id\n";
-                        } else {
-                            kill = true;
+                            if (packet->scene_id != scene_id_) {
+                                std::cout << "Received kill request with wrong "
+                                            "scene id\n";
+                            } else {
+                                kill = true;
+                            }
+                            break;
                         }
-                        break;
-                    }
+                        case tomop::packet_desc::set_slice: {
+                            auto packet = std::make_unique<tomop::SetSlicePacket>();
+                            packet->deserialize(std::move(buffer));
 
-                    case tomop::packet_desc::set_slice: {
-                        auto packet = std::make_unique<tomop::SetSlicePacket>();
-                        packet->deserialize(std::move(buffer));
-
-                        make_slice(packet->slice_id, packet->orientation);
-                        break;
-                    }
-                    case tomop::packet_desc::remove_slice: {
-                        auto packet =
-                            std::make_unique<tomop::RemoveSlicePacket>();
-                        packet->deserialize(std::move(buffer));
-
-                        auto to_erase = std::find_if(
-                            slices_.begin(), slices_.end(), [&](auto x) {
-                                return x.first == packet->slice_id;
-                            });
-                        slices_.erase(to_erase);
-
-                        if (plugin_socket_) {
-                            send(*packet, true);
+                            make_slice(packet->slice_id, packet->orientation);
+                            break;
                         }
+                        case tomop::packet_desc::remove_slice: {
+                            auto packet =
+                                std::make_unique<tomop::RemoveSlicePacket>();
+                            packet->deserialize(std::move(buffer));
 
-                        break;
-                    }
-                    case tomop::packet_desc::parameter_float: {
-                        auto packet =
-                            std::make_unique<tomop::ParameterFloatPacket>();
-                        packet->deserialize(std::move(buffer));
-                        parameter_changed(packet->parameter_name,
-                                          {packet->value});
+                            auto to_erase = std::find_if(
+                                slices_.begin(), slices_.end(), [&](auto x) {
+                                    return x.first == packet->slice_id;
+                                });
+                            slices_.erase(to_erase);
 
-                        if (plugin_socket_) {
-                            send(*packet, true);
+                            if (plugin_socket_) {
+                                send(*packet, true);
+                            }
+
+                            break;
                         }
+                        case tomop::packet_desc::parameter_float: {
+                            auto packet =
+                                std::make_unique<tomop::ParameterFloatPacket>();
+                            packet->deserialize(std::move(buffer));
+                            parameter_changed(packet->parameter_name,
+                                            {packet->value});
 
-                        break;
-                    }
-                    case tomop::packet_desc::parameter_enum: {
-                        auto packet =
-                            std::make_unique<tomop::ParameterEnumPacket>();
-                        packet->deserialize(std::move(buffer));
-                        parameter_changed(packet->parameter_name,
-                                          {packet->values[0]});
+                            if (plugin_socket_) {
+                                send(*packet, true);
+                            }
 
-                        if (plugin_socket_) {
-                            send(*packet, true);
+                            break;
                         }
+                        case tomop::packet_desc::parameter_enum: {
+                            auto packet =
+                                std::make_unique<tomop::ParameterEnumPacket>();
+                            packet->deserialize(std::move(buffer));
+                            parameter_changed(packet->parameter_name,
+                                            {packet->values[0]});
 
-                        break;
-                    }
-                    case tomop::packet_desc::parameter_bool: {
-                        auto packet =
-                            std::make_unique<tomop::ParameterBoolPacket>();
-                        packet->deserialize(std::move(buffer));
-                        parameter_changed(packet->parameter_name,
-                                          {packet->value});
+                            if (plugin_socket_) {
+                                send(*packet, true);
+                            }
 
-                        if (plugin_socket_) {
-                            send(*packet, true);
+                            break;
                         }
+                        case tomop::packet_desc::parameter_bool: {
+                            auto packet =
+                                std::make_unique<tomop::ParameterBoolPacket>();
+                            packet->deserialize(std::move(buffer));
+                            parameter_changed(packet->parameter_name,
+                                            {packet->value});
 
-                        break;
-                    }
-                    default:
-                        util::log
-                            << LOG_FILE << util::lvl::warning
-                            << "Unrecognized package with descriptor: 0x"
-                            << std::hex
-                            << std::underlying_type<tomop::packet_desc>::type(
-                                   desc)
-                            << util::end_log;
-                        break;
-                    }
+                            if (plugin_socket_) {
+                                send(*packet, true);
+                            }
+
+                            break;
+                        }
+                        default:
+                            util::log
+                                << LOG_FILE << util::lvl::warning
+                                << "Unrecognized package with descriptor: 0x"
+                                << std::hex
+                                << std::underlying_type<tomop::packet_desc>::type(
+                                    desc)
+                                << util::end_log;
+                            break;
+                        }
                 }
 
                 if (kill) {

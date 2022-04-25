@@ -31,14 +31,16 @@ int main(int argc, char** argv)
     auto preview_size = opts.arg_as_or<int32_t>("--preview-size", 128);
     auto group_size = opts.arg_as_or<int32_t>("--group-size", 32);
     auto filter_cores = opts.arg_as_or<int32_t>("--filter-cores", 8);
-    auto plugin = opts.passed("--plugin");
-    auto tilt = opts.passed("--tilt");
-    auto py_plugin = opts.passed("--pyplugin");
-    auto recast_host = opts.arg_or("--recast-host", "localhost");
-    auto use_reqrep = opts.passed("--reqrep");
-    auto gaussian_pass = opts.passed("--gaussian");
+    if (slice_size < 0 || preview_size < 0 || group_size < 0 || filter_cores < 0) {
+        std::cout << opts.usage();
+        std::cout << "ERROR: Negative parameter passed\n";
+        return -1;
+    }
+
+    auto mode = opts.passed("--continuous") ? slicerecon::mode::continuous : slicerecon::mode::alternating;
     auto retrieve_phase = opts.passed("--phase");
-    auto bench = opts.passed("--bench");
+    auto tilt = opts.passed("--tilt");
+    auto gaussian_pass = opts.passed("--gaussian");
     auto filter = opts.arg_or("--filter", "shepp-logan");
 
     auto pixel_size = opts.arg_as_or<float>("--pixelsize", 1.0f);
@@ -46,22 +48,28 @@ int main(int argc, char** argv)
     auto delta = opts.arg_as_or<float>("--delta", 1e-8);
     auto beta = opts.arg_as_or<float>("--beta", 1e-10);
     auto distance = opts.arg_as_or<float>("--distance", 40.0f);
-
-    if (slice_size < 0 || preview_size < 0 || group_size < 0 || filter_cores < 0) {
-        std::cout << opts.usage();
-        std::cout << "ERROR: Negative parameter passed\n";
-        return -1;
-    }
-
     auto paganin = slicerecon::paganin_settings{pixel_size, lambda, delta, beta, distance};
 
-    auto continuous_mode = opts.passed("--continuous");
+    auto recast_host = opts.arg_or("--recast-host", "localhost");
 
-    auto mode = continuous_mode ? slicerecon::mode::continuous : slicerecon::mode::alternating;
+    auto bench = opts.passed("--bench");
+    auto plugin = opts.passed("--plugin");
+    auto py_plugin = opts.passed("--pyplugin");
+    auto use_reqrep = opts.passed("--reqrep");
 
-    auto params = slicerecon::settings{
-    slice_size,     preview_size, group_size, filter_cores,  1, 1, mode, false,
-    retrieve_phase, tilt,         paganin,    gaussian_pass, filter};
+    auto params = slicerecon::settings { slice_size, 
+                                         preview_size, 
+                                         group_size, 
+                                         filter_cores, 
+                                         1, 
+                                         1, 
+                                         mode, 
+                                         false,
+                                         retrieve_phase, 
+                                         tilt, 
+                                         paganin, 
+                                         gaussian_pass, 
+                                         filter };
 
     auto host = opts.arg_or("--host", "*");
     auto port = opts.arg_as_or<int>("--port", 5558);
