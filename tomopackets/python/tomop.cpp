@@ -9,7 +9,7 @@ namespace py = pybind11;
 using namespace hana::literals;
 using namespace std::string_literals;
 
-PYBIND11_MODULE(py_tomop, m) {
+PYBIND11_MODULE(tomop, m) {
     using namespace tomop;
 
     m.doc() = "bindings for tomopackets";

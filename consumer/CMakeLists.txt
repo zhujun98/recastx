@@ -5,18 +5,16 @@ set(SOURCE_NAMES
     "src/server/server.cpp"
 )
 
-set(TARGET_NAME "consumer")
+set(TARGET_NAME "recast-consumer")
 add_executable(${TARGET_NAME} ${SOURCE_NAMES})
 target_link_libraries(${TARGET_NAME}
     PRIVATE
         pthread
         stdc++fs
-        tomop
+        tomopackets
 )
 target_include_directories(${TARGET_NAME} PRIVATE "include")
 target_compile_options(${TARGET_NAME} PRIVATE -std=c++17 -Wall -Wextra -Wfatal-errors)
-if (CMAKE_BUILD_TYPE MATCHES Debug)
-    target_compile_options(${TARGET_NAME} PRIVATE -g)
-else()
-    target_compile_options(${TARGET_NAME} PRIVATE -O3)
-endif()
+
+# INSTALL COMMANDS
+install(TARGETS ${TARGET_NAME} RUNTIME DESTINATION bin)
