@@ -16,7 +16,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_INSTALL_PREFIX ${CMAKE_PREFIX_PATH})
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 if (BUILD_PYTHON)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/ext/pybind11 pybind11)
+    find_package(pybind11 REQUIRED)
     find_package(Python3 REQUIRED)
 endif()
 

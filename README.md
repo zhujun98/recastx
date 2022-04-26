@@ -29,7 +29,7 @@ module load gcc/9.3.0
 conda create -n recast python==3.7.10
 
 conda activate recast
-conda install -c conda-forge cmake cppzmq eigen boost fftw libastra
+conda install -c conda-forge cmake cppzmq eigen boost fftw libastra pybind11
 
 git clone --recursive <repo>
 mkdir build && cd build
