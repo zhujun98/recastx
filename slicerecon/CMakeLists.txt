@@ -1,5 +1,9 @@
 project(slicerecon LANGUAGES CXX)
 
+# Caveat: sequence
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+find_package(FFTW REQUIRED COMPONENTS FLOAT_LIB)
+
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 message(STATUS "Found Eigen3 ${Eigen3_VERSION}")
 
@@ -13,9 +17,6 @@ set_target_properties(
     IMPORTED_LOCATION ${CMAKE_PREFIX_PATH}/lib/libastra.so
     INTERFACE_COMPILE_DEFINITIONS "ASTRA_CUDA")
 set(ASTRA_INCLUDE_DIR ${CMAKE_PREFIX_PATH}/include)
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-find_package(FFTW REQUIRED COMPONENTS FLOAT_LIB)
 
 set(SOURCES
     "src/util/util.cpp"
