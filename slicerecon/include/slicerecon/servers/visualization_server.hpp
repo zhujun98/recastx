@@ -176,7 +176,7 @@ class visualization_server : public listener, public util::bench_listener {
 
                             if (packet->scene_id != scene_id_) {
                                 std::cout << "Received kill request with wrong "
-                                            "scene id\n";
+                                             "scene id\n";
                             } else {
                                 kill = true;
                             }

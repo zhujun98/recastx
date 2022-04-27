@@ -34,11 +34,11 @@ target_include_directories(${TARGET_NAME}
         ${CMAKE_CURRENT_LIST_DIR}/include)
 target_link_libraries(${TARGET_NAME}
     PUBLIC
-        "astra-toolbox"
-        "tomopackets"
-        "Eigen3::Eigen"
-        "flags"
-        "bulk_thread"
+        astra-toolbox
+        tomopackets
+        Eigen3::Eigen
+        flags
+        bulk_thread
         ${FFTW_FLOAT_LIB}
 )
 target_compile_options(${TARGET_NAME}
