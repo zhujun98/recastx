@@ -5,6 +5,7 @@ project(recast LANGUAGES C CXX)
 option(BUILD_GUI "Build OpenGL GUI recast3d" OFF)
 option(BUILD_TEST "Build unit test" OFF)
 option(BUILD_PYTHON "Build Python bindings" OFF)
+option(BUILD_TOMCAT "Build TOMCAT server for live reconstruction" OFF)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
@@ -21,7 +22,12 @@ if (BUILD_PYTHON)
 endif()
 
 add_subdirectory(tomopackets)
+
 add_subdirectory(slicerecon)
+if (BUILD_TOMCAT)
+    add_subdirectory(tomcat-live)
+endif()
+
 add_subdirectory(consumer)
 
 if (BUILD_GUI)
