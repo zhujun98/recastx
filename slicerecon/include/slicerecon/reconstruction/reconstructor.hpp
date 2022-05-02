@@ -362,9 +362,9 @@ class reconstructor {
         // 3) compute reciprocal
         for (int i = 0; i < geom_.rows * geom_.cols; ++i) {
             if (dark[i] == flat[i]) {
-                flat_fielder_[i] = 1.0f;
+                reciprocal_[i] = 1.0f;
             } else {
-                flat_fielder_[i] = 1.0f / (flat[i] - dark[i]);
+                reciprocal_[i] = 1.0f / (flat[i] - dark[i]);
             }
         }
 
@@ -382,7 +382,7 @@ class reconstructor {
     std::vector<float> all_darks_;
     std::vector<float> all_flats_;
     std::vector<float> dark_;
-    std::vector<float> flat_fielder_;
+    std::vector<float> reciprocal_;
     std::vector<float> buffer_;
 
     int active_gpu_buffer_index_ = 0;

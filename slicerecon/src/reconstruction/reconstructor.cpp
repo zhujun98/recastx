@@ -444,7 +444,7 @@ void reconstructor::initialize(acquisition::geometry geom) {
     all_flats_.resize(pixels_ * parameters_.flats);
     all_darks_.resize(pixels_ * parameters_.darks);
     dark_.resize(pixels_);
-    flat_fielder_.resize(pixels_, 1.0f);
+    reciprocal_.resize(pixels_, 1.0f);
     update_every_ = parameters_.reconstruction_mode == mode::alternating
                         ? geom_.proj_count
                         : parameters_.group_size;
@@ -473,7 +473,7 @@ void reconstructor::initialize(acquisition::geometry geom) {
     projection_processor_->flatfielder =
         std::make_unique<util::detail::Flatfielder>(util::detail::Flatfielder{
             {dark_.data(), geom_.rows, geom_.cols},
-            {flat_fielder_.data(), geom_.rows, geom_.cols}});
+            {reciprocal_.data(), geom_.rows, geom_.cols}});
 
     // add neg log
     if (!parameters_.already_linear && !parameters_.retrieve_phase) {
