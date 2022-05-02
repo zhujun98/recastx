@@ -3,17 +3,16 @@ import numpy as np
 import argparse
 
 
-def push_zero_projections(resolution, host="localhost", port=5558):
-    m = resolution
-    proj_count, rows, cols = m, m, m
+def push_random_projections(resolution, host="localhost", port=5558):
+    proj_count = rows = cols = resolution
     scene_id = 0
 
     pub = tomop.publisher(host, port)
 
-    # We let the server know we will send one dark field, and one flat field
+    # Initialize scan settings
     num_darks, num_flats = 1, 1
-    packet_scan_settings = tomop.scan_settings_packet(scene_id, num_darks,
-                                                      num_flats, False)
+    packet_scan_settings = tomop.scan_settings_packet(
+        scene_id, num_darks, num_flats, False)
     pub.send(packet_scan_settings)
 
     # Initialize volume and acquisition geometry
@@ -21,6 +20,7 @@ def push_zero_projections(resolution, host="localhost", port=5558):
         scene_id, [0, 0, 0], [1, 1, 1])
     pub.send(packet_vol_geom)
 
+    # Initialize beam geometry
     angles = np.linspace(0, np.pi, proj_count, endpoint=False)
     packet_geometry = tomop.parallel_beam_geometry_packet(
         scene_id, rows, cols, proj_count, angles)
@@ -35,17 +35,17 @@ def push_zero_projections(resolution, host="localhost", port=5558):
     packet_flat = tomop.projection_packet(1, 0, [rows, cols], flat)
     pub.send(packet_flat)
 
-    # Create and send projection data consisting of zeros
+    # Create and send projection data consisting of random numbers
     proj_data = np.random.rand(proj_count, rows, cols)
     for i in np.arange(0, proj_count):
-        packet_proj = tomop.projection_packet(2, i, [rows, cols],
-                                              proj_data[i, :, :].ravel())
+        packet_proj = tomop.projection_packet(
+            2, i, [rows, cols], proj_data[i, :, :].ravel())
         pub.send(packet_proj)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description='Push a data set consisting of zeros to Slicerecon.')
+        description='Push a data set consisting of random to Slicerecon.')
 
     parser.add_argument('--host',
                         default="localhost",
@@ -63,4 +63,4 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    push_zero_projections(args.resolution, host=args.host, port=args.port)
+    push_random_projections(args.resolution, host=args.host, port=args.port)
