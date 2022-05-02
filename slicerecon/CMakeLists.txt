@@ -37,6 +37,7 @@ target_link_libraries(${TARGET_NAME}
         astra-toolbox
         tomopackets
         Eigen3::Eigen
+        spdlog::spdlog
         flags
         bulk_thread
         ${FFTW_FLOAT_LIB}

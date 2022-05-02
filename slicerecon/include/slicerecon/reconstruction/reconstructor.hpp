@@ -14,6 +14,8 @@ extern "C" {
 #define ASTRA_CUDA
 #endif
 
+#include <spdlog/spdlog.h>
+
 #include "astra/ConeProjectionGeometry3D.h"
 #include "astra/ConeVecProjectionGeometry3D.h"
 #include "astra/CudaBackProjectionAlgorithm3D.h"
@@ -212,8 +214,9 @@ class reconstructor {
         switch (k) {
             case proj_kind::standard: {
                 // check if we received a (new) batch of darks/flats
-                if (received_flats_ >= p.darks + p.flats && p.darks > 0 && p.flats > 0) {
-                    compute_flatfielding_();
+                if (received_darks_ + received_flats_ >= p.darks + p.flats && p.darks > 0 && p.flats > 0) {
+                    compute_reciprocal_();
+                    received_darks_ = 0;
                     received_flats_ = 0;
                 }
 
@@ -279,12 +282,14 @@ class reconstructor {
             }
             case proj_kind::dark: {
                 memcpy(&all_darks_[proj_idx * pixels_], data, sizeof(float) * pixels_);
-                received_flats_++;
+                received_darks_++;
+                spdlog::info("Received dark No. {0:d}", received_darks_);
                 break;
             }
             case proj_kind::flat: {
                 memcpy(&all_flats_[proj_idx * pixels_], data, sizeof(float) * pixels_);
                 received_flats_++;
+                spdlog::info("Received flat No. {0:d}", received_flats_);
                 break;
             }
             default:
@@ -345,7 +350,7 @@ class reconstructor {
         return result;
     }
 
-    void compute_flatfielding_() {
+    void compute_reciprocal_() {
         slicerecon::util::log << LOG_FILE << slicerecon::util::lvl::info
                               << "Computing reciprocal for flat fielding"
                               << slicerecon::util::end_log;
@@ -354,7 +359,6 @@ class reconstructor {
         auto dark = average_(all_darks_);
         // 2) average flats
         auto flat = average_(all_flats_);
-
         // 3) compute reciprocal
         for (int i = 0; i < geom_.rows * geom_.cols; ++i) {
             if (dark[i] == flat[i]) {
@@ -385,6 +389,7 @@ class reconstructor {
     int update_every_;
 
     int32_t pixels_ = -1;
+    int32_t received_darks_ = 0;
     int32_t received_flats_ = 0;
 
     std::unique_ptr<detail::solver> alg_;

@@ -10,7 +10,7 @@ def push_random_projections(resolution, host="localhost", port=5558):
     pub = tomop.publisher(host, port)
 
     # Initialize scan settings
-    num_darks, num_flats = 1, 1
+    num_darks, num_flats = 10, 10
     packet_scan_settings = tomop.scan_settings_packet(
         scene_id, num_darks, num_flats, False)
     pub.send(packet_scan_settings)
@@ -27,13 +27,15 @@ def push_random_projections(resolution, host="localhost", port=5558):
     pub.send(packet_geometry)
 
     # Send dark(s) and flat(s)
-    dark = np.zeros((rows, cols), dtype=np.float32).ravel()
-    packet_dark = tomop.projection_packet(0, 0, [rows, cols], dark)
-    pub.send(packet_dark)
+    for i in range(num_darks):
+        dark = np.zeros((rows, cols), dtype=np.float32).ravel()
+        packet_dark = tomop.projection_packet(0, i, [rows, cols], dark)
+        pub.send(packet_dark)
 
-    flat = np.ones((rows, cols), dtype=np.float32).ravel()
-    packet_flat = tomop.projection_packet(1, 0, [rows, cols], flat)
-    pub.send(packet_flat)
+    for i in range(num_flats):
+        flat = np.ones((rows, cols), dtype=np.float32).ravel()
+        packet_flat = tomop.projection_packet(1, i, [rows, cols], flat)
+        pub.send(packet_flat)
 
     # Create and send projection data consisting of random numbers
     proj_data = np.random.rand(proj_count, rows, cols)

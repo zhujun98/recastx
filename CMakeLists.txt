@@ -21,6 +21,8 @@ if (BUILD_PYTHON)
     find_package(Python3 REQUIRED)
 endif()
 
+find_package(spdlog REQUIRED)
+
 add_subdirectory(tomopackets)
 
 add_subdirectory(slicerecon)
