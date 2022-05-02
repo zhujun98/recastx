@@ -282,7 +282,7 @@ class reconstructor {
                 received_flats_++;
                 break;
             }
-            case proj_kind::light: {
+            case proj_kind::flat: {
                 memcpy(&all_flats_[proj_idx * pixels_], data, sizeof(float) * pixels_);
                 received_flats_++;
                 break;
@@ -353,14 +353,14 @@ class reconstructor {
         // 1) average dark
         auto dark = average_(all_darks_);
         // 2) average flats
-        auto light = average_(all_flats_);
+        auto flat = average_(all_flats_);
 
         // 3) compute reciprocal
         for (int i = 0; i < geom_.rows * geom_.cols; ++i) {
-            if (dark[i] == light[i]) {
+            if (dark[i] == flat[i]) {
                 flat_fielder_[i] = 1.0f;
             } else {
-                flat_fielder_[i] = 1.0f / (light[i] - dark[i]);
+                flat_fielder_[i] = 1.0f / (flat[i] - dark[i]);
             }
         }
 

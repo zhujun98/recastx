@@ -73,10 +73,9 @@ using orientation = std::array<float, 9>;
 using slice_data = std::pair<std::array<int32_t, 2>, std::vector<float>>;
 
 /**
- * An enum with the different projection kinds, which are dark, light, and
- * standard.
+ * An enum with the different projection kinds, which are dark, flat, and standard.
  */
-enum class proj_kind : int32_t { dark = 0, light = 1, standard = 2 };
+enum class proj_kind : int32_t { dark = 0, flat = 1, standard = 2 };
 
 /**
  * The data that defines a projection.
