@@ -7,6 +7,8 @@ find_package(FFTW REQUIRED COMPONENTS FLOAT_LIB)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 message(STATUS "Found Eigen3 ${Eigen3_VERSION}")
 
+find_package(nlohmann_json REQUIRED)
+
 add_subdirectory(${PROJECT_SOURCE_DIR}/../ext/bulk bulk)
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/../ext/flags flags)
@@ -20,9 +22,10 @@ set(ASTRA_INCLUDE_DIR ${CMAKE_PREFIX_PATH}/include)
 
 set(SOURCES
     "src/util/util.cpp"
-    "src/util/log.cpp"
     "src/util/bench.cpp"
-    "src/util/processing.cpp"
+    "src/reconstruction/projection_processor.cpp"
+    "src/reconstruction/listener.cpp"
+    "src/reconstruction/solver.cpp"
     "src/reconstruction/reconstructor.cpp"
     "src/reconstruction/helpers.cpp"
 )
@@ -37,6 +40,7 @@ target_link_libraries(${TARGET_NAME}
         astra-toolbox
         tomopackets
         Eigen3::Eigen
+        nlohmann_json::nlohmann_json
         spdlog::spdlog
         flags
         bulk_thread

@@ -2,36 +2,38 @@
 #include <thread>
 
 #include <zmq.hpp>
+#include <nlohmann/json.hpp>
+#include <spdlog/spdlog.h>
 
 #include "tomop/tomop.hpp"
 
-#include "../util/data_types.hpp"
 #include "../util/exceptions.hpp"
-#include "../util/log.hpp"
+#include "../data_types.hpp"
 
 namespace slicerecon {
 
-class projection_server {
-  public:
-    projection_server(std::string hostname, int port, reconstructor& pool, int type = ZMQ_PULL)
-        : context_(1), socket_(context_, type), pool_(pool), type_(type) {
+class ProjectionServer {
+
+    zmq::context_t context_;
+    zmq::socket_t socket_;
+
+    Reconstructor& recon_;
+
+    std::thread serve_thread_;
+
+public:
+    ProjectionServer(std::string hostname, int port, Reconstructor& recon)
+        : context_(1),
+          socket_(context_, ZMQ_PULL),
+          recon_(recon) {
         using namespace std::string_literals;
         auto address = "tcp://"s + hostname + ":"s + std::to_string(port);
-
-        util::log << LOG_FILE << util::lvl::info << "Binding to: " << address
-                  << util::end_log;
-        socket_.bind(address);
-
-        if (type == ZMQ_SUB) {
-            socket_.setsockopt(ZMQ_SUBSCRIBE, nullptr, 0);
-        }
+        spdlog::info("Connecting to data source {} ...", address);
+        socket_.connect(address);
     }
 
-    ~projection_server() {
-        if (serve_thread_.joinable()) {
-            serve_thread_.join();
-        }
-
+    ~ProjectionServer() {
+        if (serve_thread_.joinable()) serve_thread_.join();
         socket_.close();
         context_.close();
     }
@@ -41,211 +43,26 @@ class projection_server {
             zmq::message_t update;
             while (true) {
                 socket_.recv(&update);
-                ack();
 
-                auto desc = ((tomop::packet_desc*)update.data())[0];
-                auto buffer = (char*)update.data();
-
-                switch (desc) {
-                    case tomop::packet_desc::scan_settings: {
-                        auto mbuffer = tomop::memory_buffer(update.size(), (char*)update.data());
-                        auto packet = std::make_unique<tomop::ScanSettingsPacket>();
-                        packet->deserialize(std::move(mbuffer));
-
-                        pool_.set_scan_settings(packet->darks, 
-                                                packet->flats,
-                                                packet->already_linear);
-                        break;
-                    }
-                    case tomop::packet_desc::projection: {
-                        auto index = sizeof(tomop::packet_desc);
-
-                        /* This assumes that the projection packet from TOMOP
-                        does not change, but does avoid an unnecessary copy
-                        */
-                        int32_t type = 0;
-                        int32_t idx = 0;
-                        std::array<int32_t, 2> shape = {};
-
-                        memcpy(&type, buffer + index, sizeof(int32_t));
-                        index += sizeof(int32_t);
-
-                        memcpy(&idx, buffer + index, sizeof(int32_t));
-                        index += sizeof(int32_t);
-
-                        memcpy(&shape, buffer + index, sizeof(std::array<int32_t, 2>));
-                        index += sizeof(std::array<int32_t, 2>);
-
-                        // the first 4 bytes of the buffer are the size of the data,
-                        // so we skip ahead (its equal to reduce(shape))
-                        pool_.push_projection((proj_kind)type, idx, shape, buffer + index + sizeof(int));
-                        break;
-                    }
-                    case tomop::packet_desc::geometry_specification: {
-                        auto mbuffer = tomop::memory_buffer(update.size(), (char*)update.data());
-                        auto packet = std::make_unique<tomop::GeometrySpecificationPacket>();
-                        packet->deserialize(std::move(mbuffer));
-
-                        geom_.volume_min_point = packet->volume_min_point;
-                        geom_.volume_max_point = packet->volume_max_point;
-
-                        if (pool_.initialized()) {
-                            util::log
-                                << LOG_FILE << util::lvl::warning
-                                << "Geometry specification received while "
-                                   "reconstruction is already initialized (ignored)"
-                                << util::end_log;
-                        }
-
-                        break;
-                    }
-                    case tomop::packet_desc::parallel_beam_geometry: {
-                        auto mbuffer = tomop::memory_buffer(update.size(), (char*)update.data());
-                        auto packet = std::make_unique<tomop::ParallelBeamGeometryPacket>();
-
-                        packet->deserialize(std::move(mbuffer));
-
-                        if (packet->rows < 0 || packet->cols < 0) {
-                            throw server_error(
-                                "Invalid geometry specification received: negative "
-                                "rows or columns");
-                        }
-
-                        if (packet->proj_count != (int)packet->angles.size()) {
-                            throw server_error("Invalid geometry specification "
-                                               "received: projection count is not "
-                                               "equal to number of angles");
-                        }
-
-                        geom_.rows = packet->rows;
-                        geom_.cols = packet->cols;
-                        geom_.proj_count = packet->proj_count;
-                        geom_.angles = packet->angles;
-                        geom_.parallel = true;
-                        geom_.vec_geometry = false;
-
-                        pool_.initialize(geom_);
-
-                        break;
-                    }
-                    case tomop::packet_desc::parallel_vec_geometry: {
-                        auto mbuffer = tomop::memory_buffer(update.size(), (char*)update.data());
-                        auto packet = std::make_unique<tomop::ParallelVecGeometryPacket>();
-                        packet->deserialize(std::move(mbuffer));
-
-                        if (packet->rows < 0 || packet->cols < 0) {
-                            throw server_error(
-                                "Invalid geometry specification received: negative "
-                                "rows or columns");
-                        }
-
-                        if (packet->proj_count !=
-                            (int)(packet->vectors.size() / 12)) {
-                            throw server_error("Invalid geometry specification "
-                                               "received: projection count is not "
-                                               "equal to number of vectors");
-                        }
-
-                        geom_.rows = packet->rows;
-                        geom_.cols = packet->cols;
-                        geom_.proj_count = packet->proj_count;
-                        geom_.angles = packet->vectors;
-                        geom_.parallel = true;
-                        geom_.vec_geometry = true;
-
-                        pool_.initialize(geom_);
-
-                        break;
-                    }
-                    case tomop::packet_desc::cone_beam_geometry: {
-                        auto mbuffer = tomop::memory_buffer(update.size(), (char*)update.data());
-                        auto packet = std::make_unique<tomop::ConeBeamGeometryPacket>();
-                        packet->deserialize(std::move(mbuffer));
-
-                        if (packet->rows < 0 || packet->cols < 0) {
-                            throw server_error(
-                                "Invalid geometry specification received: negative "
-                                "rows or columns");
-                        }
-
-                        if (packet->proj_count != (int)packet->angles.size()) {
-                            throw server_error("Invalid geometry specification "
-                                               "received: projection count is not "
-                                               "equal to number of angles");
-                        }
-
-                        geom_.rows = packet->rows;
-                        geom_.cols = packet->cols;
-                        geom_.proj_count = packet->proj_count;
-                        geom_.angles = packet->angles;
-                        geom_.parallel = false;
-                        geom_.vec_geometry = false;
-                        geom_.source_origin = packet->source_origin;
-                        geom_.origin_det = packet->origin_det;
-                        geom_.detector_size = packet->detector_size;
-
-                        pool_.initialize(geom_);
-
-                        break;
-                    }
-                    case tomop::packet_desc::cone_vec_geometry: {
-                        auto mbuffer = tomop::memory_buffer(update.size(), (char*)update.data());
-                        auto packet = std::make_unique<tomop::ConeVecGeometryPacket>();
-                        packet->deserialize(std::move(mbuffer));
-
-                        if (packet->rows < 0 || packet->cols < 0) {
-                            throw server_error(
-                                "Invalid geometry specification received: negative "
-                                "rows or columns");
-                        }
-
-                        if (packet->proj_count !=
-                            (int)(packet->vectors.size() / 12)) {
-                            throw server_error("Invalid geometry specification "
-                                               "received: projection count is not "
-                                               "equal to number of vectors");
-                        }
-
-                        geom_.rows = packet->rows;
-                        geom_.cols = packet->cols;
-                        geom_.proj_count = packet->proj_count;
-                        geom_.angles = packet->vectors;
-                        geom_.parallel = false;
-                        geom_.vec_geometry = true;
-
-                        pool_.initialize(geom_);
-
-                        break;
-                    }
-                    default: {
-                        util::log << LOG_FILE << util::lvl::warning
-                                  << "Unknown package received" 
-                                  << util::end_log;
-                        break;
-                    }
+                auto meta = nlohmann::json::parse(std::string((char*)update.data(), update.size()));
+                int frame = meta["frame"];
+                int scan_idx = meta["image_attributes"]["scan_index"];
+                if (scan_idx < 0 || scan_idx > 2) {
+                    spdlog::error("scan_index must be either 0, 1 or 2. Actual: {}", scan_idx);
+                    continue;
                 }
+                auto shape = meta["shape"];
+
+                spdlog::info("Projection received: type = {0:d}, frame = {1:d}", scan_idx, frame);
+                socket_.recv(&update);
+
+                recon_.pushProjection(static_cast<ProjectionType>(scan_idx), 
+                                      frame, 
+                                      {shape[0], shape[1]}, 
+                                      static_cast<char*>(update.data()));
             }
         });
     }
-
-    void ack() {
-        if (type_ == ZMQ_REP) {
-            zmq::message_t reply(sizeof(int));
-            int succes = 1;
-            memcpy(reply.data(), &succes, sizeof(int));
-            socket_.send(reply);
-        }
-    }
-
-  private:
-    zmq::context_t context_;
-    zmq::socket_t socket_;
-    reconstructor& pool_;
-    int type_;
-
-    std::thread serve_thread_;
-
-    acquisition::geometry geom_ = {};
 };
 
 } // namespace slicerecon

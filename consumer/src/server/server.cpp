@@ -40,7 +40,9 @@ void Server::parse_packet(packet_desc desc) {
             break;
         }
 
-        default: { std::cout << "Received: unknown packet description!" << std::endl; }
+        default: { 
+            std::cout << "Received: unknown packet description!" << std::endl; 
+        }
     }
 }
 

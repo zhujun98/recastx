@@ -3,8 +3,10 @@
 #include <string>
 #include <thread>
 
-#include "tomop/tomop.hpp"
+#include <spdlog/spdlog.h>
 #include <zmq.hpp>
+
+#include "tomop/tomop.hpp"
 
 namespace slicerecon {
 
@@ -18,8 +20,7 @@ class plugin {
            std::string hostname_out = "tcp://localhost:5555")
         : context_(1), socket_in_(context_, ZMQ_REP),
           socket_out_(context_, ZMQ_REQ) {
-        util::log << LOG_FILE << util::lvl::info << "Plugin: " << hostname_in
-                  << " -> " << hostname_out << util::end_log;
+        spdlog::info("Plugin: {} -> {}", hostname_in, hostname_out);
 
         socket_in_.bind(hostname_in);
         socket_out_.connect(hostname_out);
@@ -51,8 +52,7 @@ class plugin {
     }
 
     void listen() {
-        util::log << LOG_FILE << util::lvl::info << "Plugin starts listening"
-                  << util::end_log;
+        spdlog::info("Plugin starts listening.");
 
         while (true) {
             zmq::message_t update;

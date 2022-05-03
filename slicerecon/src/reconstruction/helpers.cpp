@@ -14,11 +14,9 @@ parallel_beam_to_vec(astra::CParallelProjectionGeometry3D* parallel_geom) {
     auto vectors = std::vector<astra::SPar3DProjection>(projs);
     auto i = 0;
     for (auto& v : vectors) {
-        auto vrd =
-            Eigen::Vector3f{std::sin(angles[i]), -std::cos(angles[i]), 0};
+        auto vrd = Eigen::Vector3f{std::sin(angles[i]), -std::cos(angles[i]), 0};
         auto vc = Eigen::Vector3f{0, 0, 0};
-        auto vdx = Eigen::Vector3f{std::cos(angles[i]) * dx,
-                                   std::sin(angles[i]) * dx, 0};
+        auto vdx = Eigen::Vector3f{std::cos(angles[i]) * dx, std::sin(angles[i]) * dx, 0};
         auto vdy = Eigen::Vector3f{0, 0, dy};
         vc -= 0.5f * ((float)rows * vdy + (float)cols * vdx);
         v = {// ray dir

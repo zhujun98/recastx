@@ -1,7 +1,5 @@
 #pragma once
 
-#include "data_types.hpp"
-
 #include <cmath>
 #include <complex>
 #include <vector>
@@ -13,9 +11,12 @@ extern "C" {
 #include <bulk/backends/thread/thread.hpp>
 #include <bulk/bulk.hpp>
 
-namespace slicerecon::util {
+#include "../data_types.hpp"
+
+namespace slicerecon {
 
 namespace filter {
+
 std::vector<float> ram_lak(int cols);
 std::vector<float> shepp_logan(int cols);
 std::vector<float> gaussian(int cols, float sigma);
@@ -48,7 +49,7 @@ struct FDKScaler {
 };
 
 struct Paganin {
-    Paganin(settings parameters, acquisition::geometry geom, float* data);
+    Paganin(Settings param, Geometry geom, float* data);
 
     void apply(Projection proj, int s);
 
@@ -57,14 +58,14 @@ struct Paganin {
     fftwf_plan ffti2d_plan_;
     std::vector<std::vector<std::complex<float>>> proj_freq_buffer_;
     std::vector<float> paganin_filter_;
-    paganin_settings paganin_;
+    PaganinSettings paganin_;
 };
 
 class Filterer {
   public:
-    Filterer(settings parameters, acquisition::geometry geom, float* data);
+    Filterer(Settings param, Geometry geom, float* data);
 
-    void set_filter(std::vector<float> filter) { filter_ = filter; }
+    void set_filter(std::vector<float> filter);
 
     void apply(Projection proj, int s, int proj_idx);
 
@@ -79,8 +80,7 @@ class Filterer {
 
 class ProjectionProcessor {
   public:
-    ProjectionProcessor(settings param, acquisition::geometry geom)
-        : param_(param), geom_(geom) {}
+    ProjectionProcessor(Settings param, Geometry geom);
 
     void process(float* data, int proj_id_begin, int proj_id_end);
 
@@ -91,10 +91,10 @@ class ProjectionProcessor {
     std::unique_ptr<detail::FDKScaler> fdk_scale;
 
   private:
-    settings param_;
-    acquisition::geometry geom_;
+    Settings param_;
+    Geometry geom_;
 
     bulk::thread::environment env_;
 };
 
-} // namespace slicerecon::util
+} // namespace slicerecon

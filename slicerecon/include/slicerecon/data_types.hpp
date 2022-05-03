@@ -12,9 +12,9 @@ namespace slicerecon {
  * window. Alternating is the default.
  * @see https://github.com/cicwi/SliceRecon/issues/4
  */
-enum class mode { alternating, continuous };
+enum class Mode { alternating, continuous };
 
-struct paganin_settings {
+struct PaganinSettings {
     float pixel_size;
     float lambda;
     float delta;
@@ -22,28 +22,26 @@ struct paganin_settings {
     float distance;
 };
 
-struct settings {
+struct Settings {
     int32_t slice_size;
     int32_t preview_size;
     int32_t group_size;
     int32_t filter_cores;
     int32_t darks;
     int32_t flats;
-    mode reconstruction_mode;
+    Mode reconstruction_mode;
     bool already_linear;
     bool retrieve_phase;
     bool tilt_axis;
-    paganin_settings paganin;
+    PaganinSettings paganin;
     bool gaussian_pass;
     std::string filter;
 };
 
-namespace acquisition {
-
 /**
- * Parameters that define a simple single-axis circular geometry.
+ * Parameters that define a simple single-axis circular Geometry.
  */
-struct geometry {
+struct Geometry {
     int32_t rows = 0;
     int32_t cols = 0;
     int32_t proj_count = 0;
@@ -58,8 +56,6 @@ struct geometry {
     float origin_det = 0.0f;
 };
 
-} // namespace acquisition
-
 /**
  * The orientation is an array of 9 floating point numbers. This corresponds to
  * the way tomopackets defines an orientation.
@@ -73,18 +69,10 @@ using orientation = std::array<float, 9>;
 using slice_data = std::pair<std::array<int32_t, 2>, std::vector<float>>;
 
 /**
- * An enum with the different projection kinds, which are dark, flat, and standard.
+ * An enum with the different projection types, which are dark, flat, and standard.
  */
-enum class proj_kind : int32_t { dark = 0, flat = 1, standard = 2 };
+enum class ProjectionType : int32_t { dark = 0, flat = 1, standard = 2 };
 
-/**
- * The data that defines a projection.
- */
-struct projection {
-    proj_kind kind;
-    int32_t idx;
-    std::array<int32_t, 2> size;
-    std::vector<float> data;
-};
+using raw_dtype = uint16_t;
 
 } // namespace slicerecon

@@ -1,16 +1,18 @@
-#include <bulk/bulk.hpp>
-
 #include <algorithm>
 #include <cmath>
 #include <complex>
 #include <fstream>
 #include <iostream>
 
-#include "slicerecon/util/bench.hpp"
-#include "slicerecon/util/processing.hpp"
-#include "slicerecon/util/log.hpp"
+#include <spdlog/spdlog.h>
 
-namespace slicerecon::util {
+#include <bulk/bulk.hpp>
+
+#include "slicerecon/util/bench.hpp"
+#include "slicerecon/reconstruction/projection_processor.hpp"
+
+
+namespace slicerecon {
 
 namespace filter {
 
@@ -58,29 +60,19 @@ std::vector<float> from_file(std::string filename, int cols, int proj_count)
         fin.seekg(0, fin.beg);
         if (nelements == cols){
             result.resize(cols);
-        }else if (nelements == cols*proj_count){
+        } else if (nelements == cols*proj_count){
             result.resize(cols*proj_count);
-        }else{
-            slicerecon::util::log
-            << LOG_FILE << slicerecon::util::lvl::warning
-            << "Number of filter elements in file (" << nelements 
-            << ") does not match geometry (" << cols 
-            << " columns and " << proj_count << " projections)"
-            << slicerecon::util::end_log;
+        } else {
+            spdlog::warn("Number of filter elements in file ({}) does not match geometry"
+                         "({} columns and {} projections)", nelements, cols, proj_count);
         }
         fin.read(reinterpret_cast<char*>(result.data()), result.size()*sizeof(float));
         fin.close();
     }else{
-        slicerecon::util::log
-            << LOG_FILE << slicerecon::util::lvl::warning
-            << "Filter file (" << filename << ") not found"
-            << slicerecon::util::end_log;
+        spdlog::warn("Filter file ({}) not found!", filename);
     }
     if (result.empty()){
-        slicerecon::util::log
-            << LOG_FILE << slicerecon::util::lvl::warning
-            << "Problem reading filter file, using Shepp-Logan filter instead"
-            << slicerecon::util::end_log;
+        spdlog::warn("Problem reading filter file, using Shepp-Logan filter instead.");
         return shepp_logan(cols);
     }
     return result;
@@ -156,10 +148,10 @@ void FDKScaler::apply(Projection proj, int proj_idx) const
     }
 }
 
-Paganin::Paganin(settings parameters, acquisition::geometry geom, float* data)
+Paganin::Paganin(Settings param, Geometry geom, float* data)
 {
     proj_freq_buffer_ = std::vector<std::vector<std::complex<float>>>(
-    parameters.filter_cores, std::vector<std::complex<float>>(geom.cols * geom.rows));
+    param.filter_cores, std::vector<std::complex<float>>(geom.cols * geom.rows));
     fft2d_plan_ =
     fftwf_plan_dft_r2c_2d(geom.cols, geom.rows, data,
                           reinterpret_cast<fftwf_complex*>(&proj_freq_buffer_[0][0]),
@@ -169,11 +161,11 @@ Paganin::Paganin(settings parameters, acquisition::geometry geom, float* data)
                           reinterpret_cast<fftwf_complex*>(&proj_freq_buffer_[0][0]),
                           data, FFTW_ESTIMATE);
     paganin_filter_ =
-    util::filter::paganin(geom.rows, geom.cols, parameters.paganin.pixel_size,
-                          parameters.paganin.lambda, parameters.paganin.delta,
-                          parameters.paganin.beta, parameters.paganin.distance);
+    filter::paganin(geom.rows, geom.cols, param.paganin.pixel_size,
+                    param.paganin.lambda, param.paganin.delta,
+                    param.paganin.beta, param.paganin.distance);
 
-    paganin_ = parameters.paganin;
+    paganin_ = param.paganin;
 }
 
 void Paganin::apply(Projection proj, int s)
@@ -199,10 +191,10 @@ void Paganin::apply(Projection proj, int s)
     }
 }
 
-Filterer::Filterer(settings parameters, acquisition::geometry geom, float* data)
+Filterer::Filterer(Settings param, Geometry geom, float* data)
 {
     freq_buffer_ = std::vector<std::vector<std::complex<float>>>(
-    parameters.filter_cores, std::vector<std::complex<float>>(geom.cols));
+    param.filter_cores, std::vector<std::complex<float>>(geom.cols));
     fft_plan_ =
     fftwf_plan_dft_r2c_1d(geom.cols, data,
                           reinterpret_cast<fftwf_complex*>(&freq_buffer_[0][0]),
@@ -212,24 +204,26 @@ Filterer::Filterer(settings parameters, acquisition::geometry geom, float* data)
                           reinterpret_cast<fftwf_complex*>(&freq_buffer_[0][0]),
                           data, FFTW_ESTIMATE);
 
-    if (!parameters.filter.empty()){
-        if (!parameters.filter.compare("shepp-logan")){
-            filter_ = util::filter::shepp_logan(geom.cols);
-        }else if(!parameters.filter.compare("ram-lak")){
-            filter_ = util::filter::ram_lak(geom.cols);
+    if (!param.filter.empty()){
+        if (!param.filter.compare("shepp-logan")){
+            filter_ = filter::shepp_logan(geom.cols);
+        }else if(!param.filter.compare("ram-lak")){
+            filter_ = filter::ram_lak(geom.cols);
         }else{
-            filter_ = util::filter::from_file(parameters.filter, geom.cols, geom.proj_count);
+            filter_ = filter::from_file(param.filter, geom.cols, geom.proj_count);
         }
     }else{
-        filter_ = util::filter::shepp_logan(geom.cols);
+        filter_ = filter::shepp_logan(geom.cols);
     }
-    if (parameters.gaussian_pass) {
-        auto filter_lowpass = util::filter::gaussian(geom.cols, 0.06f);
+    if (param.gaussian_pass) {
+        auto filter_lowpass = filter::gaussian(geom.cols, 0.06f);
         for (int i = 0; i < geom.cols; ++i) {
             filter_[i] *= filter_lowpass[i];
         }
     }
 }
+
+void Filterer::set_filter(std::vector<float> filter) { filter_ = filter; }
 
 void Filterer::apply(Projection proj, int s, int proj_idx)
 {
@@ -256,6 +250,9 @@ void Filterer::apply(Projection proj, int s, int proj_idx)
 }
 
 } // namespace detail
+
+ProjectionProcessor::ProjectionProcessor(Settings param, Geometry geom)
+ : param_(param), geom_(geom) {}
 
 void ProjectionProcessor::process(float* data, int proj_id_begin, int proj_id_end)
 {
@@ -290,7 +287,8 @@ void ProjectionProcessor::process(float* data, int proj_id_begin, int proj_id_en
 
         world.barrier();
     });
-    bench.insert("process", dt.get());
+
+    util::bench.insert("process", dt.get());
 }
 
 } // namespace slicerecon::util

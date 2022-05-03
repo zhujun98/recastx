@@ -160,11 +160,11 @@ std::string info(const astra::CConeVecProjectionGeometry3D& x) {
 std::string info(const astra::CVolumeGeometry3D& x) {
     auto ss = std::stringstream("");
 
-    ss << "Min: [" << x.getWindowMinX() << ", " << x.getWindowMinY() << ", "
+    ss << "Min = [" << x.getWindowMinX() << ", " << x.getWindowMinY() << ", "
        << x.getWindowMinZ() << "], ";
-    ss << "Max: [" << x.getWindowMaxX() << ", " << x.getWindowMaxY() << ", "
+    ss << "Max = [" << x.getWindowMaxX() << ", " << x.getWindowMaxY() << ", "
        << x.getWindowMaxZ() << "], ";
-    ss << "Shape: [" << x.getGridRowCount() << ", " << x.getGridColCount()
+    ss << "Shape = [" << x.getGridRowCount() << ", " << x.getGridColCount()
        << ", " << x.getGridSliceCount() << "]";
 
     return ss.str();

@@ -8,31 +8,57 @@
 #include <thread>
 #include <utility>
 
+#include <spdlog/spdlog.h>
+
 #include "tomop/tomop.hpp"
 #include <zmq.hpp>
 
 #include <mutex>
 
+#include "../reconstruction/listener.hpp"
 #include "../reconstruction/reconstructor.hpp"
 #include "../util/bench.hpp"
-#include "../util/data_types.hpp"
+#include "../data_types.hpp"
 
 namespace slicerecon {
 
-class visualization_server : public listener, public util::bench_listener {
-  public:
+class VisualizationServer : public Listener, public util::bench_listener {
+
+public:
+
     using callback_type =
         std::function<slice_data(std::array<float, 9>, int32_t)>;
 
-    void notify(reconstructor& recon) override {
-        util::log << LOG_FILE << util::lvl::info
-                  << "Sending volume preview....: " << util::end_log;
+private:
+
+    // server connection
+    zmq::context_t context_;
+    zmq::socket_t socket_;
+
+    // subscribe connection
+    std::thread serve_thread_;
+    zmq::socket_t subscribe_socket_;
+
+    // subscribe connection
+    std::optional<zmq::socket_t> plugin_socket_;
+
+    int32_t scene_id_ = -1;
+
+    callback_type slice_data_callback_;
+    std::vector<std::pair<int32_t, std::array<float, 9>>> slices_;
+
+    std::mutex socket_mutex_;
+
+public:
+
+    void notify(Reconstructor& recon) override {
+
+        spdlog::info("Sending volume preview ...");
 
         zmq::message_t reply;
         int n = recon.parameters().preview_size;
 
-        auto volprev =
-            tomop::VolumeDataPacket(scene_id_, {n, n, n}, recon.preview_data());
+        auto volprev = tomop::VolumeDataPacket(scene_id_, {n, n, n}, recon.previewData());
         send(volprev);
 
         auto grsp = tomop::GroupRequestSlicesPacket(scene_id_, 1);
@@ -61,9 +87,9 @@ class visualization_server : public listener, public util::bench_listener {
         }
     }
 
-    visualization_server(std::string name, 
-                         std::string hostname = "tcp://localhost:5555",
-                         std::string subscribe_hostname = "tcp://localhost:5556")
+    VisualizationServer(std::string name, 
+                        std::string hostname = "tcp://localhost:5555",
+                        std::string subscribe_hostname = "tcp://localhost:5556")
         : context_(1), 
           socket_(context_, ZMQ_REQ),
           subscribe_socket_(context_, ZMQ_SUB) {
@@ -93,9 +119,7 @@ class visualization_server : public listener, public util::bench_listener {
 
         subscribe(subscribe_hostname);
 
-        util::log << LOG_FILE << util::lvl::info
-                  << "Connected to visualization server: " << hostname << " "
-                  << subscribe_hostname << util::end_log;
+        spdlog::info("Connected to visualization server: {}", hostname);
     }
 
     void register_plugin(std::string plugin_hostname) {
@@ -103,7 +127,7 @@ class visualization_server : public listener, public util::bench_listener {
         plugin_socket_.value().connect(plugin_hostname);
     }
 
-    ~visualization_server() {
+    ~VisualizationServer() {
         if (serve_thread_.joinable()) {
             serve_thread_.join();
         }
@@ -129,8 +153,7 @@ class visualization_server : public listener, public util::bench_listener {
 
     void subscribe(std::string subscribe_host) {
         if (scene_id_ < 0) {
-            throw tomop::server_error(
-                "Subscribe called for uninitialized server");
+            throw tomop::server_error("Subscribe called for uninitialized server");
         }
 
         // set socket timeout to 200 ms
@@ -150,10 +173,9 @@ class visualization_server : public listener, public util::bench_listener {
 
         for (auto descriptor : descriptors) {
             int32_t filter[] = {
-                (std::underlying_type<tomop::packet_desc>::type)descriptor,
-                scene_id_};
-            subscribe_socket_.setsockopt(ZMQ_SUBSCRIBE, filter,
-                                         sizeof(decltype(filter)));
+                (std::underlying_type<tomop::packet_desc>::type)descriptor, scene_id_
+            };
+            subscribe_socket_.setsockopt(ZMQ_SUBSCRIBE, filter, sizeof(decltype(filter)));
         }
     }
 
@@ -170,13 +192,11 @@ class visualization_server : public listener, public util::bench_listener {
 
                     switch (desc) {
                         case tomop::packet_desc::kill_scene: {
-                            auto packet =
-                                std::make_unique<tomop::KillScenePacket>();
+                            auto packet = std::make_unique<tomop::KillScenePacket>();
                             packet->deserialize(std::move(buffer));
 
                             if (packet->scene_id != scene_id_) {
-                                std::cout << "Received kill request with wrong "
-                                             "scene id\n";
+                                spdlog::warn("Received kill request with wrong scene id!");
                             } else {
                                 kill = true;
                             }
@@ -190,8 +210,7 @@ class visualization_server : public listener, public util::bench_listener {
                             break;
                         }
                         case tomop::packet_desc::remove_slice: {
-                            auto packet =
-                                std::make_unique<tomop::RemoveSlicePacket>();
+                            auto packet = std::make_unique<tomop::RemoveSlicePacket>();
                             packet->deserialize(std::move(buffer));
 
                             auto to_erase = std::find_if(
@@ -200,65 +219,46 @@ class visualization_server : public listener, public util::bench_listener {
                                 });
                             slices_.erase(to_erase);
 
-                            if (plugin_socket_) {
-                                send(*packet, true);
-                            }
+                            if (plugin_socket_) send(*packet, true);
 
                             break;
                         }
                         case tomop::packet_desc::parameter_float: {
-                            auto packet =
-                                std::make_unique<tomop::ParameterFloatPacket>();
+                            auto packet = std::make_unique<tomop::ParameterFloatPacket>();
                             packet->deserialize(std::move(buffer));
-                            parameter_changed(packet->parameter_name,
-                                            {packet->value});
+                            parameter_changed(packet->parameter_name, {packet->value});
 
-                            if (plugin_socket_) {
-                                send(*packet, true);
-                            }
+                            if (plugin_socket_) send(*packet, true);
 
                             break;
                         }
                         case tomop::packet_desc::parameter_enum: {
-                            auto packet =
-                                std::make_unique<tomop::ParameterEnumPacket>();
+                            auto packet = std::make_unique<tomop::ParameterEnumPacket>();
                             packet->deserialize(std::move(buffer));
-                            parameter_changed(packet->parameter_name,
-                                            {packet->values[0]});
+                            parameter_changed(packet->parameter_name, {packet->values[0]});
 
-                            if (plugin_socket_) {
-                                send(*packet, true);
-                            }
+                            if (plugin_socket_) send(*packet, true);
 
                             break;
                         }
                         case tomop::packet_desc::parameter_bool: {
-                            auto packet =
-                                std::make_unique<tomop::ParameterBoolPacket>();
+                            auto packet = std::make_unique<tomop::ParameterBoolPacket>();
                             packet->deserialize(std::move(buffer));
-                            parameter_changed(packet->parameter_name,
-                                            {packet->value});
+                            parameter_changed(packet->parameter_name, {packet->value});
 
-                            if (plugin_socket_) {
-                                send(*packet, true);
-                            }
+                            if (plugin_socket_) send(*packet, true);
 
                             break;
                         }
                         default:
-                            util::log
-                                << LOG_FILE << util::lvl::warning
-                                << "Unrecognized package with descriptor: 0x"
-                                << std::hex
-                                << std::underlying_type<tomop::packet_desc>::type(
-                                    desc)
-                                << util::end_log;
+                            spdlog::warn("Unrecognized package with descriptor {0:x}", 
+                                         std::underlying_type<tomop::packet_desc>::type(desc));
                             break;
                         }
                 }
 
                 if (kill) {
-                    std::cout << "Scene closed...\n";
+                    spdlog::info("Scene closed.");
                     break;
                 }
             }
@@ -291,9 +291,8 @@ class visualization_server : public listener, public util::bench_listener {
         auto result = slice_data_callback_(orientation, slice_id);
 
         if (!result.first.empty()) {
-            auto data_packet =
-                tomop::SliceDataPacket(scene_id_, slice_id, result.first,
-                                       std::move(result.second), false);
+            auto data_packet = tomop::SliceDataPacket(
+                scene_id_, slice_id, result.first, std::move(result.second), false);
             send(data_packet, true);
         }
     }
@@ -302,26 +301,8 @@ class visualization_server : public listener, public util::bench_listener {
         slice_data_callback_ = callback;
     }
 
-    int32_t scene_id() { return scene_id_; }
+    int32_t scene_id() const { return scene_id_; }
 
-  private:
-    // server connection
-    zmq::context_t context_;
-    zmq::socket_t socket_;
-
-    // subscribe connection
-    std::thread serve_thread_;
-    zmq::socket_t subscribe_socket_;
-
-    // subscribe connection
-    std::optional<zmq::socket_t> plugin_socket_;
-
-    int32_t scene_id_ = -1;
-
-    callback_type slice_data_callback_;
-    std::vector<std::pair<int32_t, std::array<float, 9>>> slices_;
-
-    std::mutex socket_mutex_;
 };
 
 } // namespace slicerecon
