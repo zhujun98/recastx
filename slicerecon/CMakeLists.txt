@@ -59,8 +59,8 @@ if (BUILD_PYTHON)
             LIBRARY DESTINATION ${Python3_SITELIB})
 endif()
 
-add_executable(recast-server "src/slicerecon_server.cpp")
-target_link_libraries(recast-server PRIVATE _slicerecon)
+add_executable(tomcat-live-server "src/tomcat_live_server.cpp")
+target_link_libraries(tomcat-live-server PRIVATE _slicerecon)
 
 # INSTALL COMMANDS
-install(TARGETS recast-server RUNTIME DESTINATION bin)
+install(TARGETS tomcat-live-server RUNTIME DESTINATION bin)
