@@ -1,6 +1,0 @@
-{
-    "files.associations": {"*.cu": "cpp"},
-    "cmake.configureArgs": [
-        "-DCMAKE_PREFIX_PATH=/sls/X02DA/Data10/e16816/disk2/Jun/.conda/envs/recast-dev"
-    ]
-}

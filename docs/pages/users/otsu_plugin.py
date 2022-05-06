@@ -1,1 +1,0 @@
-../../../examples/plugins/otsu_plugin.py

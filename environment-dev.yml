@@ -1,4 +1,4 @@
-name: recast
+name: tomcat-live
 channels:
   - conda-forge
   - astra-toolbox
@@ -6,7 +6,9 @@ dependencies:
   - cmake
   - cppzmq
   - eigen
-  - pybind11
   - boost
   - fftw
   - libastra
+  - nlohmann_json
+  - spdlog
+  - pybind11

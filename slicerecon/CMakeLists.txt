@@ -1,4 +1,4 @@
-project(slicerecon LANGUAGES CXX)
+project(tomcat-live-slicerecon LANGUAGES CXX)
 
 # Caveat: sequence
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -60,8 +60,9 @@ if (BUILD_PYTHON)
             LIBRARY DESTINATION ${Python3_SITELIB})
 endif()
 
-add_executable(tomcat-live-server "src/tomcat_live_server.cpp")
-target_link_libraries(tomcat-live-server PRIVATE _slicerecon)
+set(EXEC_NAME "tomcat-live-server")
+add_executable(${EXEC_NAME} "src/tomcat_live_server.cpp")
+target_link_libraries(${EXEC_NAME} PRIVATE _slicerecon)
 
 # INSTALL COMMANDS
-install(TARGETS tomcat-live-server RUNTIME DESTINATION bin)
+install(TARGETS ${EXEC_NAME} RUNTIME DESTINATION bin)

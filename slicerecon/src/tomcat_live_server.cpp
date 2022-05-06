@@ -186,7 +186,7 @@ int main(int argc, char** argv)
     auto proj = slicerecon::ProjectionServer(hostname, port, *recon, socket_type);
     proj.serve();
 
-    // 3. connect with (recast3d) visualization server
+    // 3. connect with visualization server
     auto viz = slicerecon::VisualizationServer("slicerecon test",
                                                "tcp://"s + gui_hostname + ":5555"s,
                                                "tcp://"s + gui_hostname + ":5556"s);
