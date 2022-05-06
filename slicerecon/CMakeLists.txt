@@ -44,7 +44,6 @@ target_link_libraries(${TARGET_NAME}
         nlohmann_json::nlohmann_json
         spdlog::spdlog
         Boost::program_options
-        flags
         bulk_thread
         ${FFTW_FLOAT_LIB}
 )

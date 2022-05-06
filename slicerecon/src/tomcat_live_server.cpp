@@ -20,20 +20,13 @@ int main(int argc, char** argv)
 {
     namespace po = boost::program_options;
 
-    po::options_description desc(
-        "Allowed options for TOMCAT live 3D reconstruction server");
-    
-    bool mode = false;
-    bool retrieve_phase = false;
-    bool tilt = false;
-    bool gaussian_pass = false;
-
-    bool bench = false;
-    bool plugin = false;
-    bool py_plugin = false;
-
-    desc.add_options()
+    po::options_description general_desc("General options");
+    general_desc.add_options()
         ("help,h", "print help message")
+    ;
+
+    po::options_description connection_desc("ZMQ options");
+    connection_desc.add_options()
         ("host,e", po::value<std::string>()->default_value("localhost"), 
          "hostname of the data source server")
         ("port,p", po::value<int>()->default_value(5558),
@@ -42,16 +35,14 @@ int main(int argc, char** argv)
          "ZMQ socket type")
         ("gui-host", po::value<std::string>()->default_value("localhost"),
          "hostname of the GUI server")
-        ("rows", po::value<int>()->default_value(1200),
-         "detector height in pixels")
-        ("cols", po::value<int>()->default_value(2016),
-         "detector width in pixels")
-        ("darks", po::value<int>()->default_value(10),
-         "number of dark images")
-        ("flats", po::value<int>()->default_value(10),
-         "number of flat images")
-        ("projections", po::value<int>()->default_value(128),
-         "number of projections")
+    ;
+
+    po::options_description reconstruction_desc("Reconstruction options");
+    bool mode = false;
+    bool retrieve_phase = false;
+    bool tilt = false;
+    bool gaussian_pass = false;
+    reconstruction_desc.add_options()
         ("slice-size", po::value<int>()->default_value(128),
          "...")
         ("preview-size", po::value<int>()->default_value(128),
@@ -60,6 +51,10 @@ int main(int argc, char** argv)
          "...")
         ("filter-cores", po::value<int>()->default_value(8),
          "...")
+        ("darks", po::value<int>()->default_value(10),
+         "number of dark images")
+        ("flats", po::value<int>()->default_value(10),
+         "number of flat images")
         ("mode", po::bool_switch(&mode),
          "...")
         ("retrieve_phase", po::bool_switch(&retrieve_phase),
@@ -70,6 +65,21 @@ int main(int argc, char** argv)
          "...")
         ("filter", po::value<std::string>()->default_value("shepp-logan"),
          "...")
+    ;
+
+    po::options_description geometry_desc("Geometry options");
+    bool cone_beam = false;
+    geometry_desc.add_options()
+        ("rows", po::value<int>()->default_value(1200),
+         "detector height in pixels")
+        ("cols", po::value<int>()->default_value(2016),
+         "detector width in pixels")
+        ("projections", po::value<int>()->default_value(128),
+         "number of projections")
+    ;
+
+    po::options_description paganin_desc("Paganin options");
+    paganin_desc.add_options()
         ("pixel-size", po::value<float>()->default_value(1.0f),
          "...")
         ("lambda", po::value<float>()->default_value(1.23984193e-9f),
@@ -80,6 +90,13 @@ int main(int argc, char** argv)
          "...")
         ("distance", po::value<float>()->default_value(40.0f),
          "...")
+    ;
+
+    po::options_description misc_desc("Miscellaneous options");
+    bool bench = false;
+    bool plugin = false;
+    bool py_plugin = false;
+    misc_desc.add_options()
         ("bench", po::bool_switch(&bench),
          "...")
         ("plugin", po::bool_switch(&plugin),
@@ -87,12 +104,23 @@ int main(int argc, char** argv)
         ("py_plugin", po::bool_switch(&py_plugin),
          "...")
     ;
+
+    po::options_description all_desc(
+        "Allowed options for TOMCAT live 3D reconstruction server");
+    all_desc.
+        add(general_desc).
+        add(connection_desc).
+        add(reconstruction_desc).
+        add(geometry_desc).
+        add(paganin_desc).
+        add(misc_desc);
+
     po::variables_map opts;
-    po::store(po::parse_command_line(argc, argv, desc), opts);
+    po::store(po::parse_command_line(argc, argv, all_desc), opts);
     po::notify(opts);
 
     if (opts.count("help")) {
-        std::cout << desc << "\n";
+        std::cout << all_desc << "\n";
         return 0;
     }
 
@@ -101,21 +129,18 @@ int main(int argc, char** argv)
     auto socket_type = parseSocketType(opts["socket"].as<std::string>());
     auto gui_hostname = opts["gui-host"].as<std::string>();
 
-    auto rows = opts["rows"].as<int>();
-    auto cols = opts["cols"].as<int>();
-
-    auto darks = opts["darks"].as<int>();
-    auto flats = opts["flats"].as<int>();
-    auto projections = opts["projections"].as<int>();
-    
     auto slice_size = opts["slice-size"].as<int>();
     auto preview_size = opts["preview-size"].as<int>();
     auto group_size = opts["group-size"].as<int>();
     auto filter_cores = opts["filter-cores"].as<int>();
-
+    auto darks = opts["darks"].as<int>();
+    auto flats = opts["flats"].as<int>();
     auto mode_ = mode ? slicerecon::Mode::continuous : slicerecon::Mode::alternating;
-
     auto filter = opts["filter"].as<std::string>();
+
+    auto rows = opts["rows"].as<int>();
+    auto cols = opts["cols"].as<int>();
+    auto projections = opts["projections"].as<int>();
 
     auto pixel_size = opts["pixel-size"].as<float>();
     auto lambda = opts["lambda"].as<float>();
