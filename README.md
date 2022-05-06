@@ -12,7 +12,7 @@ conda install -c conda-forge cmake cppzmq eigen boost fftw libastra nlohmann_jso
 
 git clone --recursive <repo>
 mkdir build && cd build
-cmake .. -DCMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../" \
+cmake .. -DCMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"} \
          -DBUILD_PYTHON=ON 
 
 make -j12
