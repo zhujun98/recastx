@@ -5,7 +5,7 @@ set(SOURCE_NAMES
     "src/server/server.cpp"
 )
 
-set(TARGET_NAME "recast-consumer")
+set(TARGET_NAME "tomcat-live-consumer")
 add_executable(${TARGET_NAME} ${SOURCE_NAMES})
 target_link_libraries(${TARGET_NAME}
     PRIVATE
