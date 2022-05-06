@@ -41,7 +41,7 @@ struct Packet {
         auto packet_size = size();
         zmq::message_t request(packet_size);
         serialize(request);
-        socket.send(request);
+        socket.send(request, zmq::send_flags::none);
     }
 
     virtual std::size_t size() const = 0;

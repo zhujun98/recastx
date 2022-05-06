@@ -19,7 +19,7 @@ class publisher {
         using namespace std::chrono_literals;
 
         address_ = "tcp://"s + hostname + ":"s + std::to_string(port);
-        socket_.setsockopt(ZMQ_LINGER, 200);
+        socket_.set(zmq::sockopt::linger, 200);
         socket_.connect(address_);
     }
 
@@ -33,7 +33,7 @@ class publisher {
 
         if (type_ == ZMQ_REQ) {
             zmq::message_t reply;
-            socket_.recv(&reply);
+            socket_.recv(reply, zmq::recv_flags::none);
         }
     }
 

@@ -45,7 +45,7 @@ public:
         serve_thread_ = std::thread([&] {
             zmq::message_t update;
             while (true) {
-                socket_.recv(&update);
+                socket_.recv(update, zmq::recv_flags::none);
 
                 auto meta = nlohmann::json::parse(std::string((char*)update.data(), update.size()));
                 int frame = meta["frame"];
@@ -57,7 +57,7 @@ public:
                 auto shape = meta["shape"];
 
                 spdlog::info("Projection received: type = {0:d}, frame = {1:d}", scan_idx, frame);
-                socket_.recv(&update);
+                socket_.recv(update, zmq::recv_flags::none);
 
                 recon_.pushProjection(static_cast<ProjectionType>(scan_idx), 
                                       frame, 

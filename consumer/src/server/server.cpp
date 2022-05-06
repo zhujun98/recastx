@@ -59,7 +59,7 @@ void Server::start() {
             zmq::message_t request;
 
             //  Wait for next request from client
-            socket.recv(&request);
+            socket.recv(request, zmq::recv_flags::none);
             auto desc = ((packet_desc*)request.data())[0];
             auto buffer = memory_buffer(request.size(), (char*)request.data());
 
@@ -68,7 +68,7 @@ void Server::start() {
             std::string s = "OK";
             zmq::message_t message(s.size());
             memcpy(message.data(), s.data(), s.size());
-            socket.send(message);
+            socket.send(message, zmq::send_flags::none);
         }
     });
 

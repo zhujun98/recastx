@@ -33,7 +33,7 @@ class server {
         using namespace std::chrono_literals;
 
         // set socket timeout to 200 ms
-        socket_.setsockopt(ZMQ_LINGER, 200);
+        socket_.set(zmq::sockopt::linger, 200);
         socket_.connect(hostname);
 
         auto packet = MakeScenePacket(name, 3);
@@ -49,7 +49,7 @@ class server {
         } else {
             //  get the reply.
             zmq::message_t reply;
-            socket_.recv(&reply);
+            socket_.recv(reply, zmq::recv_flags::none);
             scene_id_ = *(int32_t*)reply.data();
         }
 
@@ -64,7 +64,7 @@ class server {
         using namespace std::chrono_literals;
 
         // set socket timeout to 200 ms
-        socket_.setsockopt(ZMQ_LINGER, 200);
+        socket_.set(zmq::sockopt::linger, 200);
         socket_.connect(hostname);
 
         subscribe(subscribe_hostname);
@@ -82,7 +82,7 @@ class server {
         } else {
             //  get the reply.
             zmq::message_t reply;
-            socket_.recv(&reply);
+            socket_.recv(reply, zmq::recv_flags::none);
         }
     }
 
@@ -99,7 +99,7 @@ class server {
     void send(const Packet& packet) {
         packet.send(socket_);
         zmq::message_t reply;
-        socket_.recv(&reply);
+        socket_.recv(reply, zmq::recv_flags::none);
     }
 
     void subscribe(std::string subscribe_host) {
@@ -108,7 +108,7 @@ class server {
         }
 
         // set socket timeout to 200 ms
-        socket_.setsockopt(ZMQ_LINGER, 200);
+        socket_.set(zmq::sockopt::linger, 200);
 
         //  Socket to talk to server
         subscribe_socket_.connect(subscribe_host);
@@ -120,8 +120,7 @@ class server {
         for (auto descriptor : descriptors) {
             int32_t filter[] = {
                 (std::underlying_type<packet_desc>::type)descriptor, scene_id_};
-            subscribe_socket_.setsockopt(ZMQ_SUBSCRIBE, filter,
-                                         sizeof(decltype(filter)));
+            subscribe_socket_.setsockopt(ZMQ_SUBSCRIBE, filter, sizeof(decltype(filter)));
         }
     }
 
@@ -131,7 +130,7 @@ class server {
             while (true) {
                 zmq::message_t update;
                 bool kill = false;
-                if (!subscribe_socket_.recv(&update)) {
+                if (!subscribe_socket_.recv(update, zmq::recv_flags::none)) {
                     kill = true;
                 } else {
                     auto desc = ((packet_desc*)update.data())[0];
@@ -197,12 +196,12 @@ class server {
                 zmq::message_t request;
 
                 //  Wait for next request from client
-                socket.recv(&request);
+                socket.recv(request, zmq::recv_flags::none);
 
                 zmq::message_t reply(sizeof(int));
                 int success = 1;
                 memcpy(reply.data(), &success, sizeof(int));
-                socket.send(reply);
+                socket.send(reply, zmq::send_flags::none);
 
                 auto desc = ((packet_desc*)request.data())[0];
 

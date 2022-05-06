@@ -38,13 +38,13 @@ class plugin {
         zmq::message_t reply(sizeof(int));
         int success = 1;
         memcpy(reply.data(), &success, sizeof(int));
-        socket_in_.send(reply);
+        socket_in_.send(reply, zmq::send_flags::none);
     }
 
     void send(const tomop::Packet& packet) {
         packet.send(socket_out_);
         zmq::message_t reply;
-        socket_out_.recv(&reply);
+        socket_out_.recv(reply, zmq::recv_flags::none);
     }
 
     void set_slice_callback(callback_type callback) {
@@ -57,7 +57,7 @@ class plugin {
         while (true) {
             zmq::message_t update;
             bool kill = false;
-            if (!socket_in_.recv(&update)) {
+            if (!socket_in_.recv(update, zmq::recv_flags::none)) {
                 kill = true;
             } else {
                 ack();

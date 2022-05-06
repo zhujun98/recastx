@@ -42,7 +42,7 @@ class multiserver {
             subscribe_sockets_.emplace_back(context_, ZMQ_SUB);
 
             auto& socket = sockets_[i];
-            socket.setsockopt(ZMQ_LINGER, 200);
+            socket.set(zmq::sockopt::linger, 200);
             socket.connect(hostnames[i]);
 
             auto packet = MakeScenePacket(name, 3);
@@ -57,7 +57,7 @@ class multiserver {
             } else {
                 //  get the reply.
                 zmq::message_t reply;
-                socket.recv(&reply);
+                socket.recv(reply, zmq::recv_flags::none);
                 scene_ids_[i] = *(int32_t*)reply.data();
                 std::cout << "Scene ID (" << i << "): " << scene_ids_[i] << "\n";
             }
@@ -82,7 +82,7 @@ class multiserver {
     void send(const Packet& packet, int32_t server_id) {
         packet.send(sockets_[server_id]);
         zmq::message_t reply;
-        sockets_[server_id].recv(&reply);
+        sockets_[server_id].recv(reply, zmq::recv_flags::none);
     }
 
     // DONE: subscribe to all
@@ -95,7 +95,7 @@ class multiserver {
             }
 
             // set socket timeout to 200 ms
-            subscribe_sockets_[i].setsockopt(ZMQ_LINGER, 200);
+            subscribe_sockets_[i].set(zmq::sockopt::linger, 200);
 
             //  Socket to talk to server
             subscribe_sockets_[i].connect(subscribe_host);
@@ -107,9 +107,9 @@ class multiserver {
             for (auto descriptor : descriptors) {
                 int32_t filter[] = {
                     (std::underlying_type<packet_desc>::type)descriptor,
-                    scene_ids_[i]};
-                subscribe_sockets_[i].setsockopt(ZMQ_SUBSCRIBE, filter,
-                                                 sizeof(decltype(filter)));
+                    scene_ids_[i]
+                };
+                subscribe_sockets_[i].setsockopt(ZMQ_SUBSCRIBE, filter, sizeof(decltype(filter)));
             }
         }
     }
@@ -126,7 +126,7 @@ class multiserver {
                 while (true) {
                     zmq::message_t update;
                     bool kill = false;
-                    if (!subscribe_socket_.recv(&update)) {
+                    if (!subscribe_socket_.recv(update, zmq::recv_flags::none)) {
                         kill = true;
                     } else {
                         auto desc = ((packet_desc*)update.data())[0];
@@ -193,12 +193,12 @@ class multiserver {
                 zmq::message_t request;
 
                 //  Wait for next request from client
-                socket.recv(&request);
+                socket.recv(request, zmq::recv_flags::none);
 
                 zmq::message_t reply(sizeof(int));
                 int success = 1;
                 memcpy(reply.data(), &success, sizeof(int));
-                socket.send(reply);
+                socket.send(reply, zmq::send_flags::none);
 
                 auto desc = ((packet_desc*)request.data())[0];
 

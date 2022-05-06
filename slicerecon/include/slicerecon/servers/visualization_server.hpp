@@ -96,7 +96,7 @@ public:
         using namespace std::chrono_literals;
 
         // set socket timeout to 200 ms
-        socket_.setsockopt(ZMQ_LINGER, 200);
+        socket_.set(zmq::sockopt::linger, 200);
         socket_.connect(hostname);
 
         auto packet = tomop::MakeScenePacket(name, 3);
@@ -111,7 +111,7 @@ public:
             throw tomop::server_error("Could not connect to server: " + hostname);
         } else {
             zmq::message_t reply;
-            socket_.recv(&reply);
+            socket_.recv(reply, zmq::recv_flags::none);
             scene_id_ = *(int32_t*)reply.data();
             std::cout << scene_id_ << std::endl;
             // std::cout << std::string(static_cast<char*>(reply.data()), reply.size()) << std::endl;
@@ -144,10 +144,10 @@ public:
 
         if (try_plugin && plugin_socket_) {
             packet.send(plugin_socket_.value());
-            plugin_socket_.value().recv(&reply);
+            plugin_socket_.value().recv(reply, zmq::recv_flags::none);
         } else {
             packet.send(socket_);
-            socket_.recv(&reply);
+            socket_.recv(reply, zmq::recv_flags::none);
         }
     }
 
@@ -157,7 +157,7 @@ public:
         }
 
         // set socket timeout to 200 ms
-        socket_.setsockopt(ZMQ_LINGER, 200);
+        socket_.set(zmq::sockopt::linger, 200);
 
         //  Socket to talk to server
         subscribe_socket_.connect(subscribe_host);
@@ -184,7 +184,7 @@ public:
             while (true) {
                 zmq::message_t update;
                 bool kill = false;
-                if (!subscribe_socket_.recv(&update)) {
+                if (!subscribe_socket_.recv(update, zmq::recv_flags::none)) {
                     kill = true;
                 } else {
                     auto desc = ((tomop::packet_desc*)update.data())[0];
