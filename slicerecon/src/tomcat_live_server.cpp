@@ -1,68 +1,129 @@
 #include <functional>
 #include <numeric>
+#include <string>
 
+#include <zmq.hpp>
 #include <spdlog/spdlog.h>
+#include <boost/program_options.hpp>
 
-// not required, CLI args parser for testing server settings
-#include "flags/flags.hpp"
-
-// include the 'slicerecon' library headers
 #include "slicerecon/slicerecon.hpp"
 
 using namespace std::string_literals;
 
+zmq::socket_type parseSocketType(const std::string& socket_type) {
+    if (socket_type.compare("pull") == 0) return zmq::socket_type::pull;
+    if (socket_type.compare("sub") == 0) return zmq::socket_type::sub;
+    throw std::invalid_argument("Unsupported socket type: "s + socket_type); 
+}
+
 int main(int argc, char** argv)
 {
-    auto opts = flags::flags{argc, argv};
-    opts.info(argv[0], "example of how to use `slicerecon` to host a "
-                       "slice reconstruction server");
+    namespace po = boost::program_options;
 
-    auto host = opts.arg_or("--host", "localhost");
-    auto port = opts.arg_as_or<int>("--port", 5558);
+    po::options_description desc(
+        "Allowed options for TOMCAT live 3D reconstruction server");
+    
+    bool mode = false;
+    bool retrieve_phase = false;
+    bool tilt = false;
+    bool gaussian_pass = false;
 
-    auto rows = opts.arg_as_or<int32_t>("--rows", 1800);
-    auto cols = opts.arg_as_or<int32_t>("--cols", 2016);
+    bool bench = false;
+    bool plugin = false;
+    bool py_plugin = false;
 
-    auto darks = opts.arg_as_or<int32_t>("--darks", 10);
-    auto flats = opts.arg_as_or<int32_t>("--flats", 10);
-    auto projections = opts.arg_as_or<int32_t>("--projections", 128);
+    desc.add_options()
+        ("help,h", "print help message")
+        ("host,e", po::value<std::string>()->default_value("localhost"), 
+         "hostname of the data source server")
+        ("port,p", po::value<int>()->default_value(5558),
+         "ZMQ socket port")
+        ("socket", po::value<std::string>()->default_value("pull"),
+         "ZMQ socket type")
+        ("gui-host", po::value<std::string>()->default_value("localhost"),
+         "hostname of the GUI server")
+        ("rows", po::value<int>()->default_value(1200),
+         "detector height in pixels")
+        ("cols", po::value<int>()->default_value(2016),
+         "detector width in pixels")
+        ("darks", po::value<int>()->default_value(10),
+         "number of dark images")
+        ("flats", po::value<int>()->default_value(10),
+         "number of flat images")
+        ("projections", po::value<int>()->default_value(128),
+         "number of projections")
+        ("slice-size", po::value<int>()->default_value(128),
+         "...")
+        ("preview-size", po::value<int>()->default_value(128),
+         "...")
+        ("group-size", po::value<int>()->default_value(128),
+         "...")
+        ("filter-cores", po::value<int>()->default_value(8),
+         "...")
+        ("mode", po::bool_switch(&mode),
+         "...")
+        ("retrieve_phase", po::bool_switch(&retrieve_phase),
+         "...")
+        ("tilt", po::bool_switch(&tilt),
+         "...")
+        ("gaussian", po::bool_switch(&gaussian_pass),
+         "...")
+        ("filter", po::value<std::string>()->default_value("shepp-logan"),
+         "...")
+        ("pixel-size", po::value<float>()->default_value(1.0f),
+         "...")
+        ("lambda", po::value<float>()->default_value(1.23984193e-9f),
+         "...")
+        ("delta", po::value<float>()->default_value(1.e-8f),
+         "...")
+        ("beta", po::value<float>()->default_value(1.e-10f),
+         "...")
+        ("distance", po::value<float>()->default_value(40.0f),
+         "...")
+        ("bench", po::bool_switch(&bench),
+         "...")
+        ("plugin", po::bool_switch(&plugin),
+         "...")
+        ("py_plugin", po::bool_switch(&py_plugin),
+         "...")
+    ;
+    po::variables_map opts;
+    po::store(po::parse_command_line(argc, argv, desc), opts);
+    po::notify(opts);
 
-    // This is defined for the reconstruction
-    auto slice_size = opts.arg_as_or<int32_t>("--slice-size", projections);
-    auto preview_size = opts.arg_as_or<int32_t>("--preview-size", 128);
-    auto group_size = opts.arg_as_or<int32_t>("--group-size", 32);
-    auto filter_cores = opts.arg_as_or<int32_t>("--filter-cores", 8);
-    if (slice_size < 0 || preview_size < 0 || group_size < 0 || filter_cores < 0) {
-        std::cout << opts.usage();
-        std::cout << "ERROR: Negative parameter passed\n";
-        return -1;
+    if (opts.count("help")) {
+        std::cout << desc << "\n";
+        return 0;
     }
 
-    auto mode = opts.passed("--continuous") 
-                ? slicerecon::Mode::continuous : slicerecon::Mode::alternating;
-    auto retrieve_phase = opts.passed("--phase");
-    auto tilt = opts.passed("--tilt");
-    auto gaussian_pass = opts.passed("--gaussian");
-    auto filter = opts.arg_or("--filter", "shepp-logan");
+    auto hostname = opts["host"].as<std::string>();
+    auto port = opts["port"].as<int>();
+    auto socket_type = parseSocketType(opts["socket"].as<std::string>());
+    auto gui_hostname = opts["gui-host"].as<std::string>();
 
-    auto pixel_size = opts.arg_as_or<float>("--pixelsize", 1.0f);
-    auto lambda = opts.arg_as_or<float>("--lambda", 1.23984193e-9);
-    auto delta = opts.arg_as_or<float>("--delta", 1e-8);
-    auto beta = opts.arg_as_or<float>("--beta", 1e-10);
-    auto distance = opts.arg_as_or<float>("--distance", 40.0f);
+    auto rows = opts["rows"].as<int>();
+    auto cols = opts["cols"].as<int>();
+
+    auto darks = opts["darks"].as<int>();
+    auto flats = opts["flats"].as<int>();
+    auto projections = opts["projections"].as<int>();
+    
+    auto slice_size = opts["slice-size"].as<int>();
+    auto preview_size = opts["preview-size"].as<int>();
+    auto group_size = opts["group-size"].as<int>();
+    auto filter_cores = opts["filter-cores"].as<int>();
+
+    auto mode_ = mode ? slicerecon::Mode::continuous : slicerecon::Mode::alternating;
+
+    auto filter = opts["filter"].as<std::string>();
+
+    auto pixel_size = opts["pixel-size"].as<float>();
+    auto lambda = opts["lambda"].as<float>();
+    auto delta = opts["delta"].as<float>();
+    auto beta = opts["beta"].as<float>();
+    auto distance = opts["distance"].as<float>();
+
     auto paganin = slicerecon::PaganinSettings{pixel_size, lambda, delta, beta, distance};
-
-    auto recast_host = opts.arg_or("--recast-host", "localhost");
-
-    auto bench = opts.passed("--bench");
-    auto plugin = opts.passed("--plugin");
-    auto py_plugin = opts.passed("--pyplugin");
-    auto use_reqrep = opts.passed("--reqrep");
-
-    if (opts.passed("-h") || !opts.sane()) {
-        std::cout << opts.usage();
-        return opts.passed("-h") ? 0 : -1;
-    }
 
     auto params = slicerecon::Settings { slice_size, 
                                          preview_size, 
@@ -70,7 +131,7 @@ int main(int argc, char** argv)
                                          filter_cores, 
                                          darks, 
                                          flats, 
-                                         mode, 
+                                         mode_, 
                                          false,
                                          retrieve_phase, 
                                          tilt, 
@@ -97,13 +158,13 @@ int main(int argc, char** argv)
     auto recon = std::make_unique<slicerecon::Reconstructor>(params, geom);
 
     // 2. listen to projection stream projection callback, push to projection stream all raw data
-    auto proj = slicerecon::ProjectionServer(host, port, *recon);
+    auto proj = slicerecon::ProjectionServer(hostname, port, *recon, socket_type);
     proj.serve();
 
     // 3. connect with (recast3d) visualization server
     auto viz = slicerecon::VisualizationServer("slicerecon test",
-                                               "tcp://"s + recast_host + ":5555"s,
-                                               "tcp://"s + recast_host + ":5556"s);
+                                               "tcp://"s + gui_hostname + ":5555"s,
+                                               "tcp://"s + gui_hostname + ":5556"s);
     viz.set_slice_callback([&](auto x, auto idx) { return recon->reconstructSlice(x); });
     recon->addListener(&viz);
 
@@ -123,7 +184,8 @@ int main(int argc, char** argv)
         }
     );
 
-    auto plugin_two = slicerecon::plugin("tcp://*:5651", "tcp://"s + recast_host + ":5555"s);
+    auto plugin_two = slicerecon::plugin(
+        "tcp://*:5651", "tcp://"s + gui_hostname + ":5555"s);
     plugin_two.set_slice_callback(
         [](auto shape, auto data,
         auto index) -> std::pair<std::array<int32_t, 2>, std::vector<float>> {

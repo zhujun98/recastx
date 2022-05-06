@@ -11,7 +11,7 @@ find_package(nlohmann_json REQUIRED)
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/../ext/bulk bulk)
 
-add_subdirectory(${PROJECT_SOURCE_DIR}/../ext/flags flags)
+find_package(Boost 1.61 COMPONENTS program_options REQUIRED)
 
 add_library(astra-toolbox SHARED IMPORTED)
 set_target_properties(
@@ -32,8 +32,9 @@ set(SOURCES
 set(TARGET_NAME "_slicerecon")
 add_library(${TARGET_NAME} ${SOURCES})
 target_include_directories(${TARGET_NAME}
-    PUBLIC
+    PRIVATE
         ${ASTRA_INCLUDE_DIR}
+    PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include)
 target_link_libraries(${TARGET_NAME}
     PUBLIC
@@ -42,6 +43,7 @@ target_link_libraries(${TARGET_NAME}
         Eigen3::Eigen
         nlohmann_json::nlohmann_json
         spdlog::spdlog
+        Boost::program_options
         flags
         bulk_thread
         ${FFTW_FLOAT_LIB}

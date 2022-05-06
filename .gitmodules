@@ -11,6 +11,3 @@
 [submodule "ext/bulk"]
 	path = ext/bulk
 	url = https://www.github.com/jwbuurlage/Bulk.git
-[submodule "ext/flags"]
-	path = ext/flags
-	url = https://github.com/jwbuurlage/flags.git

@@ -22,9 +22,12 @@ class ProjectionServer {
     std::thread serve_thread_;
 
 public:
-    ProjectionServer(std::string hostname, int port, Reconstructor& recon)
+    ProjectionServer(const std::string& hostname,
+                     int port, 
+                     Reconstructor& recon, 
+                     zmq::socket_type socket_type)
         : context_(1),
-          socket_(context_, ZMQ_PULL),
+          socket_(context_, socket_type),
           recon_(recon) {
         using namespace std::string_literals;
         auto address = "tcp://"s + hostname + ":"s + std::to_string(port);
