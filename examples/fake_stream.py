@@ -8,7 +8,7 @@ import argparse
 def main():
     parser = argparse.ArgumentParser(description='Fake GigaFrost Data Stream')
 
-    parser.add_argument('--port', default="9912", type=int)
+    parser.add_argument('--port', default="5558", type=int)
     parser.add_argument('--sock', default='push', type=str)
     parser.add_argument('--darks', default=10, type=int)
     parser.add_argument('--flats', default=10, type=int)
@@ -31,8 +31,6 @@ def main():
     socket.bind(f"tcp://*:{port}")
 
     shape = (args.rows, args.cols)
-    zero_data = np.zeros(shape, dtype=np.uint16)
-    one_data = np.ones(shape, dtype=np.uint16)
     for scan_index, n in enumerate([args.darks, args.flats, args.projections]):
         for i in range(n):
             meta = {
@@ -47,11 +45,11 @@ def main():
             }
             socket.send_json(meta, flags=zmq.SNDMORE)
             if scan_index == 0:
-                data = zero_data
+                data = np.random.randint(500, size=shape, dtype=np.uint16)
             elif scan_index == 1:
-                data = one_data
+                data = 3596 + np.random.randint(500, size=shape, dtype=np.uint16)
             else:
-                data = 2 * one_data
+                data = np.random.randint(4096, size=shape, dtype=np.uint16)
 
             socket.send(data, flags=0)
             
