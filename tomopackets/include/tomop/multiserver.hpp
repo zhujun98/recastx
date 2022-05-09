@@ -109,7 +109,7 @@ class multiserver {
                     (std::underlying_type<packet_desc>::type)descriptor,
                     scene_ids_[i]
                 };
-                subscribe_sockets_[i].setsockopt(ZMQ_SUBSCRIBE, filter, sizeof(decltype(filter)));
+                subscribe_sockets_[i].set(zmq::sockopt::subscribe, zmq::buffer(filter));
             }
         }
     }

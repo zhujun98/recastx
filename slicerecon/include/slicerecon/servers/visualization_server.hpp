@@ -175,7 +175,7 @@ public:
             int32_t filter[] = {
                 (std::underlying_type<tomop::packet_desc>::type)descriptor, scene_id_
             };
-            subscribe_socket_.setsockopt(ZMQ_SUBSCRIBE, filter, sizeof(decltype(filter)));
+            subscribe_socket_.set(zmq::sockopt::subscribe, zmq::buffer(filter));
         }
     }
 
