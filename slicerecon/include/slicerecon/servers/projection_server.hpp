@@ -31,8 +31,16 @@ public:
           recon_(recon) {
         using namespace std::string_literals;
         auto address = "tcp://"s + hostname + ":"s + std::to_string(port);
-        spdlog::info("Connecting to data source {} ...", address);
+        if(socket_type == zmq::socket_type::sub) {
+            spdlog::info("Subscribing to data source {} ...", address);
+        } else if (socket_type == zmq::socket_type::pull) {
+            spdlog::info("Pulling data from data source {} ...", address);
+        }
         socket_.connect(address);
+
+        if (socket_type == zmq::socket_type::sub) {
+            socket_.set(zmq::sockopt::subscribe, "");
+        }
     }
 
     ~ProjectionServer() {
