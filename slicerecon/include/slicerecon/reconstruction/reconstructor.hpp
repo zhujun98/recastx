@@ -117,7 +117,7 @@ public:
 
     std::vector<float>& previewData();
 
-    Settings parameters();
+    Settings parameters() const;
 
     bool initialized() const;
 

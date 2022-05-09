@@ -113,7 +113,7 @@ void Reconstructor::pushProjection(ProjectionType k,
             if (buffer_end_reached) {
                 // copy data from buffer into sino_buffer
 
-                if (p.reconstruction_mode == Mode::alternating) {
+                if (p.recon_mode == Mode::alternating) {
                     transposeIntoSino(0, update_every_ - 1);
 
                     // let the reconstructor know that now the (other) GPU
@@ -124,8 +124,8 @@ void Reconstructor::pushProjection(ProjectionType k,
                     uploadSinoBuffer(0, update_every_ - 1, active_gpu_buffer_index_, use_gpu_lock);
 
                 } else { // --continuous mode
-                    auto begin_wrt_geom = (update_count_ * update_every_) % geom_.proj_count;
-                    auto end_wrt_geom = (begin_wrt_geom + update_every_ - 1) % geom_.proj_count;
+                    auto begin_wrt_geom = (update_count_ * update_every_) % geom_.projections;
+                    auto end_wrt_geom = (begin_wrt_geom + update_every_ - 1) % geom_.projections;
                     bool use_gpu_lock = true;
                     int gpu_buffer_idx = 0; // we only have one buffer
 
@@ -133,11 +133,11 @@ void Reconstructor::pushProjection(ProjectionType k,
                         transposeIntoSino(0, update_every_ - 1);
                         uploadSinoBuffer(begin_wrt_geom, end_wrt_geom, gpu_buffer_idx, use_gpu_lock);
                     } else {
-                        transposeIntoSino(0, geom_.proj_count - 1 - begin_wrt_geom);
+                        transposeIntoSino(0, geom_.projections - 1 - begin_wrt_geom);
                         // we have gone around in the geometry
-                        uploadSinoBuffer(begin_wrt_geom, geom_.proj_count - 1, gpu_buffer_idx, use_gpu_lock);
+                        uploadSinoBuffer(begin_wrt_geom, geom_.projections - 1, gpu_buffer_idx, use_gpu_lock);
 
-                        transposeIntoSino(geom_.proj_count - begin_wrt_geom, update_every_ - 1);
+                        transposeIntoSino(geom_.projections - begin_wrt_geom, update_every_ - 1);
                         uploadSinoBuffer(0, end_wrt_geom, gpu_buffer_idx, use_gpu_lock);
                     }
 
@@ -187,7 +187,7 @@ slice_data Reconstructor::reconstructSlice(orientation x) {
 
 std::vector<float>& Reconstructor::previewData() { return small_volume_buffer_; }
 
-Settings Reconstructor::parameters() { return param_; }
+Settings Reconstructor::parameters() const { return param_; }
 
 bool Reconstructor::initialized() const { return initialized_; }
 
@@ -219,7 +219,7 @@ void Reconstructor::initialize() {
     bool reinitializing = (bool)alg_;
 
     if (geom_.angles.empty()) {
-        geom_.angles = Reconstructor::defaultAngles(geom_.proj_count);
+        geom_.angles = Reconstructor::defaultAngles(geom_.projections);
         spdlog::info("Default angles in radians generated: min = {}, max = {}", 
                      geom_.angles.front(), geom_.angles.back());
     }
@@ -233,8 +233,8 @@ void Reconstructor::initialize() {
     dark_avg_.resize(pixels_);
     reciprocal_.resize(pixels_, 1.0f);
 
-    update_every_ = param_.reconstruction_mode == Mode::alternating 
-                    ? geom_.proj_count : param_.group_size;
+    update_every_ = param_.recon_mode == Mode::alternating 
+                    ? geom_.projections : param_.group_size;
     buffer_.resize((size_t)update_every_ * (size_t)pixels_);
     sino_buffer_.resize((size_t)update_every_ * (size_t)pixels_);
 

@@ -1,5 +1,6 @@
 #include <string>
 #include <thread>
+#include <chrono>
 
 #include <zmq.hpp>
 #include <nlohmann/json.hpp>
@@ -17,18 +18,14 @@ class ProjectionServer {
     zmq::context_t context_;
     zmq::socket_t socket_;
 
-    Reconstructor& recon_;
-
     std::thread serve_thread_;
 
 public:
     ProjectionServer(const std::string& hostname,
                      int port, 
-                     Reconstructor& recon, 
                      zmq::socket_type socket_type)
         : context_(1),
-          socket_(context_, socket_type),
-          recon_(recon) {
+          socket_(context_, socket_type) {
         using namespace std::string_literals;
         auto address = "tcp://"s + hostname + ":"s + std::to_string(port);
         if(socket_type == zmq::socket_type::sub) {
@@ -49,8 +46,15 @@ public:
         context_.close();
     }
 
-    void serve() {
+    void start(Reconstructor& recon, const Settings& params) {
         serve_thread_ = std::thread([&] {
+#if defined(WITH_MONITOR)
+            int monitor_every = params.recon_mode == slicerecon::Mode::alternating 
+                                ? params.projections : params.group_size;
+            int msg_counter = 0;
+            int msg_size = 0;  // in MB
+            auto start = std::chrono::steady_clock::now();
+#endif
             zmq::message_t update;
             while (true) {
                 socket_.recv(update, zmq::recv_flags::none);
@@ -64,13 +68,35 @@ public:
                 }
                 auto shape = meta["shape"];
 
-                spdlog::info("Projection received: type = {0:d}, frame = {1:d}", scan_idx, frame);
                 socket_.recv(update, zmq::recv_flags::none);
+                spdlog::info("Projection received: type = {0:d}, frame = {1:d}", scan_idx, frame);
 
-                recon_.pushProjection(static_cast<ProjectionType>(scan_idx), 
-                                      frame, 
-                                      {shape[0], shape[1]}, 
-                                      static_cast<char*>(update.data()));
+                recon.pushProjection(static_cast<ProjectionType>(scan_idx), 
+                                     frame, 
+                                     {shape[0], shape[1]}, 
+                                     static_cast<char*>(update.data()));
+
+#if defined(WITH_MONITOR)
+                if (!msg_size) {
+                    msg_size = static_cast<int>(shape[0]) * static_cast<int>(shape[1])
+                               * sizeof(raw_dtype) / (1024 * 1024);
+                }
+                if (scan_idx == 2) {
+                    ++msg_counter;
+                    if (msg_counter % monitor_every == 0) {
+                        float duration = std::chrono::duration_cast<std::chrono::microseconds>(
+                            std::chrono::steady_clock::now() -  start).count();
+                        spdlog::info("# of projections received: {}", msg_counter);
+                        spdlog::info("Throughput (MB/s): {}", 
+                                     msg_size * monitor_every * 1000000 / (duration));
+                        start = std::chrono::steady_clock::now();
+                    }                
+                } else {
+                    // reset the timer when dark/flat arrives
+                    start = std::chrono::steady_clock::now();
+                }
+
+#endif
             }
         });
     }

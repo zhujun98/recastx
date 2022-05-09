@@ -210,7 +210,7 @@ Filterer::Filterer(Settings param, Geometry geom, float* data)
         }else if(!param.filter.compare("ram-lak")){
             filter_ = filter::ram_lak(geom.cols);
         }else{
-            filter_ = filter::from_file(param.filter, geom.cols, geom.proj_count);
+            filter_ = filter::from_file(param.filter, geom.cols, geom.projections);
         }
     }else{
         filter_ = filter::shepp_logan(geom.cols);

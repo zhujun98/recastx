@@ -29,7 +29,8 @@ struct Settings {
     int32_t filter_cores;
     int32_t darks;
     int32_t flats;
-    Mode reconstruction_mode;
+    int32_t projections;
+    Mode recon_mode;
     bool already_linear;
     bool retrieve_phase;
     bool tilt_axis;
@@ -44,7 +45,7 @@ struct Settings {
 struct Geometry {
     int32_t rows = 0;
     int32_t cols = 0;
-    int32_t proj_count = 0;
+    int32_t projections = 0;
     std::vector<float> angles = {};
     bool parallel = false;
     bool vec_geometry = false;

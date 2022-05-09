@@ -50,6 +50,9 @@ target_link_libraries(${TARGET_NAME}
 target_compile_options(${TARGET_NAME}
     PRIVATE
         -std=c++17 -Wall -Wextra -Wfatal-errors -fPIC -static)
+if (BUILD_MONITOR)
+    target_compile_definitions(${TARGET_NAME} PRIVATE WITH_MONITOR)
+endif()
 
 if (BUILD_PYTHON)
     set(BINDING_NAME "slicerecon")
@@ -63,6 +66,9 @@ endif()
 set(EXEC_NAME "tomcat-live-server")
 add_executable(${EXEC_NAME} "src/tomcat_live_server.cpp")
 target_link_libraries(${EXEC_NAME} PRIVATE _slicerecon)
+if (BUILD_MONITOR)
+    target_compile_definitions(${EXEC_NAME} PRIVATE WITH_MONITOR)
+endif()
 
 # INSTALL COMMANDS
 install(TARGETS ${EXEC_NAME} RUNTIME DESTINATION bin)

@@ -55,6 +55,8 @@ int main(int argc, char** argv)
          "number of dark images")
         ("flats", po::value<int>()->default_value(10),
          "number of flat images")
+        ("projections", po::value<int>()->default_value(128),
+         "number of projections")
         ("mode", po::bool_switch(&mode),
          "...")
         ("retrieve_phase", po::bool_switch(&retrieve_phase),
@@ -74,8 +76,6 @@ int main(int argc, char** argv)
          "detector height in pixels")
         ("cols", po::value<int>()->default_value(2016),
          "detector width in pixels")
-        ("projections", po::value<int>()->default_value(128),
-         "number of projections")
     ;
 
     po::options_description paganin_desc("Paganin options");
@@ -156,6 +156,7 @@ int main(int argc, char** argv)
                                          filter_cores, 
                                          darks, 
                                          flats, 
+                                         projections,
                                          mode_, 
                                          false,
                                          retrieve_phase, 
@@ -180,18 +181,18 @@ int main(int argc, char** argv)
     spdlog::set_level(spdlog::level::info);
 
     // 1. setup reconstructor
-    auto recon = std::make_unique<slicerecon::Reconstructor>(params, geom);
+    slicerecon::Reconstructor recon(params, geom);
 
     // 2. listen to projection stream projection callback, push to projection stream all raw data
-    auto proj = slicerecon::ProjectionServer(hostname, port, *recon, socket_type);
-    proj.serve();
+    auto proj = slicerecon::ProjectionServer(hostname, port, socket_type);
+    proj.start(recon, params);
 
     // 3. connect with visualization server
     auto viz = slicerecon::VisualizationServer("slicerecon test",
                                                "tcp://"s + gui_hostname + ":5555"s,
                                                "tcp://"s + gui_hostname + ":5556"s);
-    viz.set_slice_callback([&](auto x, auto idx) { return recon->reconstructSlice(x); });
-    recon->addListener(&viz);
+    viz.set_slice_callback([&](auto x, auto idx) { return recon.reconstructSlice(x); });
+    recon.addListener(&viz);
 
     auto plugin_one = slicerecon::plugin("tcp://*:5650", "tcp://localhost:5651");
     plugin_one.set_slice_callback(

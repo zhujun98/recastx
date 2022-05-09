@@ -5,6 +5,7 @@ project(tomcat-live LANGUAGES C CXX)
 option(BUILD_GUI "Build OpenGL GUI" OFF)
 option(BUILD_TEST "Build unit test" OFF)
 option(BUILD_PYTHON "Build Python bindings" OFF)
+option(BUILD_MONITOR "Build with performance monitor" OFF)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
