@@ -27,9 +27,9 @@ int main(int argc, char** argv)
 
     po::options_description connection_desc("ZMQ options");
     connection_desc.add_options()
-        ("host,e", po::value<std::string>()->default_value("localhost"), 
+        ("host", po::value<std::string>()->default_value("localhost"), 
          "hostname of the data source server")
-        ("port,p", po::value<int>()->default_value(5558),
+        ("port", po::value<int>()->default_value(5558),
          "ZMQ socket port")
         ("socket", po::value<std::string>()->default_value("pull"),
          "ZMQ socket type")

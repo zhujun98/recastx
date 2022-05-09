@@ -4,7 +4,6 @@ import json
 import argparse
 
 
-
 def main():
     parser = argparse.ArgumentParser(description='Fake GigaFrost Data Stream')
 
