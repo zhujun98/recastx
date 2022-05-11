@@ -79,8 +79,10 @@ public:
                 auto shape = meta["shape"];
 
                 socket_.recv(update, zmq::recv_flags::none);
-                spdlog::info("Projection received: type = {0:d}, frame = {1:d}", 
-                             static_cast<int>(scan_index), frame);
+                if (scan_index == ProjectionType::dark || scan_index == ProjectionType::flat) {
+                    spdlog::info("Projection received: type = {0:d}, frame = {1:d}", 
+                                static_cast<int>(scan_index), frame);
+                }
 
                 recon.pushProjection(scan_index,
                                      frame, 

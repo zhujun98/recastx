@@ -8,7 +8,7 @@ def main():
     parser = argparse.ArgumentParser(description='Fake GigaFrost Data Stream')
 
     parser.add_argument('--port', default="5558", type=int)
-    parser.add_argument('--sock', default='push', type=str)
+    parser.add_argument('--sock', default='pub', type=str)
     parser.add_argument('--darks', default=10, type=int)
     parser.add_argument('--flats', default=10, type=int)
     parser.add_argument('--projections', default=128, type=int)

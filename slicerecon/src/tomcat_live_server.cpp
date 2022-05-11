@@ -31,7 +31,7 @@ int main(int argc, char** argv)
          "hostname of the data source server")
         ("port", po::value<int>()->default_value(5558),
          "ZMQ socket port")
-        ("socket", po::value<std::string>()->default_value("pull"),
+        ("socket", po::value<std::string>()->default_value("sub"),
          "ZMQ socket type")
         ("gui-host", po::value<std::string>()->default_value("localhost"),
          "hostname of the GUI server")
