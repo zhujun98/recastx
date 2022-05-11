@@ -13,6 +13,20 @@
 
 namespace slicerecon {
 
+using namespace std::string_literals;
+
+namespace detail {
+    // TODO: improve
+    ProjectionType parseProjectionType(int v) {
+        if (v != static_cast<int>(ProjectionType::dark) &&
+            v != static_cast<int>(ProjectionType::flat) && 
+            v != static_cast<int>(ProjectionType::standard)) {
+                throw std::runtime_error("Unsupported scan_index value: "s + std::to_string(v));
+            }
+        return static_cast<ProjectionType>(v);
+    }
+} // detail
+
 class ProjectionServer {
 
     zmq::context_t context_;
@@ -26,7 +40,6 @@ public:
                      zmq::socket_type socket_type)
         : context_(1),
           socket_(context_, socket_type) {
-        using namespace std::string_literals;
         auto address = "tcp://"s + hostname + ":"s + std::to_string(port);
         if(socket_type == zmq::socket_type::sub) {
             spdlog::info("Subscribing to data source {} ...", address);
@@ -61,17 +74,15 @@ public:
 
                 auto meta = nlohmann::json::parse(std::string((char*)update.data(), update.size()));
                 int frame = meta["frame"];
-                int scan_idx = meta["image_attributes"]["scan_index"];
-                if (scan_idx < 0 || scan_idx > 2) {
-                    spdlog::error("scan_index must be either 0, 1 or 2. Actual: {}", scan_idx);
-                    continue;
-                }
+                ProjectionType scan_index = detail::parseProjectionType(
+                    meta["image_attributes"]["scan_index"]);
                 auto shape = meta["shape"];
 
                 socket_.recv(update, zmq::recv_flags::none);
-                spdlog::info("Projection received: type = {0:d}, frame = {1:d}", scan_idx, frame);
+                spdlog::info("Projection received: type = {0:d}, frame = {1:d}", 
+                             static_cast<int>(scan_index), frame);
 
-                recon.pushProjection(static_cast<ProjectionType>(scan_idx), 
+                recon.pushProjection(scan_index,
                                      frame, 
                                      {shape[0], shape[1]}, 
                                      static_cast<char*>(update.data()));
@@ -81,7 +92,7 @@ public:
                     msg_size = static_cast<int>(shape[0]) * static_cast<int>(shape[1])
                                * sizeof(raw_dtype) / (1024 * 1024);
                 }
-                if (scan_idx == 2) {
+                if (scan_index == ProjectionType::standard) {
                     ++msg_counter;
                     if (msg_counter % monitor_every == 0) {
                         float duration = std::chrono::duration_cast<std::chrono::microseconds>(
@@ -101,5 +112,6 @@ public:
         });
     }
 };
+
 
 } // namespace slicerecon
