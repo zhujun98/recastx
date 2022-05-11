@@ -9,6 +9,7 @@ conda create -n tomcat-live python==3.7.10
 
 conda activate tomcat-live
 conda install -c conda-forge cmake cppzmq eigen boost fftw libastra nlohmann_json spdlog pybind11
+conda install -c cicwi -c astra-toolbox/label/dev recast3d
 
 git clone --recursive <repo>
 mkdir build && cd build
@@ -22,23 +23,40 @@ make install
 
 ## Running
 
-To run it on the Ra cluster, currently we still need the GUI installed from conda:
+**Step 1**: Start the GUI 
+
 ```sh
-conda install -c cicwi -c astra-toolbox/label/dev recast3d
+conda activate tomcat-live
+recast3d
 ```
 
-**Step 1**: Start the GUI in a [NoMachine](https://www.psi.ch/en/photon-science-data-services/remote-interactive-access
-) client. 
-```
+On the Ra cluster, you can only run the OpenGL GUI inside a [NoMachine](https://www.psi.ch/en/photon-science-data-services/remote-interactive-access
+) client by
+```sh
 vglrun recast3d
 ```
-**Step 2**: start the reconstruction server by
+**Step 2**: start the reconstruction server
+
 ```
 conda activate tomcat-live
-tomcat-live-server
+# with local data stream
+tomcat-live-server --filter-cores 20
+# with data stream from the DAQ node
+# tomcat-live-server --host xbl-daq-36 --port 9610 --filter-cores 20
 ```
-**Step 3**: ssh to the same node in another terminal and push the test data 
-to the reconstruction server by
+
+**Step 3**: stream the data
+
 ```
 python examples/fake_stream.py
+```
+or
+```
+ssh x02da-gpu-1
+ssh xbl-daq-36
+sudo -i -u dbe
+
+cd ~/git/gf_repstream
+conda activate repstream
+python -m gf_repstream.test.fake_stream -f ./gf_repstream/test/test_data -i 10000 -a tcp://*:9610 -m pub
 ```
