@@ -50,7 +50,7 @@ int main(int argc, char** argv)
         ("group-size", po::value<int>()->default_value(128),
          "...")
         ("filter-cores", po::value<int>()->default_value(8),
-         "...")
+         "Number of CPU cores used by the filters")
         ("darks", po::value<int>()->default_value(10),
          "number of dark images")
         ("flats", po::value<int>()->default_value(10),
@@ -141,6 +141,11 @@ int main(int argc, char** argv)
     auto rows = opts["rows"].as<int>();
     auto cols = opts["cols"].as<int>();
     auto projections = opts["projections"].as<int>();
+    if (projections < group_size) {
+        throw std::invalid_argument(
+            "'projections' ("s + std::to_string(projections) + 
+            ") is smaller than 'group_size' ("s + std::to_string(group_size) + ")"s);
+    }
 
     auto pixel_size = opts["pixel-size"].as<float>();
     auto lambda = opts["lambda"].as<float>();
