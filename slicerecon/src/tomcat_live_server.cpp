@@ -38,7 +38,7 @@ int main(int argc, char** argv)
     ;
 
     po::options_description reconstruction_desc("Reconstruction options");
-    bool mode = false;
+    bool continuous_mode = false;
     bool retrieve_phase = false;
     bool tilt = false;
     bool gaussian_pass = false;
@@ -50,16 +50,16 @@ int main(int argc, char** argv)
         ("group-size", po::value<int>()->default_value(128),
          "...")
         ("filter-cores", po::value<int>()->default_value(8),
-         "Number of CPU cores used by the filters")
+         "number of CPU cores used by the filters")
         ("darks", po::value<int>()->default_value(10),
          "number of dark images")
         ("flats", po::value<int>()->default_value(10),
          "number of flat images")
         ("projections", po::value<int>()->default_value(128),
          "number of projections")
-        ("mode", po::bool_switch(&mode),
-         "...")
-        ("retrieve_phase", po::bool_switch(&retrieve_phase),
+        ("continuous-mode", po::bool_switch(&continuous_mode),
+         "switch reconstructor to continuous mode from alternating mode")
+        ("retrieve-phase", po::bool_switch(&retrieve_phase),
          "...")
         ("tilt", po::bool_switch(&tilt),
          "...")
@@ -101,7 +101,7 @@ int main(int argc, char** argv)
          "...")
         ("plugin", po::bool_switch(&plugin),
          "...")
-        ("py_plugin", po::bool_switch(&py_plugin),
+        ("py-plugin", po::bool_switch(&py_plugin),
          "...")
     ;
 
@@ -135,7 +135,8 @@ int main(int argc, char** argv)
     auto filter_cores = opts["filter-cores"].as<int>();
     auto darks = opts["darks"].as<int>();
     auto flats = opts["flats"].as<int>();
-    auto mode_ = mode ? slicerecon::Mode::continuous : slicerecon::Mode::alternating;
+    auto recon_mode = continuous_mode ? slicerecon::ReconstructMode::continuous : 
+                                        slicerecon::ReconstructMode::alternating;
     auto filter = opts["filter"].as<std::string>();
 
     auto rows = opts["rows"].as<int>();
@@ -162,7 +163,7 @@ int main(int argc, char** argv)
                                          darks, 
                                          flats, 
                                          projections,
-                                         mode_, 
+                                         recon_mode, 
                                          false,
                                          retrieve_phase, 
                                          tilt, 

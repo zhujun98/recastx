@@ -113,7 +113,7 @@ void Reconstructor::pushProjection(ProjectionType k,
             if (buffer_end_reached) {
                 // copy data from buffer into sino_buffer
 
-                if (p.recon_mode == Mode::alternating) {
+                if (p.recon_mode == ReconstructMode::alternating) {
                     transposeIntoSino(0, update_every_ - 1);
 
                     // let the reconstructor know that now the (other) GPU
@@ -233,7 +233,7 @@ void Reconstructor::initialize() {
     dark_avg_.resize(pixels_);
     reciprocal_.resize(pixels_, 1.0f);
 
-    update_every_ = param_.recon_mode == Mode::alternating 
+    update_every_ = param_.recon_mode == ReconstructMode::alternating 
                     ? geom_.projections : param_.group_size;
     buffer_.resize((size_t)update_every_ * (size_t)pixels_);
     sino_buffer_.resize((size_t)update_every_ * (size_t)pixels_);

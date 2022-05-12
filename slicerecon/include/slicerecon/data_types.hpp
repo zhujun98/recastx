@@ -12,7 +12,7 @@ namespace slicerecon {
  * window. Alternating is the default.
  * @see https://github.com/cicwi/SliceRecon/issues/4
  */
-enum class Mode { alternating, continuous };
+enum class ReconstructMode { alternating, continuous };
 
 struct PaganinSettings {
     float pixel_size;
@@ -30,7 +30,7 @@ struct Settings {
     int32_t darks;
     int32_t flats;
     int32_t projections;
-    Mode recon_mode;
+    ReconstructMode recon_mode;
     bool already_linear;
     bool retrieve_phase;
     bool tilt_axis;

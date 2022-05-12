@@ -62,7 +62,7 @@ public:
     void start(Reconstructor& recon, const Settings& params) {
         serve_thread_ = std::thread([&] {
 #if defined(WITH_MONITOR)
-            int monitor_every = params.recon_mode == slicerecon::Mode::alternating 
+            int monitor_every = params.recon_mode == slicerecon::ReconstructMode::alternating 
                                 ? params.projections : params.group_size;
             int msg_counter = 0;
             int msg_size = 0;  // in MB

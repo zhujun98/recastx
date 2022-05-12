@@ -84,7 +84,7 @@ ParallelBeamSolver::ParallelBeamSolver(Settings param, Geometry geom)
     auto zeros = std::vector<float>(geom_.projections * geom_.cols * geom_.rows, 0.0f);
 
     // Projection data
-    int nr_handles = param.recon_mode == Mode::alternating ? 2 : 1;
+    int nr_handles = param.recon_mode == ReconstructMode::alternating ? 2 : 1;
     for (int i = 0; i < nr_handles; ++i) {
         proj_handles_.push_back(astraCUDA3d::createProjectionArrayHandle(
             zeros.data(), geom_.cols, geom_.projections, geom_.rows));
@@ -251,7 +251,7 @@ ConeBeamSolver::ConeBeamSolver(Settings param, Geometry geom)
     auto zeros = std::vector<float>(geom_.projections * geom_.cols * geom_.rows, 0.0f);
 
     // Projection data
-    int nr_handles = param.recon_mode == Mode::alternating ? 2 : 1;
+    int nr_handles = param.recon_mode == ReconstructMode::alternating ? 2 : 1;
     for (int i = 0; i < nr_handles; ++i) {
         proj_handles_.push_back(astraCUDA3d::createProjectionArrayHandle(
             zeros.data(), geom_.cols, geom_.projections, geom_.rows));
