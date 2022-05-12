@@ -99,13 +99,15 @@ public:
                     if (msg_counter % monitor_every == 0) {
                         float duration = std::chrono::duration_cast<std::chrono::microseconds>(
                             std::chrono::steady_clock::now() -  start).count();
-                        spdlog::info("# of projections received: {}", msg_counter);
-                        spdlog::info("Throughput (MB/s): {}", 
-                                     msg_size * monitor_every * 1000000 / (duration));
+                        spdlog::info("**************************************************************");
+                        spdlog::info("# of projections received: {}, throughput (MB/s): {}", 
+                                     msg_counter, msg_size * monitor_every * 1000000 / (duration));
+                        spdlog::info("**************************************************************");
                         start = std::chrono::steady_clock::now();
                     }                
                 } else {
-                    // reset the timer when dark/flat arrives
+                    // reset the counter and timer when dark/flat arrives
+                    msg_counter = 0;
                     start = std::chrono::steady_clock::now();
                 }
 

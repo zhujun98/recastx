@@ -78,8 +78,12 @@ void Reconstructor::pushProjection(ProjectionType k,
     switch (k) {
         case ProjectionType::standard: {
 
-            // FIXME:
             if (received_darks_ > 0 && received_flats_ > 0) {
+                if (received_darks_ < p.darks || received_flats_ < p.flats) {
+                    spdlog::warn("Computing reciprocal with less darks and/or flats than expected. "
+                                 "Received: {}/{}, Expected: {}/{} ...", 
+                                 received_darks_, received_flats_, p.darks, p.flats);
+                }
                 computeReciprocal();
                 reciprocal_computed_ = true;
                 received_darks_ = 0;
@@ -151,6 +155,7 @@ void Reconstructor::pushProjection(ProjectionType k,
             break;
         }
         case ProjectionType::dark: {
+            reciprocal_computed_ = false;
             if (received_darks_ == p.darks) {
                 spdlog::warn("Received more darks than expected. New dark ignored!");
                 return;
@@ -161,6 +166,7 @@ void Reconstructor::pushProjection(ProjectionType k,
             break;
         }
         case ProjectionType::flat: {
+            reciprocal_computed_ = false;
             if (received_flats_ == p.flats) {
                 spdlog::warn("Received more flats than expected. New flat ignored!");
                 return;
@@ -275,6 +281,10 @@ std::vector<float> Reconstructor::averageProjections(std::vector<raw_dtype> data
 void Reconstructor::computeReciprocal() {
     spdlog::info("Computing reciprocal for flat fielding ...");
 
+#if defined(WITH_MONITOR)
+    auto start = std::chrono::steady_clock::now();
+#endif
+
     // 1) average dark
     auto dark = averageProjections(all_darks_);
     // 2) average flats
@@ -289,6 +299,14 @@ void Reconstructor::computeReciprocal() {
     }
 
     dark_avg_ = dark;
+
+#if defined(WITH_MONITOR)
+    float duration = std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::steady_clock::now() -  start).count();
+    spdlog::info("**************************************************************");
+    spdlog::info("Computing reciprocal took {} ms", duration/1000);
+    spdlog::info("**************************************************************");
+#endif
 }
 
 void Reconstructor::processProjections(int proj_id_begin, int proj_id_end) {
