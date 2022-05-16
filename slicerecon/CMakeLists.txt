@@ -11,8 +11,6 @@ find_package(nlohmann_json REQUIRED)
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/../ext/bulk bulk)
 
-find_package(Boost 1.61 COMPONENTS program_options REQUIRED)
-
 add_library(astra-toolbox SHARED IMPORTED)
 set_target_properties(
     astra-toolbox PROPERTIES

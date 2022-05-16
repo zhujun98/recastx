@@ -22,6 +22,8 @@ if (BUILD_PYTHON)
     find_package(Python3 REQUIRED)
 endif()
 
+find_package(Boost 1.61 COMPONENTS program_options REQUIRED)
+
 find_package(spdlog REQUIRED)
 
 add_subdirectory(tomopackets)

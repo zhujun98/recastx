@@ -11,7 +11,7 @@ using namespace tomop;
 
 class Server {
     public:
-        Server();
+        explicit Server(int port);
 
         void start();
 
@@ -19,6 +19,7 @@ class Server {
         std::thread server_thread;
 
         zmq::context_t context_;
+        zmq::socket_t rep_socket_;
         zmq::socket_t pub_socket_;
 
         void parse_packet(packet_desc desc);
