@@ -41,7 +41,7 @@ class Server : public Ticker, public PacketListener {
             zmq::message_t message(pkt_size);
             auto membuf = pkt.serialize(pkt_size);
             memcpy(message.data(), membuf.buffer.get(), pkt_size);
-            publisher_socket_.send(message);
+            publisher_socket_.send(message, zmq::send_flags::none);
         } catch (const std::exception& e) {
             std::cout << "Failed sending: " << e.what() << "\n";
         }

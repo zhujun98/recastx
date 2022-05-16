@@ -38,7 +38,7 @@ void Server::start() {
             zmq::message_t request;
 
             //  Wait for next request from client
-            socket.recv(&request);
+            socket.recv(request, zmq::recv_flags::none);
             auto desc = ((packet_desc*)request.data())[0];
             auto buffer = memory_buffer(request.size(), (char*)request.data());
 
@@ -50,8 +50,8 @@ void Server::start() {
             }
 
             // forward the packet to the handler
-            packets_.push({desc, std::move(modules_[desc]->read_packet(
-                                     desc, buffer, socket, scenes_))});
+            packets_.push(
+                {desc, std::move(modules_[desc]->read_packet(desc, buffer, socket, scenes_))});
         }
     });
 
@@ -63,8 +63,8 @@ void Server::tick(float) {
         auto event_packet = std::move(packets_.front());
         packets_.pop();
 
-        modules_[event_packet.first]->process(scenes_, event_packet.first,
-                                              std::move(event_packet.second));
+        modules_[event_packet.first]->process(
+            scenes_, event_packet.first, std::move(event_packet.second));
     }
 }
 
