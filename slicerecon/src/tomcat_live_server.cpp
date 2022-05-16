@@ -27,14 +27,16 @@ int main(int argc, char** argv)
 
     po::options_description connection_desc("ZMQ options");
     connection_desc.add_options()
-        ("host", po::value<std::string>()->default_value("localhost"), 
+        ("data-host", po::value<std::string>()->default_value("localhost"), 
          "hostname of the data source server")
-        ("port", po::value<int>()->default_value(5558),
-         "ZMQ socket port")
-        ("socket", po::value<std::string>()->default_value("sub"),
-         "ZMQ socket type")
+        ("data-port", po::value<int>()->default_value(5558),
+         "ZMQ socket port of the data source server")
+        ("data-socket", po::value<std::string>()->default_value("sub"),
+         "ZMQ socket type of the data source server. Options: sub/pull")
         ("gui-host", po::value<std::string>()->default_value("localhost"),
          "hostname of the GUI server")
+        ("gui-port", po::value<int>()->default_value(5555),
+         "First ZMQ socket port of the GUI server. The second port has an increment of 1.")
     ;
 
     po::options_description reconstruction_desc("Reconstruction options");
@@ -124,10 +126,11 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    auto hostname = opts["host"].as<std::string>();
-    auto port = opts["port"].as<int>();
-    auto socket_type = parseSocketType(opts["socket"].as<std::string>());
+    auto data_hostname = opts["data-host"].as<std::string>();
+    auto data_port = opts["data-port"].as<int>();
+    auto data_socket_type = parseSocketType(opts["data-socket"].as<std::string>());
     auto gui_hostname = opts["gui-host"].as<std::string>();
+    auto gui_port = opts["gui-port"].as<int>();
 
     auto slice_size = opts["slice-size"].as<int>();
     auto preview_size = opts["preview-size"].as<int>();
@@ -190,13 +193,14 @@ int main(int argc, char** argv)
     slicerecon::Reconstructor recon(params, geom);
 
     // 2. listen to projection stream projection callback, push to projection stream all raw data
-    auto proj = slicerecon::ProjectionServer(hostname, port, socket_type);
+    auto proj = slicerecon::ProjectionServer(data_hostname, data_port, data_socket_type);
     proj.start(recon, params);
 
     // 3. connect with visualization server
-    auto viz = slicerecon::VisualizationServer("slicerecon test",
-                                               "tcp://"s + gui_hostname + ":5555"s,
-                                               "tcp://"s + gui_hostname + ":5556"s);
+    auto viz = slicerecon::VisualizationServer(
+        "tomcat-live GUI server",
+        "tcp://"s + gui_hostname + ":"s + std::to_string(gui_port),
+        "tcp://"s + gui_hostname + ":"s + std::to_string(gui_port + 1));
     viz.set_slice_callback([&](auto x, auto idx) { return recon.reconstructSlice(x); });
     recon.addListener(&viz);
 

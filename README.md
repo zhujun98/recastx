@@ -14,7 +14,7 @@ conda install -c cicwi -c astra-toolbox/label/dev recast3d
 git clone --recursive <repo>
 mkdir build && cd build
 cmake .. -DCMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"} \
-         -DBUILD_PYTHON=ON 
+         -DBUILD_PYTHON=ON -DBUILD_MONITOR=ON 
 
 make -j12
 
@@ -40,23 +40,33 @@ vglrun recast3d
 ```
 conda activate tomcat-live
 # with local data stream
-tomcat-live-server --filter-cores 20
+tomcat-live-server --data-port 5558 --data-socket pull --gui-server x02da-gws-3 --gui-port 5555 --filter-cores 20
 # with data stream from the DAQ node
-# tomcat-live-server --host xbl-daq-36 --port 9610 --filter-cores 20
+# tomcat-live-server --data-host xbl-daq-36 --data-port 9610 --data-socket sub --gui-server x02da-gws-3 --gui-port 5555 --filter-cores 20
 ```
 
 **Step 3**: stream the data
 
+From the same node as the reconstruction server:
+
 ```
 python examples/fake_stream.py
 ```
-or
+
+or from the DAQ node:
+
 ```
 ssh x02da-gpu-1
 ssh xbl-daq-36
 sudo -i -u dbe
 
-cd ~/git/gf_repstream
-conda activate repstream
-python -m gf_repstream.test.fake_stream -f ./gf_repstream/test/test_data -i 10000 -a tcp://*:9610 -m pub
+# streaming the fake data
+# cd ~/git/gf_repstream
+# conda activate repstream
+# python -m gf_repstream.test.fake_stream -f ./gf_repstream/test/test_data -i 10000 -a tcp://*:9610 -m pub
+
+# connecting to the GigaFrost backend
+sudo systemctl {restart/status/start/stop} repstream-gf.service 
+# log
+#sudo journalctl -u repstream-gf.service -f
 ```
