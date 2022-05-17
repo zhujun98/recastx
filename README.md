@@ -3,22 +3,27 @@
 ## Installation
 
 ```sh
-# On Ra
 module load gcc/9.3.0
 conda create -n tomcat-live python==3.7.10
 
 conda activate tomcat-live
 conda install -c conda-forge cmake cppzmq eigen boost fftw libastra nlohmann_json spdlog pybind11
-conda install -c cicwi -c astra-toolbox/label/dev recast3d
 
 git clone --recursive <repo>
+
+# On the GPU node x02da-gpu-1
+# Build and install the reconstruction server, the dummy consumer as well as
+# the Python bindings 
 mkdir build && cd build
 cmake .. -DCMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"} \
          -DBUILD_PYTHON=ON -DBUILD_MONITOR=ON 
+make -j12 && make install
 
-make -j12
-
-make install
+# On the graphics workstation x02da-gws-3
+mkdir build-gui && cd build-gui
+cmake .. -DCMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"} \
+         -DBUILD_GUI=ON 
+make -j12 && make install
 ```
 
 ## Running
@@ -27,14 +32,16 @@ make install
 
 ```sh
 conda activate tomcat-live
-recast3d
+tomcat-live-gui
 ```
 
 On the Ra cluster, you can only run the OpenGL GUI inside a [NoMachine](https://www.psi.ch/en/photon-science-data-services/remote-interactive-access
 ) client by
 ```sh
-vglrun recast3d
+vglrun tomcat-live-gui
 ```
+**Note**: there is still a problem of linking the OpenGL GUI on Ra.
+
 **Step 2**: start the reconstruction server
 
 ```
