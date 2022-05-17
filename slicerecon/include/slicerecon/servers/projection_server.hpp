@@ -81,7 +81,7 @@ public:
                 socket_.recv(update, zmq::recv_flags::none);
                 if (scan_index == ProjectionType::dark || scan_index == ProjectionType::flat) {
                     spdlog::info("Projection received: type = {0:d}, frame = {1:d}", 
-                                static_cast<int>(scan_index), frame);
+                                 static_cast<int>(scan_index), frame);
                 }
 
                 recon.pushProjection(scan_index,

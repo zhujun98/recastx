@@ -34,8 +34,7 @@ void ControlComponent::describe_parameters_() {
             auto old = value;
             ImGui::Checkbox(key.c_str(), &value);
             if (value != old) {
-                auto pkt =
-                    tomop::ParameterBoolPacket(object_.scene_id(), key, value);
+                auto pkt = tomop::ParameterBoolPacket(object_.scene_id(), key, value);
                 object_.send(pkt);
             }
         }
@@ -47,8 +46,7 @@ void ControlComponent::describe_parameters_() {
                                      ImGuiInputTextFlags_EnterReturnsTrue)) {
                 auto buffer_value = ::atof(buffer.get());
                 value = buffer_value;
-                auto pkt =
-                    tomop::ParameterFloatPacket(object_.scene_id(), key, value);
+                auto pkt = tomop::ParameterFloatPacket(object_.scene_id(), key, value);
                 object_.send(pkt);
             }
         }
@@ -60,8 +58,7 @@ void ControlComponent::describe_parameters_() {
                     bool is_selected = (value == current);
                     if (ImGui::Selectable(value.c_str(), is_selected)) {
                         current = value;
-                        auto pkt = tomop::ParameterEnumPacket(
-                            object_.scene_id(), key, {current});
+                        auto pkt = tomop::ParameterEnumPacket(object_.scene_id(), key, {current});
                         object_.send(pkt);
                     }
                     if (is_selected) {
@@ -81,9 +78,7 @@ void ControlComponent::describe_trackers_() {
 
     // TODO only track last x timesteps
 
-    if (ImGui::CollapsingHeader("trackers", nullptr,
-                                ImGuiTreeNodeFlags_DefaultOpen)) {
-
+    if (ImGui::CollapsingHeader("trackers", nullptr, ImGuiTreeNodeFlags_DefaultOpen)) {
         for (auto& [key, values] : trackers_) {
             ImGui::PlotLines(key.c_str(), values.data(), values.size(), 0,
                              nullptr, FLT_MAX, FLT_MAX, ImVec2(400.0f, 150.0f),
@@ -97,8 +92,7 @@ void ControlComponent::describe_benchmarks_() {
         return;
     }
 
-    if (ImGui::CollapsingHeader("benchmarks", nullptr,
-                                ImGuiTreeNodeFlags_DefaultOpen)) {
+    if (ImGui::CollapsingHeader("benchmarks", nullptr, ImGuiTreeNodeFlags_DefaultOpen)) {
 
         // TODO add (rolling) average
         ImGui::Indent(16.0f);
@@ -106,8 +100,7 @@ void ControlComponent::describe_benchmarks_() {
         for (auto& [key, values] : benchmarks_) {
             ImGui::TextWrapped(key.c_str());
             ImGui::NextColumn();
-            ImGui::TextWrapped(
-                std::to_string(values[values.size() - 1]).c_str());
+            ImGui::TextWrapped(std::to_string(values[values.size() - 1]).c_str());
             ImGui::NextColumn();
         }
         ImGui::Columns(1);

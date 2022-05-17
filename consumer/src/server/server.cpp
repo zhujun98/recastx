@@ -10,8 +10,13 @@
 namespace tomovis {
 
 using namespace tomop;
+using namespace std::string_literals;
 
-Server::Server() : pub_socket_(context_, ZMQ_PUB) {}
+Server::Server(int port) : 
+    rep_socket_(context_, ZMQ_REP), pub_socket_(context_, ZMQ_PUB) {
+        rep_socket_.bind("tcp://*:"s + std::to_string(port));
+        pub_socket_.bind("tcp://*:"s + std::to_string(port+1));
+    }
 
 void Server::parse_packet(packet_desc desc) {
     switch (desc) {
@@ -52,14 +57,12 @@ void Server::start() {
 
     // todo graceful shutdown, probably by sending a 'kill' packet to self
     server_thread = std::thread([&]() {
-        zmq::socket_t socket(context_, ZMQ_REP);
-        socket.bind("tcp://*:5555");
 
         while (true) {
             zmq::message_t request;
 
             //  Wait for next request from client
-            socket.recv(request, zmq::recv_flags::none);
+            rep_socket_.recv(request, zmq::recv_flags::none);
             auto desc = ((packet_desc*)request.data())[0];
             auto buffer = memory_buffer(request.size(), (char*)request.data());
 
@@ -68,11 +71,9 @@ void Server::start() {
             std::string s = "OK";
             zmq::message_t message(s.size());
             memcpy(message.data(), s.data(), s.size());
-            socket.send(message, zmq::send_flags::none);
+            rep_socket_.send(message, zmq::send_flags::none);
         }
     });
-
-    pub_socket_.bind("tcp://*:5556");
 }
 
 } // namespace tomovis

@@ -110,14 +110,12 @@ ReconstructionComponent::~ReconstructionComponent() {
 
 void ReconstructionComponent::send_slices() {
     for (auto& slice : slices_) {
-        auto packet = SetSlicePacket(scene_id_, slice.first,
-                                     slice.second->packed_orientation());
+        auto packet = SetSlicePacket(scene_id_, slice.first, slice.second->packed_orientation());
         object_.send(packet);
     }
 
     for (auto& slice : fixed_slices_) {
-        auto packet = SetSlicePacket(scene_id_, slice.first,
-                                     slice.second->packed_orientation());
+        auto packet = SetSlicePacket(scene_id_, slice.first, slice.second->packed_orientation());
         object_.send(packet);
     }
 }
@@ -147,10 +145,8 @@ void ReconstructionComponent::set_data(std::vector<float>& data,
         s->add_data(data);
     }
 
-    s->min_value = *std::min_element(s->data.begin(),
-                                                  s->data.end());
-    s->max_value = *std::max_element(s->data.begin(),
-                                                  s->data.end());
+    s->min_value = *std::min_element(s->data.begin(), s->data.end());
+    s->max_value = *std::max_element(s->data.begin(), s->data.end());
 
     update_image_(s);
 }
@@ -185,8 +181,7 @@ void ReconstructionComponent::update_partial_slice(
 void ReconstructionComponent::set_volume_data(
     std::vector<float>& data, std::array<int32_t, 3>& volume_size) {
     volume_data_ = data;
-    volume_texture_.set_data(volume_size[0], volume_size[1], volume_size[2],
-                             data);
+    volume_texture_.set_data(volume_size[0], volume_size[1], volume_size[2], data);
     update_histogram(data);
 }
 
@@ -209,8 +204,7 @@ void ReconstructionComponent::update_partial_volume(
         }
     }
 
-    volume_texture_.set_data(global_size[0], global_size[1], global_size[2],
-                             volume_data_);
+    volume_texture_.set_data(global_size[0], global_size[1], global_size[2], volume_data_);
     update_histogram(volume_data_);
 }
 
@@ -418,8 +412,8 @@ bool ReconstructionComponent::handle_mouse_button(int button, bool down) {
                 auto new_slice = std::make_unique<slice>(new_id);
                 new_slice->orientation = hovered_slice_->orientation;
 
-                auto packet = SetSlicePacket(scene_id_, new_slice->id,
-                    new_slice->packed_orientation());
+                auto packet = SetSlicePacket(
+                    scene_id_, new_slice->id, new_slice->packed_orientation());
                 object_.send(packet);
 
                 fixed_slices_[new_slice->id] = std::move(new_slice);
@@ -429,8 +423,8 @@ bool ReconstructionComponent::handle_mouse_button(int button, bool down) {
 
     if (!down) {
         if (dragged_slice_) {
-            auto packet = SetSlicePacket(scene_id_, dragged_slice_->id,
-                                         dragged_slice_->packed_orientation());
+            auto packet = SetSlicePacket(
+                scene_id_, dragged_slice_->id, dragged_slice_->packed_orientation());
             object_.send(packet);
 
             dragged_slice_ = nullptr;

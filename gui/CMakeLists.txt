@@ -72,6 +72,7 @@ target_link_libraries(${TARGET_NAME}
         tomopackets
         glm
         Eigen3::Eigen
+        Boost::program_options
 )
 target_include_directories(${TARGET_NAME} PRIVATE "include")
 target_compile_options(${TARGET_NAME} PRIVATE -std=c++17 -Wall -Wextra -Wfatal-errors)

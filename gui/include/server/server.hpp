@@ -29,7 +29,7 @@ class SceneModuleProtocol;
 
 class Server : public Ticker, public PacketListener {
    public:
-    Server(SceneList& scenes);
+    Server(SceneList& scenes, int port);
     void start();
     void tick(float) override;
 
@@ -41,7 +41,7 @@ class Server : public Ticker, public PacketListener {
             zmq::message_t message(pkt_size);
             auto membuf = pkt.serialize(pkt_size);
             memcpy(message.data(), membuf.buffer.get(), pkt_size);
-            publisher_socket_.send(message);
+            pub_socket_.send(message, zmq::send_flags::none);
         } catch (const std::exception& e) {
             std::cout << "Failed sending: " << e.what() << "\n";
         }
@@ -59,7 +59,8 @@ class Server : public Ticker, public PacketListener {
     std::queue<std::pair<packet_desc, std::unique_ptr<Packet>>> packets_;
 
     zmq::context_t context_;
-    zmq::socket_t publisher_socket_;
+    zmq::socket_t rep_socket_;
+    zmq::socket_t pub_socket_;
 };
 
 }  // namespace tomovis

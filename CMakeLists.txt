@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.15.5)
 
 project(tomcat-live LANGUAGES C CXX)
 
-option(BUILD_GUI "Build OpenGL GUI" OFF)
+option(BUILD_GUI "Build OpenGL GUI only" OFF)
 option(BUILD_TEST "Build unit test" OFF)
 option(BUILD_PYTHON "Build Python bindings" OFF)
 option(BUILD_MONITOR "Build with performance monitor" OFF)
@@ -22,14 +22,15 @@ if (BUILD_PYTHON)
     find_package(Python3 REQUIRED)
 endif()
 
+find_package(Boost 1.61 COMPONENTS program_options REQUIRED)
+
 find_package(spdlog REQUIRED)
 
 add_subdirectory(tomopackets)
 
-add_subdirectory(slicerecon)
-
-add_subdirectory(consumer)
-
 if (BUILD_GUI)
     add_subdirectory(gui)
+else()
+    add_subdirectory(slicerecon)
+    add_subdirectory(consumer)
 endif()

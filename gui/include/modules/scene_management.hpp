@@ -34,7 +34,7 @@ class ManageSceneProtocol : public SceneModuleProtocol {
             // reserve id from scenes_ and return it
             auto scene_id = scenes_.reserve_id();
             memcpy(reply.data(), &scene_id, sizeof(int));
-            socket.send(reply);
+            socket.send(reply, zmq::send_flags::none);
 
             packet->dimension = scene_id;
 
