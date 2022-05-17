@@ -13,10 +13,16 @@
 namespace tomovis {
 
 using namespace tomop;
+using namespace std::string_literals;
 
-Server::Server(SceneList& scenes)
-    : scenes_(scenes), context_(), publisher_socket_(context_, ZMQ_PUB) {
+Server::Server(SceneList& scenes, int port)
+    : scenes_(scenes),
+      rep_socket_(context_, ZMQ_REP),
+      pub_socket_(context_, ZMQ_PUB) {
     scenes_.add_listener(this);
+
+    rep_socket_.bind("tcp://*:"s + std::to_string(port));
+    pub_socket_.bind("tcp://*:"s + std::to_string(port+1));
 }
 
 void Server::register_module(std::shared_ptr<SceneModuleProtocol> module) {
@@ -31,14 +37,11 @@ void Server::start() {
 
     // todo graceful shutdown, probably by sending a 'kill' packet to self
     server_thread = std::thread([&]() {
-        zmq::socket_t socket(context_, ZMQ_REP);
-        socket.bind("tcp://*:5555");
-
         while (true) {
             zmq::message_t request;
 
             //  Wait for next request from client
-            socket.recv(request, zmq::recv_flags::none);
+            rep_socket_.recv(request, zmq::recv_flags::none);
             auto desc = ((packet_desc*)request.data())[0];
             auto buffer = memory_buffer(request.size(), (char*)request.data());
 
@@ -50,12 +53,10 @@ void Server::start() {
             }
 
             // forward the packet to the handler
-            packets_.push(
-                {desc, std::move(modules_[desc]->read_packet(desc, buffer, socket, scenes_))});
+            packets_.push({desc, std::move(modules_[desc]->read_packet(
+                desc, buffer, rep_socket_, scenes_))});
         }
     });
-
-    publisher_socket_.bind("tcp://*:5556");
 }
 
 void Server::tick(float) {
