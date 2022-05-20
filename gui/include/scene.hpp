@@ -10,7 +10,7 @@
 namespace tomovis {
 
 class Scene : public RenderTarget {
-   public:
+  public:
     Scene(std::string name, int dimension, int scene_id);
     ~Scene();
 
@@ -25,11 +25,13 @@ class Scene : public RenderTarget {
         object_->set_data(data, slice);
     }
 
-    void set_size(std::vector<int>& size, int slice = 0) { object_->set_size(size, slice); }
+    void set_size(std::vector<int>& size, int slice = 0) { 
+        object_->set_size(size, slice);
+    }
 
     int dimension() { return dimension_; }
 
-   private:
+  private:
     std::unique_ptr<SceneObject> object_;
     std::string name_;
     int dimension_;

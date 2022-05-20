@@ -8,7 +8,7 @@
 #include "modules/scene_module.hpp"
 #include "scene.hpp"
 #include "scene_list.hpp"
-#include "server/server.hpp"
+#include "server.hpp"
 
 namespace tomovis {
 
@@ -23,12 +23,6 @@ Server::Server(SceneList& scenes, int port)
 
     rep_socket_.bind("tcp://*:"s + std::to_string(port));
     pub_socket_.bind("tcp://*:"s + std::to_string(port+1));
-}
-
-void Server::register_module(std::shared_ptr<SceneModuleProtocol> module) {
-    for (auto desc : module->descriptors()) {
-        modules_[desc] = module;
-    }
 }
 
 void Server::start() {
@@ -59,6 +53,10 @@ void Server::start() {
     });
 }
 
+void Server::register_module(std::shared_ptr<SceneModuleProtocol> module) {
+    for (auto desc : module->descriptors()) modules_[desc] = module;
+}
+
 void Server::tick(float) {
     while (!packets_.empty()) {
         auto event_packet = std::move(packets_.front());
@@ -66,6 +64,18 @@ void Server::tick(float) {
 
         modules_[event_packet.first]->process(
             scenes_, event_packet.first, std::move(event_packet.second));
+    }
+}
+
+void Server::handle(Packet& pkt) {
+    try {
+        auto pkt_size = pkt.size();
+        zmq::message_t message(pkt_size);
+        auto membuf = pkt.serialize(pkt_size);
+        memcpy(message.data(), membuf.buffer.get(), pkt_size);
+        pub_socket_.send(message, zmq::send_flags::none);
+    } catch (const std::exception& e) {
+        std::cout << "Failed sending: " << e.what() << "\n";
     }
 }
 

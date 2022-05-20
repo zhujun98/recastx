@@ -26,7 +26,6 @@ class ProjectionObject : public Ticker, public Window {
 
   private:
     bool initialize_fbo_();
-    void bind_fbo_texture_() const;
     void draw_tomo_(const Model& model) const;
     glm::mat4 beam_transform_() const;
     glm::vec3 detector_center_() const;
@@ -42,7 +41,6 @@ class ProjectionObject : public Ticker, public Window {
 
     GLuint fbo_handle_;
     GLuint fbo_texture_;
-
     std::unique_ptr<ShaderProgram> shadow_program_;
 
     glm::mat4 orientation_matrix_;

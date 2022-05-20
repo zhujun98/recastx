@@ -35,14 +35,10 @@ Interface::Interface(GLFWwindow* window) {
     }
     io.MouseDrawCursor = false;
 
-    this->set_style_();
+    ImGui::StyleColorsDark();
 
     // prevent ini file
     io.IniFilename = "";
-}
-
-void Interface::set_style_() {
-    ImGui::StyleColorsDark();
 }
 
 Interface::~Interface() { ImGui_ImplGlfw_Shutdown(); }
@@ -52,9 +48,7 @@ void Interface::render(glm::mat4) {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    for (auto window : windows_) {
-        window->describe();
-    }
+    for (auto window : windows_) window->describe();
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -63,8 +57,8 @@ void Interface::render(glm::mat4) {
 void Interface::register_window(Window& window) { windows_.push_back(&window); }
 
 bool Interface::handle_mouse_button(int button, bool down) {
-    ImGui_ImplGlfw_MouseButtonCallback(nullptr, button,
-                                       down ? GLFW_PRESS : GLFW_RELEASE, 0);
+    ImGui_ImplGlfw_MouseButtonCallback(
+        nullptr, button, down ? GLFW_PRESS : GLFW_RELEASE, 0);
     auto io = ImGui::GetIO();
     return io.WantCaptureMouse;
 }
@@ -76,8 +70,8 @@ bool Interface::handle_scroll(double offset) {
 }
 
 bool Interface::handle_key(int key, bool down, int /* mods */) {
-    ImGui_ImplGlfw_KeyCallback(nullptr, key, 0,
-                               down ? GLFW_PRESS : GLFW_RELEASE, 0);
+    ImGui_ImplGlfw_KeyCallback(
+        nullptr, key, 0, down ? GLFW_PRESS : GLFW_RELEASE, 0);
     auto io = ImGui::GetIO();
     return io.WantCaptureKeyboard;
 }

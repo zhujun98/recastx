@@ -45,6 +45,7 @@ void Renderer::main_loop() {
         float time_elapsed = current_time - previous_time_;
         previous_time_ = current_time;
 
+        // FIXME: this does not look like a proper event loop
         const auto time_step = 0.0166666666;
         for (auto ticker : tickers_) {
             while (time_elapsed > time_step) {
@@ -65,26 +66,14 @@ void Renderer::main_loop() {
 
         auto window_matrix = glm::scale(glm::vec3(ratio, 1.0, 1.0));
 
-        for (auto target : targets_) {
-            target->render(window_matrix);
-        }
+        for (auto target : targets_) target->render(window_matrix);
 
         glfwSwapBuffers(window_);
     }
 }
 
-void Renderer::register_target(RenderTarget& target) {
-    targets_.insert(&target);
-}
+void Renderer::register_target(RenderTarget& target) { targets_.insert(&target); }
 
 void Renderer::register_ticker(Ticker& ticker) { tickers_.push_back(&ticker); }
-
-void Renderer::unregister_target(RenderTarget& target) {
-    targets_.erase(std::find(targets_.begin(), targets_.end(), &target));
-}
-
-void Renderer::unregister_ticker(Ticker& ticker) {
-    tickers_.erase(std::find(tickers_.begin(), tickers_.end(), &ticker));
-}
 
 } // namespace tomovis

@@ -92,8 +92,7 @@ bool ProjectionObject::initialize_fbo_() {
     glBindTexture(GL_TEXTURE_2D, fbo_texture_);
 
     // set it to an empty image
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1024, 1024, 0, GL_RGBA,
-                 GL_UNSIGNED_BYTE, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1024, 1024, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -112,11 +111,6 @@ bool ProjectionObject::initialize_fbo_() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     return flag;
-}
-
-void ProjectionObject::bind_fbo_texture_() const {
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, fbo_texture_);
 }
 
 glm::vec3 ProjectionObject::detector_center_() const {
@@ -176,7 +170,8 @@ void ProjectionObject::draw(glm::mat4 world_to_screen, const Model& model,
     program_->use();
 
     program_->uniform("texture_sampler", 0);
-    bind_fbo_texture_();
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, fbo_texture_);
 
     program_->uniform("orientation_matrix", orientation_matrix_);
     program_->uniform("world_to_screen_matrix", world_to_screen);

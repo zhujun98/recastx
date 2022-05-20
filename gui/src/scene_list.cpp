@@ -10,16 +10,14 @@ SceneList::SceneList() {}
 SceneList::~SceneList() {}
 
 // TODO make thread safe
-int SceneList::add_scene(std::string name, int id, bool make_active,
+int SceneList::add_scene(std::string name, 
+                         int id, 
+                         bool make_active,
                          int dimension) {
-    if (id == -1) {
-        id = reserve_id();
-    }
+    if (id == -1) id = reserve_id();
 
     scenes_[id] = std::make_unique<Scene>(name, dimension, id);
-    if (make_active) {
-        set_active_scene(id);
-    }
+    if (make_active) set_active_scene(id);
 
     scenes_[id]->object().add_listener(this);
 
@@ -54,9 +52,7 @@ void SceneList::render(glm::mat4 window_matrix) {
 }
 
 void SceneList::tick(float dt) {
-    if (active_scene_) {
-        return active_scene_->object().tick(dt);
-    }
+    if (active_scene_) active_scene_->object().tick(dt);
 }
 
 bool SceneList::handle_mouse_button(int button, bool down) {

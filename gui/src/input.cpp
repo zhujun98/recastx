@@ -14,33 +14,29 @@ Input::Input(GLFWwindow* window) : window_(window) {
     glfwSetCharCallback(window, char_callback);
 }
 
-Input::~Input() {}
+Input::~Input() = default;
 
 void Input::mouse_button_callback(GLFWwindow* window, int button, int action, int) {
     for (auto& handler : instance(window).handlers_) {
-        if (handler->handle_mouse_button(button, action))
-            return;
+        if (handler->handle_mouse_button(button, action)) return;
     }
 }
 
 void Input::scroll_callback(GLFWwindow* window, double, double yoffset) {
     for (auto& handler : instance(window).handlers_) {
-        if (handler->handle_scroll(yoffset))
-            return;
+        if (handler->handle_scroll(yoffset)) return;
     }
 }
 
 void Input::key_callback(GLFWwindow* window, int key, int, int action, int mods) {
     for (auto& handler : instance(window).handlers_) {
-        if (handler->handle_key(key, action, mods))
-            return;
+        if (handler->handle_key(key, action, mods)) return;
     }
 }
 
 void Input::char_callback(GLFWwindow* window, unsigned int c) {
     for (auto& handler : instance(window).handlers_) {
-        if (handler->handle_char(c))
-            return;
+        if (handler->handle_char(c)) return;
     }
 }
 

@@ -17,9 +17,6 @@ class Renderer {
       void register_target(RenderTarget& target);
       void register_ticker(Ticker& ticker);
 
-      void unregister_target(RenderTarget& target);
-      void unregister_ticker(Ticker& ticker);
-
       GLFWwindow* window() const { return window_; }
 
   private:

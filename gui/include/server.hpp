@@ -28,26 +28,18 @@ class SceneList;
 class SceneModuleProtocol;
 
 class Server : public Ticker, public PacketListener {
-   public:
+  public:
     Server(SceneList& scenes, int port);
+
     void start();
-    void tick(float) override;
 
     void register_module(std::shared_ptr<SceneModuleProtocol> module);
 
-    void handle(Packet& pkt) override {
-        try {
-            auto pkt_size = pkt.size();
-            zmq::message_t message(pkt_size);
-            auto membuf = pkt.serialize(pkt_size);
-            memcpy(message.data(), membuf.buffer.get(), pkt_size);
-            pub_socket_.send(message, zmq::send_flags::none);
-        } catch (const std::exception& e) {
-            std::cout << "Failed sending: " << e.what() << "\n";
-        }
-    }
+    void tick(float) override;
 
-   private:
+    void handle(Packet& pkt) override;
+
+  private:
     std::map<packet_desc, std::shared_ptr<SceneModuleProtocol>> modules_;
 
     /** The server should have access to the list of scenes, to obtain the

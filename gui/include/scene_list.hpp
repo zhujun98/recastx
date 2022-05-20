@@ -20,11 +20,13 @@ class SceneList : public RenderTarget,
                   public PacketPublisher,
                   public PacketListener,
                   public Ticker {
-   public:
+  public:
     SceneList();
     ~SceneList();
 
-    int add_scene(std::string name, int id = -1, bool make_active = false,
+    int add_scene(std::string name, 
+                  int id = -1, 
+                  bool make_active = false, 
                   int dimension = 2);
     void delete_scene(int index);
     void set_active_scene(int index);

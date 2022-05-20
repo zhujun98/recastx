@@ -25,35 +25,31 @@ class ControlProtocol : public SceneModuleProtocol {
         case packet_desc::parameter_bool: {
             auto packet = std::make_unique<ParameterBoolPacket>();
             packet->deserialize(std::move(buffer));
-            message_succes(socket);
+            ack(socket);
             return packet;
         }
         case packet_desc::parameter_float: {
             auto packet = std::make_unique<ParameterFloatPacket>();
             packet->deserialize(std::move(buffer));
-            message_succes(socket);
-
+            ack(socket);
             return packet;
         }
         case packet_desc::parameter_enum: {
             auto packet = std::make_unique<ParameterEnumPacket>();
             packet->deserialize(std::move(buffer));
-            message_succes(socket);
-
+            ack(socket);
             return packet;
         }
         case packet_desc::tracker: {
             auto packet = std::make_unique<TrackerPacket>();
             packet->deserialize(std::move(buffer));
-            message_succes(socket);
-
+            ack(socket);
             return packet;
         }
         case packet_desc::benchmark: {
             auto packet = std::make_unique<BenchmarkPacket>();
             packet->deserialize(std::move(buffer));
-            message_succes(socket);
-
+            ack(socket);
             return packet;
         }
 

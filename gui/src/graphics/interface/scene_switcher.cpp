@@ -26,8 +26,8 @@ SceneSwitcher::~SceneSwitcher() {}
 void SceneSwitcher::reload_data_() {
     model_options_.clear();
     short_options_.clear();
-    if (!fs::exists("../data"))
-        return;
+    if (!fs::exists("../data")) return;
+
     for (auto entry : fs::directory_iterator("../data/")) {
         std::string name = entry.path().native();
         model_options_.push_back(name);
@@ -181,8 +181,7 @@ void SceneSwitcher::add_dataset_scene(std::string location) {
 }
 
 void SceneSwitcher::delete_scene() {
-    if (!scenes_.active_scene())
-        return;
+    if (!scenes_.active_scene()) return;
 
     scenes_.delete_scene(scenes_.active_scene_index());
 }
