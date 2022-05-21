@@ -15,29 +15,27 @@
 
 namespace gui {
 
-using namespace tomop;
-
 class GeometryProtocol : public SceneModuleProtocol {
   public:
-    std::unique_ptr<Packet> read_packet(packet_desc desc, 
-                                        memory_buffer& buffer,
-                                        zmq::socket_t& socket,
-                                        SceneList& /* scenes_ */) override {
+    std::unique_ptr<tomop::Packet> read_packet(tomop::packet_desc desc,
+                                               tomop::memory_buffer& buffer,
+                                               zmq::socket_t& socket,
+                                               SceneList& /* scenes_ */) override {
         switch (desc) {
-            case packet_desc::geometry_specification: {
-                auto packet = std::make_unique<GeometrySpecificationPacket>();
+            case tomop::packet_desc::geometry_specification: {
+                auto packet = std::make_unique<tomop::GeometrySpecificationPacket>();
                 packet->deserialize(std::move(buffer));
                 ack(socket);
                 return packet;
             }
-            case packet_desc::projection_data: {
-                auto packet = std::make_unique<ProjectionDataPacket>();
+            case tomop::packet_desc::projection_data: {
+                auto packet = std::make_unique<tomop::ProjectionDataPacket>();
                 packet->deserialize(std::move(buffer));
                 ack(socket);
                 return packet;
             }
-            case packet_desc::partial_projection_data: {
-                auto packet = std::make_unique<PartialProjectionDataPacket>();
+            case tomop::packet_desc::partial_projection_data: {
+                auto packet = std::make_unique<tomop::PartialProjectionDataPacket>();
                 packet->deserialize(std::move(buffer));
                 ack(socket);
                 return packet;
@@ -46,13 +44,13 @@ class GeometryProtocol : public SceneModuleProtocol {
         }
     }
 
-    void process(SceneList& scenes, 
-                 packet_desc desc,
-                 std::unique_ptr<Packet> event_packet) override {
+    void process(SceneList& scenes,
+                 tomop::packet_desc desc,
+                 std::unique_ptr<tomop::Packet> event_packet) override {
         switch (desc) {
-            case packet_desc::geometry_specification: {
-                GeometrySpecificationPacket& packet =
-                    *(GeometrySpecificationPacket*)event_packet.get();
+            case tomop::packet_desc::geometry_specification: {
+              tomop::GeometrySpecificationPacket& packet =
+                    *(tomop::GeometrySpecificationPacket*)event_packet.get();
 
                 auto scene = scenes.get_scene(packet.scene_id);
                 if (!scene) {
@@ -70,9 +68,9 @@ class GeometryProtocol : public SceneModuleProtocol {
 
                 break;
             }
-            case packet_desc::projection_data: {
-                ProjectionDataPacket& packet =
-                    *(ProjectionDataPacket*)event_packet.get();
+            case tomop::packet_desc::projection_data: {
+              tomop::ProjectionDataPacket& packet =
+                    *(tomop::ProjectionDataPacket*)event_packet.get();
 
                 auto scene = scenes.get_scene(packet.scene_id);
                 if (!scene) {
@@ -98,9 +96,9 @@ class GeometryProtocol : public SceneModuleProtocol {
                 geometry_component.push_projection(std::move(proj));
                 break;
             }
-            case packet_desc::partial_projection_data: {
-                PartialProjectionDataPacket& packet =
-                    *(PartialProjectionDataPacket*)event_packet.get();
+            case tomop::packet_desc::partial_projection_data: {
+              tomop::PartialProjectionDataPacket& packet =
+                    *(tomop::PartialProjectionDataPacket*)event_packet.get();
 
                 auto scene = scenes.get_scene(packet.scene_id);
                 if (!scene) {
@@ -142,10 +140,10 @@ class GeometryProtocol : public SceneModuleProtocol {
         }
     }
 
-    std::vector<packet_desc> descriptors() override {
-        return {packet_desc::geometry_specification,
-                packet_desc::projection_data,
-                packet_desc::partial_projection_data};
+    std::vector<tomop::packet_desc> descriptors() override {
+        return {tomop::packet_desc::geometry_specification,
+                tomop::packet_desc::projection_data,
+                tomop::packet_desc::partial_projection_data};
     }
 };
 

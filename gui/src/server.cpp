@@ -11,7 +11,6 @@
 
 namespace gui {
 
-using namespace tomop;
 using namespace std::string_literals;
 
 Server::Server(SceneList& scenes, int port)
@@ -35,8 +34,8 @@ void Server::start() {
 
             //  Wait for next request from client
             rep_socket_.recv(request, zmq::recv_flags::none);
-            auto desc = ((packet_desc*)request.data())[0];
-            auto buffer = memory_buffer(request.size(), (char*)request.data());
+            auto desc = ((tomop::packet_desc*)request.data())[0];
+            auto buffer = tomop::memory_buffer(request.size(), (char*)request.data());
 
             if (modules_.find(desc) == modules_.end()) {
                 std::cout << "Unsupported package descriptor: "
@@ -66,7 +65,7 @@ void Server::tick(float) {
     }
 }
 
-void Server::handle(Packet& pkt) {
+void Server::handle(tomop::Packet& pkt) {
     try {
         auto pkt_size = pkt.size();
         zmq::message_t message(pkt_size);

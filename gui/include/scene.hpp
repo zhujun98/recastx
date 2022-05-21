@@ -77,12 +77,11 @@ class SceneList : public RenderTarget,
     bool handle_mouse_moved(float x, float y) override;
     bool handle_key(int key, bool down, int mods) override;
 
-    void handle(Packet& packet) override { send(packet); }
+    void handle(tomop::Packet& packet) override { send(packet); }
 
   private:
     std::map<int, std::unique_ptr<Scene>> scenes_;
     Scene* active_scene_ = nullptr;
-    int active_scene_index_ = -1;
     int give_away_id_ = 0;
 };
 

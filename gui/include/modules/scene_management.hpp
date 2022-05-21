@@ -21,15 +21,15 @@ namespace gui {
 
 class ManageSceneProtocol : public SceneModuleProtocol {
   public:
-    std::unique_ptr<Packet> read_packet(packet_desc desc, 
-                                        memory_buffer& buffer,
+    std::unique_ptr<tomop::Packet> read_packet(tomop::packet_desc desc,
+                                        tomop::memory_buffer& buffer,
                                         zmq::socket_t& socket,
                                         SceneList& scenes_) override {
         switch (desc) {
-            case packet_desc::make_scene: {
+            case tomop::packet_desc::make_scene: {
                 zmq::message_t reply(sizeof(int));
 
-                auto packet = std::make_unique<MakeScenePacket>();
+                auto packet = std::make_unique<tomop::MakeScenePacket>();
                 packet->deserialize(std::move(buffer));
 
                 // reserve id from scenes_ and return it
@@ -45,11 +45,12 @@ class ManageSceneProtocol : public SceneModuleProtocol {
         }
     }
 
-    void process(SceneList& scenes, packet_desc desc,
-                 std::unique_ptr<Packet> event_packet) override {
+    void process(SceneList& scenes,
+                 tomop::packet_desc desc,
+                 std::unique_ptr<tomop::Packet> event_packet) override {
         switch (desc) {
-            case packet_desc::make_scene: {
-                MakeScenePacket& packet = *(MakeScenePacket*)event_packet.get();
+            case tomop::packet_desc::make_scene: {
+                tomop::MakeScenePacket& packet = *(tomop::MakeScenePacket*)event_packet.get();
                 std::cout << "Making scene: " << packet.name << " ("
                           << packet.dimension << ")\n";
 
@@ -73,8 +74,8 @@ class ManageSceneProtocol : public SceneModuleProtocol {
         }
     }
 
-    std::vector<packet_desc> descriptors() override {
-        return {packet_desc::make_scene};
+    std::vector<tomop::packet_desc> descriptors() override {
+        return {tomop::packet_desc::make_scene};
     }
 };
 

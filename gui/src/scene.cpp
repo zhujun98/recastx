@@ -24,7 +24,7 @@ Scene::Scene(const std::string& name, int dimension, int scene_id)
 }
 
 Scene::~Scene() {
-    auto packet = KillScenePacket(scene_id_);
+    auto packet = tomop::KillScenePacket(scene_id_);
     object_->send(packet);
 }
 
@@ -67,7 +67,6 @@ int SceneList::reserve_id() { return give_away_id_++; }
 
 void SceneList::set_active_scene(int index) {
   active_scene_ = scenes_[index].get();
-  active_scene_index_ = index;
 }
 
 void SceneList::render(glm::mat4 window_matrix) {

@@ -6,16 +6,14 @@
 
 namespace gui {
 
-using namespace tomop;
-
 class PacketListener {
   public:
-    virtual void handle(Packet& packet) = 0;
+    virtual void handle(tomop::Packet& packet) = 0;
 };
 
 class PacketPublisher {
   public:
-    void send(Packet& packet) {
+    void send(tomop::Packet& packet) {
         for (auto listener : listeners_) listener->handle(packet);
     }
 

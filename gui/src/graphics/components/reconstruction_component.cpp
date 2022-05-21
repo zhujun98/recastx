@@ -14,8 +14,6 @@
 
 namespace gui {
 
-using namespace tomop;
-
 ReconstructionComponent::ReconstructionComponent(SceneObject& object,
                                                  int scene_id)
     : object_(object), volume_texture_(16, 16, 16), scene_id_(scene_id) {
@@ -110,12 +108,14 @@ ReconstructionComponent::~ReconstructionComponent() {
 
 void ReconstructionComponent::send_slices() {
     for (auto& slice : slices_) {
-        auto packet = SetSlicePacket(scene_id_, slice.first, slice.second->packed_orientation());
+        auto packet = tomop::SetSlicePacket(
+            scene_id_, slice.first, slice.second->packed_orientation());
         object_.send(packet);
     }
 
     for (auto& slice : fixed_slices_) {
-        auto packet = SetSlicePacket(scene_id_, slice.first, slice.second->packed_orientation());
+        auto packet = tomop::SetSlicePacket(
+            scene_id_, slice.first, slice.second->packed_orientation());
         object_.send(packet);
     }
 }
@@ -412,7 +412,7 @@ bool ReconstructionComponent::handle_mouse_button(int button, bool down) {
                 auto new_slice = std::make_unique<slice>(new_id);
                 new_slice->orientation = hovered_slice_->orientation;
 
-                auto packet = SetSlicePacket(
+                auto packet = tomop::SetSlicePacket(
                     scene_id_, new_slice->id, new_slice->packed_orientation());
                 object_.send(packet);
 
@@ -423,7 +423,7 @@ bool ReconstructionComponent::handle_mouse_button(int button, bool down) {
 
     if (!down) {
         if (dragged_slice_) {
-            auto packet = SetSlicePacket(
+            auto packet = tomop::SetSlicePacket(
                 scene_id_, dragged_slice_->id, dragged_slice_->packed_orientation());
             object_.send(packet);
 
@@ -603,7 +603,7 @@ void SliceTranslator::on_drag(glm::vec2 delta) {
         if (to_remove >= 0) {
             comp_.get_slices().erase(to_remove);
             // send slice packet
-            auto packet = RemoveSlicePacket(comp_.scene_id(), to_remove);
+            auto packet = tomop::RemoveSlicePacket(comp_.scene_id(), to_remove);
             comp_.object().send(packet);
         }
         if (!comp_.dragged_slice()) {
@@ -737,7 +737,7 @@ void SliceRotator::on_drag(glm::vec2 delta) {
         if (to_remove >= 0) {
             comp_.get_slices().erase(to_remove);
             // send slice packet
-            auto packet = RemoveSlicePacket(comp_.scene_id(), to_remove);
+            auto packet = tomop::RemoveSlicePacket(comp_.scene_id(), to_remove);
             comp_.object().send(packet);
         }
         assert(comp_.dragged_slice());
