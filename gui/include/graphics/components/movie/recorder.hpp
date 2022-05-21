@@ -3,11 +3,10 @@
 #include <stdio.h>
 
 #include "ticker.hpp"
-#include "graphics/interface/window.hpp"
 
 namespace gui {
 
-class Recorder : public Window {
+class Recorder {
   public:
     Recorder();
     ~Recorder();

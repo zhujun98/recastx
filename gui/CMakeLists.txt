@@ -49,16 +49,13 @@ set(SOURCE_NAMES
     "src/graphics/slice.cpp"
     "src/graphics/renderer.cpp"
     "src/graphics/render_target.cpp"
+    "src/graphics/interface.cpp"
     "src/graphics/components/reconstruction_component.cpp"
     "src/graphics/components/geometry_component.cpp"
     "src/graphics/components/axes_component.cpp"
     "src/graphics/components/control_component.cpp"
     "src/graphics/components/partitioning_component.cpp"
     "src/graphics/components/movie/recorder.cpp"
-    "src/graphics/interface/scene_control.cpp"
-    "src/graphics/interface/scene_switcher.cpp"
-    "src/graphics/interface/window.cpp"
-    "src/graphics/interface/interface.cpp"
 )
 
 set(TARGET_NAME "tomcat-live-gui")

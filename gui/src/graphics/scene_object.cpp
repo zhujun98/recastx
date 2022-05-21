@@ -1,11 +1,8 @@
-#include <memory>
-
 #include <imgui.h>
 #include <GL/gl3w.h>
 
 #include "graphics/scene_object.hpp"
 #include "graphics/shader_program.hpp"
-
 #include "graphics/scene_camera.hpp"
 
 namespace gui {
@@ -25,9 +22,7 @@ void SceneObject::tick(float time_elapsed) {
 }
 
 void SceneObject::describe() {
-    if (ImGui::CollapsingHeader("camera")) {
-        camera_->describe();
-    }
+    if (ImGui::CollapsingHeader("camera")) camera_->describe();
 
     for (auto& id_and_comp : components_) {
         if (ImGui::CollapsingHeader(id_and_comp.first.c_str())) {

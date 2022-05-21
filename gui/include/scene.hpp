@@ -25,7 +25,6 @@ class Scene : public RenderTarget {
     SceneObject& object() { return *object_; }
 
     [[nodiscard]] const std::string& name() const { return name_; }
-    void set_name(const std::string& name) { name_ = name; }
 
     void set_data(std::vector<unsigned char>& data, int slice = 0) {
         object_->set_data(data, slice);
@@ -54,7 +53,7 @@ class SceneList : public RenderTarget,
                   int id = -1,
                   bool make_active = false,
                   int dimension = 2);
-    void delete_scene(int index);
+    void describe();
     void set_active_scene(int index);
     int reserve_id();
 
@@ -70,8 +69,6 @@ class SceneList : public RenderTarget,
     }
 
     void tick(float dt) override;
-
-    [[nodiscard]] int active_scene_index() const { return active_scene_index_; }
 
     void render(glm::mat4 window_matrix) override;
 

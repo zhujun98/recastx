@@ -18,7 +18,7 @@ namespace gui {
 SceneCamera3d::SceneCamera3d() { reset_view(); }
 
 void SceneCamera3d::reset_view() {
-    // explicitely set to identity
+    // explicitly set to identity
     position_ = glm::vec3(0.0f, 0.0f, 5.0f);
     up_ = glm::vec3(0.0f, 1.0f, 0.0f);
     right_ = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -73,9 +73,7 @@ bool SceneCamera3d::handle_scroll(double offset) {
 }
 
 bool SceneCamera3d::handle_key(int key, bool down, int /* mods */) {
-    if (interaction_disabled_) {
-        return false;
-    }
+    if (interaction_disabled_) return false;
 
     float offset = 0.05f;
     if (down) {
@@ -111,20 +109,17 @@ bool SceneCamera3d::handle_key(int key, bool down, int /* mods */) {
 void SceneCamera3d::switch_if_necessary(drag_machine_kind kind) {
     if (!drag_machine_ || drag_machine_->kind() != kind) {
         switch (kind) {
-        case drag_machine_kind::rotator:
-            drag_machine_ =
-                std::make_unique<Rotator>(*this, prev_x_, prev_y_, instant_);
-            break;
-        default:
-            break;
+          case drag_machine_kind::rotator:
+              drag_machine_ = std::make_unique<Rotator>(*this, prev_x_, prev_y_, instant_);
+              break;
+          default:
+              break;
         }
     }
 }
 
 bool SceneCamera3d::handle_mouse_moved(float x, float y) {
-    if (interaction_disabled_) {
-        return false;
-    }
+    if (interaction_disabled_) return false;
 
     // update slices that is being hovered over
     y = -y;
@@ -184,9 +179,7 @@ void SceneCamera3d::describe() {
 }
 
 void SceneCamera3d::tick(float time_elapsed) {
-    if (dragging_) {
-        drag_machine_->tick(time_elapsed);
-    }
+    if (dragging_) drag_machine_->tick(time_elapsed);
 }
 
 } // namespace gui

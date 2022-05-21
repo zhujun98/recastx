@@ -7,14 +7,13 @@ namespace gui {
 
 class SceneObject2d : public SceneObject {
   public:
-    SceneObject2d(int scene_id);
-    ~SceneObject2d();
+    explicit SceneObject2d(int scene_id);
+    ~SceneObject2d() override;
 
     void draw(glm::mat4 window_matrix) override;
 
     void set_data(std::vector<unsigned char>& data, int slice = 0) override {
-        if (slice != 0)
-            throw;
+        if (slice != 0) throw;
 
         data_ = data;
         update_image_();

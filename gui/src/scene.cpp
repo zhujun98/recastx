@@ -1,6 +1,8 @@
 #include <memory>
 #include <iostream>
 
+#include <imgui.h>
+
 #include <tomop/tomop.hpp>
 
 #include "graphics/scene_object_2d.hpp"
@@ -48,21 +50,20 @@ int SceneList::add_scene(const std::string& name,
   return id;
 }
 
+void SceneList::describe() {
+  if (active_scene_ == nullptr) return;
+
+  ImGui::SetNextWindowSizeConstraints(ImVec2(280, 500), ImVec2(FLT_MAX, FLT_MAX)); // Width > 100, Height > 100
+  ImGui::Begin("Scene controls");
+  ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.65f); // 2/3 of the space for widget and 1/3 for labels
+
+  active_scene_->object().describe();
+
+  ImGui::End();
+}
+
 // TODO make thread safe
 int SceneList::reserve_id() { return give_away_id_++; }
-
-void SceneList::delete_scene(int index) {
-  scenes_.erase(scenes_.find(index));
-  if (active_scene_index_ == index) {
-    if (scenes_.empty()) {
-      active_scene_index_ = -1;
-      active_scene_ = nullptr;
-    } else {
-      active_scene_index_ = scenes_.begin()->first;
-      active_scene_ = scenes_[active_scene_index_].get();
-    }
-  }
-}
 
 void SceneList::set_active_scene(int index) {
   active_scene_ = scenes_[index].get();

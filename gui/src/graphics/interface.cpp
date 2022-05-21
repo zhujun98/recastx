@@ -2,18 +2,18 @@
 #include <iostream>
 #include <string>
 
+#include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 
 #include "examples/imgui_impl_glfw.h"
 #include "examples/imgui_impl_opengl3.h"
 
-#include "graphics/interface/interface.hpp"
-#include "graphics/interface/window.hpp"
+#include "graphics/interface.hpp"
 
 namespace gui {
 
-Interface::Interface(GLFWwindow* window) {
+Interface::Interface(GLFWwindow* window, SceneList& scenes) : scenes_(scenes) {
     // Setup ImGui binding
     ImGui::CreateContext();
 
@@ -48,13 +48,11 @@ void Interface::render(glm::mat4) {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    for (auto window : windows_) window->describe();
+    scenes_.describe();
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
-
-void Interface::register_window(Window& window) { windows_.push_back(&window); }
 
 bool Interface::handle_mouse_button(int button, bool down) {
     ImGui_ImplGlfw_MouseButtonCallback(

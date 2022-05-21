@@ -5,16 +5,14 @@
 
 namespace gui {
 
-SceneCamera2d::SceneCamera2d() {}
+SceneCamera2d::SceneCamera2d() = default;
 
 glm::mat4 SceneCamera2d::matrix() {
     glm::mat4 camera_matrix;
 
-    camera_matrix =
-        glm::scale(glm::vec3(glm::vec2(scale_), 1.0f)) * camera_matrix;
+    camera_matrix = glm::scale(glm::vec3(glm::vec2(scale_), 1.0f)) * camera_matrix;
 
-    camera_matrix =
-        glm::rotate(angle_, glm::vec3(0.0f, 0.0f, 1.0f)) * camera_matrix;
+    camera_matrix = glm::rotate(angle_, glm::vec3(0.0f, 0.0f, 1.0f)) * camera_matrix;
 
     camera_matrix = glm::translate(position_) * camera_matrix;
 

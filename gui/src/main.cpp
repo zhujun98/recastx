@@ -1,14 +1,11 @@
 #include <iostream>
 #include <memory>
-#include <thread>
 
 #include <experimental/filesystem>
 namespace fs = std::experimental::filesystem;
 #include <boost/program_options.hpp>
 
-#include "graphics/interface/interface.hpp"
-#include "graphics/interface/scene_control.hpp"
-#include "graphics/interface/scene_switcher.hpp"
+#include "graphics/interface.hpp"
 #include "graphics/renderer.hpp"
 #include "graphics/scene_camera.hpp"
 #include "input.hpp"
@@ -43,10 +40,8 @@ int main(int argc, char** argv) {
     gui::Renderer renderer;
 
     auto& input = gui::Input::instance(renderer.window());
-    gui::Interface interface(renderer.window());
     gui::SceneList scenes;
-    gui::SceneSwitcher scene_switcher(scenes);
-    gui::SceneControl scene_control(scenes);
+    gui::Interface interface(renderer.window(), scenes);
     gui::Server server(scenes, opts["port"].as<int>());
     server.register_module(std::make_shared<gui::ManageSceneProtocol>());
     server.register_module(std::make_shared<gui::ReconstructionProtocol>());
@@ -54,12 +49,8 @@ int main(int argc, char** argv) {
     server.register_module(std::make_shared<gui::PartitioningProtocol>());
     server.register_module(std::make_shared<gui::ControlProtocol>());
 
-    interface.register_window(scene_switcher);
-    interface.register_window(scene_control);
-
     input.register_handler(interface);
     input.register_handler(scenes);
-    input.register_handler(scene_switcher);
 
     renderer.register_ticker(input);
     renderer.register_ticker(scenes);
