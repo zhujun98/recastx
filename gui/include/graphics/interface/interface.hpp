@@ -14,14 +14,12 @@ class Window;
 
 class Interface : public RenderTarget, public InputHandler {
   public:
-      Interface(GLFWwindow* window);
-      ~Interface();
+      explicit Interface(GLFWwindow* window);
+      ~Interface() override;
 
       void render(glm::mat4) override;
 
-      int z_priority() const override {
-          return 10;
-      }
+      [[nodiscard]] int zPriority() const override { return 10; }
 
       void register_window(Window& window);
 

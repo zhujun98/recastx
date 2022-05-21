@@ -20,11 +20,6 @@ class SceneObject2d : public SceneObject {
         update_image_();
     }
 
-    void set_size(std::vector<int>& size, int slice = 0) {
-        (void)slice;
-        size_ = size;
-    }
-
   protected:
     void update_image_(int slice = 0) override;
 

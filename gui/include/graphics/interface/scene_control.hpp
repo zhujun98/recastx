@@ -9,8 +9,8 @@ class SceneList;
 
 class SceneControl : public Window {
   public:
-    SceneControl(SceneList& scenes);
-    ~SceneControl();
+    explicit SceneControl(SceneList& scenes);
+    ~SceneControl() override;
 
     void describe() override;
 

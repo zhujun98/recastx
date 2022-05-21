@@ -9,23 +9,21 @@ namespace gui {
 using namespace tomop;
 
 class PacketListener {
-   public:
+  public:
     virtual void handle(Packet& packet) = 0;
 };
 
 class PacketPublisher {
-   public:
+  public:
     void send(Packet& packet) {
-        for (auto listener : listeners_) {
-            listener->handle(packet);
-        }
+        for (auto listener : listeners_) listener->handle(packet);
     }
 
     void add_listener(PacketListener* listener) {
         listeners_.push_back(listener);
     }
 
-   private:
+  private:
     std::vector<PacketListener*> listeners_;
 };
 

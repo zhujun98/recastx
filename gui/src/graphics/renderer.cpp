@@ -24,7 +24,7 @@ Renderer::Renderer() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_SAMPLES, 4);
 
-    window_ = glfwCreateWindow(1920, 1080, "RECAST3D", NULL, NULL);
+    window_ = glfwCreateWindow(1920, 1080, "TOMCAT 3D Live Reconstruction", NULL, NULL);
     glfwMakeContextCurrent(window_);
 
     gl3wInit();

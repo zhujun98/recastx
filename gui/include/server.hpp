@@ -42,12 +42,9 @@ class Server : public Ticker, public PacketListener {
   private:
     std::map<packet_desc, std::shared_ptr<SceneModuleProtocol>> modules_;
 
-    /** The server should have access to the list of scenes, to obtain the
-     * correct one, or add a new one. */
     SceneList& scenes_;
-    std::thread server_thread;
+    std::thread server_thread_;
 
-    /** Filled by server thread, performed by 'OpenGL' tread */
     std::queue<std::pair<packet_desc, std::unique_ptr<Packet>>> packets_;
 
     zmq::context_t context_;

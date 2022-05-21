@@ -30,7 +30,7 @@ void Server::start() {
     std::cout << "Listening for incoming connections..\n";
 
     // todo graceful shutdown, probably by sending a 'kill' packet to self
-    server_thread = std::thread([&]() {
+    server_thread_ = std::thread([&]() {
         while (true) {
             zmq::message_t request;
 

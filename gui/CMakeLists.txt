@@ -49,6 +49,7 @@ set(SOURCE_NAMES
     "src/graphics/shader_program.cpp"
     "src/graphics/slice.cpp"
     "src/graphics/renderer.cpp"
+    "src/graphics/render_target.cpp"
     "src/graphics/components/reconstruction_component.cpp"
     "src/graphics/components/geometry_component.cpp"
     "src/graphics/components/axes_component.cpp"

@@ -9,7 +9,7 @@
 
 namespace gui {
 
-Scene::Scene(std::string name, int dimension, int scene_id)
+Scene::Scene(const std::string& name, int dimension, int scene_id)
     : name_(name), dimension_(dimension), scene_id_(scene_id) {
     if (dimension_ == 2) {
         object_ = std::make_unique<SceneObject2d>(scene_id_);

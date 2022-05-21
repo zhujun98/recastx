@@ -8,8 +8,8 @@
 
 namespace gui {
 
-Recorder::Recorder() {}
-Recorder::~Recorder() {}
+Recorder::Recorder() = default;
+Recorder::~Recorder() = default;
 
 void Recorder::describe() {
     ImGui::Text("Recorder");

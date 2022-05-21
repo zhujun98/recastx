@@ -76,51 +76,36 @@ class ControlProtocol : public SceneModuleProtocol {
         case packet_desc::parameter_bool: {
             auto& packet = *(ParameterBoolPacket*)event_packet.get();
             auto control_component = get_component(packet.scene_id);
-            if (!control_component) {
-                return;
-            }
-            control_component->add_bool_parameter(packet.parameter_name,
-                                                  packet.value);
+            if (!control_component) return;
+            control_component->add_bool_parameter(packet.parameter_name, packet.value);
             break;
         }
         case packet_desc::parameter_float: {
             auto& packet = *(ParameterFloatPacket*)event_packet.get();
             auto control_component = get_component(packet.scene_id);
-            if (!control_component) {
-                return;
-            }
-            control_component->add_float_parameter(packet.parameter_name,
-                                                   packet.value);
+            if (!control_component) return;
+            control_component->add_float_parameter(packet.parameter_name, packet.value);
             break;
         }
         case packet_desc::parameter_enum: {
             auto& packet = *(ParameterEnumPacket*)event_packet.get();
             auto control_component = get_component(packet.scene_id);
-            if (!control_component) {
-                return;
-            }
-            control_component->add_enum_parameter(packet.parameter_name,
-                                                  packet.values);
+            if (!control_component) return;
+            control_component->add_enum_parameter(packet.parameter_name, packet.values);
             break;
         }
         case packet_desc::tracker: {
             auto& packet = *(TrackerPacket*)event_packet.get();
             auto control_component = get_component(packet.scene_id);
-            if (!control_component) {
-                return;
-            }
-            control_component->track_result(packet.parameter_name,
-                                            packet.value);
+            if (!control_component) return;
+            control_component->track_result(packet.parameter_name, packet.value);
             break;
         }
         case packet_desc::benchmark: {
             auto& packet = *(BenchmarkPacket*)event_packet.get();
             auto control_component = get_component(packet.scene_id);
-            if (!control_component) {
-                return;
-            }
-            control_component->bench_result(packet.parameter_name,
-                                            packet.value);
+            if (!control_component) return;
+            control_component->bench_result(packet.parameter_name, packet.value);
             break;
         }
 

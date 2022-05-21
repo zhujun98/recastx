@@ -17,7 +17,6 @@ namespace fs = std::experimental::filesystem;
 #include "modules/reconstruction.hpp"
 #include "modules/scene_management.hpp"
 #include "modules/control.hpp"
-#include "scene.hpp"
 #include "scene_list.hpp"
 #include "server.hpp"
 

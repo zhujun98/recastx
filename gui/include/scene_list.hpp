@@ -24,7 +24,7 @@ class SceneList : public RenderTarget,
     SceneList();
     ~SceneList();
 
-    int add_scene(std::string name, 
+    int add_scene(const std::string& name,
                   int id = -1, 
                   bool make_active = false, 
                   int dimension = 2);
@@ -33,7 +33,7 @@ class SceneList : public RenderTarget,
     int reserve_id();
 
     auto& scenes() { return scenes_; }
-    Scene* active_scene() const { return active_scene_; }
+    [[nodiscard]] Scene* active_scene() const { return active_scene_; }
 
     Scene* get_scene(int scene_id) {
         if (scenes_.find(scene_id) == scenes_.end()) {
@@ -45,7 +45,7 @@ class SceneList : public RenderTarget,
 
     void tick(float dt) override;
 
-    int active_scene_index() const { return active_scene_index_; }
+    [[nodiscard]] int active_scene_index() const { return active_scene_index_; }
 
     void render(glm::mat4 window_matrix) override;
 
@@ -56,7 +56,7 @@ class SceneList : public RenderTarget,
 
     void handle(Packet& packet) override { send(packet); }
 
-   private:
+  private:
     std::map<int, std::unique_ptr<Scene>> scenes_;
     Scene* active_scene_ = nullptr;
     int active_scene_index_ = -1;

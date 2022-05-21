@@ -117,8 +117,7 @@ class ReconstructionProtocol : public SceneModuleProtocol {
                 break;
             }
             case packet_desc::group_request_slices: {
-                GroupRequestSlicesPacket& packet =
-                    *(GroupRequestSlicesPacket*)event_packet.get();
+                GroupRequestSlicesPacket& packet = *(GroupRequestSlicesPacket*)event_packet.get();
                 auto scene = scenes.get_scene(packet.scene_id);
                 if (!scene) {
                     std::cout << "Updating non-existing scene\n";
@@ -130,8 +129,8 @@ class ReconstructionProtocol : public SceneModuleProtocol {
                 } else {
                     if (group_size_requested_ != packet.group_size) {
                         std::cout << "Group request for different group sizes "
-                                << group_size_requested_
-                                << " != " << packet.group_size << "\n";
+                                  << group_size_requested_
+                                  << " != " << packet.group_size << "\n";
                     }
                     group_size_count_ += 1;
                 }

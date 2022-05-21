@@ -108,11 +108,9 @@ class GeometryProtocol : public SceneModuleProtocol {
                     std::cout << "Updating non-existing scene\n";
                     return;
                 }
-                auto& geometry_component =
-                    (GeometryComponent&)scene->object().get_component("geometry");
+                auto& geometry_component = (GeometryComponent&)scene->object().get_component("geometry");
 
-                auto& proj =
-                    geometry_component.get_projection(packet.projection_id);
+                auto& proj = geometry_component.get_projection(packet.projection_id);
 
                 proj.source_position = {packet.source_position[0],
                                         packet.source_position[1],
@@ -122,8 +120,7 @@ class GeometryProtocol : public SceneModuleProtocol {
                                     {xs[3], xs[4], xs[5]});
                 proj.parallel = false;
                 if (proj.contributions == 0) {
-                    proj.data.resize(packet.detector_pixels[0] *
-                                    packet.detector_pixels[1]);
+                    proj.data.resize(packet.detector_pixels[0] * packet.detector_pixels[1]);
                     std::fill(proj.data.begin(), proj.data.end(), 0.0f);
                     proj.size = packet.detector_pixels;
                 }

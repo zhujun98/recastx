@@ -11,25 +11,21 @@ namespace gui {
 
 class Scene : public RenderTarget {
   public:
-    Scene(std::string name, int dimension, int scene_id);
-    ~Scene();
+    Scene(const std::string& name, int dimension, int scene_id);
+    ~Scene() override;
 
     void render(glm::mat4 window_matrix) override;
 
-    SceneObject& object() { return *object_.get(); }
+    SceneObject& object() { return *object_; }
 
-    const std::string& name() const { return name_; }
-    void set_name(std::string name) { name_ = name; }
+    [[nodiscard]] const std::string& name() const { return name_; }
+    void set_name(const std::string& name) { name_ = name; }
 
     void set_data(std::vector<unsigned char>& data, int slice = 0) {
         object_->set_data(data, slice);
     }
 
-    void set_size(std::vector<int>& size, int slice = 0) { 
-        object_->set_size(size, slice);
-    }
-
-    int dimension() { return dimension_; }
+  [[nodiscard]] int dimension() const { return dimension_; }
 
   private:
     std::unique_ptr<SceneObject> object_;

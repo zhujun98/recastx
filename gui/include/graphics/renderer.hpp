@@ -24,7 +24,7 @@ class Renderer {
 
     struct RenderCompare {
         bool operator()(const RenderTarget* lhs, const RenderTarget* rhs) const {
-            return lhs->z_priority() < rhs->z_priority();
+            return lhs->zPriority() < rhs->zPriority();
         }
     };
 
