@@ -7,7 +7,6 @@
 
 #include "modules/scene_module.hpp"
 #include "scene.hpp"
-#include "scene_list.hpp"
 #include "server.hpp"
 
 namespace gui {

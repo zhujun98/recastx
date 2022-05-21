@@ -37,7 +37,6 @@ set(SOURCE_NAMES
     "src/util.cpp"
     "src/scene.cpp"
     "src/path.cpp"
-    "src/scene_list.cpp"
     "src/server.cpp"
     "src/graphics/primitives.cpp"
     "src/graphics/scene_object.cpp"

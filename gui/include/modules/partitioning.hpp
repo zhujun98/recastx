@@ -6,7 +6,6 @@
 #include "zmq.hpp"
 
 #include "scene.hpp"
-#include "scene_list.hpp"
 #include "scene_module.hpp"
 
 #include "graphics/components/partitioning_component.hpp"

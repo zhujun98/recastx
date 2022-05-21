@@ -1,7 +1,6 @@
 #include <imgui.h>
 
 #include "scene.hpp"
-#include "scene_list.hpp"
 #include "graphics/interface/scene_control.hpp"
 #include "graphics/scene_camera.hpp"
 

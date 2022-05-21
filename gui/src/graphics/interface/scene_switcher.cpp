@@ -10,7 +10,6 @@ namespace fs = std::experimental::filesystem;
 #include "graphics/components/reconstruction_component.hpp"
 #include "graphics/interface/scene_switcher.hpp"
 #include "scene.hpp"
-#include "scene_list.hpp"
 
 namespace gui {
 

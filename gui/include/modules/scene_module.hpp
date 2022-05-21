@@ -5,7 +5,7 @@
 
 #include "tomop/tomop.hpp"
 
-#include "../scene_list.hpp"
+#include "../scene.hpp"
 
 namespace gui {
 
