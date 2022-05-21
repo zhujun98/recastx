@@ -11,7 +11,7 @@
 #include "graphics/interface/interface.hpp"
 #include "graphics/interface/window.hpp"
 
-namespace tomovis {
+namespace gui {
 
 Interface::Interface(GLFWwindow* window) {
     // Setup ImGui binding
@@ -87,4 +87,4 @@ bool Interface::handle_mouse_moved(float /* x */, float /* y */) {
     return io.WantCaptureMouse;
 }
 
-} // namespace tomovis
+} // namespace gui

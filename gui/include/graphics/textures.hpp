@@ -9,7 +9,7 @@
 #include <GL/gl3w.h>
 #include <glm/glm.hpp>
 
-namespace tomovis {
+namespace gui {
 
 template <typename T>
 inline GLenum data_type();
@@ -173,4 +173,4 @@ class texture3d {
     int z_ = -1;
 };
 
-}  // namespace tomovis
+}  // namespace gui

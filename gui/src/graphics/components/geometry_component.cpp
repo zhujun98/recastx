@@ -9,7 +9,7 @@
 #include "graphics/scene_camera_3d.hpp"
 //#include "modules/packets/geometry_packets.hpp"
 
-namespace tomovis {
+namespace gui {
 
 GeometryComponent::GeometryComponent(SceneObject& object, int scene_id)
     : object_(object), scene_id_(scene_id) {
@@ -162,4 +162,4 @@ void GeometryComponent::draw(glm::mat4 world_to_screen) {
     glDisable(GL_DEPTH_TEST);
 }
 
-} // namespace tomovis
+} // namespace gui

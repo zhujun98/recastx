@@ -12,7 +12,7 @@
 
 struct aiMesh;
 
-namespace tomovis {
+namespace gui {
 
 class Model;
 class ShaderProgram;
@@ -67,4 +67,4 @@ class Mesh : public Ticker {
     GLuint vbo_normals_handle_;
 };
 
-} // namespace tomovis
+} // namespace gui

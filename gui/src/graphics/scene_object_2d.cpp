@@ -4,7 +4,7 @@
 #include "graphics/scene_object_2d.hpp"
 #include "graphics/shader_program.hpp"
 
-namespace tomovis {
+namespace gui {
 
 SceneObject2d::SceneObject2d(int scene_id) : SceneObject(scene_id), size_{32, 32} {
     static const GLfloat square[4][2] = {{-1.0f, -1.0f},
@@ -85,4 +85,4 @@ void SceneObject2d::draw(glm::mat4 window_matrix) {
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
-}  // namespace tomovis
+}  // namespace gui

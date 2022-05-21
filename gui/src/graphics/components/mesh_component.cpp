@@ -12,7 +12,7 @@
 #include "graphics/components/mesh_component.hpp"
 #include "graphics/scene_camera_3d.hpp"
 
-namespace tomovis {
+namespace gui {
 
 MeshComponent::MeshComponent(SceneObject& object, int scene_id)
     : object_(object), scene_id_(scene_id) {
@@ -51,4 +51,4 @@ void MeshComponent::draw(glm::mat4 /* world_to_screen */) {
     }
 }
 
-} // namespace tomovis
+} // namespace gui

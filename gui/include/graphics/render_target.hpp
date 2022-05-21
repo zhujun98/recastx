@@ -3,7 +3,7 @@
 #include <glm/glm.hpp>
 
 
-namespace tomovis {
+namespace gui {
 
 class RenderTarget {
   public:
@@ -11,4 +11,4 @@ class RenderTarget {
     virtual int z_priority() const { return 0; }
 };
 
-} // namespace tomovis
+} // namespace gui

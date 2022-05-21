@@ -7,7 +7,7 @@
 
 #include "graphics/renderer.hpp"
 
-namespace tomovis {
+namespace gui {
 
 static void error_callback(int error, const char* description) {
     fprintf(stderr, "Error %d: %s\n", error, description);
@@ -76,4 +76,4 @@ void Renderer::register_target(RenderTarget& target) { targets_.insert(&target);
 
 void Renderer::register_ticker(Ticker& ticker) { tickers_.push_back(&ticker); }
 
-} // namespace tomovis
+} // namespace gui

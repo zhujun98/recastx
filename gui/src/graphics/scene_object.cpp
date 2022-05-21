@@ -8,7 +8,7 @@
 
 #include "graphics/scene_camera.hpp"
 
-namespace tomovis {
+namespace gui {
 
 SceneObject::SceneObject(int scene_id) : scene_id_(scene_id) {}
 
@@ -72,4 +72,4 @@ bool SceneObject::handle_key(int key, bool down, int mods) {
     return false;
 }
 
-}  // namespace tomovis
+}  // namespace gui

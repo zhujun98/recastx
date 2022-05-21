@@ -8,7 +8,7 @@
 
 #include "textures.hpp"
 
-namespace tomovis {
+namespace gui {
 
 struct slice {
     slice(int id_);
@@ -60,4 +60,4 @@ struct slice {
     float max_value = -1.0f;
 };
 
-} // namespace tomovis
+} // namespace gui

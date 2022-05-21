@@ -4,7 +4,7 @@
 
 #include "tomop/tomop.hpp"
 
-namespace tomovis {
+namespace gui {
 
 using namespace tomop;
 
@@ -29,4 +29,4 @@ class PacketPublisher {
     std::vector<PacketListener*> listeners_;
 };
 
-}  // namespace tomovis
+}  // namespace gui

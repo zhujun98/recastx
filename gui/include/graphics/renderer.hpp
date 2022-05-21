@@ -6,7 +6,7 @@
 
 struct GLFWwindow;
 
-namespace tomovis {
+namespace gui {
 
 class Renderer {
   public:
@@ -34,4 +34,4 @@ class Renderer {
     double previous_time_;
 };
 
-} // namespace tomovis
+} // namespace gui

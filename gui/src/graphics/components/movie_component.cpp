@@ -10,7 +10,7 @@
 #include "graphics/components/movie_component.hpp"
 #include "graphics/scene_camera_3d.hpp"
 
-namespace tomovis {
+namespace gui {
 
 MovieComponent::MovieComponent(SceneObject& object, int scene_id,
                                std::string file)
@@ -83,4 +83,4 @@ void MovieComponent::draw(glm::mat4 world_to_screen) {
     recorder_.capture();
 }
 
-} // namespace tomovis
+} // namespace gui

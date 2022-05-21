@@ -11,7 +11,7 @@
 #include "packet_listener.hpp"
 #include "ticker.hpp"
 
-namespace tomovis {
+namespace gui {
 
 class ShaderProgram;
 class SceneCamera;
@@ -61,4 +61,4 @@ class SceneObject : public InputHandler, public PacketPublisher, public Ticker, 
     std::map<std::string, std::unique_ptr<ObjectComponent>> components_;
 };
 
-}  // namespace tomovis
+}  // namespace gui

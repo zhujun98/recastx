@@ -10,7 +10,7 @@
 #include "scene_list.hpp"
 #include "server.hpp"
 
-namespace tomovis {
+namespace gui {
 
 using namespace tomop;
 using namespace std::string_literals;
@@ -79,4 +79,4 @@ void Server::handle(Packet& pkt) {
     }
 }
 
-} // namespace tomovis
+} // namespace gui

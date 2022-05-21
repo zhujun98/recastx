@@ -19,7 +19,7 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-namespace tomovis {
+namespace gui {
 
 class ProgressUpdate : public Assimp::ProgressHandler {
   public:
@@ -248,4 +248,4 @@ void Model::draw(glm::mat4 world_to_screen, glm::vec3 camera_position,
 
 }
 
-} // namespace tomovis
+} // namespace gui

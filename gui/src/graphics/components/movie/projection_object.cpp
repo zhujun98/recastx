@@ -9,7 +9,7 @@
 #include "graphics/primitives.hpp"
 #include "math_common.hpp"
 
-namespace tomovis {
+namespace gui {
 
 ProjectionObject::ProjectionObject() {
     glGenVertexArrays(1, &vao_handle_);
@@ -209,4 +209,4 @@ void ProjectionObject::draw(glm::mat4 world_to_screen, const Model& model,
 
 void ProjectionObject::tick(float time_elapsed) { (void)time_elapsed; }
 
-} // namespace tomovis
+} // namespace gui

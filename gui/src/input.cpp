@@ -5,7 +5,7 @@
 
 #include <GLFW/glfw3.h>
 
-namespace tomovis {
+namespace gui {
 
 Input::Input(GLFWwindow* window) : window_(window) {
     glfwSetMouseButtonCallback(window, mouse_button_callback);
@@ -65,4 +65,4 @@ void Input::unregister_handler(InputHandler& handler) {
     handlers_.erase(std::find(handlers_.begin(), handlers_.end(), &handler));
 }
 
-} // namespace tomovis
+} // namespace gui

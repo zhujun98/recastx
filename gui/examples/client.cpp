@@ -11,7 +11,7 @@
 #include "modules/reconstruction.hpp"
 #include "modules/scene_management.hpp"
 
-using namespace tomovis;
+using namespace gui;
 
 int main() {
     //  Prepare our context and socket

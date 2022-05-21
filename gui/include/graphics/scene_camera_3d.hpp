@@ -9,7 +9,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 
-namespace tomovis {
+namespace gui {
 
 class SceneCamera3d;
 
@@ -125,4 +125,4 @@ class Rotator : public CameraDragMachine {
     bool instant_ = true;
 };
 
-} // namespace tomovis
+} // namespace gui

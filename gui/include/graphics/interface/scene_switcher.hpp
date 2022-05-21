@@ -6,7 +6,7 @@
 #include "graphics/interface/window.hpp"
 #include "input_handler.hpp"
 
-namespace tomovis {
+namespace gui {
 
 class SceneList;
 
@@ -43,4 +43,4 @@ class SceneSwitcher : public Window, public InputHandler {
     std::vector<std::string> model_options_;
 };
 
-} // namespace tomovis
+} // namespace gui

@@ -6,7 +6,7 @@
 #include "graphics/scene_camera.hpp"
 
 
-namespace tomovis {
+namespace gui {
 
 SceneControl::SceneControl(SceneList& scenes) : scenes_(scenes) {}
 
@@ -36,4 +36,4 @@ void SceneControl::describe() {
     ImGui::End();
 }
 
-} // namespace tomovis
+} // namespace gui

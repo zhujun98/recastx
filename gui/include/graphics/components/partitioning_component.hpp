@@ -12,7 +12,7 @@
 #include "graphics/shader_program.hpp"
 #include "object_component.hpp"
 
-namespace tomovis {
+namespace gui {
 
 struct part {
     part(int id_) : id(id_) {}
@@ -49,4 +49,4 @@ class PartitioningComponent : public ObjectComponent {
     float global_scale_ = 1.0f;
 };
 
-}  // namespace tomovis
+}  // namespace gui

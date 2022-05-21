@@ -4,7 +4,7 @@
 
 #include <GL/gl3w.h>
 
-namespace tomovis {
+namespace gui {
 
 class ShaderProgram {
   public:
@@ -26,4 +26,4 @@ class ShaderProgram {
     GLuint frag_shader_;
 };
 
-} // namespace tomovis
+} // namespace gui

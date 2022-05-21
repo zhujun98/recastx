@@ -10,7 +10,7 @@
 #include "graphics/mesh.hpp"
 #include "graphics/shader_program.hpp"
 
-namespace tomovis {
+namespace gui {
 
 Mesh::Mesh(aiMesh* asset_mesh) : asset_mesh_(asset_mesh) {
     if (!asset_mesh_->HasFaces()) {
@@ -198,4 +198,4 @@ void Mesh::draw(glm::mat4 world, glm::mat4 model, glm::vec3 camera_position,
     glDrawElements(GL_TRIANGLES, index_count_, GL_UNSIGNED_INT, nullptr);
 }
 
-} // namespace tomovis
+} // namespace gui

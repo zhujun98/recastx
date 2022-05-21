@@ -1,9 +1,9 @@
 #pragma once
 
-namespace tomovis {
+namespace gui {
 
 class ProjectionObject : public Entity {
 
 };
 
-} // namespace tomovis
+} // namespace gui

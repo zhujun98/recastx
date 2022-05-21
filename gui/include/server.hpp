@@ -20,7 +20,7 @@
 #include "packet_listener.hpp"
 #include "ticker.hpp"
 
-namespace tomovis {
+namespace gui {
 
 using namespace tomop;
 
@@ -55,4 +55,4 @@ class Server : public Ticker, public PacketListener {
     zmq::socket_t pub_socket_;
 };
 
-}  // namespace tomovis
+}  // namespace gui

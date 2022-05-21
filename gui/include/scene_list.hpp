@@ -11,7 +11,7 @@
 #include "packet_listener.hpp"
 #include "ticker.hpp"
 
-namespace tomovis {
+namespace gui {
 
 class Scene;
 
@@ -63,4 +63,4 @@ class SceneList : public RenderTarget,
     int give_away_id_ = 0;
 };
 
-}  // namespace tomovis
+}  // namespace gui

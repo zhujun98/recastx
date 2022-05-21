@@ -41,19 +41,19 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    tomovis::Renderer renderer;
+    gui::Renderer renderer;
 
-    auto& input = tomovis::Input::instance(renderer.window());
-    tomovis::Interface interface(renderer.window());
-    tomovis::SceneList scenes;
-    tomovis::SceneSwitcher scene_switcher(scenes);
-    tomovis::SceneControl scene_control(scenes);
-    tomovis::Server server(scenes, opts["port"].as<int>());
-    server.register_module(std::make_shared<tomovis::ManageSceneProtocol>());
-    server.register_module(std::make_shared<tomovis::ReconstructionProtocol>());
-    server.register_module(std::make_shared<tomovis::GeometryProtocol>());
-    server.register_module(std::make_shared<tomovis::PartitioningProtocol>());
-    server.register_module(std::make_shared<tomovis::ControlProtocol>());
+    auto& input = gui::Input::instance(renderer.window());
+    gui::Interface interface(renderer.window());
+    gui::SceneList scenes;
+    gui::SceneSwitcher scene_switcher(scenes);
+    gui::SceneControl scene_control(scenes);
+    gui::Server server(scenes, opts["port"].as<int>());
+    server.register_module(std::make_shared<gui::ManageSceneProtocol>());
+    server.register_module(std::make_shared<gui::ReconstructionProtocol>());
+    server.register_module(std::make_shared<gui::GeometryProtocol>());
+    server.register_module(std::make_shared<gui::PartitioningProtocol>());
+    server.register_module(std::make_shared<gui::ControlProtocol>());
 
     interface.register_window(scene_switcher);
     interface.register_window(scene_control);

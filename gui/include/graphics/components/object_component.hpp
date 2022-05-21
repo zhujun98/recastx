@@ -7,7 +7,7 @@
 #include "input_handler.hpp"
 #include "ticker.hpp"
 
-namespace tomovis {
+namespace gui {
 
 class ObjectComponent : public InputHandler, public Ticker, public Window {
   public:
@@ -20,4 +20,4 @@ class ObjectComponent : public InputHandler, public Ticker, public Window {
     virtual int priority() const { return 1; }
 };
 
-} // namespace tomovis
+} // namespace gui

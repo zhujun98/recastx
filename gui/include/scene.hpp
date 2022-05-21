@@ -7,7 +7,7 @@
 #include "graphics/render_target.hpp"
 #include "graphics/scene_object.hpp"
 
-namespace tomovis {
+namespace gui {
 
 class Scene : public RenderTarget {
   public:
@@ -38,4 +38,4 @@ class Scene : public RenderTarget {
     int scene_id_;
 };
 
-}  // namespace tomovis
+}  // namespace gui

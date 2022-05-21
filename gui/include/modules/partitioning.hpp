@@ -11,7 +11,7 @@
 
 #include "graphics/components/partitioning_component.hpp"
 
-namespace tomovis {
+namespace gui {
 
 using namespace tomop;
 
@@ -61,4 +61,4 @@ class PartitioningProtocol : public SceneModuleProtocol {
     }
 };
 
-} // namespace tomovis
+} // namespace gui

@@ -5,7 +5,7 @@
 
 #include <imgui.h>
 
-namespace tomovis {
+namespace gui {
 
 AxesComponent::AxesComponent(SceneObject &object, int scene_id)
     : object_(object), scene_id_(scene_id) {
@@ -65,4 +65,4 @@ void AxesComponent::draw(glm::mat4 world_to_screen) {
   glDrawElements(GL_LINES, axes_index_count_, GL_UNSIGNED_INT, nullptr);
 }
 
-} // namespace tomovis
+} // namespace gui

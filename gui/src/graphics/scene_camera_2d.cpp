@@ -3,7 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/gtx/transform.hpp>
 
-namespace tomovis {
+namespace gui {
 
 SceneCamera2d::SceneCamera2d() {}
 
@@ -86,4 +86,4 @@ bool SceneCamera2d::handle_mouse_moved(float x, float y) {
     return false;
 }
 
-} // namespace tomovis
+} // namespace gui

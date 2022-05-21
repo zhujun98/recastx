@@ -8,7 +8,7 @@
 
 struct GLFWwindow;
 
-namespace tomovis {
+namespace gui {
 
 class Window;
 
@@ -37,4 +37,4 @@ class Interface : public RenderTarget, public InputHandler {
     std::vector<Window*> windows_;
 };
 
-} // namespace tomovis
+} // namespace gui

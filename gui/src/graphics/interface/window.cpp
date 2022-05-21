@@ -1,9 +1,9 @@
 #include "graphics/interface/window.hpp"
 
 
-namespace tomovis {
+namespace gui {
 
 Window::Window() {}
 Window::~Window() {}
 
-} // namespace tomovis
+} // namespace gui

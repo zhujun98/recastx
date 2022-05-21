@@ -7,7 +7,7 @@
 
 #include "../scene_list.hpp"
 
-namespace tomovis {
+namespace gui {
 
 using namespace tomop;
 
@@ -37,4 +37,4 @@ class SceneModuleProtocol {
     }
 };
 
-}  // namespace tomovis
+}  // namespace gui

@@ -1,7 +1,7 @@
 #pragma once
 
 
-namespace tomovis {
+namespace gui {
 
 template <typename T>
 struct parameter {
@@ -11,4 +11,4 @@ struct parameter {
     T* value;
 };
 
-} // namespace tomovis
+} // namespace gui

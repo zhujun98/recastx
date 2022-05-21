@@ -12,7 +12,7 @@
 #include "graphics/primitives.hpp"
 #include "graphics/scene_camera_3d.hpp"
 
-namespace tomovis {
+namespace gui {
 
 using namespace tomop;
 
@@ -762,4 +762,4 @@ void SliceRotator::on_drag(glm::vec2 delta) {
     slice->set_orientation(a, b - a, c - a);
 }
 
-} // namespace tomovis
+} // namespace gui

@@ -8,7 +8,7 @@
 
 #include "object_component.hpp"
 
-namespace tomovis {
+namespace gui {
 
 class SceneObject;
 
@@ -34,4 +34,4 @@ class AxesComponent : public ObjectComponent {
     bool show_ = true;
 };
 
-}  // namespace tomovis
+}  // namespace gui

@@ -5,7 +5,7 @@
 
 #include "graphics/shader_program.hpp"
 
-namespace tomovis {
+namespace gui {
 
 ShaderProgram::ShaderProgram(std::string vert_file, std::string frag_file, bool from_file) {
     auto create_shader = [from_file](auto type, std::string file) {
@@ -104,4 +104,4 @@ void ShaderProgram::uniform(std::string name, int x) {
     glUniform1i(glGetUniformLocation(handle(), name.c_str()), x);
 }
 
-} // namespace tomovis
+} // namespace gui

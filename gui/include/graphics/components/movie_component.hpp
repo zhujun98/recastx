@@ -14,7 +14,7 @@
 #include "movie/projection_object.hpp"
 #include "movie/recorder.hpp"
 
-namespace tomovis {
+namespace gui {
 
 class Storyboard;
 
@@ -47,4 +47,4 @@ class MovieComponent : public ObjectComponent {
     std::unique_ptr<Storyboard> storyboard_;
 };
 
-} // namespace tomovis
+} // namespace gui

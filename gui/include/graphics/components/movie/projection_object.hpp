@@ -8,7 +8,7 @@
 #include "graphics/shader_program.hpp"
 #include "ticker.hpp"
 
-namespace tomovis {
+namespace gui {
 
 class Model;
 
@@ -50,4 +50,4 @@ class ProjectionObject : public Ticker, public Window {
     GLuint cube_vbo_handle_;
 };
 
-} // namespace tomovis
+} // namespace gui

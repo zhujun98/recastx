@@ -3,7 +3,7 @@
 #include "window.hpp"
 
 
-namespace tomovis {
+namespace gui {
 
 class SceneList;
 
@@ -18,4 +18,4 @@ class SceneControl : public Window {
     SceneList& scenes_;
 };
 
-} // namespace tomovis
+} // namespace gui

@@ -5,7 +5,7 @@
 #include "ticker.hpp"
 #include "graphics/interface/window.hpp"
 
-namespace tomovis {
+namespace gui {
 
 class Recorder : public Window {
   public:
@@ -27,4 +27,4 @@ class Recorder : public Window {
     int height_ = 768;
 };
 
-} // namespace tomovis
+} // namespace gui

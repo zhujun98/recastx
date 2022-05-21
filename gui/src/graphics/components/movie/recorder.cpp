@@ -6,7 +6,7 @@
 #include "graphics/components/movie/recorder.hpp"
 #include <imgui.h>
 
-namespace tomovis {
+namespace gui {
 
 Recorder::Recorder() {}
 Recorder::~Recorder() {}
@@ -88,4 +88,4 @@ void Recorder::capture() {
     fwrite(buffer_, sizeof(int) * width_ * height_, 1, ffmpeg_);
 }
 
-} // namespace tomovis
+} // namespace gui

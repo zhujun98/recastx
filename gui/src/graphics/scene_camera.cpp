@@ -8,7 +8,7 @@
 
 #include "graphics/scene_camera.hpp"
 
-namespace tomovis {
+namespace gui {
 
 static std::map<std::string,
                 std::array<std::vector<std::pair<double, double>>, 3>>
@@ -117,4 +117,4 @@ void SceneCamera::describe() {
     }
 }
 
-} // namespace tomovis
+} // namespace gui

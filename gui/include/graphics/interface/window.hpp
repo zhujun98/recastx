@@ -1,7 +1,7 @@
 #pragma once
 
 
-namespace tomovis {
+namespace gui {
 
 class Window {
   public:
@@ -12,4 +12,4 @@ class Window {
   private:
 };
 
-} // namespace tomovis
+} // namespace gui

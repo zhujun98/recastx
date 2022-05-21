@@ -15,7 +15,7 @@
 #include "object_component.hpp"
 #include "util.hpp"
 
-namespace tomovis {
+namespace gui {
 
 class ReconstructionComponent;
 
@@ -163,4 +163,4 @@ class SliceRotator : public ReconDragMachine {
     glm::vec2 screen_direction;
 };
 
-} // namespace tomovis
+} // namespace gui

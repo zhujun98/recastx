@@ -3,7 +3,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-namespace tomovis {
+namespace gui {
 
 struct Keyframe {
     float time_step;
@@ -17,4 +17,4 @@ struct RotationKeyframe : public Keyframe {
     glm::quat quaternion;
 };
 
-} // namespace tomovis
+} // namespace gui

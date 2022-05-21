@@ -14,7 +14,7 @@
 
 struct aiScene;
 
-namespace tomovis {
+namespace gui {
 
 class MeshComponent : public ObjectComponent {
    public:
@@ -36,4 +36,4 @@ class MeshComponent : public ObjectComponent {
     bool show_ = false;
 };
 
-}  // namespace tomovis
+}  // namespace gui

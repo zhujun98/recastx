@@ -6,7 +6,7 @@
 #include "graphics/components/control_component.hpp"
 #include "graphics/scene_object.hpp"
 
-namespace tomovis {
+namespace gui {
 
 constexpr auto BUFFER_SIZE = 32u;
 
@@ -136,4 +136,4 @@ void ControlComponent::track_result(std::string name, float value) {
     trackers_[name].push_back(value);
 }
 
-} // namespace tomovis
+} // namespace gui

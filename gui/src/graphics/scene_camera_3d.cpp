@@ -13,7 +13,7 @@
 
 #include "path.hpp"
 
-namespace tomovis {
+namespace gui {
 
 SceneCamera3d::SceneCamera3d() { reset_view(); }
 
@@ -189,4 +189,4 @@ void SceneCamera3d::tick(float time_elapsed) {
     }
 }
 
-} // namespace tomovis
+} // namespace gui

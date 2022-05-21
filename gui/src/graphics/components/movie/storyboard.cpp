@@ -10,7 +10,7 @@
 
 #include "path.hpp"
 
-namespace tomovis {
+namespace gui {
 
 Animation::Animation(float at, float duration) : at_(at), duration_(duration) {}
 
@@ -442,4 +442,4 @@ void Storyboard::tick(float time_elapsed) {
     }
 }
 
-} // namespace tomovis
+} // namespace gui

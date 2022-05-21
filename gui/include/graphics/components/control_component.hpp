@@ -7,7 +7,7 @@
 
 #include "object_component.hpp"
 
-namespace tomovis {
+namespace gui {
 
 class SceneObject;
 
@@ -44,4 +44,4 @@ class ControlComponent : public ObjectComponent {
     std::map<std::string, std::vector<float>> benchmarks_;
 };
 
-} // namespace tomovis
+} // namespace gui

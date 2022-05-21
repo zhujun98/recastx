@@ -12,7 +12,7 @@
 #include "path.hpp"
 #include "ticker.hpp"
 
-namespace tomovis {
+namespace gui {
 
 class MovieComponent;
 
@@ -161,4 +161,4 @@ class Storyboard : public Window, public Ticker {
     MovieComponent* movie_;
 };
 
-} // namespace tomovis
+} // namespace gui

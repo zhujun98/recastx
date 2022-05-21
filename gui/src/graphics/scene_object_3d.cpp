@@ -11,7 +11,7 @@
 #include "graphics/components/axes_component.hpp"
 #include "graphics/components/control_component.hpp"
 
-namespace tomovis {
+namespace gui {
 
 SceneObject3d::SceneObject3d(int scene_id) : SceneObject(scene_id) {
   camera_ = std::make_unique<SceneCamera3d>();
@@ -37,4 +37,4 @@ void SceneObject3d::draw(glm::mat4 window_matrix) {
   }
 }
 
-} // namespace tomovis
+} // namespace gui

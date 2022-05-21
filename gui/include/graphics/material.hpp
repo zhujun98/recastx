@@ -2,7 +2,7 @@
 
 #include <glm/glm.hpp>
 
-namespace tomovis {
+namespace gui {
 
 struct Material {
     glm::vec3 ambient_color = glm::vec3(0.1f);
@@ -12,4 +12,4 @@ struct Material {
     float shininess = 8.0f;
 };
 
-} // namespace tomovis
+} // namespace gui

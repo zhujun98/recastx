@@ -12,7 +12,7 @@
 #include "ticker.hpp"
 #include "graphics/interface/window.hpp"
 
-namespace tomovis {
+namespace gui {
 
 class SceneCamera : public InputHandler, public Ticker, public Window {
   public:
@@ -44,4 +44,4 @@ class SceneCamera : public InputHandler, public Ticker, public Window {
     GLuint colormap_texture_id_;
 };
 
-} // namespace tomovis
+} // namespace gui

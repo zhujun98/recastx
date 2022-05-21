@@ -13,7 +13,7 @@ namespace Assimp {
 class Importer;
 }
 
-namespace tomovis {
+namespace gui {
 
 class Mesh;
 class ProgressUpdate;
@@ -67,4 +67,4 @@ class Model : public Ticker {
     std::unique_ptr<ShaderProgram> program_;
 };
 
-} // namespace tomovis
+} // namespace gui

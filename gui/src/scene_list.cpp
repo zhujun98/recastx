@@ -3,7 +3,7 @@
 #include "scene.hpp"
 #include "scene_list.hpp"
 
-namespace tomovis {
+namespace gui {
 
 SceneList::SceneList() {}
 
@@ -83,4 +83,4 @@ bool SceneList::handle_key(int key, bool down, int mods) {
     return false;
 }
 
-}  // namespace tomovis
+}  // namespace gui

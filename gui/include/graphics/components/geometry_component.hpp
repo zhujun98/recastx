@@ -20,7 +20,7 @@
 
 #include "util.hpp"
 
-namespace tomovis {
+namespace gui {
 
 struct projection {
     projection(int id_) : id(id_), data_texture(32, 32) {
@@ -120,4 +120,4 @@ class GeometryComponent : public ObjectComponent {
     bool show_ = false;
 };
 
-} // namespace tomovis
+} // namespace gui

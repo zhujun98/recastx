@@ -7,7 +7,7 @@
 #include "graphics/scene_object_3d.hpp"
 #include "scene.hpp"
 
-namespace tomovis {
+namespace gui {
 
 Scene::Scene(std::string name, int dimension, int scene_id)
     : name_(name), dimension_(dimension), scene_id_(scene_id) {
@@ -27,4 +27,4 @@ Scene::~Scene() {
 
 void Scene::render(glm::mat4 window_matrix) { object_->draw(window_matrix); }
 
-} // namespace tomovis
+} // namespace gui

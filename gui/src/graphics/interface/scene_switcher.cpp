@@ -14,7 +14,7 @@ namespace fs = std::experimental::filesystem;
 #include "scene.hpp"
 #include "scene_list.hpp"
 
-namespace tomovis {
+namespace gui {
 
 SceneSwitcher::SceneSwitcher(SceneList& scenes) : scenes_(scenes) {
     reload_data_();
@@ -186,4 +186,4 @@ void SceneSwitcher::delete_scene() {
     scenes_.delete_scene(scenes_.active_scene_index());
 }
 
-} // namespace tomovis
+} // namespace gui

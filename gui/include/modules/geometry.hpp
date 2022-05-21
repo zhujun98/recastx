@@ -14,7 +14,7 @@
 #include "graphics/components/geometry_component.hpp"
 #include "graphics/components/reconstruction_component.hpp"
 
-namespace tomovis {
+namespace gui {
 
 using namespace tomop;
 
@@ -153,4 +153,4 @@ class GeometryProtocol : public SceneModuleProtocol {
     }
 };
 
-} // namespace tomovis
+} // namespace gui

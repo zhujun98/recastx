@@ -11,7 +11,7 @@
 
 #include "graphics/components/control_component.hpp"
 
-namespace tomovis {
+namespace gui {
 
 using namespace tomop;
 
@@ -135,4 +135,4 @@ class ControlProtocol : public SceneModuleProtocol {
     }
 };
 
-} // namespace tomovis
+} // namespace gui

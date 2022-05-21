@@ -6,7 +6,7 @@
 #include "scene_object.hpp"
 #include "slice.hpp"
 
-namespace tomovis {
+namespace gui {
 
 class SceneObject3d : public SceneObject {
    public:
@@ -16,4 +16,4 @@ class SceneObject3d : public SceneObject {
     void draw(glm::mat4 window_matrix) override;
 };
 
-}  // namespace tomovis
+}  // namespace gui

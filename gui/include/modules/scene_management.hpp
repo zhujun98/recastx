@@ -13,7 +13,7 @@
 #include "graphics/components/partitioning_component.hpp"
 #include "graphics/components/reconstruction_component.hpp"
 
-namespace tomovis {
+namespace gui {
 
 // for the 'one-way-communication' we have two parts
 // a handler that knows how to read in a packet
@@ -78,4 +78,4 @@ class ManageSceneProtocol : public SceneModuleProtocol {
     }
 };
 
-} // namespace tomovis
+} // namespace gui

@@ -3,7 +3,7 @@
 #include "scene_object.hpp"
 
 
-namespace tomovis {
+namespace gui {
 
 class SceneObject2d : public SceneObject {
   public:
@@ -34,4 +34,4 @@ class SceneObject2d : public SceneObject {
     std::vector<int> size_;
 };
 
-} // namespace tomovis
+} // namespace gui

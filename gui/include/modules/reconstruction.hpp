@@ -10,7 +10,7 @@
 #include "graphics/components/reconstruction_component.hpp"
 #include "util.hpp"
 
-namespace tomovis {
+namespace gui {
 
 using namespace tomop;
 
@@ -167,4 +167,4 @@ class ReconstructionProtocol : public SceneModuleProtocol {
     int group_size_requested_ = -1;
 };
 
-} // namespace tomovis
+} // namespace gui
