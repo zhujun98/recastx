@@ -2,7 +2,7 @@
 
 #include <GL/gl3w.h>
 
-namespace tomovis {
+namespace gui {
 
 const GLfloat* line();
 const GLfloat* square();
@@ -12,4 +12,4 @@ const GLuint* cube_wireframe_idxs();
 const GLfloat* pyramid();
 const GLfloat* alt_pyramid();
 
-} // namespace tomovis
+} // namespace gui

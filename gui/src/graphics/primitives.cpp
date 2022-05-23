@@ -1,5 +1,5 @@
 #include "graphics/primitives.hpp"
-namespace tomovis {
+namespace gui {
 
 const GLfloat* line() {
     static const GLfloat data[] = {0.0f, 0.0f, 0.0f,
@@ -77,4 +77,4 @@ const GLfloat* alt_pyramid() {
 
 
 
-} // namespace tomovis
+} // namespace gui

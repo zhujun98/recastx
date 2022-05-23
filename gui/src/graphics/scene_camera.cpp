@@ -8,7 +8,7 @@
 
 #include "graphics/scene_camera.hpp"
 
-namespace tomovis {
+namespace gui {
 
 static std::map<std::string,
                 std::array<std::vector<std::pair<double, double>>, 3>>
@@ -57,6 +57,8 @@ SceneCamera::SceneCamera() {
     set_colormap(0);
 }
 
+SceneCamera::~SceneCamera() = default;
+
 void SceneCamera::set_colormap(int scheme) {
     auto name = schemes_[scheme];
     constexpr int samples = 100;
@@ -96,8 +98,7 @@ void SceneCamera::set_colormap(int scheme) {
 
     glBindTexture(GL_TEXTURE_1D, colormap_texture_id_);
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, samples, 0, GL_RGB, GL_UNSIGNED_BYTE,
-                 image);
+    glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, samples, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
     glGenerateMipmap(GL_TEXTURE_1D);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -112,9 +113,8 @@ void SceneCamera::describe() {
                        return true;
                    },
                    (void*)&schemes_, (int)schemes_.size());
-    if (current_scheme != current_scheme_) {
-        set_colormap(current_scheme_);
-    }
+
+    if (current_scheme != current_scheme_) set_colormap(current_scheme_);
 }
 
-} // namespace tomovis
+} // namespace gui

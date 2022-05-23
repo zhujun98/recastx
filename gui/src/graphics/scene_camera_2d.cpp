@@ -3,18 +3,16 @@
 #include <GLFW/glfw3.h>
 #include <glm/gtx/transform.hpp>
 
-namespace tomovis {
+namespace gui {
 
-SceneCamera2d::SceneCamera2d() {}
+SceneCamera2d::SceneCamera2d() = default;
 
 glm::mat4 SceneCamera2d::matrix() {
     glm::mat4 camera_matrix;
 
-    camera_matrix =
-        glm::scale(glm::vec3(glm::vec2(scale_), 1.0f)) * camera_matrix;
+    camera_matrix = glm::scale(glm::vec3(glm::vec2(scale_), 1.0f)) * camera_matrix;
 
-    camera_matrix =
-        glm::rotate(angle_, glm::vec3(0.0f, 0.0f, 1.0f)) * camera_matrix;
+    camera_matrix = glm::rotate(angle_, glm::vec3(0.0f, 0.0f, 1.0f)) * camera_matrix;
 
     camera_matrix = glm::translate(position_) * camera_matrix;
 
@@ -86,4 +84,4 @@ bool SceneCamera2d::handle_mouse_moved(float x, float y) {
     return false;
 }
 
-} // namespace tomovis
+} // namespace gui

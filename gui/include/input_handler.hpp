@@ -1,6 +1,6 @@
 #pragma once
 
-namespace tomovis {
+namespace gui {
 
 class InputHandler {
   public:
@@ -13,4 +13,4 @@ class InputHandler {
     virtual int priority() const { return 10; }
 };
 
-} // namespace tomovis
+} // namespace gui

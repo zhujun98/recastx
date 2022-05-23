@@ -8,7 +8,7 @@
 
 struct GLFWwindow;
 
-namespace tomovis {
+namespace gui {
 
 class Input : public Ticker {
   public:
@@ -45,4 +45,4 @@ class Input : public Ticker {
     GLFWwindow* window_;
 };
 
-} // namespace tomovis
+} // namespace gui

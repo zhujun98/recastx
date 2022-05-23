@@ -5,7 +5,7 @@
 
 #include <GL/gl3w.h>
 
-namespace tomovis {
+namespace gui {
 
 static std::map<std::string,
                 std::array<std::vector<std::pair<double, double>>, 3>>
@@ -81,4 +81,4 @@ GLuint generate_colormap_texture(std::string name) {
     return colormap_texture_id;
 }
 
-}  // namespace tomovis
+}  // namespace gui

@@ -4,7 +4,7 @@
 #include "graphics/scene_object_2d.hpp"
 #include "graphics/shader_program.hpp"
 
-namespace tomovis {
+namespace gui {
 
 SceneObject2d::SceneObject2d(int scene_id) : SceneObject(scene_id), size_{32, 32} {
     static const GLfloat square[4][2] = {{-1.0f, -1.0f},
@@ -35,7 +35,7 @@ SceneObject2d::SceneObject2d(int scene_id) : SceneObject(scene_id), size_{32, 32
     camera_ = std::make_unique<SceneCamera2d>();
 }
 
-SceneObject2d::~SceneObject2d() {}
+SceneObject2d::~SceneObject2d() = default;
 
 void SceneObject2d::update_image_(int slice) {
     if (slice != 0)
@@ -76,8 +76,7 @@ void SceneObject2d::draw(glm::mat4 window_matrix) {
         glGetUniformLocation(program_->handle(), "inv_aspect_ratio");
     glUniform1f(loc_iasp, 1.0f / asp);
 
-    GLint matrix_loc =
-        glGetUniformLocation(program_->handle(), "transform_matrix");
+    GLint matrix_loc = glGetUniformLocation(program_->handle(), "transform_matrix");
     auto transform_matrix = window_matrix * camera_->matrix();
     glUniformMatrix4fv(matrix_loc, 1, GL_FALSE, &transform_matrix[0][0]);
 
@@ -85,4 +84,4 @@ void SceneObject2d::draw(glm::mat4 window_matrix) {
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
-}  // namespace tomovis
+}  // namespace gui

@@ -3,7 +3,7 @@
 #include <glm/glm.hpp>
 #include "graphics/scene_camera.hpp"
 
-namespace tomovis {
+namespace gui {
 
 class SceneCamera2d : public SceneCamera {
    public:
@@ -32,4 +32,4 @@ class SceneCamera2d : public SceneCamera {
     bool dragging_ = false;
 };
 
-}  // namespace tomovis
+}  // namespace gui

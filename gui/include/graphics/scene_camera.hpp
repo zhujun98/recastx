@@ -10,28 +10,27 @@
 #include "configurable.hpp"
 #include "input_handler.hpp"
 #include "ticker.hpp"
-#include "graphics/interface/window.hpp"
 
-namespace tomovis {
+namespace gui {
 
-class SceneCamera : public InputHandler, public Ticker, public Window {
+class SceneCamera : public InputHandler, public Ticker {
   public:
     SceneCamera();
-    virtual ~SceneCamera(){};
+    virtual ~SceneCamera();
 
     virtual glm::mat4 matrix() = 0;
 
     virtual void set_look_at(glm::vec3 /* center */) {}
     void tick(float) override {}
 
-    GLuint colormap() { return colormap_texture_id_; }
+    GLuint colormap() const { return colormap_texture_id_; }
     void set_colormap(int scheme);
 
     virtual glm::vec3& position() = 0;
     virtual glm::vec3& look_at() = 0;
     virtual void reset_view() {};
 
-    void describe() override;
+    virtual void describe();
 
     void toggle_interaction() { interaction_disabled_ = ! interaction_disabled_; }
 
@@ -44,4 +43,4 @@ class SceneCamera : public InputHandler, public Ticker, public Window {
     GLuint colormap_texture_id_;
 };
 
-} // namespace tomovis
+} // namespace gui

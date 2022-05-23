@@ -6,7 +6,7 @@
 
 struct GLFWwindow;
 
-namespace tomovis {
+namespace gui {
 
 class Renderer {
   public:
@@ -17,9 +17,6 @@ class Renderer {
       void register_target(RenderTarget& target);
       void register_ticker(Ticker& ticker);
 
-      void unregister_target(RenderTarget& target);
-      void unregister_ticker(Ticker& ticker);
-
       GLFWwindow* window() const { return window_; }
 
   private:
@@ -27,7 +24,7 @@ class Renderer {
 
     struct RenderCompare {
         bool operator()(const RenderTarget* lhs, const RenderTarget* rhs) const {
-            return lhs->z_priority() < rhs->z_priority();
+            return lhs->zPriority() < rhs->zPriority();
         }
     };
 
@@ -37,4 +34,4 @@ class Renderer {
     double previous_time_;
 };
 
-} // namespace tomovis
+} // namespace gui

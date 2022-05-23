@@ -7,34 +7,32 @@
 #include <GL/gl3w.h>
 #include <glm/glm.hpp>
 
-#include "components/object_component.hpp"
+#include "object_component.hpp"
 #include "packet_listener.hpp"
 #include "ticker.hpp"
 
-namespace tomovis {
+namespace gui {
 
 class ShaderProgram;
 class SceneCamera;
 
-class SceneObject : public InputHandler, public PacketPublisher, public Ticker, public Window {
+class SceneObject : public InputHandler, public PacketPublisher, public Ticker {
    public:
-    SceneObject(int scene_id);
+    explicit SceneObject(int scene_id);
     virtual ~SceneObject();
 
     virtual void draw(glm::mat4 window_matrix) = 0;
 
-    float& pixel_size() { return pixel_size_; }
     virtual SceneCamera& camera() { return *camera_; }
 
-    virtual void set_data(std::vector<unsigned char>& /* data */, int /* slice */ = 0) {}
-    virtual void set_size(std::vector<int>& /* size */, int /* slice */ = 0) {}
+    virtual void set_data(std::vector<unsigned char>& /* data */, int /* slice */) {}
 
     void add_component(std::unique_ptr<ObjectComponent> component) {
         components_.insert(
             std::make_pair(component->identifier(), std::move(component)));
     }
 
-    ObjectComponent& get_component(std::string identifier) {
+    ObjectComponent& get_component(const std::string& identifier) {
         return *components_[identifier].get();
     }
 
@@ -43,13 +41,13 @@ class SceneObject : public InputHandler, public PacketPublisher, public Ticker, 
     bool handle_mouse_moved(float x, float y) override;
     bool handle_key(int key, bool down, int mods) override;
     void tick(float time_elapsed) override;
-    void describe() override;
-    auto scene_id() const { return scene_id_; }
+    void describe();
+    [[nodiscard]] auto scene_id() const { return scene_id_; }
 
-   protected:
+  protected:
     int scene_id_ = -1;
 
-    virtual void update_image_(int /* slice */ = 0) {}
+    virtual void update_image_(int /* slice */) {}
 
     GLuint vao_handle_;
     GLuint vbo_handle_;
@@ -61,4 +59,4 @@ class SceneObject : public InputHandler, public PacketPublisher, public Ticker, 
     std::map<std::string, std::unique_ptr<ObjectComponent>> components_;
 };
 
-}  // namespace tomovis
+}  // namespace gui

@@ -4,29 +4,25 @@
 
 #include "tomop/tomop.hpp"
 
-namespace tomovis {
-
-using namespace tomop;
+namespace gui {
 
 class PacketListener {
-   public:
-    virtual void handle(Packet& packet) = 0;
+  public:
+    virtual void handle(tomop::Packet& packet) = 0;
 };
 
 class PacketPublisher {
-   public:
-    void send(Packet& packet) {
-        for (auto listener : listeners_) {
-            listener->handle(packet);
-        }
+  public:
+    void send(tomop::Packet& packet) {
+        for (auto listener : listeners_) listener->handle(packet);
     }
 
     void add_listener(PacketListener* listener) {
         listeners_.push_back(listener);
     }
 
-   private:
+  private:
     std::vector<PacketListener*> listeners_;
 };
 
-}  // namespace tomovis
+}  // namespace gui
