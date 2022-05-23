@@ -15,10 +15,10 @@
 
 #include <mutex>
 
-#include "../reconstruction/listener.hpp"
-#include "../reconstruction/reconstructor.hpp"
-#include "../util/bench.hpp"
-#include "../data_types.hpp"
+#include "reconstruction/listener.hpp"
+#include "reconstruction/reconstructor.hpp"
+#include "util/bench.hpp"
+#include "data_types.hpp"
 
 namespace slicerecon {
 
@@ -87,9 +87,9 @@ public:
         }
     }
 
-    VisualizationServer(std::string name, 
-                        std::string hostname = "tcp://localhost:5555",
-                        std::string subscribe_hostname = "tcp://localhost:5556")
+    VisualizationServer(const std::string& name,
+                        const std::string& hostname,
+                        const std::string& subscribe_hostname)
         : context_(1), 
           socket_(context_, ZMQ_REQ),
           subscribe_socket_(context_, ZMQ_SUB) {

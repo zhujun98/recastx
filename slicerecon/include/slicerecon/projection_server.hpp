@@ -8,8 +8,8 @@
 
 #include "tomop/tomop.hpp"
 
-#include "../util/exceptions.hpp"
-#include "../data_types.hpp"
+#include "util/exceptions.hpp"
+#include "data_types.hpp"
 
 namespace slicerecon {
 
