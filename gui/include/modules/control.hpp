@@ -12,7 +12,7 @@
 
 namespace gui {
 
-// Module for analysis, benchmarking and control
+// Module for analysis and control
 class ControlProtocol : public SceneModuleProtocol {
   public:
     std::unique_ptr<tomop::Packet> read_packet(tomop::packet_desc desc,
@@ -40,12 +40,6 @@ class ControlProtocol : public SceneModuleProtocol {
             }
             case tomop::packet_desc::tracker: {
                 auto packet = std::make_unique<tomop::TrackerPacket>();
-                packet->deserialize(std::move(buffer));
-                ack(socket);
-                return packet;
-            }
-            case tomop::packet_desc::benchmark: {
-                auto packet = std::make_unique<tomop::BenchmarkPacket>();
                 packet->deserialize(std::move(buffer));
                 ack(socket);
                 return packet;
@@ -100,13 +94,6 @@ class ControlProtocol : public SceneModuleProtocol {
             control_component->track_result(packet.parameter_name, packet.value);
             break;
         }
-        case tomop::packet_desc::benchmark: {
-            auto& packet = *(tomop::BenchmarkPacket*)event_packet.get();
-            auto control_component = get_component(packet.scene_id);
-            if (!control_component) return;
-            control_component->bench_result(packet.parameter_name, packet.value);
-            break;
-        }
 
         default: { break; }
         }
@@ -116,8 +103,7 @@ class ControlProtocol : public SceneModuleProtocol {
         return {tomop::packet_desc::parameter_bool,
                 tomop::packet_desc::parameter_float,
                 tomop::packet_desc::parameter_enum,
-                tomop::packet_desc::tracker,
-                tomop::packet_desc::benchmark};
+                tomop::packet_desc::tracker};
     }
 };
 

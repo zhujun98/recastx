@@ -9,7 +9,6 @@ extern "C" {
 }
 
 #include <bulk/backends/thread/thread.hpp>
-#include <bulk/bulk.hpp>
 
 #include "../data_types.hpp"
 

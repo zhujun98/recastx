@@ -1,8 +1,8 @@
 #include <sstream>
 
-#include "slicerecon/util/util.hpp"
+#include "slicerecon/reconstruction/utils.hpp"
 
-namespace slicerecon::util {
+namespace slicerecon::utils {
 
 std::vector<astra::SPar3DProjection>
 list_to_par_projections(const std::vector<float>& vectors) {
@@ -170,4 +170,4 @@ std::string info(const astra::CVolumeGeometry3D& x) {
     return ss.str();
 }
 
-} // namespace slicerecon::util
+} // slicerecon::util

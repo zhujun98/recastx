@@ -1,8 +1,7 @@
 #include <spdlog/spdlog.h>
 
 #include "slicerecon/reconstruction/solver.hpp"
-#include "slicerecon/util/bench.hpp"
-#include "slicerecon/util/util.hpp"
+#include "slicerecon/reconstruction/utils.hpp"
 
 namespace slicerecon {
 
@@ -19,7 +18,7 @@ Solver::Solver(Settings param, Geometry geom) : param_(param), geom_(geom) {
         mid_z - half_slab_height, geom_.volume_max_point[0],
         geom_.volume_max_point[1], mid_z + half_slab_height);
 
-    spdlog::info("Slice volume: {}", slicerecon::util::info(*vol_geom_));
+    spdlog::info("Slice volume: {}", slicerecon::utils::info(*vol_geom_));
 
     // Volume data
     vol_handle_ = astraCUDA3d::allocateGPUMemory(param_.slice_size,
@@ -36,7 +35,7 @@ Solver::Solver(Settings param, Geometry geom) : param_(param), geom_(geom) {
         geom_.volume_max_point[0], geom_.volume_max_point[1],
         geom_.volume_max_point[1]);
 
-    spdlog::info("Small preview volume: {}", slicerecon::util::info(*vol_geom_small_));
+    spdlog::info("Small preview volume: {}", slicerecon::utils::info(*vol_geom_small_));
 
     vol_handle_small_ = astraCUDA3d::allocateGPUMemory(
         param_.preview_size, param_.preview_size,
@@ -63,12 +62,12 @@ ParallelBeamSolver::ParallelBeamSolver(Settings param, Geometry geom)
         auto proj_geom = astra::CParallelProjectionGeometry3D(
             geom_.projections, geom_.rows, geom_.cols, 1.0f, 1.0f, geom_.angles.data());
 
-        proj_geom_ = slicerecon::util::proj_to_vec(&proj_geom);
+        proj_geom_ = slicerecon::utils::proj_to_vec(&proj_geom);
 
-        proj_geom_small_ = slicerecon::util::proj_to_vec(&proj_geom);
+        proj_geom_small_ = slicerecon::utils::proj_to_vec(&proj_geom);
 
     } else {
-        auto par_projs = slicerecon::util::list_to_par_projections(geom_.angles);
+        auto par_projs = slicerecon::utils::list_to_par_projections(geom_.angles);
         proj_geom_ = std::make_unique<astra::CParallelVecProjectionGeometry3D>(
             geom_.projections, geom_.rows, geom_.cols, par_projs.data());
         proj_geom_small_ = std::make_unique<astra::CParallelVecProjectionGeometry3D>(
@@ -103,10 +102,9 @@ ParallelBeamSolver::ParallelBeamSolver(Settings param, Geometry geom)
 }
 
 slice_data ParallelBeamSolver::reconstruct_slice(orientation x, int buffer_idx) {
-    auto dt = util::bench_scope("slice");
     auto k = vol_geom_->getWindowMaxX();
 
-    auto [delta, rot, scale] = util::slice_transform(
+    auto [delta, rot, scale] = utils::slice_transform(
         {x[6], x[7], x[8]}, {x[0], x[1], x[2]}, {x[3], x[4], x[5]}, k);
 
     // From the ASTRA geometry, get the vectors, modify, and reset them
@@ -148,7 +146,6 @@ slice_data ParallelBeamSolver::reconstruct_slice(orientation x, int buffer_idx) 
 
 void ParallelBeamSolver::reconstruct_preview(
     std::vector<float>& preview_buffer, int buffer_idx) {
-    auto dt = util::bench_scope("3D preview");
 
     proj_datas_[buffer_idx]->changeGeometry(proj_geom_small_.get());
     algs_small_[buffer_idx]->run();
@@ -229,15 +226,15 @@ ConeBeamSolver::ConeBeamSolver(Settings param, Geometry geom)
             geom_.detector_size[0], geom_.detector_size[1],
             geom_.angles.data(), geom_.source_origin, geom_.origin_det);
 
-        proj_geom_ = slicerecon::util::proj_to_vec(&proj_geom);
-        proj_geom_small_ = slicerecon::util::proj_to_vec(&proj_geom);
+        proj_geom_ = slicerecon::utils::proj_to_vec(&proj_geom);
+        proj_geom_small_ = slicerecon::utils::proj_to_vec(&proj_geom);
     } else {
-        auto cone_projs = slicerecon::util::list_to_cone_projections(
+        auto cone_projs = slicerecon::utils::list_to_cone_projections(
             geom_.rows, geom_.cols, geom_.angles);
         proj_geom_ = std::make_unique<astra::CConeVecProjectionGeometry3D>(
             geom_.projections, geom_.rows, geom_.cols, cone_projs.data());
 
-        spdlog::info("{}", slicerecon::util::info(*proj_geom_));
+        spdlog::info("{}", slicerecon::utils::info(*proj_geom_));
 
         proj_geom_small_ = std::make_unique<astra::CConeVecProjectionGeometry3D>(
             geom_.projections, geom_.rows, geom_.cols, cone_projs.data());
@@ -272,10 +269,9 @@ ConeBeamSolver::ConeBeamSolver(Settings param, Geometry geom)
 }
 
 slice_data ConeBeamSolver::reconstruct_slice(orientation x, int buffer_idx) {
-    auto dt = util::bench_scope("slice");
     auto k = vol_geom_->getWindowMaxX();
 
-    auto [delta, rot, scale] = util::slice_transform(
+    auto [delta, rot, scale] = utils::slice_transform(
         {x[6], x[7], x[8]}, {x[0], x[1], x[2]}, {x[3], x[4], x[5]}, k);
 
     // From the ASTRA geometry, get the vectors, modify, and reset them
@@ -314,8 +310,6 @@ slice_data ConeBeamSolver::reconstruct_slice(orientation x, int buffer_idx) {
 }
 
 void ConeBeamSolver::reconstruct_preview(std::vector<float>& preview_buffer, int buffer_idx) {
-    auto dt = util::bench_scope("3D preview");
-
     proj_datas_[buffer_idx]->changeGeometry(proj_geom_small_.get());
     algs_small_[buffer_idx]->run();
 

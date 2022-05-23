@@ -8,7 +8,6 @@
 
 #include <bulk/bulk.hpp>
 
-#include "slicerecon/util/bench.hpp"
 #include "slicerecon/reconstruction/projection_processor.hpp"
 
 
@@ -257,7 +256,6 @@ ProjectionProcessor::ProjectionProcessor(Settings param, Geometry geom)
 void ProjectionProcessor::process(float* data, int proj_id_begin, int proj_id_end)
 {
     auto proj_count = proj_id_end - proj_id_begin + 1;
-    auto dt = bulk::util::timer();
     env_.spawn(param_.filter_cores, [&](auto& world) {
         auto s = world.rank();
         auto p = world.active_processors();
@@ -287,8 +285,6 @@ void ProjectionProcessor::process(float* data, int proj_id_begin, int proj_id_en
 
         world.barrier();
     });
-
-    util::bench.insert("process", dt.get());
 }
 
-} // namespace slicerecon::util
+} // slicerecon::utils

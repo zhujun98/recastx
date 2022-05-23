@@ -17,12 +17,11 @@
 
 #include "reconstruction/listener.hpp"
 #include "reconstruction/reconstructor.hpp"
-#include "util/bench.hpp"
 #include "data_types.hpp"
 
 namespace slicerecon {
 
-class VisualizationServer : public Listener, public util::bench_listener {
+class VisualizationServer : public Listener {
 
 public:
 
@@ -63,10 +62,6 @@ public:
 
         auto grsp = tomop::GroupRequestSlicesPacket(scene_id_, 1);
         send(grsp);
-    }
-
-    void bench_notify(std::string name, double time) override {
-        send(tomop::BenchmarkPacket(scene_id_, name, time));
     }
 
     void register_parameter(

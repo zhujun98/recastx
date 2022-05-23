@@ -35,7 +35,6 @@ enum class packet_desc : int {
     parameter_float = 0x502,
     parameter_enum = 0x503,
     tracker = 0x504,
-    benchmark = 0x505,
 };
 
 } // namespace tomop

@@ -21,13 +21,11 @@ class ControlComponent : public ObjectComponent {
     void add_bool_parameter(std::string name, bool value);
     void add_enum_parameter(std::string name, std::vector<std::string> values);
 
-    void bench_result(std::string name, float value);
     void track_result(std::string name, float value);
 
   private:
     void describe_parameters_();
     void describe_trackers_();
-    void describe_benchmarks_();
 
     // Note: scene objects are publishers, `object_->send(packet)` for parameter
     // updates
@@ -41,7 +39,6 @@ class ControlComponent : public ObjectComponent {
         enum_parameters_;
 
     std::map<std::string, std::vector<float>> trackers_;
-    std::map<std::string, std::vector<float>> benchmarks_;
 };
 
 } // namespace gui

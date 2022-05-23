@@ -11,11 +11,6 @@ extern "C" {
 
 #include <spdlog/spdlog.h>
 
-#include "bulk/backends/thread/thread.hpp"
-#include "bulk/bulk.hpp"
-
-#include "../util/bench.hpp"
-#include "../util/exceptions.hpp"
 #include "../data_types.hpp"
 #include "helpers.hpp"
 #include "solver.hpp"
@@ -33,14 +28,14 @@ class Reconstructor {
     std::vector<float> buffer_;
 
     int active_gpu_buffer_index_ = 0;
-    int update_every_;
+    int buffer_size_;
 
     int32_t pixels_ = -1;
     int32_t received_darks_ = 0;
     int32_t received_flats_ = 0;
     bool reciprocal_computed_ = false;
 
-    std::unique_ptr<Solver> alg_;
+    std::unique_ptr<Solver> solver_;
 
     Settings param_;
     Geometry geom_;

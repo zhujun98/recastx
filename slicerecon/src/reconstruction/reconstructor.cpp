@@ -2,6 +2,9 @@
 
 #include <Eigen/Eigen>
 
+#include <bulk/backends/thread/thread.hpp>
+#include <bulk/bulk.hpp>
+
 #include "slicerecon/reconstruction/reconstructor.hpp"
 
 
@@ -35,7 +38,7 @@ Reconstructor::Reconstructor(Settings param, Geometry geom)
     if (!geom_.parallel) {
         projection_processor_->fdk_scale =
             std::make_unique<detail::FDKScaler>(detail::FDKScaler{
-                ((ConeBeamSolver*)(alg_.get()))->fdk_weights()});
+                ((ConeBeamSolver*)(solver_.get()))->fdk_weights()});
     }
 
     if (param_.retrieve_phase) {
@@ -70,14 +73,13 @@ void Reconstructor::pushProjection(ProjectionType k,
     if (shape[0] != geom_.rows || shape[1] != geom_.cols) {
         spdlog::error("Received projection with wrong shape. Actual: {} x {}, expected: {} x {}", 
                       shape[0], shape[1], geom_.rows, geom_.cols);
-        throw server_error(
+        throw std::runtime_error(
             "Received projection has a different shape than the one set by "
             "the acquisition geometry");
     }
 
     switch (k) {
         case ProjectionType::standard: {
-
             if (received_darks_ > 0 && received_flats_ > 0) {
                 if (received_darks_ < p.darks || received_flats_ < p.flats) {
                     spdlog::warn("Computing reciprocal with less darks and/or flats than expected. "
@@ -94,54 +96,47 @@ void Reconstructor::pushProjection(ProjectionType k,
                 return;
             }
 
-            auto rel_proj_idx = proj_idx % update_every_;
-            bool full_group = rel_proj_idx % p.group_size == p.group_size - 1;
-            bool buffer_end_reached = proj_idx % update_every_ == update_every_ - 1;
+            int32_t rel_idx = proj_idx % buffer_size_;
+            bool group_end_reached = rel_idx % p.group_size == p.group_size - 1;
+            bool buffer_end_reached = rel_idx == buffer_size_ - 1;
     
             // buffer incoming
-            int i0 = rel_proj_idx * pixels_;
+            int i0 = rel_idx * pixels_;
             for (int i = 0; i < pixels_; ++i) {
                 raw_dtype v;
                 memcpy(&v, data + i * sizeof(raw_dtype), sizeof(raw_dtype));
                 buffer_[i0 + i] = static_cast<float>(v);
             }
 
-            // see if some processing needs to be done
-            if (full_group || buffer_end_reached) {
-                // find processing range in the data buffer
-                auto begin_in_buffer = rel_proj_idx - (rel_proj_idx % p.group_size);
-                processProjections(begin_in_buffer, rel_proj_idx);
+            if (group_end_reached || buffer_end_reached) {
+                auto begin_in_buffer = rel_idx - (rel_idx % p.group_size);
+                processProjections(begin_in_buffer, rel_idx);
             }
 
-            // see if uploading needs to be done
             if (buffer_end_reached) {
-                // copy data from buffer into sino_buffer
-
                 if (p.recon_mode == ReconstructMode::alternating) {
-                    transposeIntoSino(0, update_every_ - 1);
+                    transposeIntoSino(0, buffer_size_ - 1);
 
-                    // let the reconstructor know that now the (other) GPU
-                    // buffer is ready for reconstruction
                     active_gpu_buffer_index_ = 1 - active_gpu_buffer_index_;
                     bool use_gpu_lock = false;
 
-                    uploadSinoBuffer(0, update_every_ - 1, active_gpu_buffer_index_, use_gpu_lock);
+                    uploadSinoBuffer(0, buffer_size_ - 1, active_gpu_buffer_index_, use_gpu_lock);
 
                 } else { // --continuous mode
-                    auto begin_wrt_geom = (update_count_ * update_every_) % geom_.projections;
-                    auto end_wrt_geom = (begin_wrt_geom + update_every_ - 1) % geom_.projections;
+                    auto begin_wrt_geom = (update_count_ * buffer_size_) % geom_.projections;
+                    auto end_wrt_geom = (begin_wrt_geom + buffer_size_ - 1) % geom_.projections;
                     bool use_gpu_lock = true;
                     int gpu_buffer_idx = 0; // we only have one buffer
 
                     if (end_wrt_geom > begin_wrt_geom) {
-                        transposeIntoSino(0, update_every_ - 1);
+                        transposeIntoSino(0, buffer_size_ - 1);
                         uploadSinoBuffer(begin_wrt_geom, end_wrt_geom, gpu_buffer_idx, use_gpu_lock);
                     } else {
                         transposeIntoSino(0, geom_.projections - 1 - begin_wrt_geom);
                         // we have gone around in the geometry
                         uploadSinoBuffer(begin_wrt_geom, geom_.projections - 1, gpu_buffer_idx, use_gpu_lock);
 
-                        transposeIntoSino(geom_.projections - begin_wrt_geom, update_every_ - 1);
+                        transposeIntoSino(geom_.projections - begin_wrt_geom, buffer_size_ - 1);
                         uploadSinoBuffer(0, end_wrt_geom, gpu_buffer_idx, use_gpu_lock);
                     }
 
@@ -188,7 +183,7 @@ slice_data Reconstructor::reconstructSlice(orientation x) {
 
     if (!initialized_) return {{1, 1}, {0.0f}};
 
-    return alg_->reconstruct_slice(x, active_gpu_buffer_index_);
+    return solver_->reconstruct_slice(x, active_gpu_buffer_index_);
 }
 
 std::vector<float>& Reconstructor::previewData() { return small_volume_buffer_; }
@@ -198,8 +193,8 @@ Settings Reconstructor::parameters() const { return param_; }
 bool Reconstructor::initialized() const { return initialized_; }
 
 void Reconstructor::parameterChanged(std::string name, std::variant<float, std::string, bool> value) {
-    if (alg_) {
-        if (alg_->parameter_changed(name, value)) {
+    if (solver_) {
+        if (solver_->parameter_changed(name, value)) {
             for (auto l : listeners_) {
                 l->notify(*this);
             }
@@ -222,7 +217,7 @@ std::vector<float> Reconstructor::defaultAngles(int n) {
 }
 
 void Reconstructor::initialize() {
-    bool reinitializing = (bool)alg_;
+    bool reinitializing = (bool)solver_;
 
     if (geom_.angles.empty()) {
         geom_.angles = Reconstructor::defaultAngles(geom_.projections);
@@ -239,23 +234,23 @@ void Reconstructor::initialize() {
     dark_avg_.resize(pixels_);
     reciprocal_.resize(pixels_, 1.0f);
 
-    update_every_ = param_.recon_mode == ReconstructMode::alternating 
-                    ? geom_.projections : param_.group_size;
-    buffer_.resize((size_t)update_every_ * (size_t)pixels_);
-    sino_buffer_.resize((size_t)update_every_ * (size_t)pixels_);
+    buffer_size_ = param_.recon_mode == ReconstructMode::alternating 
+                   ? geom_.projections : param_.group_size;
+    buffer_.resize((size_t)buffer_size_ * (size_t)pixels_);
+    sino_buffer_.resize((size_t)buffer_size_ * (size_t)pixels_);
 
     small_volume_buffer_.resize(param_.preview_size * param_.preview_size * param_.preview_size);
 
     if (geom_.parallel) {
-        alg_ = std::make_unique<ParallelBeamSolver>(param_, geom_);
+        solver_ = std::make_unique<ParallelBeamSolver>(param_, geom_);
     } else {
-        alg_ = std::make_unique<ConeBeamSolver>(param_, geom_);
+        solver_ = std::make_unique<ConeBeamSolver>(param_, geom_);
     }
 
     initialized_ = true;
 
     if (!reinitializing) {
-        for (auto [k, v] : alg_->parameters()) {
+        for (auto [k, v] : solver_->parameters()) {
             for (auto l : listeners_) {
                 l->register_parameter(k, v);
             }
@@ -329,21 +324,15 @@ void Reconstructor::uploadSinoBuffer(int proj_id_begin,
     spdlog::info("Uploading to buffer ({0:d}) between {1:d}/{2:d}", 
                  active_gpu_buffer_index_, proj_id_begin, proj_id_end);
 
-    // in continuous mode, there is only one data buffer and it needs to be
-    // protected since the reconstruction server has access to it too
-
     {
-        auto dt = util::bench_scope("GPU upload");
         if (lock_gpu) {
             std::lock_guard<std::mutex> guard(gpu_mutex_);
 
-            astra::uploadMultipleProjections(alg_->proj_data(buffer_idx),
-                                             &sino_buffer_[0], proj_id_begin,
-                                             proj_id_end);
+            astra::uploadMultipleProjections(
+                solver_->proj_data(buffer_idx), &sino_buffer_[0], proj_id_begin, proj_id_end);
         } else {
-            astra::uploadMultipleProjections(alg_->proj_data(buffer_idx),
-                                             &sino_buffer_[0], proj_id_begin,
-                                             proj_id_end);
+            astra::uploadMultipleProjections(
+                solver_->proj_data(buffer_idx), &sino_buffer_[0], proj_id_begin, proj_id_end);
         }
     }
 
@@ -353,8 +342,6 @@ void Reconstructor::uploadSinoBuffer(int proj_id_begin,
 
 
 void Reconstructor::transposeIntoSino(int proj_offset, int proj_end) {
-    auto dt = util::bench_scope("Transpose sino");
-
     // major to minor: [i, j, k]
     // In projection_group we have: [projection_id, rows, cols ]
     // For sinogram we want: [rows, projection_id, cols]
@@ -376,7 +363,7 @@ void Reconstructor::refreshData() {
 
     { // lock guard scope
         std::lock_guard<std::mutex> guard(gpu_mutex_);
-        alg_->reconstruct_preview(small_volume_buffer_, active_gpu_buffer_index_);
+        solver_->reconstruct_preview(small_volume_buffer_, active_gpu_buffer_index_);
     } // end lock guard scope
 
     spdlog::info("Reconstructed low-res preview ({0:d}).", active_gpu_buffer_index_);

@@ -43,13 +43,4 @@ struct TrackerPacket : public PacketBase<TrackerPacket> {
                              (std::string, parameter_name), (float, value));
 };
 
-struct BenchmarkPacket : public PacketBase<BenchmarkPacket> {
-    static constexpr auto desc = packet_desc::benchmark;
-    BenchmarkPacket() = default;
-    BenchmarkPacket(int32_t a, std::string b, float c)
-        : scene_id(a), parameter_name(b), value(c) {}
-    BOOST_HANA_DEFINE_STRUCT(BenchmarkPacket, (int32_t, scene_id),
-                             (std::string, parameter_name), (float, value));
-};
-
 } // namespace tomop

@@ -19,8 +19,7 @@ set_target_properties(
 set(ASTRA_INCLUDE_DIR ${CMAKE_PREFIX_PATH}/include)
 
 set(SOURCES
-    "src/util/util.cpp"
-    "src/util/bench.cpp"
+    "src/reconstruction/utils.cpp"
     "src/reconstruction/projection_processor.cpp"
     "src/reconstruction/listener.cpp"
     "src/reconstruction/solver.cpp"

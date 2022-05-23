@@ -14,7 +14,7 @@
 #include "astra/ParallelVecProjectionGeometry3D.h"
 #include "astra/VolumeGeometry3D.h"
 
-namespace slicerecon::util {
+namespace slicerecon::utils {
 
 std::vector<astra::SPar3DProjection>
 list_to_par_projections(const std::vector<float>& vectors);
@@ -35,4 +35,4 @@ slice_transform(Eigen::Vector3f base, Eigen::Vector3f axis_1,
 std::string info(const astra::CConeVecProjectionGeometry3D& x);
 std::string info(const astra::CVolumeGeometry3D& x);
 
-} // namespace slicerecon::util
+} // slicerecon::utils
