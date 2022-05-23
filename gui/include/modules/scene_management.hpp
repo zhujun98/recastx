@@ -9,9 +9,9 @@
 #include "scene.hpp"
 #include "scene_module.hpp"
 
-#include "graphics/components/geometry_component.hpp"
-#include "graphics/components/partitioning_component.hpp"
-#include "graphics/components/reconstruction_component.hpp"
+#include "graphics/geometry_component.hpp"
+#include "graphics/partitioning_component.hpp"
+#include "graphics/reconstruction_component.hpp"
 
 namespace gui {
 

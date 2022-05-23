@@ -8,7 +8,7 @@
 #include <imgui.h>
 
 #include "graphics/colormap.hpp"
-#include "graphics/components/reconstruction_component.hpp"
+#include "graphics/reconstruction_component.hpp"
 #include "graphics/primitives.hpp"
 #include "graphics/scene_camera_3d.hpp"
 

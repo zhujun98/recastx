@@ -1,15 +1,11 @@
 #include <algorithm>
-#include <iostream>
 
 #include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 #include "graphics/scene_camera_3d.hpp"
 #include "graphics/scene_object_3d.hpp"
-#include "graphics/shader_program.hpp"
-
-#include "graphics/components/axes_component.hpp"
-#include "graphics/components/control_component.hpp"
+#include "graphics/axes_component.hpp"
+#include "graphics/control_component.hpp"
 
 namespace gui {
 

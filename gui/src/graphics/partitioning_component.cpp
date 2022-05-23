@@ -4,7 +4,7 @@
 #include <glm/gtx/transform.hpp>
 #include <imgui.h>
 
-#include "graphics/components/partitioning_component.hpp"
+#include "graphics/partitioning_component.hpp"
 
 namespace gui {
 

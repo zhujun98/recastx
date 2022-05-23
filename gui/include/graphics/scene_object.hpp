@@ -7,7 +7,7 @@
 #include <GL/gl3w.h>
 #include <glm/glm.hpp>
 
-#include "components/object_component.hpp"
+#include "object_component.hpp"
 #include "packet_listener.hpp"
 #include "ticker.hpp"
 

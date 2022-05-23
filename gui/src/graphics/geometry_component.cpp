@@ -4,10 +4,9 @@
 #include <glm/gtx/transform.hpp>
 #include <imgui.h>
 
-#include "graphics/components/geometry_component.hpp"
+#include "graphics/geometry_component.hpp"
 #include "graphics/primitives.hpp"
 #include "graphics/scene_camera_3d.hpp"
-//#include "modules/packets/geometry_packets.hpp"
 
 namespace gui {
 

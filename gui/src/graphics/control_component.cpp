@@ -3,7 +3,7 @@
 #include "tomop/tomop.hpp"
 #include <imgui.h>
 
-#include "graphics/components/control_component.hpp"
+#include "graphics/control_component.hpp"
 #include "graphics/scene_object.hpp"
 
 namespace gui {

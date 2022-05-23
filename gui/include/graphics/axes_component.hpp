@@ -4,7 +4,7 @@
 
 #include <glm/glm.hpp>
 
-#include "graphics/shader_program.hpp"
+#include "shader_program.hpp"
 
 #include "object_component.hpp"
 

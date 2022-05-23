@@ -2,9 +2,9 @@
 #include <string>
 
 #include <GL/gl3w.h>
-
-#include "graphics/components/movie/recorder.hpp"
 #include <imgui.h>
+
+#include "utils/recorder.hpp"
 
 namespace gui {
 

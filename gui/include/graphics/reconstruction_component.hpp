@@ -8,10 +8,10 @@
 
 #include <glm/glm.hpp>
 
-#include "graphics/scene_object.hpp"
-#include "graphics/shader_program.hpp"
-#include "graphics/slice.hpp"
-#include "graphics/textures.hpp"
+#include "scene_object.hpp"
+#include "shader_program.hpp"
+#include "slice.hpp"
+#include "textures.hpp"
 #include "object_component.hpp"
 #include "util.hpp"
 

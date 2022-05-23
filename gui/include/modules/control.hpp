@@ -8,7 +8,7 @@
 
 #include "util.hpp"
 
-#include "graphics/components/control_component.hpp"
+#include "graphics/control_component.hpp"
 
 namespace gui {
 

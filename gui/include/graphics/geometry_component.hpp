@@ -9,12 +9,12 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "../utils/recorder.hpp"
 #include "graphics/scene_object.hpp"
 #include "graphics/shader_program.hpp"
 #include "graphics/slice.hpp"
 #include "graphics/textures.hpp"
 #include "object_component.hpp"
-#include "movie/recorder.hpp"
 
 #include "util.hpp"
 

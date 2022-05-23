@@ -8,8 +8,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "graphics/scene_object.hpp"
-#include "graphics/shader_program.hpp"
+#include "scene_object.hpp"
+#include "shader_program.hpp"
 #include "object_component.hpp"
 
 namespace gui {

@@ -6,7 +6,7 @@
 #include "scene.hpp"
 #include "scene_module.hpp"
 
-#include "graphics/components/reconstruction_component.hpp"
+#include "graphics/reconstruction_component.hpp"
 #include "util.hpp"
 
 namespace gui {

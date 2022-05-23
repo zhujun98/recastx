@@ -8,7 +8,7 @@
 #include "scene.hpp"
 #include "scene_module.hpp"
 
-#include "graphics/components/partitioning_component.hpp"
+#include "graphics/partitioning_component.hpp"
 
 namespace gui {
 

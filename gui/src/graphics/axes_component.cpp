@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "graphics/components/axes_component.hpp"
+#include "graphics/axes_component.hpp"
 #include "graphics/scene_camera_3d.hpp"
 
 #include <imgui.h>
