@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <variant>
 
 #ifndef ASTRA_CUDA
 #define ASTRA_CUDA
@@ -17,7 +18,7 @@
 #include "astra/ParallelVecProjectionGeometry3D.h"
 #include "astra/VolumeGeometry3D.h"
 
-#include "../data_types.hpp"
+#include "slicerecon/data_types.hpp"
 
 
 namespace slicerecon {

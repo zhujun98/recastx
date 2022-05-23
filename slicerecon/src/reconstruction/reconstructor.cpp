@@ -1,11 +1,8 @@
 #include <complex>
+#include <numeric>
 
 #include <Eigen/Eigen>
-
 #include <spdlog/spdlog.h>
-
-#include <bulk/backends/thread/thread.hpp>
-#include <bulk/bulk.hpp>
 
 #include "slicerecon/reconstruction/reconstructor.hpp"
 #include "slicerecon/reconstruction/utils.hpp"
@@ -248,7 +245,6 @@ void Reconstructor::processProjections(int proj_id_begin, int proj_id_end) {
     auto data = &buffer_[proj_id_begin * pixels_];
     projection_processor_->process(data, proj_id_begin, proj_id_end);
 }
-
 
 void Reconstructor::uploadSinoBuffer(int proj_id_begin, 
                                      int proj_id_end,

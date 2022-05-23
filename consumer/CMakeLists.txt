@@ -15,7 +15,7 @@ target_link_libraries(${TARGET_NAME}
         Boost::program_options
 )
 target_include_directories(${TARGET_NAME} PRIVATE "include")
-target_compile_options(${TARGET_NAME} PRIVATE -std=c++17 -Wall -Wextra -Wfatal-errors)
+target_compile_options(${TARGET_NAME} PRIVATE -Wall -Wextra -Wfatal-errors)
 
 # INSTALL COMMANDS
 install(TARGETS ${TARGET_NAME} RUNTIME DESTINATION bin)

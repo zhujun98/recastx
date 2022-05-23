@@ -8,9 +8,9 @@ extern "C" {
 #include <fftw3.h>
 }
 
-#include <bulk/backends/thread/thread.hpp>
+#include <oneapi/tbb.h>
 
-#include "../data_types.hpp"
+#include "slicerecon/data_types.hpp"
 
 namespace slicerecon {
 
@@ -93,7 +93,7 @@ class ProjectionProcessor {
     Settings param_;
     Geometry geom_;
 
-    bulk::thread::environment env_;
+    oneapi::tbb::task_arena arena_;
 };
 
 } // namespace slicerecon
