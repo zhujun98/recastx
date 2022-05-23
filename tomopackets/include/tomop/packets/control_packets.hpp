@@ -34,13 +34,4 @@ struct ParameterEnumPacket : public PacketBase<ParameterEnumPacket> {
                              (std::vector<std::string>, values));
 };
 
-struct TrackerPacket : public PacketBase<TrackerPacket> {
-    static constexpr auto desc = packet_desc::tracker;
-    TrackerPacket() = default;
-    TrackerPacket(int32_t a, std::string b, float c)
-        : scene_id(a), parameter_name(b), value(c) {}
-    BOOST_HANA_DEFINE_STRUCT(TrackerPacket, (int32_t, scene_id),
-                             (std::string, parameter_name), (float, value));
-};
-
 } // namespace tomop

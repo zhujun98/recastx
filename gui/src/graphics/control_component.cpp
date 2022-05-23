@@ -17,7 +17,6 @@ void ControlComponent::describe() {
     ImGui::Indent(16.0f);
 
     describe_parameters_();
-    describe_trackers_();
 
     ImGui::Unindent(16.0f);
 }
@@ -70,22 +69,6 @@ void ControlComponent::describe_parameters_() {
     }
 }
 
-void ControlComponent::describe_trackers_() {
-    if (trackers_.empty()) {
-        return;
-    }
-
-    // TODO only track last x timesteps
-
-    if (ImGui::CollapsingHeader("trackers", nullptr, ImGuiTreeNodeFlags_DefaultOpen)) {
-        for (auto& [key, values] : trackers_) {
-            ImGui::PlotLines(key.c_str(), values.data(), values.size(), 0,
-                             nullptr, FLT_MAX, FLT_MAX, ImVec2(400.0f, 150.0f),
-                             sizeof(float));
-        }
-    }
-}
-
 void ControlComponent::add_float_parameter(std::string name, float value) {
     auto cptr = std::unique_ptr<char[]>(new char[BUFFER_SIZE]);
     auto value_s = std::to_string(value);
@@ -104,10 +87,6 @@ void ControlComponent::add_enum_parameter(std::string name,
         return;
     }
     enum_parameters_[name] = {values, values[0]};
-}
-
-void ControlComponent::track_result(std::string name, float value) {
-    trackers_[name].push_back(value);
 }
 
 } // namespace gui

@@ -38,13 +38,6 @@ class ControlProtocol : public SceneModuleProtocol {
                 ack(socket);
                 return packet;
             }
-            case tomop::packet_desc::tracker: {
-                auto packet = std::make_unique<tomop::TrackerPacket>();
-                packet->deserialize(std::move(buffer));
-                ack(socket);
-                return packet;
-            }
-
             default: { return nullptr; }
         }
     }
@@ -87,14 +80,6 @@ class ControlProtocol : public SceneModuleProtocol {
             control_component->add_enum_parameter(packet.parameter_name, packet.values);
             break;
         }
-        case tomop::packet_desc::tracker: {
-            auto& packet = *(tomop::TrackerPacket*)event_packet.get();
-            auto control_component = get_component(packet.scene_id);
-            if (!control_component) return;
-            control_component->track_result(packet.parameter_name, packet.value);
-            break;
-        }
-
         default: { break; }
         }
     }
@@ -102,8 +87,7 @@ class ControlProtocol : public SceneModuleProtocol {
     std::vector<tomop::packet_desc> descriptors() override {
         return {tomop::packet_desc::parameter_bool,
                 tomop::packet_desc::parameter_float,
-                tomop::packet_desc::parameter_enum,
-                tomop::packet_desc::tracker};
+                tomop::packet_desc::parameter_enum};
     }
 };
 
