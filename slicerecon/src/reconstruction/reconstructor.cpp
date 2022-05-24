@@ -10,7 +10,7 @@
 
 namespace slicerecon {
 
-Reconstructor::Reconstructor(Settings param, Geometry geom)
+Reconstructor::Reconstructor(const Settings& param, const Geometry& geom)
      : param_(param), geom_(geom) {
     float_param_["lambda"] = &param_.paganin.lambda;
     float_param_["delta"] = &param_.paganin.delta;
@@ -47,6 +47,8 @@ Reconstructor::Reconstructor(Settings param, Geometry geom)
     }
 }
 
+Reconstructor::~Reconstructor() = default;
+
 void Reconstructor::addListener(Listener* l) {
     listeners_.push_back(l);
     l->register_(this);
@@ -61,14 +63,9 @@ void Reconstructor::addListener(Listener* l) {
 
 void Reconstructor::pushProjection(ProjectionType k, 
                                    int32_t proj_idx, 
-                                   std::array<int32_t, 2> shape, 
+                                   const std::array<int32_t, 2>& shape, 
                                    char* data) {
     auto p = param_;
-
-    if (!initialized_) {
-        spdlog::warn("Pushing projection into uninitialized reconstructor");
-        return;
-    }
 
     if (shape[0] != geom_.rows || shape[1] != geom_.cols) {
         spdlog::error("Received projection with wrong shape. Actual: {} x {}, expected: {} x {}", 
@@ -99,13 +96,14 @@ void Reconstructor::pushProjection(ProjectionType k,
             int32_t rel_idx = proj_idx % buffer_size_;
             bool group_end_reached = rel_idx % p.group_size == p.group_size - 1;
             bool buffer_end_reached = rel_idx == buffer_size_ - 1;
-    
+ 
             // buffer incoming
-            int i0 = rel_idx * pixels_;
-            for (int i = 0; i < pixels_; ++i) {
+            auto pos = data;
+            for (int i = 0, buf_idx = rel_idx * pixels_; i < pixels_; ++i, ++buf_idx) {
                 raw_dtype v;
-                memcpy(&v, data + i * sizeof(raw_dtype), sizeof(raw_dtype));
-                buffer_[i0 + i] = static_cast<float>(v);
+                memcpy(&v, pos, sizeof(raw_dtype));
+                pos += sizeof(raw_dtype);
+                buffer_[buf_idx] = static_cast<float>(v);
             }
 
             if (group_end_reached || buffer_end_reached) {
@@ -181,8 +179,6 @@ slice_data Reconstructor::reconstructSlice(orientation x) {
     // alternating
     std::lock_guard<std::mutex> guard(gpu_mutex_);
 
-    if (!initialized_) return {{1, 1}, {0.0f}};
-
     return solver_->reconstruct_slice(x, active_gpu_buffer_index_);
 }
 
@@ -190,14 +186,10 @@ std::vector<float>& Reconstructor::previewData() { return small_volume_buffer_; 
 
 Settings Reconstructor::parameters() const { return param_; }
 
-bool Reconstructor::initialized() const { return initialized_; }
-
 void Reconstructor::parameterChanged(std::string name, std::variant<float, std::string, bool> value) {
-    if (solver_) {
-        if (solver_->parameter_changed(name, value)) {
-            for (auto l : listeners_) {
-                l->notify(*this);
-            }
+    if (solver_->parameter_changed(name, value)) {
+        for (auto l : listeners_) {
+            l->notify(*this);
         }
     }
 
@@ -217,8 +209,6 @@ std::vector<float> Reconstructor::defaultAngles(int n) {
 }
 
 void Reconstructor::initialize() {
-    bool reinitializing = (bool)solver_;
-
     if (geom_.angles.empty()) {
         geom_.angles = Reconstructor::defaultAngles(geom_.projections);
         spdlog::info("Default angles in radians generated: min = {}, max = {}", 
@@ -245,18 +235,6 @@ void Reconstructor::initialize() {
         solver_ = std::make_unique<ParallelBeamSolver>(param_, geom_);
     } else {
         solver_ = std::make_unique<ConeBeamSolver>(param_, geom_);
-    }
-
-    initialized_ = true;
-
-    if (!reinitializing) {
-        for (auto [k, v] : solver_->parameters()) {
-            for (auto l : listeners_) {
-                l->register_parameter(k, v);
-            }
-        }
-    } else {
-        spdlog::warn("Reinitializing geometry, not registering parameter controls!");
     }
 }
 
@@ -305,8 +283,6 @@ void Reconstructor::computeReciprocal() {
 }
 
 void Reconstructor::processProjections(int proj_id_begin, int proj_id_end) {
-    if (!initialized_) return;
-
     spdlog::info("Processing buffer between {0:d} and {1:d} ...", 
                  proj_id_begin, proj_id_end);
 
@@ -319,8 +295,6 @@ void Reconstructor::uploadSinoBuffer(int proj_id_begin,
                                      int proj_id_end,
                                      int buffer_idx, 
                                      bool lock_gpu) {
-    if (!initialized_) return;
-
     spdlog::info("Uploading to buffer ({0:d}) between {1:d}/{2:d}", 
                  active_gpu_buffer_index_, proj_id_begin, proj_id_end);
 
@@ -359,8 +333,6 @@ void Reconstructor::transposeIntoSino(int proj_offset, int proj_end) {
 }
 
 void Reconstructor::refreshData() {
-    if (!initialized_) return;
-
     { // lock guard scope
         std::lock_guard<std::mutex> guard(gpu_mutex_);
         solver_->reconstruct_preview(small_volume_buffer_, active_gpu_buffer_index_);
@@ -371,5 +343,11 @@ void Reconstructor::refreshData() {
     // send message to observers that new data is available
     for (auto l : listeners_) l->notify(*this);
 }
+
+const std::vector<raw_dtype>& Reconstructor::darks() const { return all_darks_; }
+
+const std::vector<raw_dtype>& Reconstructor::flats() const { return all_flats_; }
+
+const std::vector<float>& Reconstructor::buffer() const { return buffer_; }
 
 } // namespace slicerecon

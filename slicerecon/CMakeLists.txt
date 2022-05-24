@@ -69,3 +69,7 @@ endif()
 
 # INSTALL COMMANDS
 install(TARGETS ${EXEC_NAME} RUNTIME DESTINATION bin)
+
+if (BUILD_TEST)
+    add_subdirectory(tests)
+endif()
