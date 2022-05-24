@@ -65,11 +65,6 @@ void Reconstructor::pushProjection(ProjectionType k,
                                    char* data) {
     auto p = param_;
 
-    if (!initialized_) {
-        spdlog::warn("Pushing projection into uninitialized reconstructor");
-        return;
-    }
-
     if (shape[0] != geom_.rows || shape[1] != geom_.cols) {
         spdlog::error("Received projection with wrong shape. Actual: {} x {}, expected: {} x {}", 
                       shape[0], shape[1], geom_.rows, geom_.cols);
@@ -181,8 +176,6 @@ slice_data Reconstructor::reconstructSlice(orientation x) {
     // alternating
     std::lock_guard<std::mutex> guard(gpu_mutex_);
 
-    if (!initialized_) return {{1, 1}, {0.0f}};
-
     return solver_->reconstruct_slice(x, active_gpu_buffer_index_);
 }
 
@@ -190,14 +183,10 @@ std::vector<float>& Reconstructor::previewData() { return small_volume_buffer_; 
 
 Settings Reconstructor::parameters() const { return param_; }
 
-bool Reconstructor::initialized() const { return initialized_; }
-
 void Reconstructor::parameterChanged(std::string name, std::variant<float, std::string, bool> value) {
-    if (solver_) {
-        if (solver_->parameter_changed(name, value)) {
-            for (auto l : listeners_) {
-                l->notify(*this);
-            }
+    if (solver_->parameter_changed(name, value)) {
+        for (auto l : listeners_) {
+            l->notify(*this);
         }
     }
 
@@ -217,8 +206,6 @@ std::vector<float> Reconstructor::defaultAngles(int n) {
 }
 
 void Reconstructor::initialize() {
-    bool reinitializing = (bool)solver_;
-
     if (geom_.angles.empty()) {
         geom_.angles = Reconstructor::defaultAngles(geom_.projections);
         spdlog::info("Default angles in radians generated: min = {}, max = {}", 
@@ -245,18 +232,6 @@ void Reconstructor::initialize() {
         solver_ = std::make_unique<ParallelBeamSolver>(param_, geom_);
     } else {
         solver_ = std::make_unique<ConeBeamSolver>(param_, geom_);
-    }
-
-    initialized_ = true;
-
-    if (!reinitializing) {
-        for (auto [k, v] : solver_->parameters()) {
-            for (auto l : listeners_) {
-                l->register_parameter(k, v);
-            }
-        }
-    } else {
-        spdlog::warn("Reinitializing geometry, not registering parameter controls!");
     }
 }
 
@@ -305,8 +280,6 @@ void Reconstructor::computeReciprocal() {
 }
 
 void Reconstructor::processProjections(int proj_id_begin, int proj_id_end) {
-    if (!initialized_) return;
-
     spdlog::info("Processing buffer between {0:d} and {1:d} ...", 
                  proj_id_begin, proj_id_end);
 
@@ -319,8 +292,6 @@ void Reconstructor::uploadSinoBuffer(int proj_id_begin,
                                      int proj_id_end,
                                      int buffer_idx, 
                                      bool lock_gpu) {
-    if (!initialized_) return;
-
     spdlog::info("Uploading to buffer ({0:d}) between {1:d}/{2:d}", 
                  active_gpu_buffer_index_, proj_id_begin, proj_id_end);
 
@@ -359,8 +330,6 @@ void Reconstructor::transposeIntoSino(int proj_offset, int proj_end) {
 }
 
 void Reconstructor::refreshData() {
-    if (!initialized_) return;
-
     { // lock guard scope
         std::lock_guard<std::mutex> guard(gpu_mutex_);
         solver_->reconstruct_preview(small_volume_buffer_, active_gpu_buffer_index_);

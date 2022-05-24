@@ -45,7 +45,6 @@ class Reconstructor {
     std::vector<float> sino_buffer_;
 
     std::vector<Listener*> listeners_;
-    bool initialized_ = false;
 
     std::unique_ptr<ProjectionProcessor> projection_processor_;
 
@@ -113,8 +112,6 @@ public:
     std::vector<float>& previewData();
 
     Settings parameters() const;
-
-    bool initialized() const;
 
     void parameterChanged(std::string name, std::variant<float, std::string, bool> value);
 
