@@ -98,13 +98,15 @@ class Reconstructor {
 
 public:
 
-    Reconstructor(Settings parameters, Geometry geom);
+    Reconstructor(const Settings& parameters, const Geometry& geom);
+
+    ~Reconstructor();
 
     void addListener(Listener* l);
 
     void pushProjection(ProjectionType k, 
                         int32_t proj_idx, 
-                        std::array<int32_t, 2> shape, 
+                        const std::array<int32_t, 2>& shape, 
                         char* data); 
 
     slice_data reconstructSlice(orientation x); 
@@ -116,6 +118,12 @@ public:
     void parameterChanged(std::string name, std::variant<float, std::string, bool> value);
 
     static std::vector<float> defaultAngles(int n);
+
+    // for unittest
+
+    const std::vector<raw_dtype>& darks() const;
+    const std::vector<raw_dtype>& flats() const;
+    const std::vector<float>& buffer() const;
 
 };
 

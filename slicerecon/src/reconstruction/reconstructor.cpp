@@ -10,7 +10,7 @@
 
 namespace slicerecon {
 
-Reconstructor::Reconstructor(Settings param, Geometry geom)
+Reconstructor::Reconstructor(const Settings& param, const Geometry& geom)
      : param_(param), geom_(geom) {
     float_param_["lambda"] = &param_.paganin.lambda;
     float_param_["delta"] = &param_.paganin.delta;
@@ -47,6 +47,8 @@ Reconstructor::Reconstructor(Settings param, Geometry geom)
     }
 }
 
+Reconstructor::~Reconstructor() = default;
+
 void Reconstructor::addListener(Listener* l) {
     listeners_.push_back(l);
     l->register_(this);
@@ -61,7 +63,7 @@ void Reconstructor::addListener(Listener* l) {
 
 void Reconstructor::pushProjection(ProjectionType k, 
                                    int32_t proj_idx, 
-                                   std::array<int32_t, 2> shape, 
+                                   const std::array<int32_t, 2>& shape, 
                                    char* data) {
     auto p = param_;
 
@@ -340,5 +342,11 @@ void Reconstructor::refreshData() {
     // send message to observers that new data is available
     for (auto l : listeners_) l->notify(*this);
 }
+
+const std::vector<raw_dtype>& Reconstructor::darks() const { return all_darks_; }
+
+const std::vector<raw_dtype>& Reconstructor::flats() const { return all_flats_; }
+
+const std::vector<float>& Reconstructor::buffer() const { return buffer_; }
 
 } // namespace slicerecon

@@ -154,34 +154,34 @@ int main(int argc, char** argv)
     auto beta = opts["beta"].as<float>();
     auto distance = opts["distance"].as<float>();
 
-    auto paganin = slicerecon::PaganinSettings{pixel_size, lambda, delta, beta, distance};
+    slicerecon::PaganinSettings paganin {pixel_size, lambda, delta, beta, distance};
 
-    auto params = slicerecon::Settings { slice_size, 
-                                         preview_size, 
-                                         group_size, 
-                                         filter_cores, 
-                                         darks, 
-                                         flats, 
-                                         projections,
-                                         recon_mode, 
-                                         false,
-                                         retrieve_phase, 
-                                         tilt, 
-                                         paganin, 
-                                         gaussian_pass, 
-                                         filter };
+    slicerecon::Settings params { slice_size, 
+                                  preview_size, 
+                                  group_size, 
+                                  filter_cores, 
+                                  darks, 
+                                  flats, 
+                                  projections,
+                                  recon_mode, 
+                                  false,
+                                  retrieve_phase, 
+                                  tilt, 
+                                  paganin, 
+                                  gaussian_pass, 
+                                  filter };
 
-    auto geom = slicerecon::Geometry { rows,
-                                       cols,
-                                       projections,
-                                       {},
-                                       true,
-                                       false,
-                                       {0.0f, 0.0f},
-                                       {0.0f, 0.0f, 0.0f},
-                                       {1.0f, 1.0f, 1.0f},
-                                       0.0f,
-                                       0.0f };
+    slicerecon::Geometry geom { rows,
+                                cols,
+                                projections,
+                                {},
+                                true,
+                                false,
+                                {0.0f, 0.0f},
+                                {0.0f, 0.0f, 0.0f},
+                                {1.0f, 1.0f, 1.0f},
+                                0.0f,
+                                0.0f };
 
     spdlog::set_pattern("[%Y-%m-%d %T.%e] [%^%l%$] %v");
     spdlog::set_level(spdlog::level::info);

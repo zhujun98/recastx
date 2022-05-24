@@ -43,3 +43,6 @@ target_link_libraries(test_slicerecon
         _slicerecon
         gtest
         pthread)
+target_compile_options(test_slicerecon
+    PRIVATE
+        -std=c++17)        
