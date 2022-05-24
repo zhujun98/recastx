@@ -16,9 +16,7 @@ ControlComponent::ControlComponent(SceneObject& object, int scene_id)
 void ControlComponent::describe() {
     ImGui::Indent(16.0f);
 
-    describe_benchmarks_();
     describe_parameters_();
-    describe_trackers_();
 
     ImGui::Unindent(16.0f);
 }
@@ -71,43 +69,6 @@ void ControlComponent::describe_parameters_() {
     }
 }
 
-void ControlComponent::describe_trackers_() {
-    if (trackers_.empty()) {
-        return;
-    }
-
-    // TODO only track last x timesteps
-
-    if (ImGui::CollapsingHeader("trackers", nullptr, ImGuiTreeNodeFlags_DefaultOpen)) {
-        for (auto& [key, values] : trackers_) {
-            ImGui::PlotLines(key.c_str(), values.data(), values.size(), 0,
-                             nullptr, FLT_MAX, FLT_MAX, ImVec2(400.0f, 150.0f),
-                             sizeof(float));
-        }
-    }
-}
-
-void ControlComponent::describe_benchmarks_() {
-    if (benchmarks_.empty()) {
-        return;
-    }
-
-    if (ImGui::CollapsingHeader("benchmarks", nullptr, ImGuiTreeNodeFlags_DefaultOpen)) {
-
-        // TODO add (rolling) average
-        ImGui::Indent(16.0f);
-        ImGui::Columns(2, "benchmarks");
-        for (auto& [key, values] : benchmarks_) {
-            ImGui::TextWrapped(key.c_str());
-            ImGui::NextColumn();
-            ImGui::TextWrapped(std::to_string(values[values.size() - 1]).c_str());
-            ImGui::NextColumn();
-        }
-        ImGui::Columns(1);
-        ImGui::Unindent(16.0f);
-    }
-}
-
 void ControlComponent::add_float_parameter(std::string name, float value) {
     auto cptr = std::unique_ptr<char[]>(new char[BUFFER_SIZE]);
     auto value_s = std::to_string(value);
@@ -126,14 +87,6 @@ void ControlComponent::add_enum_parameter(std::string name,
         return;
     }
     enum_parameters_[name] = {values, values[0]};
-}
-
-void ControlComponent::bench_result(std::string name, float value) {
-    benchmarks_[name].push_back(value);
-}
-
-void ControlComponent::track_result(std::string name, float value) {
-    trackers_[name].push_back(value);
 }
 
 } // namespace gui

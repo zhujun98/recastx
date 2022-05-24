@@ -1,7 +1,6 @@
 // TODO: we want some 'server system' that supports a number of operations:
 // - Adding a scene,
 // - Updating images / slices.
-// - Benchmark data?
 //
 // I guess we want to use OpenMQ for this. Do we want two-way communication or
 // just 'fire'? The nice thing about 'two-way' is that this 'slice

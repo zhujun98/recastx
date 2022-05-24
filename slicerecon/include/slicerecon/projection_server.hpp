@@ -8,8 +8,7 @@
 
 #include "tomop/tomop.hpp"
 
-#include "../util/exceptions.hpp"
-#include "../data_types.hpp"
+#include "data_types.hpp"
 
 namespace slicerecon {
 
@@ -65,7 +64,7 @@ public:
             int monitor_every = params.recon_mode == slicerecon::ReconstructMode::alternating 
                                 ? params.projections : params.group_size;
             int msg_counter = 0;
-            int msg_size = 0;  // in MB
+            float msg_size = 0.f;  // in MB
             auto start = std::chrono::steady_clock::now();
 #endif
             zmq::message_t update;
@@ -91,7 +90,7 @@ public:
 
 #if defined(WITH_MONITOR)
                 if (!msg_size) {
-                    msg_size = static_cast<int>(shape[0]) * static_cast<int>(shape[1])
+                    msg_size = static_cast<float>(shape[0]) * static_cast<float>(shape[1])
                                * sizeof(raw_dtype) / (1024 * 1024);
                 }
                 if (scan_index == ProjectionType::standard) {

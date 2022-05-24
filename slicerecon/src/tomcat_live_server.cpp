@@ -60,7 +60,7 @@ int main(int argc, char** argv)
         ("projections", po::value<int>()->default_value(128),
          "number of projections")
         ("continuous-mode", po::bool_switch(&continuous_mode),
-         "switch reconstructor to continuous mode from alternating mode")
+         "switch reconstructor to continuous mode from the default alternating mode")
         ("retrieve-phase", po::bool_switch(&retrieve_phase),
          "...")
         ("tilt", po::bool_switch(&tilt),
@@ -95,12 +95,9 @@ int main(int argc, char** argv)
     ;
 
     po::options_description misc_desc("Miscellaneous options");
-    bool bench = false;
     bool plugin = false;
     bool py_plugin = false;
     misc_desc.add_options()
-        ("bench", po::bool_switch(&bench),
-         "...")
         ("plugin", po::bool_switch(&plugin),
          "...")
         ("py-plugin", po::bool_switch(&py_plugin),
@@ -244,10 +241,6 @@ int main(int argc, char** argv)
         viz.register_plugin("tcp://localhost:5652");
     }
 
-    if (bench) {
-        slicerecon::util::bench.register_listener(&viz);
-        slicerecon::util::bench.enable();
-    }
     viz.serve();
 
     return 0;

@@ -53,9 +53,7 @@ PYBIND11_MODULE(tomop, m) {
         hana::make_tuple("parameter_float_packet"s,
                          hana::type_c<ParameterFloatPacket>),
         hana::make_tuple("parameter_enum_packet"s,
-                         hana::type_c<ParameterEnumPacket>),
-        hana::make_tuple("tracker_packet"s, hana::type_c<TrackerPacket>),
-        hana::make_tuple("benchmark_packet"s, hana::type_c<BenchmarkPacket>));
+                         hana::type_c<ParameterEnumPacket>));
 
     hana::for_each(packets, [&](auto x) {
         // 1) get C++ type
