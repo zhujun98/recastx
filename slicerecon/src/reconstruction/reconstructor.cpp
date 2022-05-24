@@ -99,7 +99,7 @@ void Reconstructor::pushProjection(ProjectionType k,
             int32_t rel_idx = proj_idx % buffer_size_;
             bool group_end_reached = rel_idx % p.group_size == p.group_size - 1;
             bool buffer_end_reached = rel_idx == buffer_size_ - 1;
-    
+ 
             // buffer incoming
             int i0 = rel_idx * pixels_;
             for (int i = 0; i < pixels_; ++i) {

@@ -12,7 +12,7 @@ if (BUILD_TEST)
     add_executable(test_server ${SOURCE_NAMES})
     target_include_directories(test_server PRIVATE "${CMAKE_CURRENT_LIST_DIR}/include")
     target_link_libraries(test_server PRIVATE cppzmq pthread Boost::boost)
-    target_compile_options(${TARGET_NAME} PRIVATE -std=c++14 -Wall -Wextra -Wfatal-errors)
+    target_compile_options(test_server PRIVATE -std=c++14 -Wall -Wextra -Wfatal-errors)
 endif()
 
 if (BUILD_PYTHON)
