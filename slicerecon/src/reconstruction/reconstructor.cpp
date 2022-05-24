@@ -98,11 +98,12 @@ void Reconstructor::pushProjection(ProjectionType k,
             bool buffer_end_reached = rel_idx == buffer_size_ - 1;
  
             // buffer incoming
-            int i0 = rel_idx * pixels_;
-            for (int i = 0; i < pixels_; ++i) {
+            auto pos = data;
+            for (int i = 0, buf_idx = rel_idx * pixels_; i < pixels_; ++i, ++buf_idx) {
                 raw_dtype v;
-                memcpy(&v, data + i * sizeof(raw_dtype), sizeof(raw_dtype));
-                buffer_[i0 + i] = static_cast<float>(v);
+                memcpy(&v, pos, sizeof(raw_dtype));
+                pos += sizeof(raw_dtype);
+                buffer_[buf_idx] = static_cast<float>(v);
             }
 
             if (group_end_reached || buffer_end_reached) {

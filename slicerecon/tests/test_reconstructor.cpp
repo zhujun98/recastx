@@ -65,14 +65,14 @@ TEST_F(ReconTest, TestPushProjection) {
     EXPECT_EQ(recon_.flats()[0], 10);
     EXPECT_EQ(recon_.flats()[3*pixels_ - 10], 12);
 
-    // push projections
-    for (int i = 0; i < projections_; ++i) {
+    // push projections (don't completely fill the buffer)
+    for (int i = 0; i < projections_ - 1; ++i) {
         std::fill(img.begin(), img.end(), 10 * i + 10);
         recon_.pushProjection(
             ProjectionType::standard, i, {rows_, cols_}, reinterpret_cast<char*>(img.data()));
     }
-    EXPECT_EQ(recon_.buffer().front(), 10.f);
-    EXPECT_EQ(recon_.buffer().back(), 10.f * projections_); 
+    EXPECT_EQ(recon_.buffer()[0], 10.f);
+    EXPECT_EQ(recon_.buffer()[(projections_ - 1) * pixels_ - 1], 10.f * (projections_ - 1)); 
 }
 
 } // slicerecon::test
