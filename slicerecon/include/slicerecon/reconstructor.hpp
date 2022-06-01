@@ -11,7 +11,7 @@ extern "C" {
 #include <fftw3.h>
 }
 
-#include "../data_types.hpp"
+#include "data_types.hpp"
 #include "helpers.hpp"
 #include "solver.hpp"
 #include "listener.hpp"

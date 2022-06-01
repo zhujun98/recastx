@@ -1,7 +1,7 @@
 #include <spdlog/spdlog.h>
 
-#include "slicerecon/reconstruction/solver.hpp"
-#include "slicerecon/reconstruction/utils.hpp"
+#include "slicerecon/solver.hpp"
+#include "slicerecon/utils.hpp"
 
 namespace slicerecon {
 

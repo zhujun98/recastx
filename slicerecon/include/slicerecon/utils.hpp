@@ -15,7 +15,7 @@
 #include "astra/ParallelVecProjectionGeometry3D.h"
 #include "astra/VolumeGeometry3D.h"
 
-#include "../data_types.hpp"
+#include "data_types.hpp"
 
 namespace slicerecon::utils {
 

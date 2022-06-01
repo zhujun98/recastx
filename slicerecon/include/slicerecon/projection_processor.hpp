@@ -10,7 +10,7 @@ extern "C" {
 
 #include <oneapi/tbb.h>
 
-#include "slicerecon/data_types.hpp"
+#include "data_types.hpp"
 
 namespace slicerecon {
 
@@ -90,8 +90,8 @@ class ProjectionProcessor {
     std::unique_ptr<detail::FDKScaler> fdk_scale;
 
   private:
-    int cols_;
     int rows_;
+    int cols_;
 
     int n_threads_;
     oneapi::tbb::task_arena arena_;

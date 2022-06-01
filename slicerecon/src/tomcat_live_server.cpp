@@ -6,7 +6,9 @@
 #include <spdlog/spdlog.h>
 #include <boost/program_options.hpp>
 
-#include "slicerecon/slicerecon.hpp"
+#include "slicerecon/reconstructor.hpp"
+#include "slicerecon/projection_server.hpp"
+#include "slicerecon/visualization_server.hpp"
 
 using namespace std::string_literals;
 
@@ -94,16 +96,6 @@ int main(int argc, char** argv)
          "...")
     ;
 
-    po::options_description misc_desc("Miscellaneous options");
-    bool plugin = false;
-    bool py_plugin = false;
-    misc_desc.add_options()
-        ("plugin", po::bool_switch(&plugin),
-         "...")
-        ("py-plugin", po::bool_switch(&py_plugin),
-         "...")
-    ;
-
     po::options_description all_desc(
         "Allowed options for TOMCAT live 3D reconstruction server");
     all_desc.
@@ -111,8 +103,7 @@ int main(int argc, char** argv)
         add(connection_desc).
         add(reconstruction_desc).
         add(geometry_desc).
-        add(paganin_desc).
-        add(misc_desc);
+        add(paganin_desc);
 
     po::variables_map opts;
     po::store(po::parse_command_line(argc, argv, all_desc), opts);
@@ -200,46 +191,6 @@ int main(int argc, char** argv)
         "tcp://"s + gui_hostname + ":"s + std::to_string(gui_port + 1));
     viz.set_slice_callback([&](auto x, auto idx) { return recon.reconstructSlice(x); });
     recon.addListener(&viz);
-
-    auto plugin_one = slicerecon::plugin("tcp://*:5650", "tcp://localhost:5651");
-    plugin_one.set_slice_callback(
-        [](auto shape, auto data, auto index) -> std::pair<std::array<int32_t, 2>, std::vector<float>> {
-            for (auto& x : data) {
-                if (x <= 3) {
-                    x = 0;
-                }
-                else {
-                    x = 17;
-                }
-            }
-
-            return {shape, data};
-        }
-    );
-
-    auto plugin_two = slicerecon::plugin(
-        "tcp://*:5651", "tcp://"s + gui_hostname + ":5555"s);
-    plugin_two.set_slice_callback(
-        [](auto shape, auto data,
-        auto index) -> std::pair<std::array<int32_t, 2>, std::vector<float>> {
-            for (auto& x : data) {
-                (void)x;
-            }
-
-            return {shape, data};
-        }
-    );
-
-    if (plugin) {
-        viz.register_plugin("tcp://localhost:5650");
-        plugin_one.serve();
-        plugin_two.serve();
-    }
-
-    if (py_plugin) {
-        std::cout << "Registering plugin at 5652\n";
-        viz.register_plugin("tcp://localhost:5652");
-    }
 
     viz.serve();
 

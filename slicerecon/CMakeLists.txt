@@ -19,21 +19,25 @@ set_target_properties(
 set(ASTRA_INCLUDE_DIR ${CMAKE_PREFIX_PATH}/include)
 
 set(SOURCES
-    "src/reconstruction/utils.cpp"
-    "src/reconstruction/projection_processor.cpp"
-    "src/reconstruction/listener.cpp"
-    "src/reconstruction/solver.cpp"
-    "src/reconstruction/reconstructor.cpp"
-    "src/reconstruction/helpers.cpp"
+    "src/tomcat_live_server.cpp"
+    "src/utils.cpp"
+    "src/projection_processor.cpp"
+    "src/listener.cpp"
+    "src/solver.cpp"
+    "src/reconstructor.cpp"
+    "src/helpers.cpp"
 )
-set(TARGET_NAME "_slicerecon")
-add_library(${TARGET_NAME} ${SOURCES})
+
+set(TARGET_NAME "tomcat-live-server")
+add_executable(${TARGET_NAME} ${SOURCES})
+
 target_include_directories(${TARGET_NAME}
     PRIVATE
         ${ASTRA_INCLUDE_DIR}
         ${TBB_INCLUDE_DIRS}
     PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include)
+
 target_link_libraries(${TARGET_NAME}
     PUBLIC
         astra-toolbox
@@ -49,29 +53,13 @@ target_link_libraries(${TARGET_NAME}
 target_compile_options(${TARGET_NAME}
     PRIVATE
         -Wall -Wextra -Wfatal-errors -fPIC -static)
+
 if (BUILD_MONITOR)
     target_compile_definitions(${TARGET_NAME} PRIVATE WITH_MONITOR)
 endif()
 
-if (BUILD_PYTHON)
-    set(BINDING_NAME "slicerecon")
-    pybind11_add_module(${BINDING_NAME} "python/slicerecon.cpp")
-    target_link_libraries(${BINDING_NAME} PRIVATE _slicerecon)
-
-    install(TARGETS ${BINDING_NAME}
-            LIBRARY DESTINATION ${Python3_SITELIB})
-endif()
-
-set(EXEC_NAME "tomcat-live-server")
-add_executable(${EXEC_NAME} "src/tomcat_live_server.cpp")
-target_link_libraries(${EXEC_NAME} PRIVATE _slicerecon)
-if (BUILD_MONITOR)
-    target_compile_definitions(${EXEC_NAME} PRIVATE WITH_MONITOR)
-endif()
-
-# INSTALL COMMANDS
-install(TARGETS ${EXEC_NAME} RUNTIME DESTINATION bin)
-
 if (BUILD_TEST)
     add_subdirectory(tests)
 endif()
+
+install(TARGETS ${TARGET_NAME} RUNTIME DESTINATION bin)

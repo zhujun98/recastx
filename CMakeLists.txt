@@ -8,7 +8,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(BUILD_GUI "Build OpenGL GUI only" OFF)
 option(BUILD_TEST "Build unit test" OFF)
-option(BUILD_PYTHON "Build Python bindings" OFF)
 option(BUILD_MONITOR "Build with performance monitor" OFF)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -21,10 +20,6 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 
 set(CMAKE_INSTALL_PREFIX ${CMAKE_PREFIX_PATH})
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-if (BUILD_PYTHON)
-    find_package(pybind11 REQUIRED)
-    find_package(Python3 REQUIRED)
-endif()
 
 find_package(Boost 1.61 COMPONENTS program_options REQUIRED)
 
