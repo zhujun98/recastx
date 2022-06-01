@@ -79,7 +79,7 @@ class Filterer {
 
 class ProjectionProcessor {
   public:
-    ProjectionProcessor(Settings param, Geometry geom);
+    ProjectionProcessor(int cols, int rows, int n_threads);
 
     void process(float* data, int proj_id_begin, int proj_id_end);
 
@@ -90,9 +90,10 @@ class ProjectionProcessor {
     std::unique_ptr<detail::FDKScaler> fdk_scale;
 
   private:
-    Settings param_;
-    Geometry geom_;
+    int cols_;
+    int rows_;
 
+    int n_threads_;
     oneapi::tbb::task_arena arena_;
 };
 

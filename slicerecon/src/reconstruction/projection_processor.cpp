@@ -248,8 +248,8 @@ void Filterer::apply(Projection proj, int s, int proj_idx)
 
 } // namespace detail
 
-ProjectionProcessor::ProjectionProcessor(Settings param, Geometry geom)
- : param_(param), geom_(geom), arena_(param_.filter_cores) {}
+ProjectionProcessor::ProjectionProcessor(int rows, int cols, int n_threads)
+ : rows_(rows), cols_(cols), n_threads_(n_threads), arena_(n_threads) {}
 
 void ProjectionProcessor::process(float* data, int proj_id_begin, int proj_id_end) {
 
@@ -260,20 +260,20 @@ void ProjectionProcessor::process(float* data, int proj_id_begin, int proj_id_en
     arena_.execute([&]{
         tbb::parallel_for(tbb::blocked_range<int>(0, proj_count), 
                           [&](const tbb::blocked_range<int> &block) {
-            auto pixels = geom_.rows * geom_.cols;
+            auto pixels = rows_ * cols_;
 
             for (auto i = block.begin(); i != block.end(); ++i) {
-                auto proj = detail::Projection{&data[i * pixels], geom_.rows, geom_.cols};
+                auto proj = detail::Projection{&data[i * pixels], rows_, cols_};
                 if (flatfielder) {
                     flatfielder->apply(proj);
                 }
                 if (paganin) {
-                    paganin->apply(proj, i % param_.filter_cores);
+                    paganin->apply(proj, i % n_threads_);
                 } else if (neglog) {
                     neglog->apply(proj);
                 }
                 if (filterer) {
-                    filterer->apply(proj, i % param_.filter_cores, proj_id_begin + i);
+                    filterer->apply(proj, i % n_threads_, proj_id_begin + i);
                 }
                 if (fdk_scale) {
                    fdk_scale->apply(proj, i);

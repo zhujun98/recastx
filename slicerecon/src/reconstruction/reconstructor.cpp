@@ -20,7 +20,8 @@ Reconstructor::Reconstructor(const Settings& param, const Geometry& geom)
 
     initialize();
     
-    projection_processor_ = std::make_unique<ProjectionProcessor>(param_, geom_);
+    projection_processor_ = std::make_unique<ProjectionProcessor>(
+        geom_.rows, geom_.cols, param.filter_cores);
 
     projection_processor_->flatfielder =
         std::make_unique<detail::Flatfielder>(detail::Flatfielder{
