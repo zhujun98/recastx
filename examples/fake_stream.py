@@ -62,10 +62,13 @@ def stream_data_file(filepath, socket,  scan_index, n):
     with h5py.File(filepath, "r") as fp:
         if scan_index == 0:
             ds = fp["/exchange/data_dark"]
+            print(f"Dark data shape: {ds.shape}")
         elif scan_index == 1:
             ds = fp["/exchange/data_white"]
+            print(f"Flat data shape: {ds.shape}")
         elif scan_index == 2:
             ds = fp["/exchange/data"]
+            print(f"Projection data shape: {ds.shape}")
         else:
             raise ValueError(f"Unsupported scan_index: {scan_index}")
 
@@ -85,6 +88,13 @@ def stream_data_file(filepath, socket,  scan_index, n):
     thread.join()
 
 
+def parse_datafile(name: str):
+    if name == "pet":
+        # number of projections per scan: 400
+        return "/sls/X02DA/Data10/e16816/disk1/PET_55um_40_1/PET_55um_40_1.h5"
+    return name
+
+
 def main():
     parser = argparse.ArgumentParser(description='Fake GigaFrost Data Stream')
 
@@ -93,16 +103,18 @@ def main():
     parser.add_argument('--darks', default=20, type=int)
     parser.add_argument('--flats', default=20, type=int)
     parser.add_argument('--projections', default=128, type=int)
-    parser.add_argument('--rows', default=1200, type=int)
-    parser.add_argument('--cols', default=2016, type=int)
-    parser.add_argument(
-        '--datafile', 
-        help="Known test data: /sls/X02DA/Data10/e16816/disk1/PET_55um_40_1/PET_55um_40_1.h5", 
-        type=str)
+    parser.add_argument('--rows', default=1200, type=int,
+                        help="Number of rows of the generated image")
+    parser.add_argument('--cols', default=2016, type=int,
+                        help="Number of columns of the generated image")
+    parser.add_argument('--datafile', type=str, 
+                        help="Path or code of the data file")
 
     args = parser.parse_args()
     port = args.port
     sock_type = args.sock.upper()
+
+    datafile = parse_datafile(args.datafile)
 
     context = zmq.Context()
 
@@ -114,12 +126,13 @@ def main():
         raise RuntimeError(f"Unknow sock type: {sock_type}")
     socket.bind(f"tcp://*:{port}")
 
-    shape = (args.rows, args.cols)
+    if datafile:
+        print(f"Streaming data from {datafile} ...")
     for scan_index, n in enumerate([args.darks, args.flats, args.projections]):
-        if not args.datafile:
-            gen_fake_data(socket, scan_index, n, shape=shape)
+        if not datafile:
+            gen_fake_data(socket, scan_index, n, shape=(args.rows, args.cols))
         else:
-            stream_data_file(args.datafile, socket, scan_index, n)
+            stream_data_file(datafile, socket, scan_index, n)
  
 
 if __name__ == "__main__":
