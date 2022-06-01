@@ -6,7 +6,7 @@
 
 #include <spdlog/spdlog.h>
 
-#include "slicerecon/reconstruction/projection_processor.hpp"
+#include "slicerecon/projection_processor.hpp"
 
 
 namespace slicerecon {

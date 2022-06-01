@@ -15,8 +15,8 @@
 
 #include <mutex>
 
-#include "reconstruction/listener.hpp"
-#include "reconstruction/reconstructor.hpp"
+#include "listener.hpp"
+#include "reconstructor.hpp"
 #include "data_types.hpp"
 
 namespace slicerecon {

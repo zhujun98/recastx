@@ -1,6 +1,6 @@
 #include <sstream>
 
-#include "slicerecon/reconstruction/utils.hpp"
+#include "slicerecon/utils.hpp"
 
 namespace slicerecon::utils {
 

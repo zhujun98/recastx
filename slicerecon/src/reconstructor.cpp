@@ -4,8 +4,8 @@
 #include <Eigen/Eigen>
 #include <spdlog/spdlog.h>
 
-#include "slicerecon/reconstruction/reconstructor.hpp"
-#include "slicerecon/reconstruction/utils.hpp"
+#include "slicerecon/reconstructor.hpp"
+#include "slicerecon/utils.hpp"
 
 
 namespace slicerecon {

@@ -1,4 +1,4 @@
-#include "slicerecon/reconstruction/helpers.hpp"
+#include "slicerecon/helpers.hpp"
 
 namespace slicerecon {
 

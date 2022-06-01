@@ -1,5 +1,5 @@
-#include <slicerecon/reconstruction/listener.hpp>
-#include <slicerecon/reconstruction/reconstructor.hpp>
+#include <slicerecon/listener.hpp>
+#include <slicerecon/reconstructor.hpp>
 
 
 namespace slicerecon {
