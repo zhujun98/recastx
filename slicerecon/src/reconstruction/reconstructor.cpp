@@ -1,11 +1,8 @@
 #include <complex>
+#include <numeric>
 
 #include <Eigen/Eigen>
-
 #include <spdlog/spdlog.h>
-
-#include <bulk/backends/thread/thread.hpp>
-#include <bulk/bulk.hpp>
 
 #include "slicerecon/reconstruction/reconstructor.hpp"
 #include "slicerecon/reconstruction/utils.hpp"
@@ -23,7 +20,8 @@ Reconstructor::Reconstructor(const Settings& param, const Geometry& geom)
 
     initialize();
     
-    projection_processor_ = std::make_unique<ProjectionProcessor>(param_, geom_);
+    projection_processor_ = std::make_unique<ProjectionProcessor>(
+        geom_.rows, geom_.cols, param.filter_cores);
 
     projection_processor_->flatfielder =
         std::make_unique<detail::Flatfielder>(detail::Flatfielder{
@@ -248,7 +246,6 @@ void Reconstructor::processProjections(int proj_id_begin, int proj_id_end) {
     auto data = &buffer_[proj_id_begin * pixels_];
     projection_processor_->process(data, proj_id_begin, proj_id_end);
 }
-
 
 void Reconstructor::uploadSinoBuffer(int proj_id_begin, 
                                      int proj_id_end,

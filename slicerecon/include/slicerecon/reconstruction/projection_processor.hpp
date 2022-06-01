@@ -8,9 +8,9 @@ extern "C" {
 #include <fftw3.h>
 }
 
-#include <bulk/backends/thread/thread.hpp>
+#include <oneapi/tbb.h>
 
-#include "../data_types.hpp"
+#include "slicerecon/data_types.hpp"
 
 namespace slicerecon {
 
@@ -79,7 +79,7 @@ class Filterer {
 
 class ProjectionProcessor {
   public:
-    ProjectionProcessor(Settings param, Geometry geom);
+    ProjectionProcessor(int cols, int rows, int n_threads);
 
     void process(float* data, int proj_id_begin, int proj_id_end);
 
@@ -90,10 +90,11 @@ class ProjectionProcessor {
     std::unique_ptr<detail::FDKScaler> fdk_scale;
 
   private:
-    Settings param_;
-    Geometry geom_;
+    int cols_;
+    int rows_;
 
-    bulk::thread::environment env_;
+    int n_threads_;
+    oneapi::tbb::task_arena arena_;
 };
 
 } // namespace slicerecon

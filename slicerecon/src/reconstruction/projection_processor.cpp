@@ -6,8 +6,6 @@
 
 #include <spdlog/spdlog.h>
 
-#include <bulk/bulk.hpp>
-
 #include "slicerecon/reconstruction/projection_processor.hpp"
 
 
@@ -250,40 +248,38 @@ void Filterer::apply(Projection proj, int s, int proj_idx)
 
 } // namespace detail
 
-ProjectionProcessor::ProjectionProcessor(Settings param, Geometry geom)
- : param_(param), geom_(geom) {}
+ProjectionProcessor::ProjectionProcessor(int rows, int cols, int n_threads)
+ : rows_(rows), cols_(cols), n_threads_(n_threads), arena_(n_threads) {}
 
-void ProjectionProcessor::process(float* data, int proj_id_begin, int proj_id_end)
-{
+void ProjectionProcessor::process(float* data, int proj_id_begin, int proj_id_end) {
+
+    using namespace oneapi;
+
     auto proj_count = proj_id_end - proj_id_begin + 1;
-    env_.spawn(param_.filter_cores, [&](auto& world) {
-        auto s = world.rank();
-        auto p = world.active_processors();
-        auto pixels = geom_.rows * geom_.cols;
 
-        // we parallelize over projections, and apply the necessary
-        // transformations
-        for (auto proj_idx = s; proj_idx < proj_count; proj_idx += p) {
-            auto proj =
-            detail::Projection{&data[proj_idx * pixels], geom_.rows, geom_.cols};
-            if (flatfielder) {
-                flatfielder->apply(proj);
-            }
-            if (paganin) {
-                paganin->apply(proj, world.rank());
-            }
-            else if (neglog) {
-                neglog->apply(proj);
-            }
-            if (filterer) {
-                filterer->apply(proj, world.rank(), proj_id_begin + proj_idx);
-            }
-            if (fdk_scale) {
-                fdk_scale->apply(proj, proj_idx);
-            }
-        }
+    arena_.execute([&]{
+        tbb::parallel_for(tbb::blocked_range<int>(0, proj_count), 
+                          [&](const tbb::blocked_range<int> &block) {
+            auto pixels = rows_ * cols_;
 
-        world.barrier();
+            for (auto i = block.begin(); i != block.end(); ++i) {
+                auto proj = detail::Projection{&data[i * pixels], rows_, cols_};
+                if (flatfielder) {
+                    flatfielder->apply(proj);
+                }
+                if (paganin) {
+                    paganin->apply(proj, i % n_threads_);
+                } else if (neglog) {
+                    neglog->apply(proj);
+                }
+                if (filterer) {
+                    filterer->apply(proj, i % n_threads_, proj_id_begin + i);
+                }
+                if (fdk_scale) {
+                   fdk_scale->apply(proj, i);
+                }
+            }
+        });
     });
 }
 

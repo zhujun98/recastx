@@ -8,6 +8,3 @@
 [submodule "ext/glfw"]
 	path = ext/glfw
 	url = https://github.com/glfw/glfw.git
-[submodule "ext/bulk"]
-	path = ext/bulk
-	url = https://www.github.com/jwbuurlage/Bulk.git

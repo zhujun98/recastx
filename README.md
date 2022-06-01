@@ -7,7 +7,7 @@ module load gcc/9.3.0
 conda create -n tomcat-live python==3.7.10
 
 conda activate tomcat-live
-conda install -c conda-forge cmake cppzmq eigen boost fftw libastra nlohmann_json spdlog pybind11
+conda install -c conda-forge cmake cppzmq eigen boost fftw libastra tbb-devel nlohmann_json spdlog pybind11
 
 git clone --recursive <repo>
 

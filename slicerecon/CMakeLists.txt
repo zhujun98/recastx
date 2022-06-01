@@ -9,7 +9,7 @@ message(STATUS "Found Eigen3 ${Eigen3_VERSION}")
 
 find_package(nlohmann_json REQUIRED)
 
-add_subdirectory(${PROJECT_SOURCE_DIR}/../ext/bulk bulk)
+find_package(TBB 2021.5 REQUIRED)
 
 add_library(astra-toolbox SHARED IMPORTED)
 set_target_properties(
@@ -31,6 +31,7 @@ add_library(${TARGET_NAME} ${SOURCES})
 target_include_directories(${TARGET_NAME}
     PRIVATE
         ${ASTRA_INCLUDE_DIR}
+        ${TBB_INCLUDE_DIRS}
     PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include)
 target_link_libraries(${TARGET_NAME}
@@ -41,12 +42,13 @@ target_link_libraries(${TARGET_NAME}
         nlohmann_json::nlohmann_json
         spdlog::spdlog
         Boost::program_options
-        bulk_thread
+        ${TBB_LIBRARIES}
         ${FFTW_FLOAT_LIB}
 )
+
 target_compile_options(${TARGET_NAME}
     PRIVATE
-        -std=c++17 -Wall -Wextra -Wfatal-errors -fPIC -static)
+        -Wall -Wextra -Wfatal-errors -fPIC -static)
 if (BUILD_MONITOR)
     target_compile_definitions(${TARGET_NAME} PRIVATE WITH_MONITOR)
 endif()
