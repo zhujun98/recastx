@@ -54,7 +54,7 @@ def gen_fake_data(socket, scan_index, n, *, shape):
     thread.join()
 
 
-def stream_data_file(filepath, socket,  scan_index, n):
+def stream_data_file(filepath, socket,  scan_index, n, *, i0=0):
     queue = Queue()
     thread = Thread(target=send, args=(socket, queue))
     thread.start()
@@ -75,7 +75,7 @@ def stream_data_file(filepath, socket,  scan_index, n):
         shape = ds.shape[1:]
         data = np.zeros(shape, dtype=np.uint16)
         n_images = ds.shape[0]
-        for i in range(n):
+        for i in range(i0, i0 + n):
             idx = i % n_images
             meta = gen_meta(scan_index, i, shape)
             ds.read_direct(data, np.s_[idx, ...], None)
@@ -99,10 +99,12 @@ def main():
     parser = argparse.ArgumentParser(description='Fake GigaFrost Data Stream')
 
     parser.add_argument('--port', default="5558", type=int)
-    parser.add_argument('--sock', default='pub', type=str)
+    parser.add_argument('--sock', default='push', type=str)
     parser.add_argument('--darks', default=20, type=int)
     parser.add_argument('--flats', default=20, type=int)
     parser.add_argument('--projections', default=128, type=int)
+    parser.add_argument('--p0', default=0, type=int,
+                        help="Starting index of the projection images")
     parser.add_argument('--rows', default=1200, type=int,
                         help="Number of rows of the generated image")
     parser.add_argument('--cols', default=2016, type=int,
@@ -132,7 +134,8 @@ def main():
         if not datafile:
             gen_fake_data(socket, scan_index, n, shape=(args.rows, args.cols))
         else:
-            stream_data_file(datafile, socket, scan_index, n)
+            stream_data_file(datafile, socket, scan_index, n, 
+                             i0=args.p0 if scan_index == 2 else 0)
  
 
 if __name__ == "__main__":
