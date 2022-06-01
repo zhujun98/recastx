@@ -5,11 +5,11 @@
 #include <iostream>
 #include <vector>
 
+#include <spdlog/spdlog.h>
+
 extern "C" {
 #include <fftw3.h>
 }
-
-#include <spdlog/spdlog.h>
 
 #include "../data_types.hpp"
 #include "helpers.hpp"
@@ -56,10 +56,6 @@ class Reconstructor {
     std::map<std::string, bool*> bool_param_;
 
     void initialize();
-
-    std::vector<float> averageProjections(std::vector<raw_dtype> all); 
-
-    void computeReciprocal();
 
     /**
      * In-memory processing the projections [proj_id_begin, ..., proj_id_end].

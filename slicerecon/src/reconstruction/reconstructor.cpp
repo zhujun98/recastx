@@ -2,10 +2,13 @@
 
 #include <Eigen/Eigen>
 
+#include <spdlog/spdlog.h>
+
 #include <bulk/backends/thread/thread.hpp>
 #include <bulk/bulk.hpp>
 
 #include "slicerecon/reconstruction/reconstructor.hpp"
+#include "slicerecon/reconstruction/utils.hpp"
 
 
 namespace slicerecon {
@@ -83,7 +86,7 @@ void Reconstructor::pushProjection(ProjectionType k,
                                  "Received: {}/{}, Expected: {}/{} ...", 
                                  received_darks_, received_flats_, p.darks, p.flats);
                 }
-                computeReciprocal();
+                utils::computeReciprocal(all_darks_, all_flats_, pixels_, reciprocal_, dark_avg_);
                 reciprocal_computed_ = true;
                 received_darks_ = 0;
                 received_flats_ = 0;
@@ -236,50 +239,6 @@ void Reconstructor::initialize() {
     } else {
         solver_ = std::make_unique<ConeBeamSolver>(param_, geom_);
     }
-}
-
-std::vector<float> Reconstructor::averageProjections(std::vector<raw_dtype> data) {
-    auto result = std::vector<float>(pixels_);
-    auto samples = data.size() / pixels_;
-    for (int i = 0; i < pixels_; ++i) {
-        float total = 0.0f;
-        for (auto j = 0u; j < samples; ++j) {
-            total += data[pixels_ * j + i];
-        }
-        result[i] = total / samples;
-    }
-    return result;
-}
-
-void Reconstructor::computeReciprocal() {
-    spdlog::info("Computing reciprocal for flat fielding ...");
-
-#if defined(WITH_MONITOR)
-    auto start = std::chrono::steady_clock::now();
-#endif
-
-    // 1) average dark
-    auto dark = averageProjections(all_darks_);
-    // 2) average flats
-    auto flat = averageProjections(all_flats_);
-    // 3) compute reciprocal
-    for (int i = 0; i < geom_.rows * geom_.cols; ++i) {
-        if (dark[i] == flat[i]) {
-            reciprocal_[i] = 1.0f;
-        } else {
-            reciprocal_[i] = 1.0f / (flat[i] - dark[i]);
-        }
-    }
-
-    dark_avg_ = dark;
-
-#if defined(WITH_MONITOR)
-    float duration = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now() -  start).count();
-    spdlog::info("**************************************************************");
-    spdlog::info("Computing reciprocal took {} ms", duration/1000);
-    spdlog::info("**************************************************************");
-#endif
 }
 
 void Reconstructor::processProjections(int proj_id_begin, int proj_id_end) {
