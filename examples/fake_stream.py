@@ -89,26 +89,38 @@ def stream_data_file(filepath, socket,  scan_index, n, *, i0=0):
 
 
 def parse_datafile(name: str):
-    if name == "pet":
-        # number of projections per scan: 400
-        return "/sls/X02DA/Data10/e16816/disk1/PET_55um_40_1/PET_55um_40_1.h5"
+    if name in ["pet1", "pet2", "pet3"]:
+        # number of projections per scan: 400, 500, 500
+        idx = name[-1]
+        return f"/sls/X02DA/Data10/e16816/disk1/PET_55um_40_{idx}/PET_55um_40_{idx}.h5"
+    if name == "asm":
+        # number of projections per scan: 400 
+        return f"/sls/X02DA/Data10/e16816/disk1/15_ASM_UA_ASM/15_ASM_UA_ASM.h5"
+    if name == "h1":
+        # number of projections per scan: 500 
+        return f"/sls/X02DA/Data10/e16816/disk1/32_050_300_H1/32_050_300_H1.h5"
     return name
 
 
 def main():
     parser = argparse.ArgumentParser(description='Fake GigaFrost Data Stream')
 
-    parser.add_argument('--port', default="5558", type=int)
-    parser.add_argument('--sock', default='push', type=str)
-    parser.add_argument('--darks', default=20, type=int)
-    parser.add_argument('--flats', default=20, type=int)
-    parser.add_argument('--projections', default=128, type=int)
+    parser.add_argument('--port', default="5558", type=int,
+                        help="ZMQ socket port (default=5558)")
+    parser.add_argument('--sock', default='push', type=str,
+                        help="ZMQ socket type (default=PUSH)")
+    parser.add_argument('--darks', default=20, type=int,
+                        help="Number of dark images (default=20)")
+    parser.add_argument('--flats', default=20, type=int,
+                        help="Number of flat images (default=20)")
+    parser.add_argument('--projections', default=128, type=int,
+                        help="Number of projection images (default=128)")
     parser.add_argument('--p0', default=0, type=int,
-                        help="Starting index of the projection images")
+                        help="Starting index of the projection images (default=0)")
     parser.add_argument('--rows', default=1200, type=int,
-                        help="Number of rows of the generated image")
+                        help="Number of rows of the generated image (default=1200)")
     parser.add_argument('--cols', default=2016, type=int,
-                        help="Number of columns of the generated image")
+                        help="Number of columns of the generated image (default=2016)")
     parser.add_argument('--datafile', type=str, 
                         help="Path or code of the data file")
 
