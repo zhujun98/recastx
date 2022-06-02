@@ -7,7 +7,7 @@
 namespace fs = std::experimental::filesystem;
 #include <boost/program_options.hpp>
 
-#include "server/server.hpp"
+#include "server.hpp"
 
 int main(int argc, char** argv) {
     namespace po = boost::program_options;
@@ -28,12 +28,9 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    // start the server
     tomovis::Server server(opts["port"].as<int>());
 
     server.start();
-
-    while (true) { std::this_thread::sleep_for(std::chrono::seconds(1)); }
 
     return 0;
 }

@@ -11,8 +11,10 @@ struct ParameterBoolPacket : public PacketBase<ParameterBoolPacket> {
     ParameterBoolPacket() = default;
     ParameterBoolPacket(int32_t a, std::string b, bool c)
         : scene_id(a), parameter_name(b), value(c) {}
-    BOOST_HANA_DEFINE_STRUCT(ParameterBoolPacket, (int32_t, scene_id),
-                             (std::string, parameter_name), (bool, value));
+    BOOST_HANA_DEFINE_STRUCT(ParameterBoolPacket, 
+                             (int32_t, scene_id),
+                             (std::string, parameter_name), 
+                             (bool, value));
 };
 
 struct ParameterFloatPacket : public PacketBase<ParameterFloatPacket> {
@@ -20,8 +22,10 @@ struct ParameterFloatPacket : public PacketBase<ParameterFloatPacket> {
     ParameterFloatPacket() = default;
     ParameterFloatPacket(int32_t a, std::string b, float c)
         : scene_id(a), parameter_name(b), value(c) {}
-    BOOST_HANA_DEFINE_STRUCT(ParameterFloatPacket, (int32_t, scene_id),
-                             (std::string, parameter_name), (float, value));
+    BOOST_HANA_DEFINE_STRUCT(ParameterFloatPacket, 
+                             (int32_t, scene_id),
+                             (std::string, parameter_name), 
+                             (float, value));
 };
 
 struct ParameterEnumPacket : public PacketBase<ParameterEnumPacket> {
@@ -29,7 +33,8 @@ struct ParameterEnumPacket : public PacketBase<ParameterEnumPacket> {
     ParameterEnumPacket() = default;
     ParameterEnumPacket(int32_t a, std::string b, std::vector<std::string> c)
         : scene_id(a), parameter_name(b), values(c) {}
-    BOOST_HANA_DEFINE_STRUCT(ParameterEnumPacket, (int32_t, scene_id),
+    BOOST_HANA_DEFINE_STRUCT(ParameterEnumPacket, 
+                             (int32_t, scene_id),
                              (std::string, parameter_name),
                              (std::vector<std::string>, values));
 };

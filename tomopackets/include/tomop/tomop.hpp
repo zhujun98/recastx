@@ -1,10 +1,4 @@
-#include "descriptors.hpp"
 #include "packets.hpp"
-#include "publisher.hpp"
-#include "serialize.hpp"
-#include "server.hpp"
-#include "multiserver.hpp"
-
 #include "packets/geometry_packets.hpp"
 #include "packets/partitioning_packets.hpp"
 #include "packets/reconstruction_packets.hpp"

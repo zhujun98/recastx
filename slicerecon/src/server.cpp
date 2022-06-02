@@ -1,4 +1,5 @@
 #include <functional>
+#include <memory>
 #include <numeric>
 #include <string>
 
@@ -7,8 +8,9 @@
 #include <boost/program_options.hpp>
 
 #include "slicerecon/reconstructor.hpp"
-#include "slicerecon/projection_server.hpp"
+#include "slicerecon/receivers.hpp"
 #include "slicerecon/visualization_server.hpp"
+#include "slicerecon/utils.hpp"
 
 using namespace std::string_literals;
 
@@ -33,7 +35,7 @@ int main(int argc, char** argv)
          "hostname of the data source server")
         ("data-port", po::value<int>()->default_value(5558),
          "ZMQ socket port of the data source server")
-        ("data-socket", po::value<std::string>()->default_value("sub"),
+        ("data-socket", po::value<std::string>()->default_value("pull"),
          "ZMQ socket type of the data source server. Options: sub/pull")
         ("gui-host", po::value<std::string>()->default_value("localhost"),
          "hostname of the GUI server")
@@ -52,9 +54,9 @@ int main(int argc, char** argv)
         ("preview-size", po::value<int>()->default_value(128),
          "...")
         ("group-size", po::value<int>()->default_value(128),
-         "...")
-        ("filter-cores", po::value<int>()->default_value(8),
-         "number of CPU cores used by the filters")
+         "")
+        ("threads", po::value<int>()->default_value(8),
+         "number of threads used for data processing")
         ("darks", po::value<int>()->default_value(10),
          "number of dark images")
         ("flats", po::value<int>()->default_value(10),
@@ -64,13 +66,13 @@ int main(int argc, char** argv)
         ("continuous-mode", po::bool_switch(&continuous_mode),
          "switch reconstructor to continuous mode from the default alternating mode")
         ("retrieve-phase", po::bool_switch(&retrieve_phase),
-         "...")
+         "switch to Paganin filter")
         ("tilt", po::bool_switch(&tilt),
          "...")
+        ("filter", po::value<std::string>()->default_value("shepp"),
+         "Supported filters are: shepp (Shepp-Logan), ramlak (Ram-Lak)")
         ("gaussian", po::bool_switch(&gaussian_pass),
-         "...")
-        ("filter", po::value<std::string>()->default_value("shepp-logan"),
-         "...")
+         "enable Gaussian low pass filter")
     ;
 
     po::options_description geometry_desc("Geometry options");
@@ -123,21 +125,22 @@ int main(int argc, char** argv)
     auto slice_size = opts["slice-size"].as<int>();
     auto preview_size = opts["preview-size"].as<int>();
     auto group_size = opts["group-size"].as<int>();
-    auto filter_cores = opts["filter-cores"].as<int>();
-    auto darks = opts["darks"].as<int>();
-    auto flats = opts["flats"].as<int>();
+    auto num_threads = opts["threads"].as<int>();
+    auto num_darks = opts["darks"].as<int>();
+    auto num_flats = opts["flats"].as<int>();
+    auto num_projections = opts["projections"].as<int>();
+    if (num_projections < group_size) {
+        throw std::invalid_argument(
+            "'projections' ("s + std::to_string(num_projections) + 
+            ") is smaller than 'group_size' ("s + std::to_string(group_size) + ")"s);
+    }
+
     auto recon_mode = continuous_mode ? slicerecon::ReconstructMode::continuous : 
                                         slicerecon::ReconstructMode::alternating;
-    auto filter = opts["filter"].as<std::string>();
+    auto filter_name = opts["filter"].as<std::string>();
 
     auto rows = opts["rows"].as<int>();
     auto cols = opts["cols"].as<int>();
-    auto projections = opts["projections"].as<int>();
-    if (projections < group_size) {
-        throw std::invalid_argument(
-            "'projections' ("s + std::to_string(projections) + 
-            ") is smaller than 'group_size' ("s + std::to_string(group_size) + ")"s);
-    }
 
     auto pixel_size = opts["pixel-size"].as<float>();
     auto lambda = opts["lambda"].as<float>();
@@ -145,54 +148,60 @@ int main(int argc, char** argv)
     auto beta = opts["beta"].as<float>();
     auto distance = opts["distance"].as<float>();
 
-    slicerecon::PaganinSettings paganin {pixel_size, lambda, delta, beta, distance};
-
-    slicerecon::Settings params { slice_size, 
-                                  preview_size, 
-                                  group_size, 
-                                  filter_cores, 
-                                  darks, 
-                                  flats, 
-                                  projections,
-                                  recon_mode, 
-                                  false,
-                                  retrieve_phase, 
-                                  tilt, 
-                                  paganin, 
-                                  gaussian_pass, 
-                                  filter };
-
-    slicerecon::Geometry geom { rows,
-                                cols,
-                                projections,
-                                {},
-                                true,
-                                false,
-                                {0.0f, 0.0f},
-                                {0.0f, 0.0f, 0.0f},
-                                {1.0f, 1.0f, 1.0f},
-                                0.0f,
-                                0.0f };
-
     spdlog::set_pattern("[%Y-%m-%d %T.%e] [%^%l%$] %v");
     spdlog::set_level(spdlog::level::info);
 
-    // 1. setup reconstructor
-    slicerecon::Reconstructor recon(params, geom);
+    std::array<float, 2> detector_size {0.0f, 0.0f};
+    std::array<float, 3> volume_min_point {0.0f, 0.0f, 0.0f};
+    std::array<float, 3> volume_max_point {1.0f, 1.0f, 1.0f};
+    float source_origin = 0.f;
+    float origin_det = 0.f;
+
+    bool vec_geometry = false;
+
+    // 1. set up reconstructor
+    auto recon = std::make_shared<slicerecon::Reconstructor>(rows, cols, num_threads);
+
+    recon->initialize(num_darks, num_flats, num_projections, group_size, preview_size, recon_mode);
+
+    if (retrieve_phase) recon->initPaganin(pixel_size, lambda, delta, beta, distance);
+
+    recon->initFilter(filter_name, gaussian_pass);
+
+    // set up solver
+
+    // TODO:: receive/create angles in different ways.
+    auto angles = slicerecon::utils::defaultAngles(num_projections);
+    if (cone_beam) {
+        recon->setSolver(std::make_unique<slicerecon::ConeBeamSolver>(
+            rows, cols, num_projections, angles, volume_min_point, volume_max_point, preview_size, slice_size,
+            vec_geometry, detector_size, source_origin, origin_det, recon_mode
+        ));
+    } else {
+        recon->setSolver(std::make_unique<slicerecon::ParallelBeamSolver>(
+            rows, cols, num_projections, angles, volume_min_point, volume_max_point, preview_size, slice_size, 
+            vec_geometry, recon_mode
+        ));
+    }
 
     // 2. listen to projection stream projection callback, push to projection stream all raw data
-    auto proj = slicerecon::ProjectionServer(data_hostname, data_port, data_socket_type);
-    proj.start(recon, params);
+    auto proj_receiver = slicerecon::ProjectionReceiver(
+        "tcp://"s + data_hostname + ":"s + std::to_string(data_port),
+        data_socket_type,
+        recon);
+    proj_receiver.start();
 
     // 3. connect with visualization server
     auto viz = slicerecon::VisualizationServer(
         "tomcat-live GUI server",
         "tcp://"s + gui_hostname + ":"s + std::to_string(gui_port),
-        "tcp://"s + gui_hostname + ":"s + std::to_string(gui_port + 1));
-    viz.set_slice_callback([&](auto x, auto idx) { return recon.reconstructSlice(x); });
-    recon.addListener(&viz);
+        "tcp://"s + gui_hostname + ":"s + std::to_string(gui_port + 1),
+        recon);
+    viz.start();
 
-    viz.serve();
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    }
 
     return 0;
 }

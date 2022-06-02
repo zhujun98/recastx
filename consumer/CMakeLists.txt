@@ -2,7 +2,7 @@ project(consumer LANGUAGES CXX)
 
 set(SOURCE_NAMES
     "src/main.cpp"
-    "src/server/server.cpp"
+    "src/server.cpp"
 )
 
 set(TARGET_NAME "tomcat-live-consumer")

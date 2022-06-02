@@ -19,47 +19,50 @@ set_target_properties(
 set(ASTRA_INCLUDE_DIR ${CMAKE_PREFIX_PATH}/include)
 
 set(SOURCES
-    "src/tomcat_live_server.cpp"
     "src/utils.cpp"
-    "src/projection_processor.cpp"
-    "src/listener.cpp"
+    "src/filter.cpp"
+    "src/phase.cpp"
     "src/solver.cpp"
     "src/reconstructor.cpp"
-    "src/helpers.cpp"
+    "src/receivers.cpp"
 )
 
-set(TARGET_NAME "tomcat-live-server")
-add_executable(${TARGET_NAME} ${SOURCES})
+add_library(slicerecon ${SOURCES})
 
-target_include_directories(${TARGET_NAME}
+target_include_directories(slicerecon
     PRIVATE
         ${ASTRA_INCLUDE_DIR}
         ${TBB_INCLUDE_DIRS}
     PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include)
 
-target_link_libraries(${TARGET_NAME}
+target_link_libraries(slicerecon
     PUBLIC
-        astra-toolbox
         tomopackets
+        spdlog::spdlog
         Eigen3::Eigen
+        astra-toolbox
+    PRIVATE
         nlohmann_json::nlohmann_json
         spdlog::spdlog
-        Boost::program_options
         ${TBB_LIBRARIES}
         ${FFTW_FLOAT_LIB}
 )
 
-target_compile_options(${TARGET_NAME}
-    PRIVATE
+target_compile_options(slicerecon
+    PUBLIC
         -Wall -Wextra -Wfatal-errors -fPIC -static)
 
 if (BUILD_MONITOR)
-    target_compile_definitions(${TARGET_NAME} PRIVATE WITH_MONITOR)
+    target_compile_definitions(slicerecon PRIVATE WITH_MONITOR)
 endif()
 
 if (BUILD_TEST)
     add_subdirectory(tests)
 endif()
 
-install(TARGETS ${TARGET_NAME} RUNTIME DESTINATION bin)
+set(EXEC_NAME "tomcat-live-server")
+add_executable(${EXEC_NAME} "src/server.cpp")
+target_link_libraries(${EXEC_NAME} PUBLIC slicerecon Boost::program_options)
+
+install(TARGETS ${EXEC_NAME} RUNTIME DESTINATION bin)

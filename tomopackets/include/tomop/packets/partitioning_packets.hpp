@@ -12,8 +12,10 @@ struct SetPartPacket : public PacketBase<SetPartPacket> {
     SetPartPacket(int32_t a, int32_t b, std::array<float, 3> c,
                   std::array<float, 3> d)
         : scene_id(a), part_id(b), min_pt(c), max_pt(d) {}
-    BOOST_HANA_DEFINE_STRUCT(SetPartPacket, (int32_t, scene_id),
-                             (int32_t, part_id), (std::array<float, 3>, min_pt),
+    BOOST_HANA_DEFINE_STRUCT(SetPartPacket, 
+                             (int32_t, scene_id),
+                             (int32_t, part_id), 
+                             (std::array<float, 3>, min_pt),
                              (std::array<float, 3>, max_pt));
 };
 

@@ -122,7 +122,9 @@ def main():
     parser.add_argument('--cols', default=2016, type=int,
                         help="Number of columns of the generated image (default=2016)")
     parser.add_argument('--datafile', type=str, 
-                        help="Path or code of the data file")
+                        help="Path or code of the data file. Available codes "
+                             "with number of projection denoted in the bracket are: "
+                             "pet1 (400), pet2 (500), pet3 (500), asm (400), h1 (500)")
 
     args = parser.parse_args()
     port = args.port

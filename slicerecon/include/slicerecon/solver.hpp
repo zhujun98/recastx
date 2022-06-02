@@ -27,8 +27,12 @@ class Solver {
 
 protected:
 
-    Settings param_;
-    Geometry geom_;
+    int rows_;
+    int cols_;
+    int projections_;
+
+    int preview_size_;
+    int slice_size_;
 
     std::unique_ptr<astra::CVolumeGeometry3D> vol_geom_;
     astraCUDA3d::MemHandle3D vol_handle_;
@@ -40,35 +44,36 @@ protected:
     std::unique_ptr<astra::CFloat32VolumeData3DGPU> vol_data_small_;
     std::vector<std::unique_ptr<astra::CCudaBackProjectionAlgorithm3D>> algs_small_;
 
-    std::vector<std::unique_ptr<astra::CFloat32ProjectionData3DGPU>> proj_datas_;
+    std::vector<std::unique_ptr<astra::CFloat32ProjectionData3DGPU>> proj_data_;
     std::vector<std::unique_ptr<astra::CCudaBackProjectionAlgorithm3D>> algs_;
     std::vector<astraCUDA3d::MemHandle3D> proj_handles_;
 
 public:
 
-    Solver(Settings param, Geometry geom);
+    Solver(int rows, 
+           int cols, 
+           int projections,
+           const std::array<float, 3>& volume_min_point, 
+           const std::array<float, 3>& volume_max_point,
+           int preview_size,
+           int slice_size);
+
     virtual ~Solver();
 
-    virtual slice_data reconstruct_slice(orientation x, int buffer_idx) = 0;
-    virtual void reconstruct_preview(std::vector<float>& preview_buffer, int buffer_idx) = 0;
-
-    auto proj_data(int index) { return proj_datas_[index].get(); }
+    virtual slice_data reconstructSlice(orientation x, int buffer_idx) = 0;
+    virtual void reconstructPreview(std::vector<float>& preview_buffer, int buffer_idx) = 0;
 
     // returns true if we want to trigger a re-reconstruction
     virtual bool
-    parameter_changed(std::string param, std::variant<float, std::string, bool> value) {
+    parameterChanged(std::string param, std::variant<float, std::string, bool> value) {
         return false;
     }
 
-    virtual std::vector<std::pair<std::string, std::variant<float, std::vector<std::string>, bool>>>
-    parameters() {
-        return {};
-    }
+    void uploadProjections(int buffer_idx, const std::vector<float>& sino, int begin, int end);
 };
 
 class ParallelBeamSolver : public Solver {
 
-    // Parallel specific stuff
     std::unique_ptr<astra::CParallelVecProjectionGeometry3D> proj_geom_;
     std::unique_ptr<astra::CParallelVecProjectionGeometry3D> proj_geom_small_;
     std::vector<astra::SPar3DProjection> vectors_;
@@ -79,19 +84,26 @@ class ParallelBeamSolver : public Solver {
 
 public:
 
-    ParallelBeamSolver(Settings param, Geometry geom);
+    ParallelBeamSolver(int rows, 
+                       int cols,
+                       int projections,
+                       std::vector<float> angles,
+                       const std::array<float, 3>& volume_min_point, 
+                       const std::array<float, 3>& volume_max_point,
+                       int preview_size,
+                       int slice_size,
+                       bool vec_geometry,
+                       ReconstructMode recon_mode);
     // FIXME ~solver clean up
 
-    slice_data reconstruct_slice(orientation x, int buffer_idx) override;
-    void reconstruct_preview(std::vector<float>& preview_buffer, int buffer_idx) override;
+    slice_data reconstructSlice(orientation x, int buffer_idx) override;
+    void reconstructPreview(std::vector<float>& preview_buffer, int buffer_idx) override;
 
-    bool parameter_changed(std::string param, std::variant<float, std::string, bool> value) override;
-    std::vector<std::pair<std::string,std::variant<float, std::vector<std::string>, bool>>>
-    parameters() override;
+    bool parameterChanged(std::string param, std::variant<float, std::string, bool> value) override;
 };
 
 class ConeBeamSolver : public Solver {
-    // Cone specific stuff
+
     std::unique_ptr<astra::CConeVecProjectionGeometry3D> proj_geom_;
     std::unique_ptr<astra::CConeVecProjectionGeometry3D> proj_geom_small_;
     std::vector<astra::SConeProjection> vectors_;
@@ -99,11 +111,23 @@ class ConeBeamSolver : public Solver {
 
 public:
 
-    ConeBeamSolver(Settings param, Geometry geom);
+    ConeBeamSolver(int rows, 
+                   int cols,
+                   int projections,
+                   std::vector<float> angles,
+                   const std::array<float, 3>& volume_min_point, 
+                   const std::array<float, 3>& volume_max_point,
+                   int preview_size,
+                   int slice_size,
+                   bool vec_geometry,
+                   const std::array<float, 2>& detector_size,
+                   float source_origin,
+                   float origin_det,
+                   ReconstructMode recon_mode);
     // FIXME ~solver clean up
 
-    slice_data reconstruct_slice(orientation x, int buffer_idx) override;
-    void reconstruct_preview(std::vector<float>& preview_buffer, int buffer_idx) override;
+    slice_data reconstructSlice(orientation x, int buffer_idx) override;
+    void reconstructPreview(std::vector<float>& preview_buffer, int buffer_idx) override;
     std::vector<float> fdk_weights();
 };
 
