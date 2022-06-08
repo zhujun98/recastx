@@ -7,7 +7,6 @@
 #include <glm/glm.hpp>
 #include <GL/gl3w.h>
 
-#include "configurable.hpp"
 #include "input_handler.hpp"
 #include "ticker.hpp"
 

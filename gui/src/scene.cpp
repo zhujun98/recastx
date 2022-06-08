@@ -5,12 +5,17 @@
 
 #include <tomop/tomop.hpp>
 
+#include "graphics/geometry_component.hpp"
+#include "graphics/partitioning_component.hpp"
+#include "graphics/reconstruction_component.hpp"
 #include "graphics/scene_object_2d.hpp"
 #include "graphics/scene_object_3d.hpp"
 #include "scene.hpp"
 
 
 namespace gui {
+
+// class Scene
 
 Scene::Scene(const std::string& name, int dimension, int scene_id)
     : name_(name), dimension_(dimension), scene_id_(scene_id) {
@@ -30,36 +35,42 @@ Scene::~Scene() {
 
 void Scene::render(glm::mat4 window_matrix) { object_->draw(window_matrix); }
 
+// class SceneList
 
-SceneList::SceneList() = default;
+SceneList::SceneList() {
+    int scene_id = 0;
+    add_scene("TOMCAT live 3D preview", scene_id, true, 3);
+
+    auto& obj = active_scene_->object();
+    obj.add_component(std::make_unique<ReconstructionComponent>(obj, scene_id));
+    obj.add_component(std::make_unique<GeometryComponent>(obj, scene_id));
+    obj.add_component(std::make_unique<PartitioningComponent>(obj, scene_id));
+};
 
 SceneList::~SceneList() = default;
 
 // TODO make thread safe
-int SceneList::add_scene(const std::string& name,
-                         int id,
-                         bool make_active,
-                         int dimension) {
-  if (id == -1) id = reserve_id();
+int SceneList::add_scene(const std::string& name, int id, bool make_active, int dimension) {
+    if (id == -1) id = reserve_id();
 
-  scenes_[id] = std::make_unique<Scene>(name, dimension, id);
-  if (make_active) set_active_scene(id);
+    scenes_[id] = std::make_unique<Scene>(name, dimension, id);
+    if (make_active) set_active_scene(id);
 
-  scenes_[id]->object().add_listener(this);
+    scenes_[id]->object().add_listener(this);
 
-  return id;
+    return id;
 }
 
 void SceneList::describe() {
-  if (active_scene_ == nullptr) return;
+    if (active_scene_ == nullptr) return;
 
-  ImGui::SetNextWindowSizeConstraints(ImVec2(280, 500), ImVec2(FLT_MAX, FLT_MAX)); // Width > 100, Height > 100
-  ImGui::Begin("Scene controls");
-  ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.65f); // 2/3 of the space for widget and 1/3 for labels
+    ImGui::SetNextWindowSizeConstraints(ImVec2(280, 500), ImVec2(FLT_MAX, FLT_MAX)); // Width > 100, Height > 100
+    ImGui::Begin("Scene controls");
+    ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.65f); // 2/3 of the space for widget and 1/3 for labels
 
-  active_scene_->object().describe();
+    active_scene_->object().describe();
 
-  ImGui::End();
+    ImGui::End();
 }
 
 // TODO make thread safe

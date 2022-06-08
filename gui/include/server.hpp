@@ -16,6 +16,7 @@
 #include "zmq.hpp"
 #include "tomop/tomop.hpp"
 
+#include "modules/scene_module.hpp"
 #include "packet_listener.hpp"
 #include "ticker.hpp"
 
@@ -30,8 +31,6 @@ class Server : public Ticker, public PacketListener {
 
     void start();
 
-    void register_module(std::shared_ptr<SceneModuleProtocol> module);
-
     void tick(float) override;
 
     void handle(tomop::Packet& pkt) override;
@@ -40,13 +39,15 @@ class Server : public Ticker, public PacketListener {
     std::map<tomop::packet_desc, std::shared_ptr<SceneModuleProtocol>> modules_;
 
     SceneList& scenes_;
-    std::thread server_thread_;
+    std::thread thread_;
 
     std::queue<std::pair<tomop::packet_desc, std::unique_ptr<tomop::Packet>>> packets_;
 
     zmq::context_t context_;
     zmq::socket_t rep_socket_;
     zmq::socket_t pub_socket_;
+
+    void registerModule(std::shared_ptr<SceneModuleProtocol> module);
 };
 
 }  // namespace gui

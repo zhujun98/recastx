@@ -193,7 +193,6 @@ int main(int argc, char** argv)
 
     // 3. connect with visualization server
     auto viz = slicerecon::VisualizationServer(
-        "tomcat-live GUI server",
         "tcp://"s + gui_hostname + ":"s + std::to_string(gui_port),
         "tcp://"s + gui_hostname + ":"s + std::to_string(gui_port + 1),
         recon);
