@@ -122,10 +122,10 @@ public:
                 zmq::message_t reply;
 
                 int n = recon_->previewSize();
-                auto volprev = tomop::VolumeDataPacket(0, {n, n, n}, recon_->previewData());
+                auto volprev = tomop::VolumeDataPacket({n, n, n}, recon_->previewData());
                 send(volprev);
 
-                auto grsp = tomop::GroupRequestSlicesPacket(0, 1);
+                auto grsp = tomop::GroupRequestSlicesPacket(1);
                 send(grsp);
                 
                 spdlog::info("Volume preview data sent");
@@ -157,7 +157,7 @@ public:
 
         if (!result.first.empty()) {
             auto data_packet = tomop::SliceDataPacket(
-                0, slice_id, result.first, std::move(result.second), false);
+                slice_id, result.first, std::move(result.second), false);
             send(data_packet);
         }
     }

@@ -1,5 +1,3 @@
 #include "packets.hpp"
-#include "packets/geometry_packets.hpp"
-#include "packets/partitioning_packets.hpp"
 #include "packets/reconstruction_packets.hpp"
 #include "packets/control_packets.hpp"
