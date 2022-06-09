@@ -7,7 +7,7 @@
 
 namespace slicerecon {
 
-class ProjectionReceiver {
+class DataReceiver {
 
     zmq::context_t context_;
     zmq::socket_t socket_;
@@ -17,11 +17,11 @@ class ProjectionReceiver {
     std::shared_ptr<Reconstructor> recon_;
 
 public:
-    ProjectionReceiver(const std::string& endpoint,
-                      zmq::socket_type socket_type,
-                      std::shared_ptr<Reconstructor> recon);
+    DataReceiver(const std::string& endpoint,
+                 zmq::socket_type socket_type,
+                 std::shared_ptr<Reconstructor> recon);
 
-    ~ProjectionReceiver();
+    ~DataReceiver();
 
     void start();
 };

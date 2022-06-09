@@ -4,7 +4,7 @@
 #include <spdlog/spdlog.h>
 
 #include "slicerecon/data_types.hpp"
-#include "slicerecon/receivers.hpp"
+#include "slicerecon/data_receiver.hpp"
 
 
 namespace slicerecon {
@@ -26,9 +26,9 @@ ProjectionType parseProjectionType(int v) {
 } // detail
 
 
-ProjectionReceiver::ProjectionReceiver(const std::string& endpoint,
-                                       zmq::socket_type socket_type,
-                                       std::shared_ptr<Reconstructor> recon)
+DataReceiver::DataReceiver(const std::string& endpoint,
+                           zmq::socket_type socket_type,
+                           std::shared_ptr<Reconstructor> recon)
         : context_(1),
           socket_(context_, socket_type),
           recon_(recon) {
@@ -44,12 +44,12 @@ ProjectionReceiver::ProjectionReceiver(const std::string& endpoint,
     }
 }
 
-ProjectionReceiver::~ProjectionReceiver() {
+DataReceiver::~DataReceiver() {
     socket_.close();
     context_.close();
 }
 
-void ProjectionReceiver::start() {
+void DataReceiver::start() {
     thread_ = std::thread([&] {
 #if defined(WITH_MONITOR)
         int monitor_every = recon_->bufferSize();
