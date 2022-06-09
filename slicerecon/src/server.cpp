@@ -8,7 +8,7 @@
 #include <boost/program_options.hpp>
 
 #include "slicerecon/reconstructor.hpp"
-#include "slicerecon/receivers.hpp"
+#include "slicerecon/data_receiver.hpp"
 #include "slicerecon/visualization_server.hpp"
 #include "slicerecon/utils.hpp"
 
@@ -185,14 +185,14 @@ int main(int argc, char** argv)
         ));
     }
 
-    // 2. listen to projection stream projection callback, push to projection stream all raw data
-    auto proj_receiver = slicerecon::ProjectionReceiver(
+    // set up data bridges
+
+    auto data_receiver = slicerecon::DataReceiver(
         "tcp://"s + data_hostname + ":"s + std::to_string(data_port),
         data_socket_type,
         recon);
-    proj_receiver.start();
+    data_receiver.start();
 
-    // 3. connect with visualization server
     auto viz = slicerecon::VisualizationServer(
         "tcp://"s + gui_hostname + ":"s + std::to_string(gui_port),
         "tcp://"s + gui_hostname + ":"s + std::to_string(gui_port + 1),
