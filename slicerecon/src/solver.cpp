@@ -36,8 +36,8 @@ Solver::Solver(int rows,
     // Small preview volume
     vol_geom_small_ = std::make_unique<astra::CVolumeGeometry3D>(
         preview_size, preview_size, preview_size, 
-        volume_min_point[0], volume_min_point[1], volume_min_point[1],
-        volume_max_point[0], volume_max_point[1], volume_max_point[1]);
+        volume_min_point[0], volume_min_point[1], volume_min_point[2],
+        volume_max_point[0], volume_max_point[1], volume_max_point[2]);
 
     spdlog::info("Small preview volume: {}", slicerecon::utils::info(*vol_geom_small_));
 

@@ -46,8 +46,10 @@ public:
 
         req_socket_.set(zmq::sockopt::linger, 200);
         req_socket_.connect(endpoint);
+        spdlog::info("Connected to GUI server (REQ-REP): {}", endpoint);
 
         sub_socket_.connect(subscribe_endpoint);
+        spdlog::info("Connected to GUI server (PUB-SUB): {}", subscribe_endpoint);
 
         std::vector<tomop::packet_desc> descriptors = {
             tomop::packet_desc::set_slice,
@@ -61,7 +63,6 @@ public:
             sub_socket_.set(zmq::sockopt::subscribe, zmq::buffer(filter));
         }
 
-        spdlog::info("Connected to visualization server: {}", endpoint);
     }
 
     ~VisualizationServer() {
@@ -91,7 +92,7 @@ public:
                         auto packet = std::make_unique<tomop::SetSlicePacket>();
                         packet->deserialize(std::move(buffer));
 
-                        make_slice(packet->slice_id, packet->orientation);
+                        makeSlice(packet->slice_id, packet->orientation);
                         break;
                     }
                     case tomop::packet_desc::remove_slice: {
@@ -136,7 +137,7 @@ public:
         preview_thread_.detach();
     }
 
-    void make_slice(int32_t slice_id, std::array<float, 9> orientation) {
+    void makeSlice(int32_t slice_id, std::array<float, 9> orientation) {
         int32_t update_slice_index = -1;
         int32_t i = 0;
         for (auto& id_and_slice : slices_) {
