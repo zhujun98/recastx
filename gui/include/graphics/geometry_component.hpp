@@ -65,7 +65,7 @@ struct projection {
 
 class GeometryComponent : public ObjectComponent {
   public:
-    GeometryComponent(SceneObject& object, int scene_id);
+    GeometryComponent(SceneObject& object);
     ~GeometryComponent();
 
     void draw(glm::mat4 world_to_screen) override;
@@ -92,7 +92,6 @@ class GeometryComponent : public ObjectComponent {
 
   private:
     SceneObject& object_;
-    int scene_id_;
 
     GLuint vao_handle_;
     GLuint vbo_handle_;

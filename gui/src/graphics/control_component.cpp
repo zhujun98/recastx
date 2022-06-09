@@ -10,8 +10,8 @@ namespace gui {
 
 constexpr auto BUFFER_SIZE = 32u;
 
-ControlComponent::ControlComponent(SceneObject& object, int scene_id)
-    : object_(object), scene_id_(scene_id) {}
+ControlComponent::ControlComponent(SceneObject& object)
+    : object_(object) {}
 
 void ControlComponent::describe() {
     ImGui::Indent(16.0f);
@@ -32,7 +32,7 @@ void ControlComponent::describe_parameters_() {
             auto old = value;
             ImGui::Checkbox(key.c_str(), &value);
             if (value != old) {
-                auto pkt = tomop::ParameterBoolPacket(object_.scene_id(), key, value);
+                auto pkt = tomop::ParameterBoolPacket(key, value);
                 object_.send(pkt);
             }
         }
@@ -44,7 +44,7 @@ void ControlComponent::describe_parameters_() {
                                      ImGuiInputTextFlags_EnterReturnsTrue)) {
                 auto buffer_value = ::atof(buffer.get());
                 value = buffer_value;
-                auto pkt = tomop::ParameterFloatPacket(object_.scene_id(), key, value);
+                auto pkt = tomop::ParameterFloatPacket(key, value);
                 object_.send(pkt);
             }
         }
@@ -56,7 +56,7 @@ void ControlComponent::describe_parameters_() {
                     bool is_selected = (value == current);
                     if (ImGui::Selectable(value.c_str(), is_selected)) {
                         current = value;
-                        auto pkt = tomop::ParameterEnumPacket(object_.scene_id(), key, {current});
+                        auto pkt = tomop::ParameterEnumPacket(key, {current});
                         object_.send(pkt);
                     }
                     if (is_selected) {

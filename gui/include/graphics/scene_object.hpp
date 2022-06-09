@@ -18,7 +18,7 @@ class SceneCamera;
 
 class SceneObject : public InputHandler, public PacketPublisher, public Ticker {
    public:
-    explicit SceneObject(int scene_id);
+    SceneObject();
     virtual ~SceneObject();
 
     virtual void draw(glm::mat4 window_matrix) = 0;
@@ -42,10 +42,8 @@ class SceneObject : public InputHandler, public PacketPublisher, public Ticker {
     bool handle_key(int key, bool down, int mods) override;
     void tick(float time_elapsed) override;
     void describe();
-    [[nodiscard]] auto scene_id() const { return scene_id_; }
 
   protected:
-    int scene_id_ = -1;
 
     virtual void update_image_(int /* slice */) {}
 

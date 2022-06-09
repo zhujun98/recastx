@@ -14,7 +14,7 @@ class SceneObject;
 
 class AxesComponent : public ObjectComponent {
    public:
-    AxesComponent(SceneObject& object, int scene_id);
+    AxesComponent(SceneObject& object);
 
     void draw(glm::mat4 world_to_screen) override;
     std::string identifier() const override { return "axes"; }
@@ -23,8 +23,7 @@ class AxesComponent : public ObjectComponent {
 
    private:
     SceneObject& object_;
-    int scene_id_;
-    
+
     GLuint axes_vao_handle_;
     GLuint axes_vbo_handle_;
     GLuint axes_index_handle_;

@@ -5,8 +5,6 @@
 #include "tomop/tomop.hpp"
 #include "zmq.hpp"
 
-#include "modules/geometry.hpp"
-#include "modules/partitioning.hpp"
 #include "modules/reconstruction.hpp"
 #include "modules/control.hpp"
 #include "scene.hpp"
@@ -27,8 +25,6 @@ Server::Server(SceneList& scenes, int port)
     pub_socket_.bind("tcp://*:"s + std::to_string(port+1));
 
     registerModule(std::make_shared<ReconstructionProtocol>());
-    registerModule(std::make_shared<GeometryProtocol>());
-    registerModule(std::make_shared<PartitioningProtocol>());
     registerModule(std::make_shared<ControlProtocol>());
 }
 
@@ -54,7 +50,7 @@ void Server::start() {
 
             // forward the packet to the handler
             packets_.push({desc, std::move(modules_[desc]->read_packet(
-                desc, buffer, rep_socket_, scenes_))});
+                desc, buffer, rep_socket_))});
         }
     });
 }

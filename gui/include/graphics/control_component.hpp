@@ -13,7 +13,7 @@ class SceneObject;
 
 class ControlComponent : public ObjectComponent {
   public:
-    ControlComponent(SceneObject& object, int scene_id);
+    explicit ControlComponent(SceneObject& object);
     std::string identifier() const override { return "control"; }
     void describe() override;
 
@@ -27,13 +27,10 @@ class ControlComponent : public ObjectComponent {
     // Note: scene objects are publishers, `object_->send(packet)` for parameter
     // updates
     SceneObject& object_;
-    int scene_id_;
 
-    std::map<std::string, std::pair<float, std::unique_ptr<char[]>>>
-    float_parameters_;
+    std::map<std::string, std::pair<float, std::unique_ptr<char[]>>> float_parameters_;
     std::map<std::string, bool> bool_parameters_;
-    std::map<std::string, std::pair<std::vector<std::string>, std::string>>
-        enum_parameters_;
+    std::map<std::string, std::pair<std::vector<std::string>, std::string>> enum_parameters_;
 
 };
 

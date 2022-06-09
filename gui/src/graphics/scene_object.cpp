@@ -7,7 +7,7 @@
 
 namespace gui {
 
-SceneObject::SceneObject(int scene_id) : scene_id_(scene_id) {}
+SceneObject::SceneObject() = default;
 
 SceneObject::~SceneObject() {
     glDeleteVertexArrays(1, &vao_handle_);

@@ -28,8 +28,8 @@ inline glm::vec3 hue_to_rgb(float hue) {
     }
 }
 
-PartitioningComponent::PartitioningComponent(SceneObject& object, int scene_id)
-    : object_(object), scene_id_(scene_id) {
+PartitioningComponent::PartitioningComponent(SceneObject& object)
+    : object_(object) {
     static const GLfloat cube[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,

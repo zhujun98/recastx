@@ -6,13 +6,19 @@
 #include "graphics/scene_object_3d.hpp"
 #include "graphics/axes_component.hpp"
 #include "graphics/control_component.hpp"
+#include "graphics/reconstruction_component.hpp"
+#include "graphics/geometry_component.hpp"
+#include "graphics/partitioning_component.hpp"
 
 namespace gui {
 
-SceneObject3d::SceneObject3d(int scene_id) : SceneObject(scene_id) {
+SceneObject3d::SceneObject3d() : SceneObject() {
   camera_ = std::make_unique<SceneCamera3d>();
-  this->add_component(std::make_unique<AxesComponent>(*this, scene_id));
-  this->add_component(std::make_unique<ControlComponent>(*this, scene_id));
+  this->add_component(std::make_unique<AxesComponent>(*this));
+  this->add_component(std::make_unique<ControlComponent>(*this));
+  this->add_component(std::make_unique<ReconstructionComponent>(*this));
+  this->add_component(std::make_unique<GeometryComponent>(*this));
+  this->add_component(std::make_unique<PartitioningComponent>(*this));
 }
 
 SceneObject3d::~SceneObject3d() = default;

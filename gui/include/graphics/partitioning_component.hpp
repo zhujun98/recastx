@@ -26,7 +26,7 @@ struct part {
 
 class PartitioningComponent : public ObjectComponent {
    public:
-    PartitioningComponent(SceneObject& object, int scene_id);
+    PartitioningComponent(SceneObject& object);
     ~PartitioningComponent();
 
     void draw(glm::mat4 world_to_screen) override;
@@ -37,7 +37,6 @@ class PartitioningComponent : public ObjectComponent {
 
    private:
     SceneObject& object_;
-    int scene_id_;
 
     GLuint cube_vao_handle_;
     GLuint cube_vbo_handle_;

@@ -1,12 +1,3 @@
-// TODO: we want some 'server system' that supports a number of operations:
-// - Adding a scene,
-// - Updating images / slices.
-//
-// I guess we want to use OpenMQ for this. Do we want two-way communication or
-// just 'fire'? The nice thing about 'two-way' is that this 'slice
-// reconstruction' thing can also be done. At first simply only 'sending' the
-// appropriate slice, but later restricting construction only to the request.
-
 #include <cstring>
 #include <map>
 #include <memory>
