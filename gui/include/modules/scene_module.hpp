@@ -18,8 +18,7 @@ class SceneModuleProtocol {
     virtual std::unique_ptr<tomop::Packet> read_packet(
         tomop::packet_desc desc,
         tomop::memory_buffer& buffer,
-        zmq::socket_t& socket,
-        SceneList& scenes_) = 0;
+        zmq::socket_t& socket) = 0;
 
     virtual void process(SceneList& scenes,
                          tomop::packet_desc desc,

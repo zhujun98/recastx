@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <memory>
-#include <map>
+#include <unordered_map>
 #include <vector>
 
 #include <glm/glm.hpp>
@@ -16,8 +16,14 @@
 namespace gui {
 
 class Scene : public RenderTarget {
+
+    std::unique_ptr<SceneObject> object_;
+    std::string name_;
+    int dimension_;
+
   public:
-    Scene(const std::string& name, int dimension, int scene_id);
+
+    Scene(const std::string& name, int dimension);
     ~Scene() override;
 
     void render(glm::mat4 window_matrix) override;
@@ -30,13 +36,7 @@ class Scene : public RenderTarget {
         object_->set_data(data, slice);
     }
 
-  [[nodiscard]] int dimension() const { return dimension_; }
-
-  private:
-    std::unique_ptr<SceneObject> object_;
-    std::string name_;
-    int dimension_;
-    int scene_id_;
+    [[nodiscard]] int dimension() const { return dimension_; }
 };
 
 
@@ -45,28 +45,21 @@ class SceneList : public RenderTarget,
                   public PacketPublisher,
                   public PacketListener,
                   public Ticker {
+
+    std::unordered_map<std::string, std::unique_ptr<Scene>> scenes_;
+    Scene* active_scene_ = nullptr;
+
   public:
     SceneList();
     ~SceneList() override;
 
-    int add_scene(const std::string& name,
-                  int id = -1,
-                  bool make_active = false,
-                  int dimension = 2);
+    void addScene(const std::string& name, int dimension);
+
     void describe();
-    void set_active_scene(int index);
-    int reserve_id();
 
-    auto& scenes() { return scenes_; }
-    [[nodiscard]] Scene* active_scene() const { return active_scene_; }
+    void activate(const std::string& name);
 
-    Scene* get_scene(int scene_id) {
-      if (scenes_.find(scene_id) == scenes_.end()) {
-        std::cout << "Scene " << scene_id << " does not exist";
-        return nullptr;
-      }
-      return scenes_[scene_id].get();
-    }
+    SceneObject& object() { return active_scene_->object(); }
 
     void tick(float dt) override;
 
@@ -78,11 +71,6 @@ class SceneList : public RenderTarget,
     bool handle_key(int key, bool down, int mods) override;
 
     void handle(tomop::Packet& packet) override { send(packet); }
-
-  private:
-    std::map<int, std::unique_ptr<Scene>> scenes_;
-    Scene* active_scene_ = nullptr;
-    int give_away_id_ = 0;
 };
 
 }  // namespace gui

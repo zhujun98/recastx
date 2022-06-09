@@ -40,25 +40,18 @@ class ReconDragMachine {
 
 class ReconstructionComponent : public ObjectComponent {
   public:
-    ReconstructionComponent(SceneObject& object, int scene_id);
+    explicit ReconstructionComponent(SceneObject& object);
     ~ReconstructionComponent();
 
     void draw(glm::mat4 world_to_screen) override;
     void describe() override;
 
-    void set_data(std::vector<float>& data, std::array<int32_t, 2> size,
-                  int slice, bool additive = true);
-    void update_partial_slice(std::vector<float>& data,
-                              std::array<int32_t, 2> offset,
-                              std::array<int32_t, 2> size,
-                              std::array<int32_t, 2> global_size, int slice,
-                              bool additive = true);
+    void set_data(std::vector<float>& data,
+                  const std::array<int32_t, 2>& size,
+                  int slice,
+                  bool additive = true);
     void set_volume_data(std::vector<float>& data,
-                         std::array<int32_t, 3>& volume_size);
-    void update_partial_volume(std::vector<float>& data,
-                               std::array<int32_t, 3>& offset,
-                               std::array<int32_t, 3>& size,
-                               std::array<int32_t, 3>& global_size);
+                         const std::array<int32_t, 3>& volume_size);
     void set_volume_position(glm::vec3 min_pt, glm::vec3 max_pt);
     void update_histogram(const std::vector<float>& data);
 
@@ -72,7 +65,6 @@ class ReconstructionComponent : public ObjectComponent {
 
     std::map<int, std::unique_ptr<slice>>& slices() { return slices_; }
     glm::mat4 volume_transform() { return volume_transform_; }
-    auto scene_id() { return scene_id_; }
     auto& object() { return object_; }
     auto& dragged_slice() { return dragged_slice_; }
     auto hovered_slice() { return hovered_slice_; }
@@ -135,7 +127,6 @@ class ReconstructionComponent : public ObjectComponent {
     bool show_ = true;
     bool transparency_mode_ = false;
 
-    int scene_id_;
 };
 
 class SliceTranslator : public ReconDragMachine {

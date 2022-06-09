@@ -70,6 +70,7 @@ target_link_libraries(${TARGET_NAME}
         glm
         Eigen3::Eigen
         Boost::program_options
+        spdlog::spdlog
 )
 target_include_directories(${TARGET_NAME} PRIVATE "include")
 target_compile_options(${TARGET_NAME} PRIVATE -Wall -Wextra -Wfatal-errors)

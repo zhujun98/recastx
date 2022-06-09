@@ -14,9 +14,8 @@
 
 namespace gui {
 
-ReconstructionComponent::ReconstructionComponent(SceneObject& object,
-                                                 int scene_id)
-    : object_(object), volume_texture_(16, 16, 16), scene_id_(scene_id) {
+ReconstructionComponent::ReconstructionComponent(SceneObject& object)
+    : object_(object), volume_texture_(16, 16, 16) {
     glGenVertexArrays(1, &vao_handle_);
     glBindVertexArray(vao_handle_);
     glGenBuffers(1, &vbo_handle_);
@@ -109,19 +108,20 @@ ReconstructionComponent::~ReconstructionComponent() {
 void ReconstructionComponent::send_slices() {
     for (auto& slice : slices_) {
         auto packet = tomop::SetSlicePacket(
-            scene_id_, slice.first, slice.second->packed_orientation());
+            slice.first, slice.second->packed_orientation());
         object_.send(packet);
     }
 
     for (auto& slice : fixed_slices_) {
         auto packet = tomop::SetSlicePacket(
-            scene_id_, slice.first, slice.second->packed_orientation());
+            slice.first, slice.second->packed_orientation());
         object_.send(packet);
     }
 }
 
 void ReconstructionComponent::set_data(std::vector<float>& data,
-                                       std::array<int32_t, 2> size, int slice_idx,
+                                       const std::array<int32_t, 2>& size,
+                                       int slice_idx,
                                        bool additive) {
     slice* s = nullptr;
     if (slices_.find(slice_idx) != slices_.end()) {
@@ -151,61 +151,11 @@ void ReconstructionComponent::set_data(std::vector<float>& data,
     update_image_(s);
 }
 
-void ReconstructionComponent::update_partial_slice(
-    std::vector<float>& data, std::array<int32_t, 2> offset,
-    std::array<int32_t, 2> size, std::array<int32_t, 2> global_size, int slice,
-    bool additive) {
-    if (slices_.find(slice) == slices_.end()) {
-        std::cout << "Updating inactive slice: " << slice << "\n";
-        return;
-    }
-    auto& the_slice = slices_[slice];
-    if (!additive || !slices_[slice]->has_data()) {
-        the_slice->size = global_size;
-        the_slice->data.resize(size[0] * size[1]);
-        std::fill(the_slice->data.begin(), the_slice->data.end(), 0);
-        the_slice->add_partial_data(data, offset, size);
-    } else {
-        assert(global_size == the_slice->size);
-        slices_[slice]->add_partial_data(data, offset, size);
-    }
-
-    slices_[slice]->min_value = *std::min_element(slices_[slice]->data.begin(),
-                                                  slices_[slice]->data.end());
-    slices_[slice]->max_value = *std::max_element(slices_[slice]->data.begin(),
-                                                  slices_[slice]->data.end());
-
-    update_image_(slices_[slice].get());
-}
-
 void ReconstructionComponent::set_volume_data(
-    std::vector<float>& data, std::array<int32_t, 3>& volume_size) {
+        std::vector<float>& data, const std::array<int32_t, 3>& volume_size) {
     volume_data_ = data;
     volume_texture_.set_data(volume_size[0], volume_size[1], volume_size[2], data);
     update_histogram(data);
-}
-
-void ReconstructionComponent::update_partial_volume(
-    std::vector<float>& data, std::array<int32_t, 3>& offset,
-    std::array<int32_t, 3>& size, std::array<int32_t, 3>& global_size) {
-    if ((int)volume_data_.size() !=
-        global_size[0] * global_size[1] * global_size[2]) {
-        volume_data_ = std::vector<float>(
-            global_size[0] * global_size[1] * global_size[2], 0.0f);
-    }
-
-    int idx = 0;
-    for (auto k = offset[2]; k < size[2] + offset[2]; ++k) {
-        for (auto j = offset[1]; j < size[1] + offset[1]; ++j) {
-            for (auto i = offset[0]; i < size[0] + offset[0]; ++i) {
-                volume_data_[k * global_size[0] * global_size[1] +
-                             j * global_size[0] + i] = data[idx++];
-            }
-        }
-    }
-
-    volume_texture_.set_data(global_size[0], global_size[1], global_size[2], volume_data_);
-    update_histogram(volume_data_);
 }
 
 void ReconstructionComponent::update_histogram(const std::vector<float>& data) {
@@ -289,8 +239,7 @@ void ReconstructionComponent::update_image_(slice* s) {
     s->update_texture();
 }
 
-void ReconstructionComponent::set_volume_position(glm::vec3 min_pt,
-                                                  glm::vec3 max_pt) {
+void ReconstructionComponent::set_volume_position(glm::vec3 min_pt, glm::vec3 max_pt) {
     auto center = 0.5f * (min_pt + max_pt);
     volume_transform_ = glm::translate(center) *
                         glm::scale(glm::vec3(max_pt - min_pt)) *
@@ -413,7 +362,7 @@ bool ReconstructionComponent::handle_mouse_button(int button, bool down) {
                 new_slice->orientation = hovered_slice_->orientation;
 
                 auto packet = tomop::SetSlicePacket(
-                    scene_id_, new_slice->id, new_slice->packed_orientation());
+                    new_slice->id, new_slice->packed_orientation());
                 object_.send(packet);
 
                 fixed_slices_[new_slice->id] = std::move(new_slice);
@@ -424,7 +373,7 @@ bool ReconstructionComponent::handle_mouse_button(int button, bool down) {
     if (!down) {
         if (dragged_slice_) {
             auto packet = tomop::SetSlicePacket(
-                scene_id_, dragged_slice_->id, dragged_slice_->packed_orientation());
+                dragged_slice_->id, dragged_slice_->packed_orientation());
             object_.send(packet);
 
             dragged_slice_ = nullptr;
@@ -603,7 +552,7 @@ void SliceTranslator::on_drag(glm::vec2 delta) {
         if (to_remove >= 0) {
             comp_.get_slices().erase(to_remove);
             // send slice packet
-            auto packet = tomop::RemoveSlicePacket(comp_.scene_id(), to_remove);
+            auto packet = tomop::RemoveSlicePacket(to_remove);
             comp_.object().send(packet);
         }
         if (!comp_.dragged_slice()) {
@@ -737,7 +686,7 @@ void SliceRotator::on_drag(glm::vec2 delta) {
         if (to_remove >= 0) {
             comp_.get_slices().erase(to_remove);
             // send slice packet
-            auto packet = tomop::RemoveSlicePacket(comp_.scene_id(), to_remove);
+            auto packet = tomop::RemoveSlicePacket(to_remove);
             comp_.object().send(packet);
         }
         assert(comp_.dragged_slice());

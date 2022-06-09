@@ -10,8 +10,8 @@
 
 namespace gui {
 
-GeometryComponent::GeometryComponent(SceneObject& object, int scene_id)
-    : object_(object), scene_id_(scene_id) {
+GeometryComponent::GeometryComponent(SceneObject& object)
+    : object_(object) {
     current_projection_ = 0;
 
     glGenVertexArrays(1, &vao_handle_);

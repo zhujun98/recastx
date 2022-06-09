@@ -1,12 +1,12 @@
 #pragma once
 
-#include "tomop/tomop.hpp"
-#include "zmq.hpp"
+#include <zmq.hpp>
+#include <spdlog/spdlog.h>
 
+#include "tomop/tomop.hpp"
+#include "graphics/reconstruction_component.hpp"
 #include "scene.hpp"
 #include "scene_module.hpp"
-
-#include "graphics/reconstruction_component.hpp"
 #include "util.hpp"
 
 namespace gui {
@@ -20,8 +20,7 @@ class ReconstructionProtocol : public SceneModuleProtocol {
     std::unique_ptr<tomop::Packet>
     read_packet(tomop::packet_desc desc,
                 tomop::memory_buffer& buffer,
-                zmq::socket_t& socket,
-                SceneList& /* scenes_ */) override {
+                zmq::socket_t& socket) override {
         switch (desc) {
             case tomop::packet_desc::slice_data: {
                 auto packet = std::make_unique<tomop::SliceDataPacket>();
@@ -53,35 +52,29 @@ class ReconstructionProtocol : public SceneModuleProtocol {
         switch (desc) {
             case tomop::packet_desc::slice_data: {
                 tomop::SliceDataPacket& packet = *(tomop::SliceDataPacket*)event_packet.get();
-                auto scene = scenes.get_scene(packet.scene_id);
-                if (!scene) std::cout << "Updating non-existing scene\n";
 
                 auto& reconstruction_component =
-                    (ReconstructionComponent&)scene->object().get_component("reconstruction");
+                    (ReconstructionComponent&)scenes.object().get_component("reconstruction");
                 reconstruction_component.set_data(packet.data, 
                                                   packet.slice_size,
                                                   packet.slice_id, 
                                                   packet.additive);
+                spdlog::info("Set slice data");
                 break;
             }
 
             case tomop::packet_desc::volume_data: {
                 tomop::VolumeDataPacket& packet = *(tomop::VolumeDataPacket*)event_packet.get();
-                auto scene = scenes.get_scene(packet.scene_id);
-                if (!scene) std::cout << "Updating non-existing scene\n";
 
                 auto& reconstruction_component =
-                    (ReconstructionComponent&)scene->object().get_component("reconstruction");
+                    (ReconstructionComponent&)scenes.object().get_component("reconstruction");
                 reconstruction_component.set_volume_data(packet.data, packet.volume_size);
+                spdlog::info("Set volume data");
                 break;
             }
 
             case tomop::packet_desc::group_request_slices: {
                 tomop::GroupRequestSlicesPacket& packet = *(tomop::GroupRequestSlicesPacket*)event_packet.get();
-                auto scene = scenes.get_scene(packet.scene_id);
-                if (!scene) {
-                    std::cout << "Updating non-existing scene\n";
-                }
 
                 if (group_size_requested_ < 0) {
                     group_size_requested_ = packet.group_size;
@@ -100,7 +93,7 @@ class ReconstructionProtocol : public SceneModuleProtocol {
                     group_size_requested_ = -1;
 
                     auto& reconstruction_component =
-                        (ReconstructionComponent&)scene->object().get_component("reconstruction");
+                        (ReconstructionComponent&)scenes.object().get_component("reconstruction");
                     reconstruction_component.send_slices();
                 }
 
@@ -115,9 +108,7 @@ class ReconstructionProtocol : public SceneModuleProtocol {
 
     std::vector<tomop::packet_desc> descriptors() override {
         return {tomop::packet_desc::slice_data,
-                tomop::packet_desc::partial_slice_data,
                 tomop::packet_desc::volume_data,
-                tomop::packet_desc::partial_volume_data,
                 tomop::packet_desc::group_request_slices};
     }
 

@@ -12,13 +12,11 @@
 
 namespace gui {
 
-// Module for analysis and control
 class ControlProtocol : public SceneModuleProtocol {
   public:
     std::unique_ptr<tomop::Packet> read_packet(tomop::packet_desc desc,
                                                tomop::memory_buffer& buffer,
-                                               zmq::socket_t& socket,
-                                               SceneList& /* scenes */) override {
+                                               zmq::socket_t& socket) override {
         switch (desc) {
             case tomop::packet_desc::parameter_bool: {
                 auto packet = std::make_unique<tomop::ParameterBoolPacket>();
@@ -46,41 +44,26 @@ class ControlProtocol : public SceneModuleProtocol {
                  tomop::packet_desc desc,
                  std::unique_ptr<tomop::Packet> event_packet) override {
 
-        auto get_component = [&](int scene_id) -> ControlComponent* {
-            auto scene = scenes.get_scene(scene_id);
-            if (!scene) {
-                std::cout << "Updating non-existing scene\n";
-                return nullptr;
-            }
-            auto control_component =
-                &(ControlComponent&)scene->object().get_component("control");
-
-            return control_component;
-        };
-
         switch (desc) {
-        case tomop::packet_desc::parameter_bool: {
-            auto& packet = *(tomop::ParameterBoolPacket*)event_packet.get();
-            auto control_component = get_component(packet.scene_id);
-            if (!control_component) return;
-            control_component->add_bool_parameter(packet.parameter_name, packet.value);
-            break;
-        }
-        case tomop::packet_desc::parameter_float: {
-            auto& packet = *(tomop::ParameterFloatPacket*)event_packet.get();
-            auto control_component = get_component(packet.scene_id);
-            if (!control_component) return;
-            control_component->add_float_parameter(packet.parameter_name, packet.value);
-            break;
-        }
-        case tomop::packet_desc::parameter_enum: {
-            auto& packet = *(tomop::ParameterEnumPacket*)event_packet.get();
-            auto control_component = get_component(packet.scene_id);
-            if (!control_component) return;
-            control_component->add_enum_parameter(packet.parameter_name, packet.values);
-            break;
-        }
-        default: { break; }
+            case tomop::packet_desc::parameter_bool: {
+                auto& packet = *(tomop::ParameterBoolPacket*)event_packet.get();
+                auto& control_component = (ControlComponent&)scenes.object().get_component("control");
+                control_component.add_bool_parameter(packet.name, packet.value);
+                break;
+            }
+            case tomop::packet_desc::parameter_float: {
+                auto& packet = *(tomop::ParameterFloatPacket*)event_packet.get();
+                auto& control_component = (ControlComponent&)scenes.object().get_component("control");
+                control_component.add_float_parameter(packet.name, packet.value);
+                break;
+            }
+            case tomop::packet_desc::parameter_enum: {
+                auto& packet = *(tomop::ParameterEnumPacket*)event_packet.get();
+                auto& control_component = (ControlComponent&)scenes.object().get_component("control");
+                control_component.add_enum_parameter(packet.name, packet.values);
+                break;
+            }
+            default: { break; }
         }
     }
 
