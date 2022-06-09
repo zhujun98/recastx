@@ -151,9 +151,10 @@ int main(int argc, char** argv)
     spdlog::set_pattern("[%Y-%m-%d %T.%e] [%^%l%$] %v");
     spdlog::set_level(spdlog::level::info);
 
+    // TODO: how to set volume geometry properly?
+    std::array<float, 3> volume_min_point {-128.0f, -128.0f, -128.0f};
+    std::array<float, 3> volume_max_point {128.0f, 128.0f, 128.0f};
     std::array<float, 2> detector_size {0.0f, 0.0f};
-    std::array<float, 3> volume_min_point {0.0f, 0.0f, 0.0f};
-    std::array<float, 3> volume_max_point {1.0f, 1.0f, 1.0f};
     float source_origin = 0.f;
     float origin_det = 0.f;
 
