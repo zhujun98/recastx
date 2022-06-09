@@ -16,13 +16,13 @@ git clone --recursive <repo>
 # the Python bindings 
 mkdir build && cd build
 cmake .. -DCMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"} \
-         -DBUILD_MONITOR=ON 
+         -DBUILD_MONITOR=ON -DBUILD_TEST=ON 
 make -j12 && make install
 
 # On the graphics workstation x02da-gws-3
 mkdir build-gui && cd build-gui
 cmake .. -DCMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"} \
-         -DBUILD_GUI=ON 
+         -DBUILD_GUI=ON -DBUILD_TEST=ON 
 make -j12 && make install
 ```
 
