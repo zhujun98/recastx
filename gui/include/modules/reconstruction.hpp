@@ -30,22 +30,8 @@ class ReconstructionProtocol : public SceneModuleProtocol {
                 return packet;
             }
 
-            case tomop::packet_desc::partial_slice_data: {
-                auto packet = std::make_unique<tomop::PartialSliceDataPacket>();
-                packet->deserialize(std::move(buffer));
-                ack(socket);
-                return packet;
-            }
-
             case tomop::packet_desc::volume_data: {
                 auto packet = std::make_unique<tomop::VolumeDataPacket>();
-                packet->deserialize(std::move(buffer));
-                ack(socket);
-                return packet;
-            }
-
-            case tomop::packet_desc::partial_volume_data: {
-                auto packet = std::make_unique<tomop::PartialVolumeDataPacket>();
                 packet->deserialize(std::move(buffer));
                 ack(socket);
                 return packet;
@@ -78,19 +64,6 @@ class ReconstructionProtocol : public SceneModuleProtocol {
                                                   packet.additive);
                 break;
             }
-            case tomop::packet_desc::partial_slice_data: {
-                tomop::PartialSliceDataPacket& packet =
-                    *(tomop::PartialSliceDataPacket*)event_packet.get();
-                auto scene = scenes.get_scene(packet.scene_id);
-                if (!scene) std::cout << "Updating non-existing scene\n";
-
-                auto& reconstruction_component =
-                    (ReconstructionComponent&)scene->object().get_component("reconstruction");
-                reconstruction_component.update_partial_slice(
-                    packet.data, packet.slice_offset, packet.slice_size,
-                    packet.global_slice_size, packet.slice_id, packet.additive);
-                break;
-            }
 
             case tomop::packet_desc::volume_data: {
                 tomop::VolumeDataPacket& packet = *(tomop::VolumeDataPacket*)event_packet.get();
@@ -102,19 +75,7 @@ class ReconstructionProtocol : public SceneModuleProtocol {
                 reconstruction_component.set_volume_data(packet.data, packet.volume_size);
                 break;
             }
-            case tomop::packet_desc::partial_volume_data: {
-                tomop::PartialVolumeDataPacket& packet =
-                    *(tomop::PartialVolumeDataPacket*)event_packet.get();
-                auto scene = scenes.get_scene(packet.scene_id);
-                if (!scene) std::cout << "Updating non-existing scene\n";
 
-                auto& reconstruction_component =
-                    (ReconstructionComponent&)scene->object().get_component("reconstruction");
-                reconstruction_component.update_partial_volume(
-                    packet.data, packet.volume_offset, packet.volume_size,
-                    packet.global_volume_size);
-                break;
-            }
             case tomop::packet_desc::group_request_slices: {
                 tomop::GroupRequestSlicesPacket& packet = *(tomop::GroupRequestSlicesPacket*)event_packet.get();
                 auto scene = scenes.get_scene(packet.scene_id);

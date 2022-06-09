@@ -5,9 +5,13 @@
 #include "tomop/tomop.hpp"
 #include "zmq.hpp"
 
-#include "modules/scene_module.hpp"
+#include "modules/geometry.hpp"
+#include "modules/partitioning.hpp"
+#include "modules/reconstruction.hpp"
+#include "modules/control.hpp"
 #include "scene.hpp"
 #include "server.hpp"
+
 
 namespace gui {
 
@@ -21,14 +25,18 @@ Server::Server(SceneList& scenes, int port)
 
     rep_socket_.bind("tcp://*:"s + std::to_string(port));
     pub_socket_.bind("tcp://*:"s + std::to_string(port+1));
+
+    registerModule(std::make_shared<ReconstructionProtocol>());
+    registerModule(std::make_shared<GeometryProtocol>());
+    registerModule(std::make_shared<PartitioningProtocol>());
+    registerModule(std::make_shared<ControlProtocol>());
 }
 
 void Server::start() {
-    //  Prepare our context and socket
     std::cout << "Listening for incoming connections..\n";
 
     // todo graceful shutdown, probably by sending a 'kill' packet to self
-    server_thread_ = std::thread([&]() {
+    thread_ = std::thread([&]() {
         while (true) {
             zmq::message_t request;
 
@@ -39,7 +47,7 @@ void Server::start() {
 
             if (modules_.find(desc) == modules_.end()) {
                 std::cout << "Unsupported package descriptor: "
-                          << (std::underlying_type<decltype(desc)>::type)desc
+                          << std::hex << (std::underlying_type<decltype(desc)>::type)desc
                           << "\n";
                 continue;
             }
@@ -49,10 +57,6 @@ void Server::start() {
                 desc, buffer, rep_socket_, scenes_))});
         }
     });
-}
-
-void Server::register_module(std::shared_ptr<SceneModuleProtocol> module) {
-    for (auto desc : module->descriptors()) modules_[desc] = module;
 }
 
 void Server::tick(float) {
@@ -75,6 +79,10 @@ void Server::handle(tomop::Packet& pkt) {
     } catch (const std::exception& e) {
         std::cout << "Failed sending: " << e.what() << "\n";
     }
+}
+
+void Server::registerModule(std::shared_ptr<SceneModuleProtocol> module) {
+    for (auto desc : module->descriptors()) modules_[desc] = module;
 }
 
 } // namespace gui

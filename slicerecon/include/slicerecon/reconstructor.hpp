@@ -3,102 +3,92 @@
 #include <complex>
 #include <cstdint>
 #include <iostream>
+#include <tuple>
 #include <vector>
 
 #include <spdlog/spdlog.h>
+#include <oneapi/tbb.h>
 
 extern "C" {
 #include <fftw3.h>
 }
 
+#include <condition_variable>
 #include "data_types.hpp"
-#include "helpers.hpp"
+#include "phase.hpp"
+#include "filter.hpp"
 #include "solver.hpp"
-#include "listener.hpp"
-#include "projection_processor.hpp"
+
 
 namespace slicerecon {
 
 class Reconstructor {
 
-    std::vector<raw_dtype> all_darks_;
-    std::vector<raw_dtype> all_flats_;
+    int rows_;
+    int cols_;
+    int pixels_;
+
+    std::vector<RawDtype> all_darks_;
+    std::vector<RawDtype> all_flats_;
     std::vector<float> dark_avg_;
     std::vector<float> reciprocal_;
     std::vector<float> buffer_;
+    std::vector<float> sino_buffer_;
+    std::tuple<std::vector<float>, std::vector<float>> preview_buffer_;
+    bool initialized_ = false;
 
     int active_gpu_buffer_index_ = 0;
     int buffer_size_;
 
-    int32_t pixels_ = -1;
+    int num_darks_ = 1;
+    int num_flats_ = 1;
+    int num_projections_ = 1;
+    int group_size_ = 1;
+    int preview_size_ = 1; 
+
     int32_t received_darks_ = 0;
     int32_t received_flats_ = 0;
     bool reciprocal_computed_ = false;
 
+    ReconstructMode recon_mode_;
+
+    std::unique_ptr<Paganin> paganin_;
+    std::unique_ptr<Filter> filter_;
     std::unique_ptr<Solver> solver_;
 
-    Settings param_;
-    Geometry geom_;
-
     int update_count_ = 0;
-    std::vector<float> small_volume_buffer_;
-    std::vector<float> sino_buffer_;
-
-    std::vector<Listener*> listeners_;
-
-    std::unique_ptr<ProjectionProcessor> projection_processor_;
 
     std::mutex gpu_mutex_;
+    std::condition_variable preview_cv_;
+    std::mutex preview_mutex_;
 
-    // list of parameters that can be changed from the visualization UI
-    // NOTE: the enum parameters are hard coded into the handler
-    std::map<std::string, float*> float_param_;
-    std::map<std::string, bool*> bool_param_;
+    int num_threads_;
+    oneapi::tbb::task_arena arena_;
 
-    void initialize();
+    void processProjections(int begin, int end);
 
-    /**
-     * In-memory processing the projections [proj_id_begin, ..., proj_id_end].
-     *
-     * @param proj_id_begin
-     * @param proj_id_end
-     */
-    void processProjections(int proj_id_begin, int proj_id_end);
+    void uploadSinoBuffer(int begin, int end);
 
-    /**
-     * Upload the CPU sinogram buffer to ASTRA on the GPU
-     *
-     * @param proj_id_begin: The starting position of the data in the GPU.
-     * @param proj_id_end: The last position of the data in the GPU.
-     * @param buffer_begin: Position of the to-be-uploaded data in the CPU buffer.
-     * @param buffer_idx: Index of the GPU buffer the sinogram data should be uploaded to.
-     * @param lock_gpu: Whether or not to use gpu_mutex_ to block access to the GPU.
-     */
-    void uploadSinoBuffer(int proj_id_begin, int proj_id_end, int buffer_idx, bool lock_gpu = false);
-
-    /**
-     * Copy from a data buffer to a sino buffer, while transposing the data.
-     *
-     * If an offset is given, it transposes projections [offset, offset+1, ...,
-     * proj_end] to the *front* of the sino_buffer_, leaving the remainder of the
-     * buffer unused.
-     *
-     * @param projection_group: Reference to buffered data.
-     * @param sino_buffer: Reference to the CPU buffer of the projections.
-     * @param group_size: Number of projections in the group.
-     *
-     */
-    void transposeIntoSino(int proj_offset, int proj_end);
-
-    void refreshData();
+    void reconstructPreview();
 
 public:
 
-    Reconstructor(const Settings& parameters, const Geometry& geom);
+    Reconstructor(int rows, int cols, int num_threads); 
 
     ~Reconstructor();
 
-    void addListener(Listener* l);
+    void initialize(int num_darks, 
+                    int num_flats, 
+                    int num_projections,
+                    int group_size,
+                    int preview_size,
+                    ReconstructMode recon_mode);
+
+    void initPaganin(float pixel_size, float lambda, float delta, float beta, float distance);
+
+    void initFilter(const std::string& name, bool gaussian_pass);
+
+    void setSolver(std::unique_ptr<Solver>&& solver);
 
     void pushProjection(ProjectionType k, 
                         int32_t proj_idx, 
@@ -107,19 +97,18 @@ public:
 
     slice_data reconstructSlice(orientation x); 
 
-    std::vector<float>& previewData();
+    const std::vector<float>& previewData();
 
-    Settings parameters() const;
+    int previewSize() const;
 
-    void parameterChanged(std::string name, std::variant<float, std::string, bool> value);
-
-    static std::vector<float> defaultAngles(int n);
+    int bufferSize() const;
 
     // for unittest
 
-    const std::vector<raw_dtype>& darks() const;
-    const std::vector<raw_dtype>& flats() const;
+    const std::vector<RawDtype>& darks() const;
+    const std::vector<RawDtype>& flats() const;
     const std::vector<float>& buffer() const;
+    const std::vector<float>& sinoBuffer() const;
 
 };
 

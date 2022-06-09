@@ -54,7 +54,7 @@ def gen_fake_data(socket, scan_index, n, *, shape):
     thread.join()
 
 
-def stream_data_file(filepath, socket,  scan_index, n):
+def stream_data_file(filepath, socket,  scan_index, n, *, i0=0):
     queue = Queue()
     thread = Thread(target=send, args=(socket, queue))
     thread.start()
@@ -62,17 +62,20 @@ def stream_data_file(filepath, socket,  scan_index, n):
     with h5py.File(filepath, "r") as fp:
         if scan_index == 0:
             ds = fp["/exchange/data_dark"]
+            print(f"Dark data shape: {ds.shape}")
         elif scan_index == 1:
             ds = fp["/exchange/data_white"]
+            print(f"Flat data shape: {ds.shape}")
         elif scan_index == 2:
             ds = fp["/exchange/data"]
+            print(f"Projection data shape: {ds.shape}")
         else:
             raise ValueError(f"Unsupported scan_index: {scan_index}")
 
         shape = ds.shape[1:]
         data = np.zeros(shape, dtype=np.uint16)
         n_images = ds.shape[0]
-        for i in range(n):
+        for i in range(i0, i0 + n):
             idx = i % n_images
             meta = gen_meta(scan_index, i, shape)
             ds.read_direct(data, np.s_[idx, ...], None)
@@ -85,24 +88,49 @@ def stream_data_file(filepath, socket,  scan_index, n):
     thread.join()
 
 
+def parse_datafile(name: str):
+    if name in ["pet1", "pet2", "pet3"]:
+        # number of projections per scan: 400, 500, 500
+        idx = name[-1]
+        return f"/sls/X02DA/Data10/e16816/disk1/PET_55um_40_{idx}/PET_55um_40_{idx}.h5"
+    if name == "asm":
+        # number of projections per scan: 400 
+        return f"/sls/X02DA/Data10/e16816/disk1/15_ASM_UA_ASM/15_ASM_UA_ASM.h5"
+    if name == "h1":
+        # number of projections per scan: 500 
+        return f"/sls/X02DA/Data10/e16816/disk1/32_050_300_H1/32_050_300_H1.h5"
+    return name
+
+
 def main():
     parser = argparse.ArgumentParser(description='Fake GigaFrost Data Stream')
 
-    parser.add_argument('--port', default="5558", type=int)
-    parser.add_argument('--sock', default='pub', type=str)
-    parser.add_argument('--darks', default=20, type=int)
-    parser.add_argument('--flats', default=20, type=int)
-    parser.add_argument('--projections', default=128, type=int)
-    parser.add_argument('--rows', default=1200, type=int)
-    parser.add_argument('--cols', default=2016, type=int)
-    parser.add_argument(
-        '--datafile', 
-        help="Known test data: /sls/X02DA/Data10/e16816/disk1/PET_55um_40_1/PET_55um_40_1.h5", 
-        type=str)
+    parser.add_argument('--port', default="5558", type=int,
+                        help="ZMQ socket port (default=5558)")
+    parser.add_argument('--sock', default='push', type=str,
+                        help="ZMQ socket type (default=PUSH)")
+    parser.add_argument('--darks', default=20, type=int,
+                        help="Number of dark images (default=20)")
+    parser.add_argument('--flats', default=20, type=int,
+                        help="Number of flat images (default=20)")
+    parser.add_argument('--projections', default=128, type=int,
+                        help="Number of projection images (default=128)")
+    parser.add_argument('--p0', default=0, type=int,
+                        help="Starting index of the projection images (default=0)")
+    parser.add_argument('--rows', default=1200, type=int,
+                        help="Number of rows of the generated image (default=1200)")
+    parser.add_argument('--cols', default=2016, type=int,
+                        help="Number of columns of the generated image (default=2016)")
+    parser.add_argument('--datafile', type=str, 
+                        help="Path or code of the data file. Available codes "
+                             "with number of projection denoted in the bracket are: "
+                             "pet1 (400), pet2 (500), pet3 (500), asm (400), h1 (500)")
 
     args = parser.parse_args()
     port = args.port
     sock_type = args.sock.upper()
+
+    datafile = parse_datafile(args.datafile)
 
     context = zmq.Context()
 
@@ -114,12 +142,14 @@ def main():
         raise RuntimeError(f"Unknow sock type: {sock_type}")
     socket.bind(f"tcp://*:{port}")
 
-    shape = (args.rows, args.cols)
+    if datafile:
+        print(f"Streaming data from {datafile} ...")
     for scan_index, n in enumerate([args.darks, args.flats, args.projections]):
-        if not args.datafile:
-            gen_fake_data(socket, scan_index, n, shape=shape)
+        if not datafile:
+            gen_fake_data(socket, scan_index, n, shape=(args.rows, args.cols))
         else:
-            stream_data_file(args.datafile, socket, scan_index, n)
+            stream_data_file(datafile, socket, scan_index, n, 
+                             i0=args.p0 if scan_index == 2 else 0)
  
 
 if __name__ == "__main__":

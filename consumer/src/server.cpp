@@ -1,15 +1,14 @@
+#include <chrono>
 #include <iostream>
 #include <thread>
 
 #include <zmq.hpp>
 
 #include "tomop/tomop.hpp"
-
-#include "server/server.hpp"
+#include "server.hpp"
 
 namespace tomovis {
 
-using namespace tomop;
 using namespace std::string_literals;
 
 Server::Server(int port) : 
@@ -20,6 +19,11 @@ Server::Server(int port) :
 
 void Server::parse_packet(packet_desc desc) {
     switch (desc) {
+        case packet_desc::make_scene: {
+            std::cout << "Received: make scene" << std::endl;
+            break;
+        }
+
         case packet_desc::slice_data: {
             std::cout << "Received: slice data" << std::endl;
             break;
@@ -52,19 +56,19 @@ void Server::parse_packet(packet_desc desc) {
 }
 
 void Server::start() {
-    //  Prepare our context and socket
     std::cout << "Listening for incoming connections..\n";
 
     // todo graceful shutdown, probably by sending a 'kill' packet to self
-    server_thread = std::thread([&]() {
-
+    server_thread_ = std::thread([&]() {
         while (true) {
             zmq::message_t request;
 
-            //  Wait for next request from client
             rep_socket_.recv(request, zmq::recv_flags::none);
-            auto desc = ((packet_desc*)request.data())[0];
-            auto buffer = memory_buffer(request.size(), (char*)request.data());
+            auto desc = ((tomop::packet_desc*)request.data())[0];
+            auto buffer = tomop::memory_buffer(request.size(), (char*)request.data());
+
+            // packets_->push({desc, std::move(modules_[desc]->read_packet(
+            //     desc, buffer, rep_socket_, scenes_))});
 
             parse_packet(desc);
 
@@ -74,6 +78,18 @@ void Server::start() {
             rep_socket_.send(message, zmq::send_flags::none);
         }
     });
+
+    while (true) {
+        if (packets_.empty()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    //     // auto event_packet = std::move(packets_->front());
+    //     // packets_->pop();
+
+    //     // modules_[event_packet.first]->process(
+    //     //     scenes_, event_packet.first, std::move(event_packet.second));
+    }
 }
 
 } // namespace tomovis

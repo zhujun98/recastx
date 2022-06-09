@@ -9,11 +9,7 @@ namespace fs = std::experimental::filesystem;
 #include "graphics/renderer.hpp"
 #include "graphics/scene_camera.hpp"
 #include "input.hpp"
-#include "modules/geometry.hpp"
-#include "modules/partitioning.hpp"
-#include "modules/reconstruction.hpp"
-#include "modules/scene_management.hpp"
-#include "modules/control.hpp"
+
 #include "scene.hpp"
 #include "server.hpp"
 
@@ -43,11 +39,7 @@ int main(int argc, char** argv) {
     gui::SceneList scenes;
     gui::Interface interface(renderer.window(), scenes);
     gui::Server server(scenes, opts["port"].as<int>());
-    server.register_module(std::make_shared<gui::ManageSceneProtocol>());
-    server.register_module(std::make_shared<gui::ReconstructionProtocol>());
-    server.register_module(std::make_shared<gui::GeometryProtocol>());
-    server.register_module(std::make_shared<gui::PartitioningProtocol>());
-    server.register_module(std::make_shared<gui::ControlProtocol>());
+
 
     input.register_handler(interface);
     input.register_handler(scenes);
