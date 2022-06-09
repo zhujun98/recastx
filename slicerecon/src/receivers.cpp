@@ -32,12 +32,12 @@ ProjectionReceiver::ProjectionReceiver(const std::string& endpoint,
         : context_(1),
           socket_(context_, socket_type),
           recon_(recon) {
-    if(socket_type == zmq::socket_type::sub) {
-        spdlog::info("Subscribing to data source {} ...", endpoint);
-    } else if (socket_type == zmq::socket_type::pull) {
-        spdlog::info("Pulling data from data source {} ...", endpoint);
-    }
     socket_.connect(endpoint);
+    if(socket_type == zmq::socket_type::sub) {
+        spdlog::info("Connected to data server (PUB-SUB){}", endpoint);
+    } else if (socket_type == zmq::socket_type::pull) {
+        spdlog::info("Connected to data server (PUSH-PULL) {}", endpoint);
+    }
 
     if (socket_type == zmq::socket_type::sub) {
         socket_.set(zmq::sockopt::subscribe, "");
