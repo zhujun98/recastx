@@ -9,7 +9,7 @@
 
 #include "slicerecon/reconstructor.hpp"
 #include "slicerecon/data_receiver.hpp"
-#include "slicerecon/visualization_server.hpp"
+#include "slicerecon/broker.hpp"
 #include "slicerecon/utils.hpp"
 
 using namespace std::string_literals;
@@ -193,11 +193,11 @@ int main(int argc, char** argv)
         recon);
     data_receiver.start();
 
-    auto viz = slicerecon::VisualizationServer(
+    auto broker = slicerecon::Broker(
         "tcp://"s + gui_hostname + ":"s + std::to_string(gui_port),
         "tcp://"s + gui_hostname + ":"s + std::to_string(gui_port + 1),
         recon);
-    viz.start();
+    broker.start();
 
     while (true) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));

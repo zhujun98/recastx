@@ -25,6 +25,7 @@ set(SOURCES
     "src/solver.cpp"
     "src/reconstructor.cpp"
     "src/data_receiver.cpp"
+    "src/broker.cpp"
 )
 
 add_library(slicerecon ${SOURCES})
