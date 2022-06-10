@@ -55,35 +55,39 @@ void SceneList::describe() {
 }
 
 void SceneList::activate(const std::string& name) {
-  if (scenes_.find(name) == scenes_.end())
-      throw std::runtime_error("Scene " + name + " does not exist!");
-  active_scene_ = scenes_[name].get();
+    if (scenes_.find(name) == scenes_.end())
+        throw std::runtime_error("Scene " + name + " does not exist!");
+    active_scene_ = scenes_[name].get();
 }
 
 SceneObject& SceneList::object() { return active_scene_->object(); }
 
 void SceneList::render(glm::mat4 window_matrix) {
-  active_scene_->render(window_matrix);
+    active_scene_->render(window_matrix);
 }
 
 void SceneList::tick(float dt) {
-  active_scene_->object().tick(dt);
+    active_scene_->object().tick(dt);
 }
 
 bool SceneList::handleMouseButton(int button, bool down) {
-  return active_scene_->object().handleMouseButton(button, down);
+    return active_scene_->object().handleMouseButton(button, down);
 }
 
 bool SceneList::handleScroll(double offset) {
-  return active_scene_->object().handleScroll(offset);
+    return active_scene_->object().handleScroll(offset);
 }
 
 bool SceneList::handleMouseMoved(double x, double y) {
-  return active_scene_->object().handleMouseMoved(x, y);
+    return active_scene_->object().handleMouseMoved(x, y);
 }
 
 bool SceneList::handleKey(int key, bool down, int mods) {
-  return active_scene_->object().handleKey(key, down, mods);
+    return active_scene_->object().handleKey(key, down, mods);
+}
+
+void SceneList::handle(tomop::Packet& packet) {
+    send(packet);
 }
 
 } // namespace gui

@@ -6,7 +6,17 @@
 namespace gui {
 
 class SceneObject2d : public SceneObject {
+
+    GLuint texture_id_;
+    std::vector<unsigned char> data_;
+    std::vector<int> size_;
+
+  protected:
+
+    void update_image_(int slice = 0) override;
+
   public:
+
     SceneObject2d();
     ~SceneObject2d() override;
 
@@ -18,14 +28,6 @@ class SceneObject2d : public SceneObject {
         data_ = data;
         update_image_();
     }
-
-  protected:
-    void update_image_(int slice = 0) override;
-
-  private:
-    GLuint texture_id_;
-    std::vector<unsigned char> data_;
-    std::vector<int> size_;
 };
 
 } // namespace gui

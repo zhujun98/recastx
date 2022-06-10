@@ -14,7 +14,12 @@ namespace gui {
 class Window;
 
 class Interface : public RenderTarget, public InputHandler {
+
+    SceneList& scenes_;
+    std::vector<Window*> windows_;
+
   public:
+
     Interface(GLFWwindow* window, SceneList& scenes);
     ~Interface() override;
 
@@ -29,10 +34,6 @@ class Interface : public RenderTarget, public InputHandler {
     bool handleMouseMoved(double x, double y) override;
 
     int priority() const override { return 1; }
-
-  private:
-    SceneList& scenes_;
-    std::vector<Window*> windows_;
 };
 
 } // namespace gui

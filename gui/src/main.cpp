@@ -33,6 +33,7 @@ int main(int argc, char** argv) {
     gui::Renderer renderer;
 
     auto& input = gui::Input::instance(renderer.window());
+
     gui::SceneList scenes;
     gui::Interface interface(renderer.window(), scenes);
     gui::Server server(scenes, opts["port"].as<int>());
@@ -42,9 +43,9 @@ int main(int argc, char** argv) {
 
     renderer.register_ticker(input);
     renderer.register_ticker(scenes);
+    renderer.register_ticker(server);
     renderer.register_target(interface);
     renderer.register_target(scenes);
-    renderer.register_ticker(server);
 
     server.start();
 

@@ -1,19 +1,45 @@
-#include <iostream>
-#include <limits>
-
 #include <imgui.h>
 
 #include "graphics/scene_camera_3d.hpp"
 
 #include <GLFW/glfw3.h>
-#include <glm/gtx/intersect.hpp>
-#include <glm/gtx/string_cast.hpp>
 #include <glm/gtx/transform.hpp>
-#include <imgui.h>
 
 #include "path.hpp"
 
 namespace gui {
+
+// class Rotator
+
+Rotator::Rotator(SceneCamera3d& camera, float x, float y, bool instant)
+    : Rotator(camera) {
+    x_ = x;
+    y_ = y;
+    cx_ = x;
+    cy_ = y;
+    instant_ = instant;
+}
+
+void Rotator::on_drag(glm::vec2 cur, glm::vec2 delta) {
+    if (instant_) {
+      camera_.rotate(3.0f * delta.x, -3.0f * delta.y);
+    } else {
+      cx_ = cur.x;
+      cy_ = cur.y;
+    }
+}
+
+void Rotator::tick(float time_elapsed) {
+    if (instant_) return;
+
+    camera_.rotate(10.0f * time_elapsed * (cx_ - x_), -10.0f * time_elapsed * (cy_ - y_));
+}
+
+drag_machine_kind Rotator::kind() {
+    return drag_machine_kind::rotator;
+}
+
+// class SceneCamera3d
 
 SceneCamera3d::SceneCamera3d() { reset_view(); }
 
