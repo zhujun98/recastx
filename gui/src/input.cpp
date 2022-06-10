@@ -8,33 +8,33 @@
 namespace gui {
 
 Input::Input(GLFWwindow* window) : window_(window) {
-    glfwSetMouseButtonCallback(window, mouse_button_callback);
-    glfwSetScrollCallback(window, scroll_callback);
-    glfwSetKeyCallback(window, key_callback);
-    glfwSetCharCallback(window, char_callback);
+    glfwSetMouseButtonCallback(window, mouseButtonCallback);
+    glfwSetScrollCallback(window, scrollCallback);
+    glfwSetKeyCallback(window, keyCallback);
+    glfwSetCharCallback(window, charCallback);
 }
 
 Input::~Input() = default;
 
-void Input::mouse_button_callback(GLFWwindow* window, int button, int action, int) {
+void Input::mouseButtonCallback(GLFWwindow* window, int button, int action, int) {
     for (auto& handler : instance(window).handlers_) {
         if (handler->handleMouseButton(button, action)) return;
     }
 }
 
-void Input::scroll_callback(GLFWwindow* window, double, double yoffset) {
+void Input::scrollCallback(GLFWwindow* window, double, double yoffset) {
     for (auto& handler : instance(window).handlers_) {
         if (handler->handleScroll(yoffset)) return;
     }
 }
 
-void Input::key_callback(GLFWwindow* window, int key, int, int action, int mods) {
+void Input::keyCallback(GLFWwindow* window, int key, int, int action, int mods) {
     for (auto& handler : instance(window).handlers_) {
         if (handler->handleKey(key, action, mods)) return;
     }
 }
 
-void Input::char_callback(GLFWwindow* window, unsigned int c) {
+void Input::charCallback(GLFWwindow* window, unsigned int c) {
     for (auto& handler : instance(window).handlers_) {
         if (handler->handleChar(c)) return;
     }
@@ -57,12 +57,8 @@ void Input::tick(float /* time_elapsed */) {
     }
 }
 
-void Input::register_handler(InputHandler& handler) {
+void Input::registerHandler(InputHandler& handler) {
     handlers_.insert(&handler);
-}
-
-void Input::unregister_handler(InputHandler& handler) {
-    handlers_.erase(std::find(handlers_.begin(), handlers_.end(), &handler));
 }
 
 } // namespace gui

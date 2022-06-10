@@ -388,10 +388,8 @@ bool ReconstructionComponent::handleMouseButton(int button, bool down) {
     return false;
 }
 
-bool ReconstructionComponent::handleMouseMoved(float x, float y) {
-    if (!show_) {
-        return false;
-    }
+bool ReconstructionComponent::handleMouseMoved(double x, double y) {
+    if (!show_) return false;
 
     // update slice that is being hovered over
     y = -y;
@@ -409,10 +407,8 @@ bool ReconstructionComponent::handleMouseMoved(float x, float y) {
     if (dragging_) {
         drag_machine_->on_drag(delta);
         return true;
-    } else {
-        check_hovered(x, y);
     }
-
+    check_hovered(x, y);
     return false;
 }
 
@@ -424,8 +420,7 @@ std::tuple<bool, float, glm::vec3> ReconstructionComponent::intersection_point(
         auto alpha = glm::dot(normal, direction);
         if (glm::abs(alpha) > 0.001f) {
             distance = glm::dot((base - origin), normal) / alpha;
-            if (distance >= 0.001f)
-                return true;
+            if (distance >= 0.001f) return true;
         }
         return false;
     };
@@ -467,18 +462,14 @@ std::tuple<bool, float, glm::vec3> ReconstructionComponent::intersection_point(
 }
 
 int ReconstructionComponent::index_hovering_over(float x, float y) {
-    auto inv_matrix =
-        glm::inverse(object_.camera().matrix() * volume_transform_);
+    auto inv_matrix = glm::inverse(object_.camera().matrix() * volume_transform_);
     int best_slice_index = -1;
     float best_z = std::numeric_limits<float>::max();
     for (auto& id_slice : slices_) {
         auto& slice = id_slice.second;
-        if (slice->inactive) {
-            continue;
-        }
+        if (slice->inactive) continue;
         slice->hovered = false;
-        auto maybe_point =
-            intersection_point(inv_matrix, slice->orientation, glm::vec2(x, y));
+        auto maybe_point = intersection_point(inv_matrix, slice->orientation, glm::vec2(x, y));
         if (std::get<0>(maybe_point)) {
             auto z = std::get<1>(maybe_point);
             if (z < best_z) {

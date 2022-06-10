@@ -78,7 +78,7 @@ bool SceneList::handleScroll(double offset) {
   return active_scene_->object().handleScroll(offset);
 }
 
-bool SceneList::handleMouseMoved(float x, float y) {
+bool SceneList::handleMouseMoved(double x, double y) {
   return active_scene_->object().handleMouseMoved(x, y);
 }
 

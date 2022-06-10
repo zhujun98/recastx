@@ -59,7 +59,7 @@ class ReconstructionComponent : public ObjectComponent {
 
     void switch_if_necessary(recon_drag_machine_kind kind);
     bool handleMouseButton(int button, bool down) override;
-    bool handleMouseMoved(float x, float y) override;
+    bool handleMouseMoved(double x, double y) override;
     int index_hovering_over(float x, float y);
     void check_hovered(float x, float y);
 
@@ -113,8 +113,8 @@ class ReconstructionComponent : public ObjectComponent {
 
     std::vector<float> histogram_;
 
-    float prev_x_ = -1.1f;
-    float prev_y_ = -1.1f;
+    double prev_x_ = -1.1;
+    double prev_y_ = -1.1;
 
     float lower_value_ = -1.0f;
     float upper_value_ = 1.0f;

@@ -38,7 +38,7 @@ class SceneObject : public InputHandler, public PacketPublisher, public Ticker {
 
     bool handleMouseButton(int button, bool down) override;
     bool handleScroll(double offset) override;
-    bool handleMouseMoved(float x, float y) override;
+    bool handleMouseMoved(double x, double y) override;
     bool handleKey(int key, bool down, int mods) override;
     void tick(float time_elapsed) override;
     void describe();

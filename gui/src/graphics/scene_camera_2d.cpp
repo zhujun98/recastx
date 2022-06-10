@@ -58,7 +58,7 @@ bool SceneCamera2d::handleKey(int key, bool down, int /* mods */) {
     return false;
 }
 
-bool SceneCamera2d::handleMouseMoved(float x, float y) {
+bool SceneCamera2d::handleMouseMoved(double x, double y) {
     if (prev_y_ < -1.0) {
         prev_x_ = x;
         prev_y_ = y;
@@ -66,11 +66,8 @@ bool SceneCamera2d::handleMouseMoved(float x, float y) {
 
     // TODO: fix for screen ratio ratio
     if (dragging_) {
-        auto dx = x - prev_x_;
-        auto dy = y - prev_y_;
-
-        position_.x += dx;
-        position_.y -= dy;
+        position_.x += x - prev_x_;
+        position_.y -= y - prev_y_;
 
         prev_x_ = x;
         prev_y_ = y;

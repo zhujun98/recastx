@@ -118,7 +118,7 @@ void SceneCamera3d::switch_if_necessary(drag_machine_kind kind) {
     }
 }
 
-bool SceneCamera3d::handleMouseMoved(float x, float y) {
+bool SceneCamera3d::handleMouseMoved(double x, double y) {
     if (interaction_disabled_) return false;
 
     // update slices that is being hovered over

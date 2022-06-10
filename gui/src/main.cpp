@@ -37,8 +37,8 @@ int main(int argc, char** argv) {
     gui::Interface interface(renderer.window(), scenes);
     gui::Server server(scenes, opts["port"].as<int>());
 
-    input.register_handler(interface);
-    input.register_handler(scenes);
+    input.registerHandler(interface);
+    input.registerHandler(scenes);
 
     renderer.register_ticker(input);
     renderer.register_ticker(scenes);

@@ -49,7 +49,7 @@ bool SceneObject::handleScroll(double offset) {
     return false;
 }
 
-bool SceneObject::handleMouseMoved(float x, float y) {
+bool SceneObject::handleMouseMoved(double x, double y) {
     for (auto& id_and_comp : components_) {
         if (id_and_comp.second->handleMouseMoved(x, y)) return true;
     }

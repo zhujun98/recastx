@@ -80,7 +80,7 @@ bool Interface::handleChar(unsigned int c) {
     return io.WantCaptureKeyboard;
 }
 
-bool Interface::handleMouseMoved(float /* x */, float /* y */) {
+bool Interface::handleMouseMoved(double /* x */, double /* y */) {
     auto io = ImGui::GetIO();
     return io.WantCaptureMouse;
 }
