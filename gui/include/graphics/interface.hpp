@@ -14,7 +14,12 @@ namespace gui {
 class Window;
 
 class Interface : public RenderTarget, public InputHandler {
+
+    SceneList& scenes_;
+    std::vector<Window*> windows_;
+
   public:
+
     Interface(GLFWwindow* window, SceneList& scenes);
     ~Interface() override;
 
@@ -22,17 +27,13 @@ class Interface : public RenderTarget, public InputHandler {
 
     [[nodiscard]] int zPriority() const override { return 10; }
 
-    bool handle_mouse_button(int button, bool down) override;
-    bool handle_scroll(double offset) override;
-    bool handle_key(int key, bool down, int mods) override;
-    bool handle_char(unsigned int c) override;
-    bool handle_mouse_moved(float x, float y) override;
+    bool handleMouseButton(int button, bool down) override;
+    bool handleScroll(double offset) override;
+    bool handleKey(int key, bool down, int mods) override;
+    bool handleChar(unsigned int c) override;
+    bool handleMouseMoved(double x, double y) override;
 
     int priority() const override { return 1; }
-
-  private:
-    SceneList& scenes_;
-    std::vector<Window*> windows_;
 };
 
 } // namespace gui

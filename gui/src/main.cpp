@@ -1,8 +1,5 @@
 #include <iostream>
-#include <memory>
 
-#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
 #include <boost/program_options.hpp>
 
 #include "graphics/interface.hpp"
@@ -36,19 +33,19 @@ int main(int argc, char** argv) {
     gui::Renderer renderer;
 
     auto& input = gui::Input::instance(renderer.window());
+
     gui::SceneList scenes;
     gui::Interface interface(renderer.window(), scenes);
     gui::Server server(scenes, opts["port"].as<int>());
 
-
-    input.register_handler(interface);
-    input.register_handler(scenes);
+    input.registerHandler(interface);
+    input.registerHandler(scenes);
 
     renderer.register_ticker(input);
     renderer.register_ticker(scenes);
+    renderer.register_ticker(server);
     renderer.register_target(interface);
     renderer.register_target(scenes);
-    renderer.register_ticker(server);
 
     server.start();
 

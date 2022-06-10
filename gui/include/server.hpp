@@ -38,7 +38,7 @@ class Server : public Ticker, public PacketListener {
     zmq::socket_t rep_socket_;
     zmq::socket_t pub_socket_;
 
-    void registerModule(std::shared_ptr<SceneModuleProtocol> module);
+    void registerModule(const std::shared_ptr<SceneModuleProtocol>& module);
 };
 
 }  // namespace gui

@@ -1,19 +1,45 @@
-#include <iostream>
-#include <limits>
-
 #include <imgui.h>
 
 #include "graphics/scene_camera_3d.hpp"
 
 #include <GLFW/glfw3.h>
-#include <glm/gtx/intersect.hpp>
-#include <glm/gtx/string_cast.hpp>
 #include <glm/gtx/transform.hpp>
-#include <imgui.h>
 
 #include "path.hpp"
 
 namespace gui {
+
+// class Rotator
+
+Rotator::Rotator(SceneCamera3d& camera, float x, float y, bool instant)
+    : Rotator(camera) {
+    x_ = x;
+    y_ = y;
+    cx_ = x;
+    cy_ = y;
+    instant_ = instant;
+}
+
+void Rotator::on_drag(glm::vec2 cur, glm::vec2 delta) {
+    if (instant_) {
+      camera_.rotate(3.0f * delta.x, -3.0f * delta.y);
+    } else {
+      cx_ = cur.x;
+      cy_ = cur.y;
+    }
+}
+
+void Rotator::tick(float time_elapsed) {
+    if (instant_) return;
+
+    camera_.rotate(10.0f * time_elapsed * (cx_ - x_), -10.0f * time_elapsed * (cy_ - y_));
+}
+
+drag_machine_kind Rotator::kind() {
+    return drag_machine_kind::rotator;
+}
+
+// class SceneCamera3d
 
 SceneCamera3d::SceneCamera3d() { reset_view(); }
 
@@ -50,7 +76,7 @@ glm::mat4 SceneCamera3d::matrix() {
     return camera_matrix;
 }
 
-bool SceneCamera3d::handle_mouse_button(int /* button */, bool down) {
+bool SceneCamera3d::handleMouseButton(int /* button */, bool down) {
     if (interaction_disabled_) {
         return false;
     }
@@ -63,7 +89,7 @@ bool SceneCamera3d::handle_mouse_button(int /* button */, bool down) {
     return true;
 }
 
-bool SceneCamera3d::handle_scroll(double offset) {
+bool SceneCamera3d::handleScroll(double offset) {
     if (interaction_disabled_) {
         return false;
     }
@@ -72,7 +98,7 @@ bool SceneCamera3d::handle_scroll(double offset) {
     return true;
 }
 
-bool SceneCamera3d::handle_key(int key, bool down, int /* mods */) {
+bool SceneCamera3d::handleKey(int key, bool down, int /* mods */) {
     if (interaction_disabled_) return false;
 
     float offset = 0.05f;
@@ -118,7 +144,7 @@ void SceneCamera3d::switch_if_necessary(drag_machine_kind kind) {
     }
 }
 
-bool SceneCamera3d::handle_mouse_moved(float x, float y) {
+bool SceneCamera3d::handleMouseMoved(double x, double y) {
     if (interaction_disabled_) return false;
 
     // update slices that is being hovered over

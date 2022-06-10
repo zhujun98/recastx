@@ -64,33 +64,7 @@ struct projection {
 };
 
 class GeometryComponent : public ObjectComponent {
-  public:
-    GeometryComponent(SceneObject& object);
-    ~GeometryComponent();
 
-    void draw(glm::mat4 world_to_screen) override;
-    std::string identifier() const override { return "geometry"; }
-
-    void tick(float time_elapsed) override;
-    void describe() override;
-    void push_projection(projection&& proj) {
-        projections_.push_back(std::move(proj));
-    }
-
-    auto& get_projection(int projection_id) {
-        auto proj =
-            std::find_if(projections_.begin(), projections_.end(),
-                         [=](const auto& x) { return x.id == projection_id; });
-        if (proj == projections_.end()) {
-            projections_.emplace_back(projection_id);
-            return projections_[projections_.size() - 1];
-        }
-        return *proj;
-    }
-
-    int priority() const override { return 0; }
-
-  private:
     SceneObject& object_;
 
     GLuint vao_handle_;
@@ -115,6 +89,33 @@ class GeometryComponent : public ObjectComponent {
     Recorder recorder_;
 
     bool show_ = false;
+
+  public:
+
+    explicit GeometryComponent(SceneObject& object);
+    ~GeometryComponent();
+
+    void draw(glm::mat4 world_to_screen) override;
+    [[nodiscard]] std::string identifier() const override { return "geometry"; }
+
+    void tick(float time_elapsed) override;
+    void describe() override;
+    void push_projection(projection&& proj) {
+        projections_.push_back(std::move(proj));
+    }
+
+    auto& get_projection(int projection_id) {
+        auto proj =
+            std::find_if(projections_.begin(), projections_.end(),
+                         [=](const auto& x) { return x.id == projection_id; });
+        if (proj == projections_.end()) {
+            projections_.emplace_back(projection_id);
+            return projections_[projections_.size() - 1];
+        }
+        return *proj;
+    }
+
+    [[nodiscard]] int priority() const override { return 0; }
 };
 
 } // namespace gui

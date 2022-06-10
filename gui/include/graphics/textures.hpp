@@ -37,7 +37,13 @@ inline GLint format_type<float>() { return GL_R32F; }
 
 template <typename T = unsigned char>
 class texture {
-   public:
+
+    GLuint texture_id_ = -1;
+    int x_ = -1;
+    int y_ = -1;
+
+  public:
+
     texture(int x, int y) : x_(x), y_(y) {
         glGenTextures(1, &texture_id_);
         std::vector<T> data(x * y);
@@ -54,7 +60,7 @@ class texture {
         }
     }
 
-    texture(texture&& other) {
+    texture(texture&& other) noexcept {
         x_ = other.x_;
         y_ = other.y_;
         texture_id_ = other.texture_id_;
@@ -96,16 +102,18 @@ class texture {
     }
 
     auto id() const { return texture_id_; }
-
-   private:
-    GLuint texture_id_ = -1;
-    int x_ = -1;
-    int y_ = -1;
 };
 
 template <typename T = unsigned char>
 class texture3d {
-   public:
+
+    GLuint texture_id_;
+    int x_ = -1;
+    int y_ = -1;
+    int z_ = -1;
+
+  public:
+
     texture3d(int x, int y, int z) : x_(x), y_(y), z_(z) {
         glGenTextures(1, &texture_id_);
         std::vector<T> data(x * y * z);
@@ -165,12 +173,6 @@ class texture3d {
     }
 
     auto id() const { return texture_id_; }
-
-   private:
-    GLuint texture_id_;
-    int x_ = -1;
-    int y_ = -1;
-    int z_ = -1;
 };
 
 }  // namespace gui

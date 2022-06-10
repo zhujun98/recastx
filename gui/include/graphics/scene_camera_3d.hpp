@@ -20,7 +20,7 @@ enum class drag_machine_kind : int {
 
 class CameraDragMachine : public Ticker {
   public:
-    CameraDragMachine(SceneCamera3d& camera) : camera_(camera) {}
+    explicit CameraDragMachine(SceneCamera3d& camera) : camera_(camera) {}
 
     virtual void on_drag(glm::vec2 cur, glm::vec2 delta) = 0;
     virtual drag_machine_kind kind() = 0;
@@ -30,45 +30,38 @@ class CameraDragMachine : public Ticker {
     SceneCamera3d& camera_;
 };
 
-class SceneCamera3d : public SceneCamera {
+
+class Rotator : public CameraDragMachine {
+
+    float x_;
+    float y_;
+    float cx_;
+    float cy_;
+    bool instant_ = true;
+
   public:
-    SceneCamera3d();
 
-    glm::mat4 matrix() override;
+    using CameraDragMachine::CameraDragMachine;
 
-    void reset_view() override;
+    Rotator(SceneCamera3d& camera, float x, float y, bool instant = true);
 
-    auto& up() { return up_; }
-    auto& right() { return right_; }
-
-    void switch_if_necessary(drag_machine_kind kind);
-
-    bool handle_mouse_button(int button, bool down) override;
-    bool handle_scroll(double offset) override;
-    bool handle_mouse_moved(float x, float y) override;
-    bool handle_key(int key, bool down, int mods) override;
+    void on_drag(glm::vec2 cur, glm::vec2 delta) override;
 
     void tick(float time_elapsed) override;
 
-    void set_look_at(glm::vec3 center) override;
-    void set_position(glm::vec3 position);
-    void set_right(glm::vec3 right);
-    void set_up(glm::vec3 up);
+    drag_machine_kind kind() override;
+};
 
-    glm::vec3& position() override { return position_; }
-    glm::vec3& look_at() override { return center_; }
 
-    void rotate(float phi, float psi);
-    void describe() override;
+class SceneCamera3d : public SceneCamera {
 
-  private:
     glm::vec3 position_;
 
     float angle_ = 0.0f;
     float scale_ = 0.5f;
 
-    float prev_x_ = -1.1f;
-    float prev_y_ = -1.1f;
+    double prev_x_ = -1.1;
+    double prev_y_ = -1.1;
     glm::vec2 delta_;
 
     bool dragging_ = false;
@@ -83,46 +76,38 @@ class SceneCamera3d : public SceneCamera {
     bool toggled_ = false;
 
     std::unique_ptr<CameraDragMachine> drag_machine_;
-};
 
-class Rotator : public CameraDragMachine {
   public:
-    using CameraDragMachine::CameraDragMachine;
 
-    Rotator(SceneCamera3d& camera, float x, float y, bool instant = true)
-        : Rotator(camera) {
-        x_ = x;
-        y_ = y;
-        cx_ = x;
-        cy_ = y;
-        instant_ = instant;
-    }
+    SceneCamera3d();
 
-    void on_drag(glm::vec2 cur, glm::vec2 delta) override {
-        if (instant_) {
-            camera_.rotate(3.0f * delta.x, -3.0f * delta.y);
-        } else {
-            cx_ = cur.x;
-            cy_ = cur.y;
-        }
-    }
+    glm::mat4 matrix() override;
 
-    void tick(float time_elapsed) override {
-        if (instant_) {
-            return;
-        }
-        camera_.rotate(10.0f * time_elapsed * (cx_ - x_),
-                       -10.0f * time_elapsed * (cy_ - y_));
-    }
+    void reset_view() override;
 
-    drag_machine_kind kind() override { return drag_machine_kind::rotator; }
+    auto& up() { return up_; }
+    auto& right() { return right_; }
 
-  private:
-    float x_;
-    float y_;
-    float cx_;
-    float cy_;
-    bool instant_ = true;
+    void switch_if_necessary(drag_machine_kind kind);
+
+    bool handleMouseButton(int button, bool down) override;
+    bool handleScroll(double offset) override;
+    bool handleMouseMoved(double x, double y) override;
+    bool handleKey(int key, bool down, int mods) override;
+
+    void tick(float time_elapsed) override;
+
+    void set_look_at(glm::vec3 center) override;
+    void set_position(glm::vec3 position);
+    void set_right(glm::vec3 right);
+    void set_up(glm::vec3 up);
+
+    glm::vec3& position() override { return position_; }
+    glm::vec3& look_at() override { return center_; }
+
+    void rotate(float phi, float psi);
+    void describe() override;
 };
+
 
 } // namespace gui

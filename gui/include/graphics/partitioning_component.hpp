@@ -25,17 +25,7 @@ struct part {
 };
 
 class PartitioningComponent : public ObjectComponent {
-   public:
-    PartitioningComponent(SceneObject& object);
-    ~PartitioningComponent();
 
-    void draw(glm::mat4 world_to_screen) override;
-    std::string identifier() const override { return "partitioning"; }
-
-    void add_part(part&& p) { parts_.push_back(std::move(p)); }
-    void describe() override;
-
-   private:
     SceneObject& object_;
 
     GLuint cube_vao_handle_;
@@ -46,6 +36,18 @@ class PartitioningComponent : public ObjectComponent {
     bool show_ = true;
 
     float global_scale_ = 1.0f;
+
+  public:
+
+    explicit PartitioningComponent(SceneObject& object);
+    ~PartitioningComponent();
+
+    void draw(glm::mat4 world_to_screen) override;
+
+    [[nodiscard]] std::string identifier() const override { return "partitioning"; }
+
+    void add_part(part&& p) { parts_.push_back(std::move(p)); }
+    void describe() override;
 };
 
 }  // namespace gui

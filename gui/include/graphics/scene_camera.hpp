@@ -13,7 +13,17 @@
 namespace gui {
 
 class SceneCamera : public InputHandler, public Ticker {
+
+    int current_scheme_ = -1;
+    std::vector<std::string> schemes_;
+    GLuint colormap_texture_id_;
+
+  protected:
+
+    bool interaction_disabled_ = false;
+
   public:
+
     SceneCamera();
     virtual ~SceneCamera();
 
@@ -22,7 +32,7 @@ class SceneCamera : public InputHandler, public Ticker {
     virtual void set_look_at(glm::vec3 /* center */) {}
     void tick(float) override {}
 
-    GLuint colormap() const { return colormap_texture_id_; }
+    [[nodiscard]] GLuint colormap() const { return colormap_texture_id_; }
     void set_colormap(int scheme);
 
     virtual glm::vec3& position() = 0;
@@ -32,14 +42,6 @@ class SceneCamera : public InputHandler, public Ticker {
     virtual void describe();
 
     void toggle_interaction() { interaction_disabled_ = ! interaction_disabled_; }
-
-  protected:
-    bool interaction_disabled_ = false;
-
-  private:
-    int current_scheme_ = -1;
-    std::vector<std::string> schemes_;
-    GLuint colormap_texture_id_;
 };
 
 } // namespace gui

@@ -54,33 +54,33 @@ void Interface::render(glm::mat4) {
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-bool Interface::handle_mouse_button(int button, bool down) {
+bool Interface::handleMouseButton(int button, bool down) {
     ImGui_ImplGlfw_MouseButtonCallback(
         nullptr, button, down ? GLFW_PRESS : GLFW_RELEASE, 0);
     auto io = ImGui::GetIO();
     return io.WantCaptureMouse;
 }
 
-bool Interface::handle_scroll(double offset) {
+bool Interface::handleScroll(double offset) {
     ImGui_ImplGlfw_ScrollCallback(nullptr, 0.0, offset);
     auto io = ImGui::GetIO();
     return io.WantCaptureMouse;
 }
 
-bool Interface::handle_key(int key, bool down, int /* mods */) {
+bool Interface::handleKey(int key, bool down, int /* mods */) {
     ImGui_ImplGlfw_KeyCallback(
         nullptr, key, 0, down ? GLFW_PRESS : GLFW_RELEASE, 0);
     auto io = ImGui::GetIO();
     return io.WantCaptureKeyboard;
 }
 
-bool Interface::handle_char(unsigned int c) {
+bool Interface::handleChar(unsigned int c) {
     ImGui_ImplGlfw_CharCallback(nullptr, c);
     auto io = ImGui::GetIO();
     return io.WantCaptureKeyboard;
 }
 
-bool Interface::handle_mouse_moved(float /* x */, float /* y */) {
+bool Interface::handleMouseMoved(double /* x */, double /* y */) {
     auto io = ImGui::GetIO();
     return io.WantCaptureMouse;
 }

@@ -9,29 +9,29 @@ struct GLFWwindow;
 namespace gui {
 
 class Renderer {
-  public:
-      Renderer(); 
-      ~Renderer();
-
-      void main_loop();
-      void register_target(RenderTarget& target);
-      void register_ticker(Ticker& ticker);
-
-      GLFWwindow* window() const { return window_; }
-
-  private:
     GLFWwindow* window_;
 
     struct RenderCompare {
-        bool operator()(const RenderTarget* lhs, const RenderTarget* rhs) const {
-            return lhs->zPriority() < rhs->zPriority();
-        }
+      bool operator()(const RenderTarget* lhs, const RenderTarget* rhs) const {
+        return lhs->zPriority() < rhs->zPriority();
+      }
     };
 
     std::set<RenderTarget*, RenderCompare> targets_;
     std::vector<Ticker*> tickers_;
 
     double previous_time_;
+
+  public:
+
+    Renderer();
+    ~Renderer();
+
+    void main_loop();
+    void register_target(RenderTarget& target);
+    void register_ticker(Ticker& ticker);
+
+    [[nodiscard]] GLFWwindow* window() const { return window_; }
 };
 
 } // namespace gui

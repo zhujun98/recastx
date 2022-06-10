@@ -17,7 +17,21 @@ class ShaderProgram;
 class SceneCamera;
 
 class SceneObject : public InputHandler, public PacketPublisher, public Ticker {
-   public:
+  protected:
+
+    virtual void update_image_(int /* slice */) {}
+
+    GLuint vao_handle_;
+    GLuint vbo_handle_;
+    std::unique_ptr<ShaderProgram> program_;
+    std::unique_ptr<SceneCamera> camera_;
+    float pixel_size_ = 1.0;
+
+    // FIXME: map of components
+    std::map<std::string, std::unique_ptr<ObjectComponent>> components_;
+
+  public:
+
     SceneObject();
     virtual ~SceneObject();
 
@@ -36,25 +50,12 @@ class SceneObject : public InputHandler, public PacketPublisher, public Ticker {
         return *components_[identifier].get();
     }
 
-    bool handle_mouse_button(int button, bool down) override;
-    bool handle_scroll(double offset) override;
-    bool handle_mouse_moved(float x, float y) override;
-    bool handle_key(int key, bool down, int mods) override;
+    bool handleMouseButton(int button, bool down) override;
+    bool handleScroll(double offset) override;
+    bool handleMouseMoved(double x, double y) override;
+    bool handleKey(int key, bool down, int mods) override;
     void tick(float time_elapsed) override;
     void describe();
-
-  protected:
-
-    virtual void update_image_(int /* slice */) {}
-
-    GLuint vao_handle_;
-    GLuint vbo_handle_;
-    std::unique_ptr<ShaderProgram> program_;
-    std::unique_ptr<SceneCamera> camera_;
-    float pixel_size_ = 1.0;
-
-    // FIXME: map of components
-    std::map<std::string, std::unique_ptr<ObjectComponent>> components_;
 };
 
 }  // namespace gui
