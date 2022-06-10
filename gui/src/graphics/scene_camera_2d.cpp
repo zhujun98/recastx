@@ -19,17 +19,17 @@ glm::mat4 SceneCamera2d::matrix() {
     return camera_matrix;
 }
 
-bool SceneCamera2d::handle_mouse_button(int /* button */, bool down) {
+bool SceneCamera2d::handleMouseButton(int /* button */, bool down) {
     dragging_ = down;
     return true;
 }
 
-bool SceneCamera2d::handle_scroll(double offset) {
+bool SceneCamera2d::handleScroll(double offset) {
     scale_ += offset / 20.0;
     return true;
 }
 
-bool SceneCamera2d::handle_key(int key, bool down, int /* mods */) {
+bool SceneCamera2d::handleKey(int key, bool down, int /* mods */) {
     float offset = 0.05f;
     if (down) {
         switch (key) {
@@ -58,7 +58,7 @@ bool SceneCamera2d::handle_key(int key, bool down, int /* mods */) {
     return false;
 }
 
-bool SceneCamera2d::handle_mouse_moved(float x, float y) {
+bool SceneCamera2d::handleMouseMoved(float x, float y) {
     if (prev_y_ < -1.0) {
         prev_x_ = x;
         prev_y_ = y;

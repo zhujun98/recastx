@@ -59,16 +59,16 @@ class SceneList : public RenderTarget,
 
     void activate(const std::string& name);
 
-    SceneObject& object() { return active_scene_->object(); }
+    SceneObject& object();
 
     void tick(float dt) override;
 
     void render(glm::mat4 window_matrix) override;
 
-    bool handle_mouse_button(int button, bool down) override;
-    bool handle_scroll(double offset) override;
-    bool handle_mouse_moved(float x, float y) override;
-    bool handle_key(int key, bool down, int mods) override;
+    bool handleMouseButton(int button, bool down) override;
+    bool handleScroll(double offset) override;
+    bool handleMouseMoved(float x, float y) override;
+    bool handleKey(int key, bool down, int mods) override;
 
     void handle(tomop::Packet& packet) override { send(packet); }
 };

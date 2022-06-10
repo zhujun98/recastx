@@ -37,7 +37,6 @@ SceneList::SceneList() {
 
 SceneList::~SceneList() = default;
 
-// TODO make thread safe
 void SceneList::addScene(const std::string& name, int dimension) {
     auto scene = std::make_unique<Scene>(name, dimension);
     scene->object().add_listener(this);
@@ -61,6 +60,8 @@ void SceneList::activate(const std::string& name) {
   active_scene_ = scenes_[name].get();
 }
 
+SceneObject& SceneList::object() { return active_scene_->object(); }
+
 void SceneList::render(glm::mat4 window_matrix) {
   active_scene_->render(window_matrix);
 }
@@ -69,20 +70,20 @@ void SceneList::tick(float dt) {
   active_scene_->object().tick(dt);
 }
 
-bool SceneList::handle_mouse_button(int button, bool down) {
-  return active_scene_->object().handle_mouse_button(button, down);
+bool SceneList::handleMouseButton(int button, bool down) {
+  return active_scene_->object().handleMouseButton(button, down);
 }
 
-bool SceneList::handle_scroll(double offset) {
-  return active_scene_->object().handle_scroll(offset);
+bool SceneList::handleScroll(double offset) {
+  return active_scene_->object().handleScroll(offset);
 }
 
-bool SceneList::handle_mouse_moved(float x, float y) {
-  return active_scene_->object().handle_mouse_moved(x, y);
+bool SceneList::handleMouseMoved(float x, float y) {
+  return active_scene_->object().handleMouseMoved(x, y);
 }
 
-bool SceneList::handle_key(int key, bool down, int mods) {
-  return active_scene_->object().handle_key(key, down, mods);
+bool SceneList::handleKey(int key, bool down, int mods) {
+  return active_scene_->object().handleKey(key, down, mods);
 }
 
 } // namespace gui

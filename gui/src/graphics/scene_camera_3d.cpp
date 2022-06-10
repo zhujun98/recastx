@@ -50,7 +50,7 @@ glm::mat4 SceneCamera3d::matrix() {
     return camera_matrix;
 }
 
-bool SceneCamera3d::handle_mouse_button(int /* button */, bool down) {
+bool SceneCamera3d::handleMouseButton(int /* button */, bool down) {
     if (interaction_disabled_) {
         return false;
     }
@@ -63,7 +63,7 @@ bool SceneCamera3d::handle_mouse_button(int /* button */, bool down) {
     return true;
 }
 
-bool SceneCamera3d::handle_scroll(double offset) {
+bool SceneCamera3d::handleScroll(double offset) {
     if (interaction_disabled_) {
         return false;
     }
@@ -72,7 +72,7 @@ bool SceneCamera3d::handle_scroll(double offset) {
     return true;
 }
 
-bool SceneCamera3d::handle_key(int key, bool down, int /* mods */) {
+bool SceneCamera3d::handleKey(int key, bool down, int /* mods */) {
     if (interaction_disabled_) return false;
 
     float offset = 0.05f;
@@ -118,7 +118,7 @@ void SceneCamera3d::switch_if_necessary(drag_machine_kind kind) {
     }
 }
 
-bool SceneCamera3d::handle_mouse_moved(float x, float y) {
+bool SceneCamera3d::handleMouseMoved(float x, float y) {
     if (interaction_disabled_) return false;
 
     // update slices that is being hovered over

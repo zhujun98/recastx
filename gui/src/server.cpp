@@ -77,7 +77,7 @@ void Server::handle(tomop::Packet& pkt) {
     }
 }
 
-void Server::registerModule(std::shared_ptr<SceneModuleProtocol> module) {
+void Server::registerModule(const std::shared_ptr<SceneModuleProtocol>& module) {
     for (auto desc : module->descriptors()) modules_[desc] = module;
 }
 

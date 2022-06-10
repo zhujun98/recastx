@@ -58,8 +58,8 @@ class ReconstructionComponent : public ObjectComponent {
     void send_slices();
 
     void switch_if_necessary(recon_drag_machine_kind kind);
-    bool handle_mouse_button(int button, bool down) override;
-    bool handle_mouse_moved(float x, float y) override;
+    bool handleMouseButton(int button, bool down) override;
+    bool handleMouseMoved(float x, float y) override;
     int index_hovering_over(float x, float y);
     void check_hovered(float x, float y);
 

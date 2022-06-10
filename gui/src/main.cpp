@@ -1,8 +1,5 @@
 #include <iostream>
-#include <memory>
 
-#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
 #include <boost/program_options.hpp>
 
 #include "graphics/interface.hpp"
@@ -39,7 +36,6 @@ int main(int argc, char** argv) {
     gui::SceneList scenes;
     gui::Interface interface(renderer.window(), scenes);
     gui::Server server(scenes, opts["port"].as<int>());
-
 
     input.register_handler(interface);
     input.register_handler(scenes);

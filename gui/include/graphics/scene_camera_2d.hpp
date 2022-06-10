@@ -11,10 +11,10 @@ class SceneCamera2d : public SceneCamera {
 
     glm::mat4 matrix() override;
 
-    bool handle_mouse_button(int button, bool down) override;
-    bool handle_scroll(double offset) override;
-    bool handle_mouse_moved(float x, float y) override;
-    bool handle_key(int key, bool down, int mods) override;
+    bool handleMouseButton(int button, bool down) override;
+    bool handleScroll(double offset) override;
+    bool handleMouseMoved(float x, float y) override;
+    bool handleKey(int key, bool down, int mods) override;
 
     glm::vec3& position() override { return position_; }
     glm::vec3& look_at() override { return look_at_; }

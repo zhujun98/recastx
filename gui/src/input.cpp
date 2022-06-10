@@ -18,25 +18,25 @@ Input::~Input() = default;
 
 void Input::mouse_button_callback(GLFWwindow* window, int button, int action, int) {
     for (auto& handler : instance(window).handlers_) {
-        if (handler->handle_mouse_button(button, action)) return;
+        if (handler->handleMouseButton(button, action)) return;
     }
 }
 
 void Input::scroll_callback(GLFWwindow* window, double, double yoffset) {
     for (auto& handler : instance(window).handlers_) {
-        if (handler->handle_scroll(yoffset)) return;
+        if (handler->handleScroll(yoffset)) return;
     }
 }
 
 void Input::key_callback(GLFWwindow* window, int key, int, int action, int mods) {
     for (auto& handler : instance(window).handlers_) {
-        if (handler->handle_key(key, action, mods)) return;
+        if (handler->handleKey(key, action, mods)) return;
     }
 }
 
 void Input::char_callback(GLFWwindow* window, unsigned int c) {
     for (auto& handler : instance(window).handlers_) {
-        if (handler->handle_char(c)) return;
+        if (handler->handleChar(c)) return;
     }
 }
 
@@ -52,7 +52,7 @@ void Input::tick(float /* time_elapsed */) {
     mouse_y = 2.0 * (mouse_y / h) - 1.0;
 
     for (auto& handler : instance(window_).handlers_) {
-        if (handler->handle_mouse_moved(mouse_x, mouse_y))
+        if (handler->handleMouseMoved(mouse_x, mouse_y))
             return;
     }
 }

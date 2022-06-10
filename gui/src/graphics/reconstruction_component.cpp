@@ -334,7 +334,7 @@ void ReconstructionComponent::draw(glm::mat4 world_to_screen) {
     glDisable(GL_BLEND);
 }
 
-bool ReconstructionComponent::handle_mouse_button(int button, bool down) {
+bool ReconstructionComponent::handleMouseButton(int button, bool down) {
     if (!show_) {
         return false;
     }
@@ -388,7 +388,7 @@ bool ReconstructionComponent::handle_mouse_button(int button, bool down) {
     return false;
 }
 
-bool ReconstructionComponent::handle_mouse_moved(float x, float y) {
+bool ReconstructionComponent::handleMouseMoved(float x, float y) {
     if (!show_) {
         return false;
     }
