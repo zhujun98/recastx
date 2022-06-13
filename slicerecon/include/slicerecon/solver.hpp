@@ -50,6 +50,17 @@ protected:
 
 public:
 
+    /**
+     * @brief Construct a new Solver:: Solver object
+     * 
+     * @param rows: Number of rows of the detector.
+     * @param cols: Number of columns of the detector.
+     * @param projections: Number of projection angles. 
+     * @param volume_min_point: Minimal (X, Y, Z)-coordinate in the volume window.
+     * @param volume_max_point: Maximal (X, Y, Z)-coordinate in the volume window. 
+     * @param preview_size: Size of the cubic reconstructed volume for preview.
+     * @param slice_size: Size of the square reconstructed slice in pixels. 
+     */
     Solver(int rows, 
            int cols, 
            int projections,
@@ -84,15 +95,29 @@ class ParallelBeamSolver : public Solver {
 
 public:
 
+    /**
+     * @brief Construct a new Parallel Beam Solver:: Parallel Beam Solver object
+     * 
+     * @param rows: Number of rows of the detector.
+     * @param cols: Number of columns of the detector.
+     * @param angles: An array of projection angles.
+     * @param volume_min_point: Minimal (X, Y, Z)-coordinate in the volume window.
+     * @param volume_max_point: Maximal (X, Y, Z)-coordinate in the volume window. 
+     * @param preview_size: Size of the cubic reconstructed volume for preview.
+     * @param slice_size: Size of the square reconstructed slice in pixels. 
+     * @param vec_geometry 
+     * @param detector_size: (Height, Width) of a detector cell, in unit lengths.
+     * @param recon_mode: Reconstruction mode: alternative or continuous. 
+     */
     ParallelBeamSolver(int rows, 
                        int cols,
-                       int projections,
                        std::vector<float> angles,
                        const std::array<float, 3>& volume_min_point, 
                        const std::array<float, 3>& volume_max_point,
                        int preview_size,
                        int slice_size,
                        bool vec_geometry,
+                       const std::array<float, 2>& detector_size,
                        ReconstructMode recon_mode);
     // FIXME ~solver clean up
 
@@ -111,9 +136,26 @@ class ConeBeamSolver : public Solver {
 
 public:
 
+    /**
+     * @brief Construct a new Cone Beam Solver:: Cone Beam Solver object
+     * 
+     * @param rows: Number of rows of the detector.
+     * @param cols: Number of columns of the detector.
+     * @param angles: An array of projection angles. 
+     * @param volume_min_point: Minimal (X, Y, Z)-coordinate in the volume window.
+     * @param volume_max_point: Maximal (X, Y, Z)-coordinate in the volume window. 
+     * @param preview_size: Size of the cubic reconstructed volume for preview.
+     * @param slice_size: Size of the square reconstructed slice in pixels.
+     * @param vec_geometry 
+     * @param detector_size: (Height, Width) of a detector cell, in unit lengths.
+     * @param source_origin: Distance from the origin of the coordinate system to the source.
+     * @param origin_det: Distance from the origin of the coordinate system to the detector 
+     *                    (i.e., the distance between the origin and its orthogonal projection
+     *                    onto the detector array).
+     * @param recon_mode: Reconstruction mode: alternative or continuous. 
+     */
     ConeBeamSolver(int rows, 
                    int cols,
-                   int projections,
                    std::vector<float> angles,
                    const std::array<float, 3>& volume_min_point, 
                    const std::array<float, 3>& volume_max_point,

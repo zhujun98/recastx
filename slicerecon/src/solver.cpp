@@ -5,6 +5,8 @@
 
 namespace slicerecon {
 
+// class Solver
+
 Solver::Solver(int rows, 
                int cols, 
                int projections,
@@ -21,7 +23,8 @@ Solver::Solver(int rows,
     float half_slab_height = 0.5f * (volume_max_point[2] - volume_min_point[2]) / preview_size;
     float mid_z = 0.5f * (volume_max_point[2] + volume_min_point[2]);
 
-    // Volume geometry
+    // This class represents a 3D pixel grid that is placed in the geometry. 
+    // It defines a rectangular volume window.
     vol_geom_ = std::make_unique<astra::CVolumeGeometry3D>(
         slice_size, slice_size, 1,
         volume_min_point[0], volume_min_point[1], mid_z - half_slab_height, 
@@ -74,22 +77,29 @@ void Solver::uploadProjections(int buffer_idx,
 #endif
 }
 
+// class ParallelBeamSolver
+
 ParallelBeamSolver::ParallelBeamSolver(int rows, 
                                        int cols,
-                                       int projections,
                                        std::vector<float> angles,
                                        const std::array<float, 3>& volume_min_point, 
                                        const std::array<float, 3>& volume_max_point,
                                        int preview_size,
                                        int slice_size,
                                        bool vec_geometry,
+                                       const std::array<float, 2>& detector_size,
                                        ReconstructMode recon_mode)
-        : Solver(rows, cols, projections, volume_min_point, volume_max_point, preview_size, slice_size) {
+        : Solver(rows, 
+                 cols, 
+                 static_cast<int>(angles.size()), 
+                 volume_min_point, 
+                 volume_max_point, 
+                 preview_size, 
+                 slice_size) {
     spdlog::info("Initializing parallel beam solver ...");
     if (!vec_geometry) {
-        // Projection geometry
         auto proj_geom = astra::CParallelProjectionGeometry3D(
-            projections, rows, cols, 1.0f, 1.0f, angles.data());
+            projections_, rows, cols, detector_size[1], detector_size[0], angles.data());
 
         proj_geom_ = slicerecon::utils::proj_to_vec(&proj_geom);
 
@@ -97,25 +107,27 @@ ParallelBeamSolver::ParallelBeamSolver(int rows,
 
     } else {
         auto par_projs = slicerecon::utils::list_to_par_projections(angles);
+
         proj_geom_ = std::make_unique<astra::CParallelVecProjectionGeometry3D>(
-            projections, rows, cols, par_projs.data());
+            projections_, rows, cols, par_projs.data());
+
         proj_geom_small_ = std::make_unique<astra::CParallelVecProjectionGeometry3D>(
-            projections, rows, cols, par_projs.data());
+            projections_, rows, cols, par_projs.data());
     }
 
     vectors_ = std::vector<astra::SPar3DProjection>(
         proj_geom_->getProjectionVectors(),
-        proj_geom_->getProjectionVectors() + projections);
+        proj_geom_->getProjectionVectors() + projections_);
     original_vectors_ = vectors_;
     vec_buf_ = vectors_;
 
-    auto zeros = std::vector<float>(projections * cols * rows, 0.0f);
+    auto zeros = std::vector<float>(projections_ * cols * rows, 0.0f);
 
     // Projection data and back projection algorithm
     projector_ = std::make_unique<astra::CCudaProjector3D>();
     for (int i = 0; i < (recon_mode == ReconstructMode::alternating ? 2 : 1); ++i) {
         proj_handles_.push_back(astraCUDA3d::createProjectionArrayHandle(
-            zeros.data(), cols, projections, rows));
+            zeros.data(), cols, projections_, rows));
         proj_data_.push_back(std::make_unique<astra::CFloat32ProjectionData3DGPU>(
             proj_geom_.get(), proj_handles_[0]));
 
@@ -232,9 +244,10 @@ bool ParallelBeamSolver::parameterChanged(std::string param, std::variant<float,
     return tilt_changed;
 }
 
+// class ConeBeamSolver
+
 ConeBeamSolver::ConeBeamSolver(int rows, 
                                int cols,
-                               int projections,
                                std::vector<float> angles,
                                const std::array<float, 3>& volume_min_point, 
                                const std::array<float, 3>& volume_max_point,
@@ -245,13 +258,20 @@ ConeBeamSolver::ConeBeamSolver(int rows,
                                float source_origin,
                                float origin_det,
                                ReconstructMode recon_mode)
-        : Solver(rows, cols, projections, volume_min_point, volume_max_point, preview_size, slice_size) {
+        : Solver(rows, 
+                 cols, 
+                 static_cast<int>(angles.size()), 
+                 volume_min_point, 
+                 volume_max_point, 
+                 preview_size, 
+                 slice_size) {
     spdlog::info("Initializing cone beam solver ...");
 
     if (!vec_geometry) {
+        // TODO: should detector_size be (Height, Width)?
         auto proj_geom = astra::CConeProjectionGeometry3D(
-            projections, rows, cols,
-            detector_size[0], detector_size[1],
+            projections_, rows, cols,
+            detector_size[1], detector_size[0],
             angles.data(), source_origin, origin_det);
 
         proj_geom_ = slicerecon::utils::proj_to_vec(&proj_geom);
@@ -259,26 +279,26 @@ ConeBeamSolver::ConeBeamSolver(int rows,
     } else {
         auto cone_projs = slicerecon::utils::list_to_cone_projections(rows, cols, angles);
         proj_geom_ = std::make_unique<astra::CConeVecProjectionGeometry3D>(
-            projections, rows, cols, cone_projs.data());
+            projections_, rows, cols, cone_projs.data());
 
         spdlog::info("{}", slicerecon::utils::info(*proj_geom_));
 
         proj_geom_small_ = std::make_unique<astra::CConeVecProjectionGeometry3D>(
-            projections, rows, cols, cone_projs.data());
+            projections_, rows, cols, cone_projs.data());
     }
 
     vectors_ = std::vector<astra::SConeProjection>(
-        proj_geom_->getProjectionVectors(), proj_geom_->getProjectionVectors() + projections);
+        proj_geom_->getProjectionVectors(), proj_geom_->getProjectionVectors() + projections_);
 
     vec_buf_ = vectors_;
 
-    auto zeros = std::vector<float>(projections * cols * rows, 0.0f);
+    auto zeros = std::vector<float>(projections_ * cols * rows, 0.0f);
 
     // Projection data
     int nr_handles = recon_mode == ReconstructMode::alternating ? 2 : 1;
     for (int i = 0; i < nr_handles; ++i) {
         proj_handles_.push_back(astraCUDA3d::createProjectionArrayHandle(
-            zeros.data(), cols, projections, rows));
+            zeros.data(), cols, projections_, rows));
         proj_data_.push_back(std::make_unique<astra::CFloat32ProjectionData3DGPU>(
             proj_geom_.get(), proj_handles_[0]));
     }
