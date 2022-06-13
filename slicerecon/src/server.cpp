@@ -43,18 +43,25 @@ int main(int argc, char** argv)
          "First ZMQ socket port of the GUI server. The second port has an increment of 1.")
     ;
 
+    po::options_description geometry_desc("Geometry options");
+    bool cone_beam = false;
+    geometry_desc.add_options()
+        ("rows", po::value<int>()->default_value(1200),
+         "detector height in pixels")
+        ("cols", po::value<int>()->default_value(2016),
+         "detector width in pixels")
+    ;
+
     po::options_description reconstruction_desc("Reconstruction options");
     bool continuous_mode = false;
     bool retrieve_phase = false;
     bool tilt = false;
     bool gaussian_pass = false;
     reconstruction_desc.add_options()
-        ("slice-size", po::value<int>()->default_value(128),
-         "...")
+        ("slice-size", po::value<int>()->default_value(-1),
+         "size of the square reconstructed slice in pixels. Default to detector columns.")
         ("preview-size", po::value<int>()->default_value(128),
-         "...")
-        ("group-size", po::value<int>()->default_value(128),
-         "")
+         "size of the cubic reconstructed volume for preview. Default to slice size.")
         ("threads", po::value<int>()->default_value(8),
          "number of threads used for data processing")
         ("darks", po::value<int>()->default_value(10),
@@ -63,6 +70,9 @@ int main(int argc, char** argv)
          "number of flat images")
         ("projections", po::value<int>()->default_value(128),
          "number of projections")
+        ("group-size", po::value<int>()->default_value(-1),
+         "group size for projection processing in the alternative mode. "
+         "Default to number of projections.")
         ("continuous-mode", po::bool_switch(&continuous_mode),
          "switch reconstructor to continuous mode from the default alternating mode")
         ("retrieve-phase", po::bool_switch(&retrieve_phase),
@@ -73,15 +83,6 @@ int main(int argc, char** argv)
          "Supported filters are: shepp (Shepp-Logan), ramlak (Ram-Lak)")
         ("gaussian", po::bool_switch(&gaussian_pass),
          "enable Gaussian low pass filter")
-    ;
-
-    po::options_description geometry_desc("Geometry options");
-    bool cone_beam = false;
-    geometry_desc.add_options()
-        ("rows", po::value<int>()->default_value(1200),
-         "detector height in pixels")
-        ("cols", po::value<int>()->default_value(2016),
-         "detector width in pixels")
     ;
 
     po::options_description paganin_desc("Paganin options");
@@ -103,8 +104,8 @@ int main(int argc, char** argv)
     all_desc.
         add(general_desc).
         add(connection_desc).
-        add(reconstruction_desc).
         add(geometry_desc).
+        add(reconstruction_desc).
         add(paganin_desc);
 
     po::variables_map opts;
@@ -122,13 +123,18 @@ int main(int argc, char** argv)
     auto gui_hostname = opts["gui-host"].as<std::string>();
     auto gui_port = opts["gui-port"].as<int>();
 
+    auto rows = opts["rows"].as<int>();
+    auto cols = opts["cols"].as<int>();
+
     auto slice_size = opts["slice-size"].as<int>();
+    if (slice_size <= 0) slice_size = cols;
     auto preview_size = opts["preview-size"].as<int>();
-    auto group_size = opts["group-size"].as<int>();
     auto num_threads = opts["threads"].as<int>();
     auto num_darks = opts["darks"].as<int>();
     auto num_flats = opts["flats"].as<int>();
     auto num_projections = opts["projections"].as<int>();
+    auto group_size = opts["group-size"].as<int>();
+    if (group_size <= 0) group_size = num_projections;
     if (num_projections < group_size) {
         throw std::invalid_argument(
             "'projections' ("s + std::to_string(num_projections) + 
@@ -139,9 +145,6 @@ int main(int argc, char** argv)
                                         slicerecon::ReconstructMode::alternating;
     auto filter_name = opts["filter"].as<std::string>();
 
-    auto rows = opts["rows"].as<int>();
-    auto cols = opts["cols"].as<int>();
-
     auto pixel_size = opts["pixel-size"].as<float>();
     auto lambda = opts["lambda"].as<float>();
     auto delta = opts["delta"].as<float>();
@@ -151,10 +154,10 @@ int main(int argc, char** argv)
     spdlog::set_pattern("[%Y-%m-%d %T.%e] [%^%l%$] %v");
     spdlog::set_level(spdlog::level::info);
 
-    // TODO: how to set volume geometry properly?
-    std::array<float, 3> volume_min_point {-128.0f, -128.0f, -128.0f};
-    std::array<float, 3> volume_max_point {128.0f, 128.0f, 128.0f};
-    std::array<float, 2> detector_size {0.0f, 0.0f};
+    float hdw = cols / 2.f; // half detector width
+    std::array<float, 3> volume_min_point {-hdw, -hdw, -hdw};
+    std::array<float, 3> volume_max_point {hdw, hdw, hdw};
+    std::array<float, 2> detector_size {1.0f, 1.0f};
     float source_origin = 0.f;
     float origin_det = 0.f;
 
@@ -181,7 +184,7 @@ int main(int argc, char** argv)
     } else {
         recon->setSolver(std::make_unique<slicerecon::ParallelBeamSolver>(
             rows, cols, num_projections, angles, volume_min_point, volume_max_point, preview_size, slice_size, 
-            vec_geometry, recon_mode
+            vec_geometry, detector_size, recon_mode
         ));
     }
 

@@ -47,7 +47,6 @@ void Reconstructor::initialize(int num_darks,
     spdlog::info("- Number of flat images: {}", num_flats_);
     spdlog::info("- Number of projection images: {}", num_projections_);
     spdlog::info("- Group size: {}", group_size_);
-    spdlog::info("- Preview size: {}", preview_size_);
     spdlog::info("- Mode: {}", recon_mode_ == ReconstructMode::alternating ? "alternating" : "continuous");
 }
 

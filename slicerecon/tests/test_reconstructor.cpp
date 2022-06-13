@@ -23,9 +23,9 @@ class ReconTest : public testing::Test {
     int num_flats_ = 6;
     int num_projections_ = 32;
     std::vector<float> angles_;
-    int group_size_ = 32;
-    int preview_size_ = 32;
-    int slice_size_ = 32;
+    int group_size_ = num_projections_;
+    int slice_size_ = cols_;
+    int preview_size_ = slice_size_ / 2;
     slicerecon::ReconstructMode recon_mode_ = slicerecon::ReconstructMode::alternating;
 
     std::string filter_name_ = "shepp";
@@ -34,6 +34,7 @@ class ReconTest : public testing::Test {
 
     std::array<float, 3> volume_min_point_ {0.0f, 0.0f, 0.0f};
     std::array<float, 3> volume_max_point_ {1.0f, 1.0f, 1.0f};
+    std::array<float, 2> detector_size_ {1.0f, 1.0f};
 
     slicerecon::Reconstructor recon_ {rows_, cols_, threads_};
 
@@ -48,7 +49,7 @@ class ReconTest : public testing::Test {
         recon_.setSolver(std::make_unique<slicerecon::ParallelBeamSolver>(
             rows_, cols_, num_projections_, angles_, 
             volume_min_point_, volume_max_point_, preview_size_, slice_size_, 
-            false, recon_mode_
+            false, detector_size_, recon_mode_
         ));
     }
 
