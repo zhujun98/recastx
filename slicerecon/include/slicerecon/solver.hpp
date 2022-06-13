@@ -53,8 +53,8 @@ public:
     /**
      * @brief Construct a new Solver:: Solver object
      * 
-     * @param rows: Number of rows of detectors.
-     * @param cols: Number of columns of detectors.
+     * @param rows: Number of rows of the detector.
+     * @param cols: Number of columns of the detector.
      * @param projections: Number of projection angles. 
      * @param volume_min_point: Minimal (X, Y, Z)-coordinate in the volume window.
      * @param volume_max_point: Maximal (X, Y, Z)-coordinate in the volume window. 
@@ -98,8 +98,8 @@ public:
     /**
      * @brief Construct a new Parallel Beam Solver:: Parallel Beam Solver object
      * 
-     * @param rows: Number of rows of detectors.
-     * @param cols: Number of columns of detectors.
+     * @param rows: Number of rows of the detector.
+     * @param cols: Number of columns of the detector.
      * @param angles: An array of projection angles.
      * @param volume_min_point: Minimal (X, Y, Z)-coordinate in the volume window.
      * @param volume_max_point: Maximal (X, Y, Z)-coordinate in the volume window. 
@@ -139,8 +139,8 @@ public:
     /**
      * @brief Construct a new Cone Beam Solver:: Cone Beam Solver object
      * 
-     * @param rows: Number of rows of detectors.
-     * @param cols: Number of columns of detectors.
+     * @param rows: Number of rows of the detector.
+     * @param cols: Number of columns of the detector.
      * @param angles: An array of projection angles. 
      * @param volume_min_point: Minimal (X, Y, Z)-coordinate in the volume window.
      * @param volume_max_point: Maximal (X, Y, Z)-coordinate in the volume window. 
