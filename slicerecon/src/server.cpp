@@ -13,6 +13,8 @@
 #include "slicerecon/utils.hpp"
 
 using namespace std::string_literals;
+namespace po = boost::program_options;
+
 
 zmq::socket_type parseSocketType(const std::string& socket_type) {
     if (socket_type.compare("pull") == 0) return zmq::socket_type::pull;
@@ -20,10 +22,19 @@ zmq::socket_type parseSocketType(const std::string& socket_type) {
     throw std::invalid_argument("Unsupported socket type: "s + socket_type); 
 }
 
+std::array<float, 3> makeVolumeMinmaxPoint(const po::variable_value& point, float v) {
+    if (point.empty()) return {v, v, v};
+
+    auto pv = point.as<std::vector<float>>();
+    if (pv.size() == 1) return {pv[0], pv[0], pv[0]};
+    if (pv.size() == 3) return {pv[0], pv[1], pv[2]};
+    
+    throw std::invalid_argument(
+        "Length of volume min/max point vector must be either 1 or 3");
+}
+
 int main(int argc, char** argv)
 {
-    namespace po = boost::program_options;
-
     po::options_description general_desc("General options");
     general_desc.add_options()
         ("help,h", "print help message")
@@ -50,6 +61,10 @@ int main(int argc, char** argv)
          "detector height in pixels")
         ("cols", po::value<int>()->default_value(2016),
          "detector width in pixels")
+        ("volume-min-point", po::value<std::vector<float>>()->multitoken(), 
+         "minimal (X, Y, Z)-coordinate in the volume window.")
+        ("volume-max-point", po::value<std::vector<float>>()->multitoken(), 
+         "maximal (X, Y, Z)-coordinate in the volume window.")
     ;
 
     po::options_description reconstruction_desc("Reconstruction options");
@@ -125,6 +140,10 @@ int main(int argc, char** argv)
 
     auto rows = opts["rows"].as<int>();
     auto cols = opts["cols"].as<int>();
+    auto vminp = opts["volume-min-point"];
+    auto vmaxp = opts["volume-max-point"];
+    auto volume_min_point = makeVolumeMinmaxPoint(vminp, -cols / 2.f);
+    auto volume_max_point = makeVolumeMinmaxPoint(vmaxp, cols / 2.f);
 
     auto slice_size = opts["slice-size"].as<int>();
     if (slice_size <= 0) slice_size = cols;
@@ -154,9 +173,6 @@ int main(int argc, char** argv)
     spdlog::set_pattern("[%Y-%m-%d %T.%e] [%^%l%$] %v");
     spdlog::set_level(spdlog::level::info);
 
-    float hdw = cols / 2.f; // half detector width
-    std::array<float, 3> volume_min_point {-hdw, -hdw, -hdw};
-    std::array<float, 3> volume_max_point {hdw, hdw, hdw};
     std::array<float, 2> detector_size {1.0f, 1.0f};
     float source_origin = 0.f;
     float origin_det = 0.f;
