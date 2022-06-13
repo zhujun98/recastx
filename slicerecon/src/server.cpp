@@ -178,12 +178,12 @@ int main(int argc, char** argv)
     auto angles = slicerecon::utils::defaultAngles(num_projections);
     if (cone_beam) {
         recon->setSolver(std::make_unique<slicerecon::ConeBeamSolver>(
-            rows, cols, num_projections, angles, volume_min_point, volume_max_point, preview_size, slice_size,
+            rows, cols, angles, volume_min_point, volume_max_point, preview_size, slice_size,
             vec_geometry, detector_size, source_origin, origin_det, recon_mode
         ));
     } else {
         recon->setSolver(std::make_unique<slicerecon::ParallelBeamSolver>(
-            rows, cols, num_projections, angles, volume_min_point, volume_max_point, preview_size, slice_size, 
+            rows, cols, angles, volume_min_point, volume_max_point, preview_size, slice_size, 
             vec_geometry, detector_size, recon_mode
         ));
     }

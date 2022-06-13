@@ -54,7 +54,7 @@ public:
      * @brief Construct a new Solver:: Solver object
      * 
      * @param rows: Number of rows of detectors.
-     * @param cols: Number of columns detectors.
+     * @param cols: Number of columns of detectors.
      * @param projections: Number of projection angles. 
      * @param volume_min_point: Minimal (X, Y, Z)-coordinate in the volume window.
      * @param volume_max_point: Maximal (X, Y, Z)-coordinate in the volume window. 
@@ -99,8 +99,7 @@ public:
      * @brief Construct a new Parallel Beam Solver:: Parallel Beam Solver object
      * 
      * @param rows: Number of rows of detectors.
-     * @param cols: Number of columns detectors.
-     * @param projections: Number of projection angles.
+     * @param cols: Number of columns of detectors.
      * @param angles: An array of projection angles.
      * @param volume_min_point: Minimal (X, Y, Z)-coordinate in the volume window.
      * @param volume_max_point: Maximal (X, Y, Z)-coordinate in the volume window. 
@@ -112,7 +111,6 @@ public:
      */
     ParallelBeamSolver(int rows, 
                        int cols,
-                       int projections,
                        std::vector<float> angles,
                        const std::array<float, 3>& volume_min_point, 
                        const std::array<float, 3>& volume_max_point,
@@ -142,8 +140,7 @@ public:
      * @brief Construct a new Cone Beam Solver:: Cone Beam Solver object
      * 
      * @param rows: Number of rows of detectors.
-     * @param cols: Number of columns detectors.
-     * @param projections: Number of projection angles.
+     * @param cols: Number of columns of detectors.
      * @param angles: An array of projection angles. 
      * @param volume_min_point: Minimal (X, Y, Z)-coordinate in the volume window.
      * @param volume_max_point: Maximal (X, Y, Z)-coordinate in the volume window. 
@@ -159,7 +156,6 @@ public:
      */
     ConeBeamSolver(int rows, 
                    int cols,
-                   int projections,
                    std::vector<float> angles,
                    const std::array<float, 3>& volume_min_point, 
                    const std::array<float, 3>& volume_max_point,

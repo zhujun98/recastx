@@ -47,7 +47,7 @@ class ReconTest : public testing::Test {
                           group_size_, preview_size_, recon_mode_);
         recon_.initFilter(filter_name_, gaussian_pass_);
         recon_.setSolver(std::make_unique<slicerecon::ParallelBeamSolver>(
-            rows_, cols_, num_projections_, angles_, 
+            rows_, cols_, angles_, 
             volume_min_point_, volume_max_point_, preview_size_, slice_size_, 
             false, detector_size_, recon_mode_
         ));
