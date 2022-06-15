@@ -76,7 +76,7 @@ int main(int argc, char** argv)
         ("slice-size", po::value<int>()->default_value(-1),
          "size of the square reconstructed slice in pixels. Default to detector columns.")
         ("preview-size", po::value<int>()->default_value(128),
-         "size of the cubic reconstructed volume for preview. Default to slice size.")
+         "size of the cubic reconstructed volume for preview.")
         ("threads", po::value<int>()->default_value(8),
          "number of threads used for data processing")
         ("darks", po::value<int>()->default_value(10),

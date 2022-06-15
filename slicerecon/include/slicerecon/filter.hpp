@@ -21,13 +21,21 @@ class Filter {
     int cols_;
 
   public:
-    Filter(const std::string& filter,
-           bool gaussian_pass,
-           float* data, 
+    Filter(const std::string& filter_name, 
+           bool gaussian_pass, 
+           float* data,
            int rows, 
-           int cols);
+           int cols,
+           int buffer_size);
 
-    void apply(float* data);
+    ~Filter();
+
+    void initialize(const std::string& filter_name, 
+                    bool gaussian_pass, 
+                    float* data, 
+                    int buffer_size);
+
+    void apply(float* data, int buffer_index);
 
     std::vector<float> ramlak(int n);
     std::vector<float> shepp(int n);
