@@ -26,16 +26,16 @@ class FilterTest : public testing::Test {
 };
 
 TEST_F(FilterTest, TestShepp) {
-    auto filter = Filter("shepp", false, src_.data(), rows_, cols_);
-    filter.apply(&dst_[0]);
+    auto filter = Filter("shepp", false, src_.data(), rows_, cols_, 1);
+    filter.apply(&dst_[0], 0);
 
     EXPECT_THAT(std::vector<float>(dst_.begin(), dst_.begin() + 2), 
                 Pointwise(FloatNear(1e-6), {1.0, 1.0}));
 }
 
 TEST_F(FilterTest, TestRamlak) {
-    auto filter = Filter("ramlak", false, src_.data(), rows_, cols_);
-    filter.apply(&dst_[0]);
+    auto filter = Filter("ramlak", false, src_.data(), rows_, cols_, 1);
+    filter.apply(&dst_[0], 0);
 
     EXPECT_THAT(std::vector<float>(dst_.begin(), dst_.begin() + 2),
                 Pointwise(FloatNear(1e-6), {1.0, 1.0}));

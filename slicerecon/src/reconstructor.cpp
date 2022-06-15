@@ -64,7 +64,8 @@ void Reconstructor::initPaganin(float pixel_size,
 void Reconstructor::initFilter(const std::string& name, bool gaussian_pass) {
     if (!initialized_) throw std::runtime_error("Reconstructor not initialized!");
 
-    filter_ = std::make_unique<Filter>(name, gaussian_pass, &buffer_[0], rows_, cols_);
+    filter_ = std::make_unique<Filter>(
+        name, gaussian_pass, &buffer_[0], rows_, cols_, num_threads_);
 }
 
 void Reconstructor::setSolver(std::unique_ptr<Solver>&& solver) {
@@ -225,7 +226,7 @@ void Reconstructor::processProjections(int begin, int end) {
                 else
                     utils::negativeLog(proj, pixels_);
 
-                filter_->apply(proj);
+                filter_->apply(proj, tbb::this_task_arena::current_thread_index());
 
                 // TODO: Add FDK scaler for cone beam
             }
