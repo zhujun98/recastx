@@ -20,6 +20,8 @@ class Filter {
     int rows_;
     int cols_;
 
+    static std::vector<float> frequency(int n);
+
   public:
     Filter(const std::string& filter_name, 
            bool gaussian_pass, 
@@ -37,9 +39,9 @@ class Filter {
 
     void apply(float* data, int buffer_index);
 
-    std::vector<float> ramlak(int n);
-    std::vector<float> shepp(int n);
-    std::vector<float> gaussian(int n, float sigma);
+    static std::vector<float> ramlak(int n);
+    static std::vector<float> shepp(int n);
+    static std::vector<float> gaussian(int n, float sigma);
 };
 
 } // slicerecon

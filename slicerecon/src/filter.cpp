@@ -1,5 +1,5 @@
 #include "slicerecon/filter.hpp"
-
+#include <iostream>
 
 namespace slicerecon {
 
@@ -49,42 +49,46 @@ void Filter::initialize(const std::string& filter_name,
 
 void Filter::apply(float *data, int buffer_index) {
     for (int r = 0; r < rows_; ++r) {
+        auto idx = r * cols_;
+
         fftwf_execute_dft_r2c(fft_plan_, 
-                              &data[r * cols_],
+                              &data[idx],
                               reinterpret_cast<fftwf_complex*>(&freq_[buffer_index][0]));
 
         for (int c = 0; c < cols_; ++c) freq_[buffer_index][c] *= filter_[c];
 
         fftwf_execute_dft_c2r(ffti_plan_,
                               reinterpret_cast<fftwf_complex*>(&freq_[buffer_index][0]),
-                              &data[r * cols_]);
+                              &data[idx]);
     }
 }
 
-std::vector<float> Filter::ramlak(int cols) {
-    auto result = std::vector<float>(cols);
-    int mid = (cols + 1) / 2;
-    for (int i = 0; i < mid; ++i) result[i] = i;
-    for (int j = mid; j < cols; ++j) result[j] = 2 * mid - j;
-    return result;
+std::vector<float> Filter::frequency(int n) {
+    auto ret = std::vector<float>(n);
+    int mid = (n + 1) / 2;
+    for (int i = 0; i < mid; ++i) ret[i] = static_cast<float>(i) / n;
+    for (int i = mid; i < n; ++i) ret[i] = static_cast<float>(i) / n - 1.f;
+    return ret;  
 }
 
-std::vector<float> Filter::shepp(int cols) {
-    auto result = std::vector<float>(cols);
-    int mid = (cols + 1) / 2;
-
-    auto filter_weight = [=](int i) {
-        auto norm_freq = i / static_cast<float>(mid);
-        return norm_freq * std::sin(M_PI * norm_freq) / (M_PI * norm_freq);
-    };
-
-    for (int i = 1; i < mid; ++i) result[i] = filter_weight(i);
-    for (int j = mid; j < cols; ++j) result[j] = filter_weight(2 * mid - j);
-    return result;
+std::vector<float> Filter::ramlak(int n) {
+    auto ret = Filter::frequency(n);
+    float c = 2.f / n; // compensate for unnormalized fft in fftw
+    for (int i = 0; i < n; ++i) ret[i] = c * std::abs(ret[i]);
+    return ret;
 }
 
-std::vector<float> Filter::gaussian(int n, float sigma)
-{
+std::vector<float> Filter::shepp(int n) {
+    auto ret = Filter::frequency(n);
+    float c = 2.f / n; // compensate for unnormalized fft in fftw
+    for (int i = 1; i < n; ++i) {
+        float tmp = M_PI * ret[i];
+        ret[i] = c * std::abs(ret[i] * std::sin(tmp) / tmp);
+    }
+    return ret;
+}
+
+std::vector<float> Filter::gaussian(int n, float sigma) {
     auto result = std::vector<float>(n);
     auto mid = (n + 1) / 2;
 
