@@ -97,7 +97,7 @@ int main(int argc, char** argv)
         ("filter", po::value<std::string>()->default_value("shepp"),
          "Supported filters are: shepp (Shepp-Logan), ramlak (Ram-Lak)")
         ("gaussian", po::bool_switch(&gaussian_pass),
-         "enable Gaussian low pass filter")
+         "enable Gaussian low pass filter (not verified)")
     ;
 
     po::options_description paganin_desc("Paganin options");
