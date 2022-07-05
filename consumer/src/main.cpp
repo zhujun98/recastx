@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
     po::options_description desc("Options");
     desc.add_options()
         ("help,h", "print help message")
-        ("port", po::value<int>()->default_value(5555),
+        ("port", po::value<int>()->default_value(9970),
          "ZMQ socket port of the consumer")
     ;
 

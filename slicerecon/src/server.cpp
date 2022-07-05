@@ -50,8 +50,9 @@ int main(int argc, char** argv)
          "ZMQ socket type of the data source server. Options: sub/pull")
         ("gui-host", po::value<std::string>()->default_value("localhost"),
          "hostname of the GUI server")
-        ("gui-port", po::value<int>()->default_value(5555),
-         "First ZMQ socket port of the GUI server. The second port has an increment of 1.")
+        ("gui-port", po::value<int>()->default_value(9970),
+         "First ZMQ socket port of the GUI server. The second port has an increment of 1. "
+         "The valid port range is [9970, 9979]")
     ;
 
     po::options_description geometry_desc("Geometry options");
