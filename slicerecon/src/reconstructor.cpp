@@ -38,8 +38,7 @@ void Reconstructor::initialize(int num_darks,
     buffer_size_ = recon_mode == ReconstructMode::alternating ? num_projections : group_size;
     buffer_.resize((size_t)buffer_size_ * (size_t)pixels_);
     sino_buffer_.resize((size_t)buffer_size_ * (size_t)pixels_);
-    std::get<0>(preview_buffer_).resize(preview_size * preview_size * preview_size);
-    std::get<1>(preview_buffer_).resize(preview_size * preview_size * preview_size);
+    preview_buffer_.initialize(preview_size * preview_size * preview_size);
 
     initialized_ = true;
     spdlog::info("Reconstructor initialized:");
@@ -197,9 +196,8 @@ slice_data Reconstructor::reconstructSlice(orientation x) {
 const std::vector<float>& Reconstructor::previewData() { 
     std::unique_lock<std::mutex> preview_lock(preview_mutex_);
     preview_cv_.wait(preview_lock);
-    std::get<1>(preview_buffer_).swap(std::get<0>(preview_buffer_));
-
-    return std::get<1>(preview_buffer_); 
+    preview_buffer_.swap();
+    return preview_buffer_.front(); 
 }
 
 int Reconstructor::previewSize() const { return preview_size_; }
@@ -257,7 +255,7 @@ void Reconstructor::reconstructPreview() {
         std::lock_guard<std::mutex> gpu_lock(gpu_mutex_);
         {
             std::lock_guard<std::mutex> preview_lock(preview_mutex_);
-            solver_->reconstructPreview(std::get<0>(preview_buffer_), active_gpu_buffer_index_);
+            solver_->reconstructPreview(preview_buffer_.back(), active_gpu_buffer_index_);
             preview_cv_.notify_one();
         }
     }

@@ -1,9 +1,9 @@
 #pragma once
 
 #include <complex>
+#include <condition_variable>
 #include <cstdint>
 #include <iostream>
-#include <tuple>
 #include <vector>
 
 #include <spdlog/spdlog.h>
@@ -13,7 +13,7 @@ extern "C" {
 #include <fftw3.h>
 }
 
-#include <condition_variable>
+#include "buffer.hpp"
 #include "data_types.hpp"
 #include "phase.hpp"
 #include "filter.hpp"
@@ -34,7 +34,7 @@ class Reconstructor {
     std::vector<float> reciprocal_;
     std::vector<float> buffer_;
     std::vector<float> sino_buffer_;
-    std::tuple<std::vector<float>, std::vector<float>> preview_buffer_;
+    Buffer<float> preview_buffer_;
     bool initialized_ = false;
 
     int active_gpu_buffer_index_ = 0;
