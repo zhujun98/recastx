@@ -36,7 +36,7 @@ void Reconstructor::initialize(int num_darks,
     reciprocal_.resize(pixels_, 1.0f);
 
     buffer_size_ = recon_mode == ReconstructMode::alternating ? num_projections : group_size;
-    buffer_.resize((size_t)buffer_size_ * (size_t)pixels_);
+    buffer_.initialize((size_t)buffer_size_ * (size_t)pixels_);
     sino_buffer_.resize((size_t)buffer_size_ * (size_t)pixels_);
     preview_buffer_.initialize(preview_size * preview_size * preview_size);
 
@@ -57,14 +57,14 @@ void Reconstructor::initPaganin(float pixel_size,
     if (!initialized_) throw std::runtime_error("Reconstructor not initialized!");
 
     paganin_ = std::make_unique<Paganin>(
-        pixel_size, lambda, delta, beta, distance, &buffer_[0], rows_, cols_);
+        pixel_size, lambda, delta, beta, distance, &buffer_.front()[0], rows_, cols_);
 }
 
 void Reconstructor::initFilter(const std::string& name, bool gaussian_pass) {
     if (!initialized_) throw std::runtime_error("Reconstructor not initialized!");
 
     filter_ = std::make_unique<Filter>(
-        name, gaussian_pass, &buffer_[0], rows_, cols_, num_threads_);
+        name, gaussian_pass, &buffer_.front()[0], rows_, cols_, num_threads_);
 }
 
 void Reconstructor::setSolver(std::unique_ptr<Solver>&& solver) {
@@ -109,14 +109,8 @@ void Reconstructor::pushProjection(ProjectionType k,
             }
 
             // TODO: compute the average on the fly instead of storing the data in the buffer
-            auto pos = data;
             int buffer_idx1 = proj_idx % buffer_size_;
-            for (int i = 0, j = buffer_idx1 * pixels_; i < pixels_; ++i, ++j) {
-                RawDtype v;
-                memcpy(&v, pos, sizeof(RawDtype));
-                pos += sizeof(RawDtype);
-                buffer_[j] = static_cast<float>(v);
-            }
+            buffer_.fill<RawDtype>(data, proj_idx / buffer_size_, proj_idx % buffer_size_, pixels_);
 
             bool group_end_reached = buffer_idx1 % group_size_ == group_size_ - 1;
             bool buffer_end_reached = buffer_idx1 == buffer_size_ - 1;
@@ -130,8 +124,7 @@ void Reconstructor::pushProjection(ProjectionType k,
 
             if (buffer_end_reached) {
                 if (recon_mode_ == ReconstructMode::alternating) {
-                    utils::projection2sino(
-                        buffer_, sino_buffer_, rows_, cols_, 0, buffer_size_ - 1);
+                    utils::projection2sino(buffer_.front(), sino_buffer_, rows_, cols_, 0, buffer_size_ - 1);
                     uploadSinoBuffer(0, buffer_size_ - 1);
                 } else { // --continuous mode
                     auto begin_wrt_geom = (update_count_ * buffer_size_) % num_projections_;
@@ -139,22 +132,23 @@ void Reconstructor::pushProjection(ProjectionType k,
 
                     // we only have one buffer
                     if (end_wrt_geom > begin_wrt_geom) {
-                        utils::projection2sino(buffer_, sino_buffer_, rows_, cols_, 0, buffer_size_ - 1);
+                        utils::projection2sino(buffer_.front(), sino_buffer_, rows_, cols_, 0, buffer_size_ - 1);
                         uploadSinoBuffer(begin_wrt_geom, end_wrt_geom);
                     } else {
                         utils::projection2sino(
-                            buffer_, sino_buffer_, rows_, cols_, 0, num_projections_ - 1 - begin_wrt_geom);
+                            buffer_.front(), sino_buffer_, rows_, cols_, 0, num_projections_ - 1 - begin_wrt_geom);
                         // we have gone around in the geometry
                         uploadSinoBuffer(begin_wrt_geom, num_projections_ - 1);
 
                         utils::projection2sino(
-                            buffer_, sino_buffer_, rows_, cols_, num_projections_ - begin_wrt_geom, buffer_size_ - 1);
+                            buffer_.front(), sino_buffer_, rows_, cols_, num_projections_ - begin_wrt_geom, buffer_size_ - 1);
                         uploadSinoBuffer(0, end_wrt_geom);
                     }
 
                     ++update_count_;
                 }
 
+                buffer_.swap();
                 reconstructPreview();
             }
 
@@ -209,7 +203,7 @@ void Reconstructor::processProjections(int begin, int end) {
     auto start = std::chrono::steady_clock::now();
 #endif
 
-    auto data = &buffer_[begin * pixels_];
+    auto data = &buffer_.front()[begin * pixels_];
 
     using namespace oneapi;
     arena_.execute([&]{
@@ -264,7 +258,7 @@ void Reconstructor::reconstructPreview() {
 
 const std::vector<RawDtype>& Reconstructor::darks() const { return all_darks_; }
 const std::vector<RawDtype>& Reconstructor::flats() const { return all_flats_; }
-const std::vector<float>& Reconstructor::buffer() const { return buffer_; }
+const Buffer<float>& Reconstructor::buffer() const { return buffer_; }
 const std::vector<float>& Reconstructor::sinoBuffer() const { return sino_buffer_; }
 
 } // namespace slicerecon

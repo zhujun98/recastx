@@ -24,6 +24,22 @@ public:
         bf2_.resize(s);
     }
 
+    template<typename D>
+    void fill(char* data, int buffer_index, int index, int pixels) {
+        std::vector<T>& bf = bf1_;
+        if (buffer_index == 0) ;
+        else if (buffer_index == 1) bf = bf2_;
+        else
+            throw std::runtime_error("Invalid buffer_index" + std::to_string(buffer_index));
+
+        for (int i = index * pixels; i < (index + 1) * pixels; ++i) {
+            D v;
+            memcpy(&v, data, sizeof(D));
+            data += sizeof(D);
+            bf[i] = static_cast<float>(v);
+        }
+    }
+
     std::vector<T>& front() { return bf1_; }
     std::vector<T>& back() { return bf2_; };
 

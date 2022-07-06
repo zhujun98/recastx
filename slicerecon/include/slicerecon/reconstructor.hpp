@@ -32,7 +32,7 @@ class Reconstructor {
     std::vector<RawDtype> all_flats_;
     std::vector<float> dark_avg_;
     std::vector<float> reciprocal_;
-    std::vector<float> buffer_;
+    Buffer<float> buffer_;
     std::vector<float> sino_buffer_;
     Buffer<float> preview_buffer_;
     bool initialized_ = false;
@@ -107,7 +107,7 @@ public:
 
     const std::vector<RawDtype>& darks() const;
     const std::vector<RawDtype>& flats() const;
-    const std::vector<float>& buffer() const;
+    const Buffer<float>& buffer() const;
     const std::vector<float>& sinoBuffer() const;
 
 };
