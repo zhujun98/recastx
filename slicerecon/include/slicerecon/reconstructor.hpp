@@ -43,7 +43,6 @@ class Reconstructor {
     int num_darks_ = 1;
     int num_flats_ = 1;
     int num_projections_ = 1;
-    int group_size_ = 1;
     int preview_size_ = 1; 
 
     int32_t received_darks_ = 0;
@@ -65,7 +64,7 @@ class Reconstructor {
     int num_threads_;
     oneapi::tbb::task_arena arena_;
 
-    void processProjections(int begin, int end);
+    void processProjections();
 
     void uploadSinoBuffer(int begin, int end);
 
@@ -80,7 +79,6 @@ public:
     void initialize(int num_darks, 
                     int num_flats, 
                     int num_projections,
-                    int group_size,
                     int preview_size,
                     ReconstructMode recon_mode);
 

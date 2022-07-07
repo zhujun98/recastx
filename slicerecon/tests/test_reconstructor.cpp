@@ -23,7 +23,6 @@ class ReconTest : public testing::Test {
     int num_flats_ = 6;
     int num_projections_ = 16;
     std::vector<float> angles_;
-    int group_size_ = num_projections_;
     int slice_size_ = cols_;
     int preview_size_ = slice_size_ / 2;
     slicerecon::ReconstructMode recon_mode_ = slicerecon::ReconstructMode::alternating;
@@ -44,7 +43,7 @@ class ReconTest : public testing::Test {
 
     void buildRecon() {
         recon_.initialize(num_darks_, num_flats_, num_projections_, 
-                          group_size_, preview_size_, recon_mode_);
+                          preview_size_, recon_mode_);
         recon_.initFilter(filter_name_, gaussian_pass_);
         recon_.setSolver(std::make_unique<slicerecon::ParallelBeamSolver>(
             rows_, cols_, angles_, 
@@ -117,39 +116,6 @@ TEST_F(ReconTest, TestPushProjection) {
     EXPECT_THAT(std::vector<float>(buffer2.begin(), buffer2.begin() + 10), 
                 Pointwise(FloatNear(1e-6), {0.110098f, -0.272487f, 0.133713f, -0.491590f, 0.520265f,
                                             0.099537f, -0.214807f, 0.464008f, -0.369369f, 0.020631f}));
-    EXPECT_THAT(std::vector<float>(buffer2.end() - 10, buffer2.end()), 
-                Pointwise(FloatNear(1e-6), { 0.443812f,  0.056262f, -0.205481f,  0.034181f, -0.328773f,
-                                            -0.028346f, -0.080572f, -0.066762f, -0.086848f,  0.262528f}));
-    EXPECT_THAT(std::vector<float>(sino_buffer.begin(), sino_buffer.begin() + 10), 
-                Pointwise(FloatNear(1e-6), {0.110098f, -0.272487f, 0.133713f, -0.491590f, 0.520265f,
-                                            0.101732f, -0.201946f, 0.119072f, -0.369920f, 0.351062f}));
-    EXPECT_THAT(std::vector<float>(sino_buffer.end() - 10, sino_buffer.end()), 
-                Pointwise(FloatNear(1e-6), {-0.040253f, -0.094602f, -0.078659f, -0.107789f, 0.3213040f,
-                                            -0.028346f, -0.080572f, -0.066762f, -0.086848f, 0.262528f}));
-}
-
-TEST_F(ReconTest, TestPushProjection2) {
-    // number of projections > group size
-    // the batch size for projection processing is now the group size
-    group_size_ = 12;
-    buildRecon();
-
-    pushDarks(num_darks_);
-    pushFlats(num_flats_);
-
-    auto& buffer1 = recon_.buffer().front();
-    pushProjection(0, group_size_);
-    EXPECT_THAT(std::vector<float>(buffer1.begin(), buffer1.begin() + 10), 
-                Pointwise(FloatNear(1e-6), {0.110098f, -0.272487f, 0.133713f, -0.491590f, 0.520265f,
-                                            0.099537f, -0.214807f, 0.464008f, -0.369369f, 0.020631f}));
-
-    // buffer will be swapped after the processing
-    auto& buffer2 = recon_.buffer().back();
-    auto& sino_buffer = recon_.sinoBuffer();
-    pushProjection(group_size_, num_projections_);
-    EXPECT_THAT(std::vector<float>(buffer2.begin(), buffer2.begin() + 10), 
-            Pointwise(FloatNear(1e-6), {0.110098f, -0.272487f, 0.133713f, -0.491590f, 0.520265f,
-                                        0.099537f, -0.214807f, 0.464008f, -0.369369f, 0.020631f}));
     EXPECT_THAT(std::vector<float>(buffer2.end() - 10, buffer2.end()), 
                 Pointwise(FloatNear(1e-6), { 0.443812f,  0.056262f, -0.205481f,  0.034181f, -0.328773f,
                                             -0.028346f, -0.080572f, -0.066762f, -0.086848f,  0.262528f}));

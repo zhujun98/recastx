@@ -9,6 +9,11 @@ class Buffer {
     std::vector<T> bf1_;
     std::vector<T> bf2_;
 
+    std::vector<int> indices1_;
+    std::vector<int> indices2_;
+
+    size_t size_ = 0;
+
 public:
 
     Buffer() = default;
@@ -17,18 +22,25 @@ public:
 
     void swap() {
         bf1_.swap(bf2_);
+        indices1_.swap(indices2_);
+        indices2_.clear();
     }
 
-    void initialize(size_t s) {
-        bf1_.resize(s);
-        bf2_.resize(s);
+    void initialize(size_t s, int pixels) {
+        bf1_.resize(s * pixels);
+        bf2_.resize(s * pixels);
+        size_ = s;
     }
 
     template<typename D>
     void fill(char* data, int buffer_index, int index, int pixels) {
         std::vector<T>& bf = bf1_;
-        if (buffer_index == 0) ;
-        else if (buffer_index == 1) bf = bf2_;
+        if (buffer_index == 0) {
+            indices1_.push_back(index);
+        } else if (buffer_index == 1) {
+            bf = bf2_;
+            indices2_.push_back(index);
+        }
         else
             throw std::runtime_error("Invalid buffer_index" + std::to_string(buffer_index));
 
@@ -45,6 +57,8 @@ public:
 
     const std::vector<T>& front() const { return bf1_; }
     const std::vector<T>& back() const { return bf2_; };
+
+    bool full() { return indices1_.size() == size_; }
 };
 
 } // slicerecon

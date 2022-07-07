@@ -20,13 +20,11 @@ Reconstructor::Reconstructor(int rows, int cols, int num_threads)
 void Reconstructor::initialize(int num_darks, 
                                int num_flats, 
                                int num_projections,
-                               int group_size,
                                int preview_size,
                                ReconstructMode recon_mode) {
     num_darks_ = num_darks;
     num_flats_ = num_flats;
     num_projections_ = num_projections;
-    group_size_ = group_size;
     preview_size_ = preview_size;
     recon_mode_ = recon_mode;
 
@@ -35,17 +33,16 @@ void Reconstructor::initialize(int num_darks,
     dark_avg_.resize(pixels_);
     reciprocal_.resize(pixels_, 1.0f);
 
-    buffer_size_ = recon_mode == ReconstructMode::alternating ? num_projections : group_size;
-    buffer_.initialize((size_t)buffer_size_ * (size_t)pixels_);
-    sino_buffer_.resize((size_t)buffer_size_ * (size_t)pixels_);
-    preview_buffer_.initialize(preview_size * preview_size * preview_size);
+    buffer_size_ = num_projections;
+    buffer_.initialize((size_t)buffer_size_, pixels_);
+    sino_buffer_.resize((size_t)buffer_size_ * pixels_);
+    preview_buffer_.initialize(1, preview_size * preview_size * preview_size);
 
     initialized_ = true;
     spdlog::info("Reconstructor initialized:");
     spdlog::info("- Number of dark images: {}", num_darks_);
     spdlog::info("- Number of flat images: {}", num_flats_);
     spdlog::info("- Number of projection images: {}", num_projections_);
-    spdlog::info("- Group size: {}", group_size_);
     spdlog::info("- Mode: {}", recon_mode_ == ReconstructMode::alternating ? "alternating" : "continuous");
 }
 
@@ -109,20 +106,11 @@ void Reconstructor::pushProjection(ProjectionType k,
             }
 
             // TODO: compute the average on the fly instead of storing the data in the buffer
-            int buffer_idx1 = proj_idx % buffer_size_;
             buffer_.fill<RawDtype>(data, proj_idx / buffer_size_, proj_idx % buffer_size_, pixels_);
+            if (buffer_.full()) {
+                spdlog::info("Processing projection buffer ...");
+                processProjections();
 
-            bool group_end_reached = buffer_idx1 % group_size_ == group_size_ - 1;
-            bool buffer_end_reached = buffer_idx1 == buffer_size_ - 1;
-            if (group_end_reached || buffer_end_reached) {
-                auto buffer_idx0 = buffer_idx1 - (buffer_idx1 % group_size_);
-
-                spdlog::info("Processing projection buffer between {0:d} and {1:d} ...", 
-                             buffer_idx0, buffer_idx1);
-                processProjections(buffer_idx0, buffer_idx1);
-            }
-
-            if (buffer_end_reached) {
                 if (recon_mode_ == ReconstructMode::alternating) {
                     utils::projection2sino(buffer_.front(), sino_buffer_, rows_, cols_, 0, buffer_size_ - 1);
                     uploadSinoBuffer(0, buffer_size_ - 1);
@@ -198,16 +186,15 @@ int Reconstructor::previewSize() const { return preview_size_; }
 
 int Reconstructor::bufferSize() const { return buffer_size_; }
 
-void Reconstructor::processProjections(int begin, int end) {
+void Reconstructor::processProjections() {
 #if defined(WITH_MONITOR)
     auto start = std::chrono::steady_clock::now();
 #endif
 
-    auto data = &buffer_.front()[begin * pixels_];
-
+    auto data = buffer_.front().data();
     using namespace oneapi;
     arena_.execute([&]{
-        tbb::parallel_for(tbb::blocked_range<int>(0, end - begin + 1),
+        tbb::parallel_for(tbb::blocked_range<int>(0, buffer_size_),
                           [&](const tbb::blocked_range<int> &block) {
             for (auto i = block.begin(); i != block.end(); ++i) {
                 float* proj = &data[i * pixels_];
