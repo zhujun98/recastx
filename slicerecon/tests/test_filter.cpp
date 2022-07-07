@@ -27,10 +27,10 @@ class FilterTest : public testing::Test {
 };
 
 TEST_F(FilterTest, TestRamlak) {
-    EXPECT_THAT(Filter::ramlak(5), 
-                Pointwise(FloatNear(1e-6), {0.f, .08f, .16f, .16f, .08f}));
     EXPECT_THAT(Filter::ramlak(4), 
                 Pointwise(FloatNear(1e-6), {0.f, .125f, .25f, .125f}));
+    EXPECT_THAT(Filter::ramlak(5), 
+                Pointwise(FloatNear(1e-6), {0.f, .08f, .16f, .16f, .08f}));
 
     auto filter = Filter("ramlak", false, src_.data(), rows_, cols_, threads_);
     arena_.execute([&]{
@@ -57,10 +57,10 @@ TEST_F(FilterTest, TestRamlak) {
 }
 
 TEST_F(FilterTest, TestShepp) {
-    EXPECT_THAT(Filter::shepp(5), 
-                Pointwise(FloatNear(1e-6), {0.f, 0.07483914f, 0.12109228f, 0.12109228f, 0.07483914f}));
     EXPECT_THAT(Filter::shepp(4), 
                 Pointwise(FloatNear(1e-6), {0.f, 0.11253954f, 0.15915494f, 0.11253954f}));
+    EXPECT_THAT(Filter::shepp(5), 
+                Pointwise(FloatNear(1e-6), {0.f, 0.07483914f, 0.12109228f, 0.12109228f, 0.07483914f}));
 
     auto filter = Filter("shepp", false, src_.data(), rows_, cols_, threads_);
     arena_.execute([&]{

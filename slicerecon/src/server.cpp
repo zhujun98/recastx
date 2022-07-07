@@ -86,9 +86,6 @@ int main(int argc, char** argv)
          "number of flat images")
         ("projections", po::value<int>()->default_value(128),
          "number of projections")
-        ("group-size", po::value<int>()->default_value(-1),
-         "group size for projection processing in the alternative mode. "
-         "Default to number of projections.")
         ("continuous-mode", po::bool_switch(&continuous_mode),
          "switch reconstructor to continuous mode from the default alternating mode")
         ("retrieve-phase", po::bool_switch(&retrieve_phase),
@@ -153,13 +150,6 @@ int main(int argc, char** argv)
     auto num_darks = opts["darks"].as<int>();
     auto num_flats = opts["flats"].as<int>();
     auto num_projections = opts["projections"].as<int>();
-    auto group_size = opts["group-size"].as<int>();
-    if (group_size <= 0) group_size = num_projections;
-    if (num_projections < group_size) {
-        throw std::invalid_argument(
-            "'projections' ("s + std::to_string(num_projections) + 
-            ") is smaller than 'group_size' ("s + std::to_string(group_size) + ")"s);
-    }
 
     auto recon_mode = continuous_mode ? slicerecon::ReconstructMode::continuous : 
                                         slicerecon::ReconstructMode::alternating;
@@ -183,7 +173,7 @@ int main(int argc, char** argv)
     // 1. set up reconstructor
     auto recon = std::make_shared<slicerecon::Reconstructor>(rows, cols, num_threads);
 
-    recon->initialize(num_darks, num_flats, num_projections, group_size, preview_size, recon_mode);
+    recon->initialize(num_darks, num_flats, num_projections, preview_size, recon_mode);
 
     if (retrieve_phase) recon->initPaganin(pixel_size, lambda, delta, beta, distance);
 

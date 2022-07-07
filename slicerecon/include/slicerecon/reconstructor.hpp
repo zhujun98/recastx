@@ -1,9 +1,9 @@
 #pragma once
 
 #include <complex>
+#include <condition_variable>
 #include <cstdint>
 #include <iostream>
-#include <tuple>
 #include <vector>
 
 #include <spdlog/spdlog.h>
@@ -13,7 +13,7 @@ extern "C" {
 #include <fftw3.h>
 }
 
-#include <condition_variable>
+#include "buffer.hpp"
 #include "data_types.hpp"
 #include "phase.hpp"
 #include "filter.hpp"
@@ -32,9 +32,9 @@ class Reconstructor {
     std::vector<RawDtype> all_flats_;
     std::vector<float> dark_avg_;
     std::vector<float> reciprocal_;
-    std::vector<float> buffer_;
+    Buffer<float> buffer_;
     std::vector<float> sino_buffer_;
-    std::tuple<std::vector<float>, std::vector<float>> preview_buffer_;
+    Buffer<float> preview_buffer_;
     bool initialized_ = false;
 
     int active_gpu_buffer_index_ = 0;
@@ -43,7 +43,6 @@ class Reconstructor {
     int num_darks_ = 1;
     int num_flats_ = 1;
     int num_projections_ = 1;
-    int group_size_ = 1;
     int preview_size_ = 1; 
 
     int32_t received_darks_ = 0;
@@ -65,7 +64,7 @@ class Reconstructor {
     int num_threads_;
     oneapi::tbb::task_arena arena_;
 
-    void processProjections(int begin, int end);
+    void processProjections();
 
     void uploadSinoBuffer(int begin, int end);
 
@@ -80,7 +79,6 @@ public:
     void initialize(int num_darks, 
                     int num_flats, 
                     int num_projections,
-                    int group_size,
                     int preview_size,
                     ReconstructMode recon_mode);
 
@@ -107,7 +105,7 @@ public:
 
     const std::vector<RawDtype>& darks() const;
     const std::vector<RawDtype>& flats() const;
-    const std::vector<float>& buffer() const;
+    const Buffer<float>& buffer() const;
     const std::vector<float>& sinoBuffer() const;
 
 };

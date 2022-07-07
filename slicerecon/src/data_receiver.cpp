@@ -74,9 +74,9 @@ void DataReceiver::start() {
             }
 
             recon_->pushProjection(scan_index,
-                                    frame,
-                                    {shape[0], shape[1]},
-                                    static_cast<char*>(update.data()));
+                                   frame,
+                                   {shape[0], shape[1]},
+                                   static_cast<char*>(update.data()));
 
 #if defined(WITH_MONITOR)
             if (!msg_size) {
