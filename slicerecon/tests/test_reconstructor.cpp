@@ -95,7 +95,6 @@ TEST_F(ReconTest, TestPushProjectionException) {
 }
 
 TEST_F(ReconTest, TestPushProjection) {
-    // num_projections == group size
     buildRecon();
 
     pushDarks(num_darks_);
@@ -125,6 +124,43 @@ TEST_F(ReconTest, TestPushProjection) {
     EXPECT_THAT(std::vector<float>(sino_buffer.end() - 10, sino_buffer.end()), 
                 Pointwise(FloatNear(1e-6), {-0.040253f, -0.094602f, -0.078659f, -0.107789f, 0.3213040f,
                                             -0.028346f, -0.080572f, -0.066762f, -0.086848f, 0.262528f}));
+}
+TEST_F(ReconTest, TestPushProjectionUnordered) {
+    buildRecon();
+
+    pushDarks(num_darks_);
+    pushFlats(num_flats_);
+
+    // buffer will be swapped after the processing
+    auto& buffer1 = recon_.buffer().front();
+    auto& buffer2 = recon_.buffer().back();
+    auto& sino_buffer = recon_.sinoBuffer();
+
+    pushProjection(0, num_projections_ - 3);
+    int overflow = 3;
+    pushProjection(num_projections_ - 1, num_projections_ + overflow);
+
+    EXPECT_EQ(buffer1[0], 2.f);
+    EXPECT_EQ(buffer1[num_projections_ * pixels_ - 1], 4.f);
+    EXPECT_EQ(buffer2[0], 2.f);
+    EXPECT_EQ(buffer1[overflow * pixels_ - 1], 3.f);
+    EXPECT_FALSE(recon_.buffer().full());
+    EXPECT_EQ(recon_.buffer().size(), num_projections_ - 2);
+
+    pushProjection(num_projections_ - 3, num_projections_ - 1);
+    EXPECT_THAT(std::vector<float>(buffer2.begin(), buffer2.begin() + 10), 
+                Pointwise(FloatNear(1e-6), {0.110098f, -0.272487f, 0.133713f, -0.491590f, 0.520265f,
+                                            0.099537f, -0.214807f, 0.464008f, -0.369369f, 0.020631f}));
+    EXPECT_THAT(std::vector<float>(buffer2.end() - 10, buffer2.end()), 
+                Pointwise(FloatNear(1e-6), { 0.443812f,  0.056262f, -0.205481f,  0.034181f, -0.328773f,
+                                            -0.028346f, -0.080572f, -0.066762f, -0.086848f,  0.262528f}));
+    EXPECT_THAT(std::vector<float>(sino_buffer.begin(), sino_buffer.begin() + 10), 
+                Pointwise(FloatNear(1e-6), {0.110098f, -0.272487f, 0.133713f, -0.491590f, 0.520265f,
+                                            0.101732f, -0.201946f, 0.119072f, -0.369920f, 0.351062f}));
+    EXPECT_THAT(std::vector<float>(sino_buffer.end() - 10, sino_buffer.end()), 
+                Pointwise(FloatNear(1e-6), {-0.040253f, -0.094602f, -0.078659f, -0.107789f, 0.3213040f,
+                                            -0.028346f, -0.080572f, -0.066762f, -0.086848f, 0.262528f}));
+    EXPECT_EQ(recon_.buffer().size(), overflow);
 }
 
 TEST(TestUtils, TestComputeReciprocal) {

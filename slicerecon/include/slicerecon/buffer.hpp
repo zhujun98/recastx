@@ -12,7 +12,7 @@ class Buffer {
     std::vector<int> indices1_;
     std::vector<int> indices2_;
 
-    size_t size_ = 0;
+    size_t capacity_ = 0;
 
 public:
 
@@ -26,29 +26,29 @@ public:
         indices2_.clear();
     }
 
-    void initialize(size_t s, int pixels) {
-        bf1_.resize(s * pixels);
-        bf2_.resize(s * pixels);
-        size_ = s;
+    void initialize(size_t capacity, int pixels) {
+        bf1_.resize(capacity * pixels);
+        bf2_.resize(capacity * pixels);
+        capacity_ = capacity;
     }
 
     template<typename D>
     void fill(char* data, int buffer_index, int index, int pixels) {
-        std::vector<T>& bf = bf1_;
+        std::vector<T>* bf;
         if (buffer_index == 0) {
+            bf = &bf1_;
             indices1_.push_back(index);
         } else if (buffer_index == 1) {
-            bf = bf2_;
+            bf = &bf2_;
             indices2_.push_back(index);
-        }
-        else
+        } else
             throw std::runtime_error("Invalid buffer_index" + std::to_string(buffer_index));
 
         for (int i = index * pixels; i < (index + 1) * pixels; ++i) {
             D v;
             memcpy(&v, data, sizeof(D));
             data += sizeof(D);
-            bf[i] = static_cast<float>(v);
+            (*bf)[i] = static_cast<float>(v);
         }
     }
 
@@ -58,7 +58,8 @@ public:
     const std::vector<T>& front() const { return bf1_; }
     const std::vector<T>& back() const { return bf2_; };
 
-    bool full() { return indices1_.size() == size_; }
+    bool full() const { return indices1_.size() == capacity_; }
+    size_t size() const { return indices1_.size(); }
 };
 
 } // slicerecon
