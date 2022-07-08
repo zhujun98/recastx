@@ -2,7 +2,7 @@ import numpy as np
 import zmq
 import json
 import argparse
-from queue import Queue
+from queue import deque, Queue
 from threading import Thread
 
 import h5py
@@ -10,12 +10,31 @@ import h5py
 
 sentinel = object()
 
+def shuffled_range(start, end):
+    prob = [0.2, 0.2, 0.1, 0.1, 0.1, 0.1, 0.05, 0.05, 0.05, 0.05]
+    q = deque()
+    for i in range(start, end):
+        if len(q) == len(prob):
+            idx = np.random.choice(q, p=prob)
+            q.remove(idx)
+            yield int(idx)
+        q.append(i)
+
+    np.random.shuffle(q)
+    for idx in q:
+        yield idx
+
 
 def send(socket, queue):
     while True:
         meta, data = queue.get()
+
         if data is sentinel:
             break
+        else:
+            print(f"Sent type {meta['image_attributes']['scan_index']}, "
+                  f"frame {meta['frame']}")
+
         socket.send_json(meta, flags=zmq.SNDMORE)
         socket.send(data)
 
@@ -33,12 +52,12 @@ def gen_meta(scan_index, frame_index, shape):
     }
 
 
-def gen_fake_data(socket, scan_index, n, *, shape):
+def gen_fake_data(socket, scan_index, n, *, shape, unordered=False):
     queue = Queue()
     thread = Thread(target=send, args=(socket, queue))
     thread.start()
 
-    for i in range(n):
+    for i in shuffled_range(0, n):
         meta = gen_meta(scan_index, i, shape)
         if scan_index == 0:
             data = np.random.randint(500, size=shape, dtype=np.uint16)
@@ -48,13 +67,13 @@ def gen_fake_data(socket, scan_index, n, *, shape):
             data = np.random.randint(4096, size=shape, dtype=np.uint16)
         queue.put((meta, data))
 
-    print("Number of data sent: ", i+1)
+    print("Number of data sent: ", i + 1)
 
     queue.put((None, sentinel))
     thread.join()
 
 
-def stream_data_file(filepath, socket,  scan_index, n, *, i0=0):
+def stream_data_file(filepath, socket,  scan_index, *, start, end):
     queue = Queue()
     thread = Thread(target=send, args=(socket, queue))
     thread.start()
@@ -75,14 +94,14 @@ def stream_data_file(filepath, socket,  scan_index, n, *, i0=0):
         shape = ds.shape[1:]
         data = np.zeros(shape, dtype=np.uint16)
         n_images = ds.shape[0]
-        for i in range(i0, i0 + n):
-            idx = i % n_images
+        for i in shuffled_range(start, end):
             meta = gen_meta(scan_index, i, shape)
-            ds.read_direct(data, np.s_[idx, ...], None)
+            # Repeating reading data from chunks if data size is smaller 
+            # than the index range.
+            ds.read_direct(data, np.s_[i % n_images, ...], None)
             queue.put((meta, data))
-            print(f"Sent type {scan_index}, frame {i}")
 
-    print("Number of data sent: ", i+1)
+    print("Number of data sent: ", i + 1)
     
     queue.put((None, sentinel))
     thread.join()
@@ -115,7 +134,7 @@ def main():
                         help="Number of flat images (default=20)")
     parser.add_argument('--projections', default=128, type=int,
                         help="Number of projection images (default=128)")
-    parser.add_argument('--p0', default=0, type=int,
+    parser.add_argument('--start', default=0, type=int,
                         help="Starting index of the projection images (default=0)")
     parser.add_argument('--rows', default=1200, type=int,
                         help="Number of rows of the generated image (default=1200)")
@@ -148,9 +167,13 @@ def main():
         if not datafile:
             gen_fake_data(socket, scan_index, n, shape=(args.rows, args.cols))
         else:
-            stream_data_file(datafile, socket, scan_index, n, 
-                             i0=args.p0 if scan_index == 2 else 0)
- 
+            if scan_index == 2:
+                stream_data_file(datafile, socket, scan_index, 
+                                 start=args.start, 
+                                 end=args.start + n)
+            else:
+                stream_data_file(datafile, socket, scan_index, start=0, end=n)
+
 
 if __name__ == "__main__":
     main()
