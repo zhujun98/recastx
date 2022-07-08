@@ -36,7 +36,7 @@ void Reconstructor::initialize(int num_darks,
     buffer_size_ = num_projections;
     buffer_.initialize((size_t)buffer_size_, pixels_);
     sino_buffer_.resize((size_t)buffer_size_ * pixels_);
-    preview_buffer_.initialize(1, preview_size * preview_size * preview_size);
+    preview_buffer_.initialize(preview_size * preview_size * preview_size);
 
     initialized_ = true;
     spdlog::info("Reconstructor initialized:");

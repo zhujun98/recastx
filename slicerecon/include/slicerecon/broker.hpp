@@ -28,7 +28,7 @@ class Broker {
 
     std::shared_ptr<Reconstructor> recon_;
 
-public:
+  public:
 
     Broker(const std::string& endpoint,
            const std::string& subscribe_endpoint,
