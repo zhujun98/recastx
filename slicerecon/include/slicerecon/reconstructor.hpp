@@ -34,7 +34,7 @@ class Reconstructor {
     std::vector<float> reciprocal_;
     Buffer<float> buffer_;
     std::vector<float> sino_buffer_;
-    Buffer<float> preview_buffer_;
+    SimpleBuffer<float> preview_buffer_;
     bool initialized_ = false;
 
     int active_gpu_buffer_index_ = 0;
