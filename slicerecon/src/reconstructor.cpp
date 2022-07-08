@@ -35,7 +35,7 @@ void Reconstructor::initialize(int num_darks,
 
     buffer_size_ = num_projections;
     buffer_.initialize((size_t)buffer_size_, pixels_);
-    sino_buffer_.resize((size_t)buffer_size_ * pixels_);
+    sino_buffer_.initialize((size_t)buffer_size_ * pixels_);
     preview_buffer_.initialize(preview_size * preview_size * preview_size);
 
     initialized_ = true;
@@ -111,9 +111,10 @@ void Reconstructor::pushProjection(ProjectionType k,
                 spdlog::info("Processing projection buffer ...");
                 processProjections();
 
+                const auto& bf = buffer_.front();
+                auto& sbf = sino_buffer_.front(); 
                 if (recon_mode_ == ReconstructMode::alternating) {
-                    utils::projection2sino(
-                        arena_, buffer_.front(), sino_buffer_, rows_, cols_, 0, buffer_size_ - 1);
+                    utils::projection2sino(arena_, bf, sbf, rows_, cols_, 0, buffer_size_ - 1);
                     uploadSinoBuffer(0, buffer_size_ - 1);
                 } else { // --continuous mode
                     auto begin_wrt_geom = (update_count_ * buffer_size_) % num_projections_;
@@ -121,17 +122,16 @@ void Reconstructor::pushProjection(ProjectionType k,
 
                     // we only have one buffer
                     if (end_wrt_geom > begin_wrt_geom) {
-                        utils::projection2sino(
-                            arena_, buffer_.front(), sino_buffer_, rows_, cols_, 0, buffer_size_ - 1);
+                        utils::projection2sino(arena_, bf, sbf, rows_, cols_, 0, buffer_size_ - 1);
                         uploadSinoBuffer(begin_wrt_geom, end_wrt_geom);
                     } else {
                         utils::projection2sino(
-                            arena_, buffer_.front(), sino_buffer_, rows_, cols_, 0, num_projections_ - 1 - begin_wrt_geom);
+                            arena_, bf, sbf, rows_, cols_, 0, num_projections_ - 1 - begin_wrt_geom);
                         // we have gone around in the geometry
                         uploadSinoBuffer(begin_wrt_geom, num_projections_ - 1);
 
                         utils::projection2sino(
-                            arena_, buffer_.front(), sino_buffer_, rows_, cols_, num_projections_ - begin_wrt_geom, buffer_size_ - 1);
+                            arena_, bf, sbf, rows_, cols_, num_projections_ - begin_wrt_geom, buffer_size_ - 1);
                         uploadSinoBuffer(0, end_wrt_geom);
                     }
 
@@ -139,6 +139,7 @@ void Reconstructor::pushProjection(ProjectionType k,
                 }
 
                 buffer_.swap();
+                sino_buffer_.swap();
                 reconstructPreview();
             }
 
@@ -224,12 +225,13 @@ void Reconstructor::processProjections() {
 void Reconstructor::uploadSinoBuffer(int begin, int end) {
     spdlog::info("Uploading sinogram buffer between {} and {} to GPU ...", begin, end);
 
+    auto& sbf = sino_buffer_.front(); 
     if (recon_mode_ == ReconstructMode::alternating) {
         active_gpu_buffer_index_ = 1 - active_gpu_buffer_index_;
         std::lock_guard<std::mutex> guard(gpu_mutex_);
-        solver_->uploadProjections(active_gpu_buffer_index_, sino_buffer_, begin, end);
+        solver_->uploadProjections(active_gpu_buffer_index_, sbf, begin, end);
     } else {
-        solver_->uploadProjections(active_gpu_buffer_index_, sino_buffer_, begin, end);
+        solver_->uploadProjections(active_gpu_buffer_index_, sbf, begin, end);
     }
 }
 
@@ -248,6 +250,6 @@ void Reconstructor::reconstructPreview() {
 const std::vector<RawDtype>& Reconstructor::darks() const { return all_darks_; }
 const std::vector<RawDtype>& Reconstructor::flats() const { return all_flats_; }
 const Buffer<float>& Reconstructor::buffer() const { return buffer_; }
-const std::vector<float>& Reconstructor::sinoBuffer() const { return sino_buffer_; }
+const SimpleBuffer<float>& Reconstructor::sinoBuffer() const { return sino_buffer_; }
 
 } // namespace slicerecon
