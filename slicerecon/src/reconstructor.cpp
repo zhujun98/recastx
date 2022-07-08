@@ -112,7 +112,8 @@ void Reconstructor::pushProjection(ProjectionType k,
                 processProjections();
 
                 if (recon_mode_ == ReconstructMode::alternating) {
-                    utils::projection2sino(buffer_.front(), sino_buffer_, rows_, cols_, 0, buffer_size_ - 1);
+                    utils::projection2sino(
+                        arena_, buffer_.front(), sino_buffer_, rows_, cols_, 0, buffer_size_ - 1);
                     uploadSinoBuffer(0, buffer_size_ - 1);
                 } else { // --continuous mode
                     auto begin_wrt_geom = (update_count_ * buffer_size_) % num_projections_;
@@ -120,16 +121,17 @@ void Reconstructor::pushProjection(ProjectionType k,
 
                     // we only have one buffer
                     if (end_wrt_geom > begin_wrt_geom) {
-                        utils::projection2sino(buffer_.front(), sino_buffer_, rows_, cols_, 0, buffer_size_ - 1);
+                        utils::projection2sino(
+                            arena_, buffer_.front(), sino_buffer_, rows_, cols_, 0, buffer_size_ - 1);
                         uploadSinoBuffer(begin_wrt_geom, end_wrt_geom);
                     } else {
                         utils::projection2sino(
-                            buffer_.front(), sino_buffer_, rows_, cols_, 0, num_projections_ - 1 - begin_wrt_geom);
+                            arena_, buffer_.front(), sino_buffer_, rows_, cols_, 0, num_projections_ - 1 - begin_wrt_geom);
                         // we have gone around in the geometry
                         uploadSinoBuffer(begin_wrt_geom, num_projections_ - 1);
 
                         utils::projection2sino(
-                            buffer_.front(), sino_buffer_, rows_, cols_, num_projections_ - begin_wrt_geom, buffer_size_ - 1);
+                            arena_, buffer_.front(), sino_buffer_, rows_, cols_, num_projections_ - begin_wrt_geom, buffer_size_ - 1);
                         uploadSinoBuffer(0, end_wrt_geom);
                     }
 

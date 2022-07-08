@@ -4,6 +4,7 @@
 #include <numeric>
 
 #include <Eigen/Eigen>
+#include <oneapi/tbb.h>
 #include <spdlog/spdlog.h>
 
 #ifndef ASTRA_CUDA
@@ -116,7 +117,8 @@ inline std::vector<float> defaultAngles(int n) {
  * @param proj_offset 
  * @param proj_end
  */
-inline void projection2sino(const std::vector<float>& proj, 
+inline void projection2sino(tbb::task_arena& arena,
+                            const std::vector<float>& proj, 
                             std::vector<float>& sino, 
                             int rows, 
                             int cols, 
@@ -127,15 +129,22 @@ inline void projection2sino(const std::vector<float>& proj,
     auto start = std::chrono::steady_clock::now();
 #endif    
 
+    using namespace oneapi;
+
     int size = end - begin + 1;
-    for (int i = 0; i < rows; ++i) {
-        for (int j = begin; j <= end; ++j) {
-            for (int k = 0; k < cols; ++k) {
-                sino[i * size * cols + (j - begin) * cols + k] = 
-                    proj[j * cols * rows + i * cols + k];
+    arena.execute([&]{
+        tbb::parallel_for(tbb::blocked_range<int>(0, rows),
+                          [&](const tbb::blocked_range<int> &block) {
+            for (auto i = block.begin(); i != block.end(); ++i) {
+                for (int j = begin; j <= end; ++j) {
+                    for (int k = 0; k < cols; ++k) {
+                        sino[i * size * cols + (j - begin) * cols + k] = 
+                            proj[j * cols * rows + i * cols + k];
+                    }
+                }
             }
-        }
-    }
+        });
+    });
 
 #if defined(WITH_MONITOR)
     float duration = std::chrono::duration_cast<std::chrono::microseconds>(
