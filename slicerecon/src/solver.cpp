@@ -139,6 +139,11 @@ ParallelBeamSolver::ParallelBeamSolver(int rows,
 }
 
 slice_data ParallelBeamSolver::reconstructSlice(orientation x, int buffer_idx) {
+
+#if defined(WITH_MONITOR)
+    auto start = std::chrono::steady_clock::now();
+#endif
+
     auto k = vol_geom_->getWindowMaxX();
 
     auto [delta, rot, scale] = utils::slice_transform(
@@ -178,11 +183,21 @@ slice_data ParallelBeamSolver::reconstructSlice(orientation x, int buffer_idx) {
     auto pos = astraCUDA3d::SSubDimensions3D{n, n, 1, n, n, n, 1, 0, 0, 0};
     astraCUDA3d::copyFromGPUMemory(result.data(), vol_handle_, pos);
 
+#if defined(WITH_MONITOR)
+    float duration = std::chrono::duration_cast<std::chrono::microseconds>(
+    std::chrono::steady_clock::now() -  start).count();
+    spdlog::info("[bench] Reconstructing slices took {} ms", duration / 1000);
+#endif
+
     return {{(int)n, (int)n}, std::move(result)};
 }
 
 void ParallelBeamSolver::reconstructPreview(std::vector<float>& preview_buffer, 
                                             int buffer_idx) {
+#if defined(WITH_MONITOR)
+    auto start = std::chrono::steady_clock::now();
+#endif
+
     proj_data_[buffer_idx]->changeGeometry(proj_geom_small_.get());
     algs_small_[buffer_idx]->run();
 
@@ -194,6 +209,12 @@ void ParallelBeamSolver::reconstructPreview(std::vector<float>& preview_buffer,
     for (auto& x : preview_buffer) {
         x *= (factor * factor * factor);
     }
+
+#if defined(WITH_MONITOR)
+    float duration = std::chrono::duration_cast<std::chrono::microseconds>(
+    std::chrono::steady_clock::now() -  start).count();
+    spdlog::info("[bench] Reconstructing preview took {} ms", duration / 1000);
+#endif
 }
 
 bool ParallelBeamSolver::parameterChanged(std::string param, std::variant<float, std::string, bool> value) {
