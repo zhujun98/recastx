@@ -190,6 +190,8 @@ int main(int argc, char** argv)
         ));
     }
 
+    recon->start();
+
     // set up data bridges
 
     auto data_receiver = slicerecon::DataReceiver(

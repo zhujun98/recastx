@@ -17,6 +17,8 @@ Reconstructor::Reconstructor(int rows, int cols, int num_threads)
        num_threads_(num_threads), 
        arena_(num_threads) {}
 
+Reconstructor::~Reconstructor() = default;
+
 void Reconstructor::initialize(int num_darks, 
                                int num_flats, 
                                int num_projections,
@@ -65,7 +67,22 @@ void Reconstructor::setSolver(std::unique_ptr<Solver>&& solver) {
     solver_ = std::move(solver);
 }
 
-Reconstructor::~Reconstructor() = default;
+void Reconstructor::start() {
+    gpu_thread_ = std::thread([&] {
+        while (true) {
+            std::lock_guard<std::mutex> gpu_lock(gpu_mutex_);
+
+            spdlog::info("Uploading sinogram buffer to GPU ...");
+            active_gpu_buffer_index_ = 1 - active_gpu_buffer_index_;
+            {
+                std::unique_lock<std::mutex> sino_lock(sino_mutex_);
+                sino_cv_.wait(sino_lock);
+                solver_->uploadProjections(active_gpu_buffer_index_, sino_buffer_.front(), 0, buffer_size_ - 1);
+            }
+            reconstructPreview();
+        }
+    });
+}
 
 void Reconstructor::pushProjection(ProjectionType k, 
                                    int32_t proj_idx, 
@@ -107,15 +124,13 @@ void Reconstructor::pushProjection(ProjectionType k,
             if (buffer_.full()) {
                 spdlog::info("Processing projection buffer ...");
                 processProjections();
-
-                const auto& bf = buffer_.front();
-                auto& sbf = sino_buffer_.front(); 
-                utils::projection2sino(arena_, bf, sbf, rows_, cols_, 0, buffer_size_ - 1);
-                uploadSinoBuffer(0, buffer_size_ - 1);
-
                 buffer_.swap();
-                sino_buffer_.swap();
-                reconstructPreview();
+                {
+                    std::lock_guard<std::mutex> sino_lock(sino_mutex_);
+                    projectionToSino();
+                    sino_buffer_.swap();
+                    sino_cv_.notify_one();
+                }
             }
 
             break;
@@ -148,15 +163,12 @@ void Reconstructor::pushProjection(ProjectionType k,
 }
 
 slice_data Reconstructor::reconstructSlice(orientation x) {
-    // the lock is supposed to be always open if reconstruction mode == alternating
-    std::lock_guard<std::mutex> guard(gpu_mutex_);
     return solver_->reconstructSlice(x, active_gpu_buffer_index_);
 }
 
 const std::vector<float>& Reconstructor::previewData() { 
     std::unique_lock<std::mutex> preview_lock(preview_mutex_);
     preview_cv_.wait(preview_lock);
-    preview_buffer_.swap();
     return preview_buffer_.front(); 
 }
 
@@ -197,23 +209,43 @@ void Reconstructor::processProjections() {
 #endif
 }
 
-void Reconstructor::uploadSinoBuffer(int begin, int end) {
-    spdlog::info("Uploading sinogram buffer between {} and {} to GPU ...", begin, end);
+void Reconstructor::projectionToSino() {
 
-    active_gpu_buffer_index_ = 1 - active_gpu_buffer_index_;
-    std::lock_guard<std::mutex> guard(gpu_mutex_);
-    solver_->uploadProjections(active_gpu_buffer_index_, sino_buffer_.front(), begin, end);
+#if defined(WITH_MONITOR)
+    auto start = std::chrono::steady_clock::now();
+#endif    
+
+    using namespace oneapi;
+
+    const auto& proj = buffer_.back();
+    auto& sino = sino_buffer_.back();
+    arena_.execute([&]{
+        tbb::parallel_for(tbb::blocked_range<int>(0, rows_),
+                          [&](const tbb::blocked_range<int> &block) {
+            for (auto i = block.begin(); i != block.end(); ++i) {
+                for (int j = 0; j < buffer_size_; ++j) {
+                    for (int k = 0; k < cols_; ++k) {
+                        sino[i * buffer_size_ * cols_ + j * cols_ + k] = 
+                            proj[j * cols_ * rows_ + i * cols_ + k];
+                    }
+                }
+            }
+        });
+    });
+
+#if defined(WITH_MONITOR)
+    float duration = std::chrono::duration_cast<std::chrono::microseconds>(
+    std::chrono::steady_clock::now() -  start).count();
+    spdlog::info("[bench] Transposing into sino buffer took {} ms", duration / 1000);
+#endif
+
 }
 
 void Reconstructor::reconstructPreview() {
-    {
-        std::lock_guard<std::mutex> gpu_lock(gpu_mutex_);
-        {
-            std::lock_guard<std::mutex> preview_lock(preview_mutex_);
-            solver_->reconstructPreview(preview_buffer_.back(), active_gpu_buffer_index_);
-            preview_cv_.notify_one();
-        }
-    }
+    std::lock_guard<std::mutex> preview_lock(preview_mutex_);
+    solver_->reconstructPreview(preview_buffer_.back(), active_gpu_buffer_index_);
+    preview_buffer_.swap();
+    preview_cv_.notify_one();
 }
 
 const std::vector<RawDtype>& Reconstructor::darks() const { return all_darks_; }

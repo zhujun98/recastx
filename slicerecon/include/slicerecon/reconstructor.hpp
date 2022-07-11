@@ -4,6 +4,7 @@
 #include <condition_variable>
 #include <cstdint>
 #include <iostream>
+#include <thread>
 #include <vector>
 
 #include <spdlog/spdlog.h>
@@ -37,7 +38,6 @@ class Reconstructor {
     SimpleBuffer<float> preview_buffer_;
     bool initialized_ = false;
 
-    int active_gpu_buffer_index_ = 0;
     int buffer_size_;
 
     int num_darks_ = 1;
@@ -53,16 +53,18 @@ class Reconstructor {
     std::unique_ptr<Filter> filter_;
     std::unique_ptr<Solver> solver_;
 
+    std::mutex sino_mutex_;
+    std::condition_variable sino_cv_;
+    int active_gpu_buffer_index_ = 0;
+    std::thread gpu_thread_;
     std::mutex gpu_mutex_;
-    std::condition_variable preview_cv_;
     std::mutex preview_mutex_;
+    std::condition_variable preview_cv_;
 
     int num_threads_;
     oneapi::tbb::task_arena arena_;
 
     void processProjections();
-
-    void uploadSinoBuffer(int begin, int end);
 
     void reconstructPreview();
 
@@ -83,10 +85,17 @@ public:
 
     void setSolver(std::unique_ptr<Solver>&& solver);
 
+    void start();
+
     void pushProjection(ProjectionType k, 
                         int32_t proj_idx, 
                         const std::array<int32_t, 2>& shape, 
                         char* data); 
+
+    /**
+     * @brief Copy projections (projection_id, rows, cols) to sinograms (rows, projection_id, cols).
+     */
+    void projectionToSino();
 
     slice_data reconstructSlice(orientation x); 
 
