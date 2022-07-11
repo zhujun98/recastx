@@ -49,13 +49,9 @@ class Reconstructor {
     int32_t received_flats_ = 0;
     bool reciprocal_computed_ = false;
 
-    ReconstructMode recon_mode_;
-
     std::unique_ptr<Paganin> paganin_;
     std::unique_ptr<Filter> filter_;
     std::unique_ptr<Solver> solver_;
-
-    int update_count_ = 0;
 
     std::mutex gpu_mutex_;
     std::condition_variable preview_cv_;
@@ -79,8 +75,7 @@ public:
     void initialize(int num_darks, 
                     int num_flats, 
                     int num_projections,
-                    int preview_size,
-                    ReconstructMode recon_mode);
+                    int preview_size);
 
     void initPaganin(float pixel_size, float lambda, float delta, float beta, float distance);
 

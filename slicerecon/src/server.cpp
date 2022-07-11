@@ -69,7 +69,6 @@ int main(int argc, char** argv)
     ;
 
     po::options_description reconstruction_desc("Reconstruction options");
-    bool continuous_mode = false;
     bool retrieve_phase = false;
     bool tilt = false;
     bool gaussian_pass = false;
@@ -86,8 +85,6 @@ int main(int argc, char** argv)
          "number of flat images")
         ("projections", po::value<int>()->default_value(128),
          "number of projections")
-        ("continuous-mode", po::bool_switch(&continuous_mode),
-         "switch reconstructor to continuous mode from the default alternating mode")
         ("retrieve-phase", po::bool_switch(&retrieve_phase),
          "switch to Paganin filter")
         ("tilt", po::bool_switch(&tilt),
@@ -151,8 +148,6 @@ int main(int argc, char** argv)
     auto num_flats = opts["flats"].as<int>();
     auto num_projections = opts["projections"].as<int>();
 
-    auto recon_mode = continuous_mode ? slicerecon::ReconstructMode::continuous : 
-                                        slicerecon::ReconstructMode::alternating;
     auto filter_name = opts["filter"].as<std::string>();
 
     auto pixel_size = opts["pixel-size"].as<float>();
@@ -173,7 +168,7 @@ int main(int argc, char** argv)
     // 1. set up reconstructor
     auto recon = std::make_shared<slicerecon::Reconstructor>(rows, cols, num_threads);
 
-    recon->initialize(num_darks, num_flats, num_projections, preview_size, recon_mode);
+    recon->initialize(num_darks, num_flats, num_projections, preview_size);
 
     if (retrieve_phase) recon->initPaganin(pixel_size, lambda, delta, beta, distance);
 
@@ -186,12 +181,12 @@ int main(int argc, char** argv)
     if (cone_beam) {
         recon->setSolver(std::make_unique<slicerecon::ConeBeamSolver>(
             rows, cols, angles, volume_min_point, volume_max_point, preview_size, slice_size,
-            vec_geometry, detector_size, source_origin, origin_det, recon_mode
+            vec_geometry, detector_size, source_origin, origin_det
         ));
     } else {
         recon->setSolver(std::make_unique<slicerecon::ParallelBeamSolver>(
             rows, cols, angles, volume_min_point, volume_max_point, preview_size, slice_size, 
-            vec_geometry, detector_size, recon_mode
+            vec_geometry, detector_size
         ));
     }
 

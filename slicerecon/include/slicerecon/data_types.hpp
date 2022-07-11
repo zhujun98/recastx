@@ -8,13 +8,6 @@
 namespace slicerecon {
 
 /**
- * The mode that the reconstructor is in. Continuous corresponds to a sliding-
- * window. Alternating is the default.
- * @see https://github.com/cicwi/SliceRecon/issues/4
- */
-enum class ReconstructMode { alternating, continuous };
-
-/**
  * The orientation is an array of 9 floating point numbers. This corresponds to
  * the way tomopackets defines an orientation.
  */

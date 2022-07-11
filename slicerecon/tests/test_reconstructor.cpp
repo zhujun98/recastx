@@ -25,7 +25,6 @@ class ReconTest : public testing::Test {
     std::vector<float> angles_;
     int slice_size_ = cols_;
     int preview_size_ = slice_size_ / 2;
-    slicerecon::ReconstructMode recon_mode_ = slicerecon::ReconstructMode::alternating;
 
     std::string filter_name_ = "shepp";
     bool gaussian_pass_ = false;
@@ -42,13 +41,12 @@ class ReconTest : public testing::Test {
     }
 
     void buildRecon() {
-        recon_.initialize(num_darks_, num_flats_, num_projections_, 
-                          preview_size_, recon_mode_);
+        recon_.initialize(num_darks_, num_flats_, num_projections_, preview_size_);
         recon_.initFilter(filter_name_, gaussian_pass_);
         recon_.setSolver(std::make_unique<slicerecon::ParallelBeamSolver>(
             rows_, cols_, angles_, 
             volume_min_point_, volume_max_point_, preview_size_, slice_size_, 
-            false, detector_size_, recon_mode_
+            false, detector_size_
         ));
     }
 

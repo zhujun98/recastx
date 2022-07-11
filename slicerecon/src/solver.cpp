@@ -87,8 +87,7 @@ ParallelBeamSolver::ParallelBeamSolver(int rows,
                                        int preview_size,
                                        int slice_size,
                                        bool vec_geometry,
-                                       const std::array<float, 2>& detector_size,
-                                       ReconstructMode recon_mode)
+                                       const std::array<float, 2>& detector_size)
         : Solver(rows, 
                  cols, 
                  static_cast<int>(angles.size()), 
@@ -125,7 +124,7 @@ ParallelBeamSolver::ParallelBeamSolver(int rows,
 
     // Projection data and back projection algorithm
     projector_ = std::make_unique<astra::CCudaProjector3D>();
-    for (int i = 0; i < (recon_mode == ReconstructMode::alternating ? 2 : 1); ++i) {
+    for (int i = 0; i < 2; ++i) {
         proj_handles_.push_back(astraCUDA3d::createProjectionArrayHandle(
             zeros.data(), cols, projections_, rows));
         proj_data_.push_back(std::make_unique<astra::CFloat32ProjectionData3DGPU>(
@@ -277,8 +276,7 @@ ConeBeamSolver::ConeBeamSolver(int rows,
                                bool vec_geometry,
                                const std::array<float, 2>& detector_size,
                                float source_origin,
-                               float origin_det,
-                               ReconstructMode recon_mode)
+                               float origin_det)
         : Solver(rows, 
                  cols, 
                  static_cast<int>(angles.size()), 
@@ -316,8 +314,7 @@ ConeBeamSolver::ConeBeamSolver(int rows,
     auto zeros = std::vector<float>(projections_ * cols * rows, 0.0f);
 
     // Projection data
-    int nr_handles = recon_mode == ReconstructMode::alternating ? 2 : 1;
-    for (int i = 0; i < nr_handles; ++i) {
+    for (int i = 0; i < 2; ++i) {
         proj_handles_.push_back(astraCUDA3d::createProjectionArrayHandle(
             zeros.data(), cols, projections_, rows));
         proj_data_.push_back(std::make_unique<astra::CFloat32ProjectionData3DGPU>(
@@ -326,7 +323,7 @@ ConeBeamSolver::ConeBeamSolver(int rows,
 
     // Back projection algorithm, link to previously made objects
     projector_ = std::make_unique<astra::CCudaProjector3D>();
-    for (int i = 0; i < nr_handles; ++i) {
+    for (int i = 0; i < 2; ++i) {
         algs_.push_back(std::make_unique<astra::CCudaBackProjectionAlgorithm3D>(
             projector_.get(), proj_data_[i].get(), vol_data_.get()));
         algs_small_.push_back(
