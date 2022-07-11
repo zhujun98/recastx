@@ -201,13 +201,13 @@ void ParallelBeamSolver::reconstructPreview(std::vector<float>& preview_buffer,
     algs_small_[buffer_idx]->run();
 
     unsigned int n = preview_size_;
-    float factor = (n / (float)cols_);
     auto pos = astraCUDA3d::SSubDimensions3D{n, n, n, n, n, n, n, 0, 0, 0};
     astraCUDA3d::copyFromGPUMemory(preview_buffer.data(), vol_handle_small_, pos);
 
-    for (auto& x : preview_buffer) {
-        x *= (factor * factor * factor);
-    }
+    float factor = n / (float)cols_;
+    // FIXME: why cubic? 
+    float scale = factor * factor * factor;
+    for (auto& x : preview_buffer) x *= scale;
 
 #if defined(WITH_MONITOR)
     float duration = std::chrono::duration_cast<std::chrono::microseconds>(

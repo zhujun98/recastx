@@ -120,6 +120,7 @@ public:
     // FIXME ~solver clean up
 
     slice_data reconstructSlice(orientation x, int buffer_idx) override;
+
     void reconstructPreview(std::vector<float>& preview_buffer, int buffer_idx) override;
 
     bool parameterChanged(std::string param, std::variant<float, std::string, bool> value) override;
