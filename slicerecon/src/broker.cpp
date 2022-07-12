@@ -94,11 +94,10 @@ void Broker::start() {
             int n = recon_->previewSize();
             auto volprev = tomop::VolumeDataPacket({n, n, n}, recon_->previewData());
             send(volprev);
+            spdlog::info("Volume preview data sent");
 
             auto grsp = tomop::GroupRequestSlicesPacket(1);
             send(grsp);
-            
-            spdlog::info("Volume preview data sent");
         }
     });
 

@@ -70,7 +70,7 @@ void DataReceiver::start() {
             socket_.recv(update, zmq::recv_flags::none);
             if (scan_index == ProjectionType::dark || scan_index == ProjectionType::flat) {
                 spdlog::info("Projection received: type = {0:d}, frame = {1:d}", 
-                                static_cast<int>(scan_index), frame);
+                             static_cast<int>(scan_index), frame);
             }
 
             recon_->pushProjection(scan_index,
@@ -81,7 +81,7 @@ void DataReceiver::start() {
 #if defined(WITH_MONITOR)
             if (!msg_size) {
                 msg_size = static_cast<float>(shape[0]) * static_cast<float>(shape[1])
-                            * sizeof(RawDtype) / (1024 * 1024);
+                           * sizeof(RawDtype) / (1024 * 1024);
             }
             if (scan_index == ProjectionType::projection) {
                 ++msg_counter;

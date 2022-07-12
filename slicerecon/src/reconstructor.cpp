@@ -80,11 +80,7 @@ void Reconstructor::start() {
                 solver_->uploadProjections(
                     active_gpu_buffer_index_, sino_buffer_.front(), 0, buffer_size_ - 1);
             }
-            {
-                std::lock_guard<std::mutex> preview_lock(preview_mutex_);
-                reconstructPreview();
-                preview_cv_.notify_one();
-            }
+            reconstructPreview();
         }
     });
 }
@@ -170,8 +166,7 @@ slice_data Reconstructor::reconstructSlice(orientation x) {
 }
 
 const std::vector<float>& Reconstructor::previewData() { 
-    std::unique_lock<std::mutex> preview_lock(preview_mutex_);
-    preview_cv_.wait(preview_lock);
+    preview_buffer_.swap();
     return preview_buffer_.front(); 
 }
 
@@ -248,12 +243,12 @@ void Reconstructor::projectionToSino() {
 
 void Reconstructor::reconstructPreview() {
     solver_->reconstructPreview(preview_buffer_.back(), active_gpu_buffer_index_);
-    preview_buffer_.swap();
+    preview_buffer_.prepare();
 }
 
 const std::vector<RawDtype>& Reconstructor::darks() const { return all_darks_; }
 const std::vector<RawDtype>& Reconstructor::flats() const { return all_flats_; }
-const Buffer<float>& Reconstructor::buffer() const { return buffer_; }
-const SimpleBuffer<float>& Reconstructor::sinoBuffer() const { return sino_buffer_; }
+const Buffer2<float>& Reconstructor::buffer() const { return buffer_; }
+const SimpleBuffer2<float>& Reconstructor::sinoBuffer() const { return sino_buffer_; }
 
 } // namespace slicerecon

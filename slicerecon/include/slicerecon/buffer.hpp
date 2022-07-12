@@ -1,7 +1,15 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
+#include <condition_variable>
+#include <thread>
+
 namespace slicerecon {
+
+class SimpleBufferInterface {
+  public:
+    virtual void initialize(size_t capacity) = 0;
+};
 
 template<typename T>
 class DoubleBufferInterface {
@@ -23,16 +31,16 @@ class DoubleBufferInterface {
 };
 
 template<typename T>
-class SimpleBuffer : public DoubleBufferInterface<T> {
+class SimpleBuffer2 : public DoubleBufferInterface<T>, public SimpleBufferInterface {
 
   public:
 
-    SimpleBuffer() = default;
-    ~SimpleBuffer() = default;
+    SimpleBuffer2() = default;
+    ~SimpleBuffer2() = default;
 
     void swap() override { this->front_.swap(this->back_); }
 
-    void initialize(size_t capacity) {
+    void initialize(size_t capacity) override {
         this->back_.resize(capacity);
         this->front_.resize(capacity);
     }
@@ -40,7 +48,7 @@ class SimpleBuffer : public DoubleBufferInterface<T> {
 };
 
 template<typename T>
-class Buffer : public DoubleBufferInterface<T> {
+class Buffer2 : public DoubleBufferInterface<T> {
 
     std::vector<int> indices_back_;
     std::vector<int> indices_front_;
@@ -51,8 +59,8 @@ class Buffer : public DoubleBufferInterface<T> {
 
   public:
 
-    Buffer() = default;
-    ~Buffer() = default;
+    Buffer2() = default;
+    ~Buffer2() = default;
 
     void swap() override {
         this->front_.swap(this->back_);
@@ -95,6 +103,61 @@ class Buffer : public DoubleBufferInterface<T> {
 
     bool full() const { return indices_back_.size() == capacity_; }
     size_t size() const { return indices_back_.size(); }
+};
+
+template<typename T>
+class TrippleBufferInterface {
+
+  protected:
+
+    std::vector<T> back_;
+    std::vector<T> ready_;
+    std::vector<T> front_;
+
+    bool is_ready_ = false;
+    std::mutex mtx_;
+    std::condition_variable cv_;
+
+  public:
+
+    virtual void swap() = 0;
+    virtual void prepare() = 0;
+
+    std::vector<T>& front() { return front_; }
+    std::vector<T>& back() { return back_; };
+
+    const std::vector<T>& front() const { return front_; }
+    const std::vector<T>& back() const { return back_; };
+};
+
+template<typename T>
+class SimpleBuffer3 : public TrippleBufferInterface<T>, public SimpleBufferInterface {
+
+  public:
+
+    SimpleBuffer3() = default;
+    ~SimpleBuffer3() = default;
+
+    void swap() override {
+        std::unique_lock lk(this->mtx_);
+        this->cv_.wait(lk, [this] { return this->is_ready_; });
+        this->front_.swap(this->ready_); 
+        this->is_ready_ = false;
+    }
+
+    void prepare() override {
+        std::lock_guard lk(this->mtx_);
+        this->ready_.swap(this->back_);
+        this->is_ready_ = true;    
+        this->cv_.notify_one();
+    }
+
+    void initialize(size_t capacity) override {
+        this->back_.resize(capacity);
+        this->ready_.resize(capacity);
+        this->front_.resize(capacity);
+    }
+
 };
 
 } // slicerecon

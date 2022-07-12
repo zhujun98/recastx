@@ -33,9 +33,9 @@ class Reconstructor {
     std::vector<RawDtype> all_flats_;
     std::vector<float> dark_avg_;
     std::vector<float> reciprocal_;
-    Buffer<float> buffer_;
-    SimpleBuffer<float> sino_buffer_;
-    SimpleBuffer<float> preview_buffer_;
+    Buffer2<float> buffer_;
+    SimpleBuffer2<float> sino_buffer_;
+    SimpleBuffer3<float> preview_buffer_;
     bool initialized_ = false;
 
     int buffer_size_;
@@ -58,8 +58,6 @@ class Reconstructor {
     int active_gpu_buffer_index_ = 0;
     std::thread gpu_thread_;
     std::mutex gpu_mutex_;
-    std::mutex preview_mutex_;
-    std::condition_variable preview_cv_;
 
     int num_threads_;
     oneapi::tbb::task_arena arena_;
@@ -109,8 +107,8 @@ public:
 
     const std::vector<RawDtype>& darks() const;
     const std::vector<RawDtype>& flats() const;
-    const Buffer<float>& buffer() const;
-    const SimpleBuffer<float>& sinoBuffer() const;
+    const Buffer2<float>& buffer() const;
+    const SimpleBuffer2<float>& sinoBuffer() const;
 
 };
 
