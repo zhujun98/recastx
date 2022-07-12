@@ -80,14 +80,21 @@ def gen_fake_data(socket, scan_index, n, *, shape, unordered=False):
     thread = Thread(target=send, args=(socket, queue))
     thread.start()
 
+    darks = [np.random.randint(500, size=shape, dtype=np.uint16) 
+             for _ in range(10)]
+    whites = [3596 + np.random.randint(500, size=shape, dtype=np.uint16) 
+              for _ in range(10)]
+    projections = [np.random.randint(4096, size=shape, dtype=np.uint16)
+                   for _ in range(10)]
+
     for i in shuffled_range(0, n):
         meta = gen_meta(scan_index, i, shape)
         if scan_index == 0:
-            data = np.random.randint(500, size=shape, dtype=np.uint16)
+            data = darks[np.random.choice(len(darks))]
         elif scan_index == 1:
-            data = 3596 + np.random.randint(500, size=shape, dtype=np.uint16)
+            data = whites[np.random.choice(len(whites))]
         else:
-            data = np.random.randint(4096, size=shape, dtype=np.uint16)
+            data = projections[np.random.choice(len(projections))]
         queue.put((meta, data))
 
     queue.put((None, sentinel))
@@ -177,7 +184,7 @@ def main():
     elif sock_type == "PUB":
         socket = context.socket(zmq.PUB)
     else:
-        raise RuntimeError(f"Unknow sock type: {sock_type}")
+        raise RuntimeError(f"Unknown sock type: {sock_type}")
     socket.bind(f"tcp://*:{port}")
 
     if datafile:
