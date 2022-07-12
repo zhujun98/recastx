@@ -99,8 +99,8 @@ TEST_F(ReconTest, TestPushProjection) {
     pushFlats(num_flats_);
 
     // buffer will be swapped after the processing
-    auto& buffer1 = recon_.buffer().front();
-    auto& buffer2 = recon_.buffer().back();
+    auto& buffer1 = recon_.buffer().back();
+    auto& buffer2 = recon_.buffer().front();
     auto& sino_buffer = recon_.sinoBuffer().front();
 
     // push projections (don't completely fill the buffer)
@@ -130,8 +130,8 @@ TEST_F(ReconTest, TestPushProjectionUnordered) {
     pushFlats(num_flats_);
 
     // buffer will be swapped after the processing
-    auto& buffer1 = recon_.buffer().front();
-    auto& buffer2 = recon_.buffer().back();
+    auto& buffer1 = recon_.buffer().back();
+    auto& buffer2 = recon_.buffer().front();
     auto& sino_buffer = recon_.sinoBuffer().front();
 
     pushProjection(0, num_projections_ - 3);

@@ -8,18 +8,18 @@ class DoubleBufferInterface {
 
   protected:
 
-    std::vector<T> data1_;
-    std::vector<T> data2_;
+    std::vector<T> back_;
+    std::vector<T> front_;
 
   public:
 
     virtual void swap() = 0;
 
-    std::vector<T>& front() { return data1_; }
-    std::vector<T>& back() { return data2_; };
+    std::vector<T>& front() { return front_; }
+    std::vector<T>& back() { return back_; };
 
-    const std::vector<T>& front() const { return data1_; }
-    const std::vector<T>& back() const { return data2_; };
+    const std::vector<T>& front() const { return front_; }
+    const std::vector<T>& back() const { return back_; };
 };
 
 template<typename T>
@@ -30,11 +30,11 @@ class SimpleBuffer : public DoubleBufferInterface<T> {
     SimpleBuffer() = default;
     ~SimpleBuffer() = default;
 
-    void swap() override { this->data1_.swap(this->data2_); }
+    void swap() override { this->front_.swap(this->back_); }
 
     void initialize(size_t capacity) {
-        this->data1_.resize(capacity);
-        this->data2_.resize(capacity);
+        this->back_.resize(capacity);
+        this->front_.resize(capacity);
     }
 
 };
@@ -42,8 +42,8 @@ class SimpleBuffer : public DoubleBufferInterface<T> {
 template<typename T>
 class Buffer : public DoubleBufferInterface<T> {
 
-    std::vector<int> indices1_;
-    std::vector<int> indices2_;
+    std::vector<int> indices_back_;
+    std::vector<int> indices_front_;
 
     int buffer_index_ = -2; // current buffer index
 
@@ -55,15 +55,15 @@ class Buffer : public DoubleBufferInterface<T> {
     ~Buffer() = default;
 
     void swap() override {
-        this->data1_.swap(this->data2_);
-        indices1_.swap(indices2_);
-        indices2_.clear();
+        this->front_.swap(this->back_);
+        indices_front_.swap(indices_back_);
+        indices_front_.clear();
         buffer_index_ += 1;
     }
 
     void initialize(size_t capacity, int size) {
-        this->data1_.resize(capacity * size);
-        this->data2_.resize(capacity * size);
+        this->back_.resize(capacity * size);
+        this->front_.resize(capacity * size);
         capacity_ = capacity;
     }
 
@@ -71,17 +71,18 @@ class Buffer : public DoubleBufferInterface<T> {
     void fill(char* raw, int buffer_index, int index, int size) {
         std::vector<T>* data;
         if (buffer_index == buffer_index_) {
-            data = &(this->data1_);
-            indices1_.push_back(index);
+            data = &(this->back_);
+            indices_back_.push_back(index);
         } else if (buffer_index - buffer_index_ == 1) {
-            data = &(this->data2_);
-            indices2_.push_back(index);
+            data = &(this->front_);
+            indices_front_.push_back(index);
         } else if (buffer_index - buffer_index_ > 1) {
             buffer_index_ = buffer_index; // initialization
-            data = &(this->data1_);
-            indices1_.push_back(index);
+            data = &(this->back_);
+            indices_back_.push_back(index);
         } else {
-            throw std::runtime_error("Received old buffer index" + std::to_string(buffer_index));
+            throw std::runtime_error(
+                "Received old buffer index" + std::to_string(buffer_index));
         }
 
         for (int i = index * size; i < (index + 1) * size; ++i) {
@@ -92,8 +93,8 @@ class Buffer : public DoubleBufferInterface<T> {
         }
     }
 
-    bool full() const { return indices1_.size() == capacity_; }
-    size_t size() const { return indices1_.size(); }
+    bool full() const { return indices_back_.size() == capacity_; }
+    size_t size() const { return indices_back_.size(); }
 };
 
 } // slicerecon

@@ -77,9 +77,14 @@ void Reconstructor::start() {
             {
                 std::unique_lock<std::mutex> sino_lock(sino_mutex_);
                 sino_cv_.wait(sino_lock);
-                solver_->uploadProjections(active_gpu_buffer_index_, sino_buffer_.front(), 0, buffer_size_ - 1);
+                solver_->uploadProjections(
+                    active_gpu_buffer_index_, sino_buffer_.front(), 0, buffer_size_ - 1);
             }
-            reconstructPreview();
+            {
+                std::lock_guard<std::mutex> preview_lock(preview_mutex_);
+                reconstructPreview();
+                preview_cv_.notify_one();
+            }
         }
     });
 }
@@ -124,11 +129,9 @@ void Reconstructor::pushProjection(ProjectionType k,
             if (buffer_.full()) {
                 spdlog::info("Processing projection buffer ...");
                 processProjections();
-                buffer_.swap();
                 {
                     std::lock_guard<std::mutex> sino_lock(sino_mutex_);
                     projectionToSino();
-                    sino_buffer_.swap();
                     sino_cv_.notify_one();
                 }
             }
@@ -181,7 +184,7 @@ void Reconstructor::processProjections() {
     auto start = std::chrono::steady_clock::now();
 #endif
 
-    auto data = buffer_.front().data();
+    auto data = buffer_.back().data();
     using namespace oneapi;
     arena_.execute([&]{
         tbb::parallel_for(tbb::blocked_range<int>(0, buffer_size_),
@@ -207,17 +210,18 @@ void Reconstructor::processProjections() {
     std::chrono::steady_clock::now() -  start).count();
     spdlog::info("[bench] Processing projection buffer took {} ms", duration / 1000);
 #endif
+
+    buffer_.swap();
 }
 
 void Reconstructor::projectionToSino() {
-
 #if defined(WITH_MONITOR)
     auto start = std::chrono::steady_clock::now();
 #endif    
 
     using namespace oneapi;
 
-    const auto& proj = buffer_.back();
+    const auto& proj = buffer_.front();
     auto& sino = sino_buffer_.back();
     arena_.execute([&]{
         tbb::parallel_for(tbb::blocked_range<int>(0, rows_),
@@ -239,13 +243,12 @@ void Reconstructor::projectionToSino() {
     spdlog::info("[bench] Transposing into sino buffer took {} ms", duration / 1000);
 #endif
 
+    sino_buffer_.swap();
 }
 
 void Reconstructor::reconstructPreview() {
-    std::lock_guard<std::mutex> preview_lock(preview_mutex_);
     solver_->reconstructPreview(preview_buffer_.back(), active_gpu_buffer_index_);
     preview_buffer_.swap();
-    preview_cv_.notify_one();
 }
 
 const std::vector<RawDtype>& Reconstructor::darks() const { return all_darks_; }
