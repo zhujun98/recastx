@@ -4,6 +4,7 @@ import json
 import argparse
 from queue import deque, Queue
 from threading import Thread
+import time
 
 import h5py
 
@@ -26,17 +27,39 @@ def shuffled_range(start, end):
 
 
 def send(socket, queue):
+    t0 = time.time()
+    t_start = t0
+    byte_sent = 0
+    total_byte_sent = 0
+    counter = 0
+    to_mb = 1024. * 1024.
+    print_every = 100
     while True:
         meta, data = queue.get()
 
         if data is sentinel:
             break
         else:
-            print(f"Sent type {meta['image_attributes']['scan_index']}, "
-                  f"frame {meta['frame']}")
+            if counter % print_every == 0:
+                print(f"Sent type {meta['image_attributes']['scan_index']}, "
+                    f"frame {meta['frame']}")
 
         socket.send_json(meta, flags=zmq.SNDMORE)
         socket.send(data)
+
+        counter += 1
+        byte_sent += data.nbytes
+        total_byte_sent += data.nbytes
+        if counter % print_every == 0:
+            dt = time.time() - t0
+            print(f"Number of data sent: {counter:>6d}, "
+                  f"throughput: {byte_sent / dt / to_mb:>6.1f} MB/s")
+            t0 = time.time()
+            byte_sent = 0
+
+    dt = time.time() - t_start
+    print(f"Total number of data sent: {counter:>6d}, "
+          f"average throughput: {total_byte_sent / dt / to_mb:>6.1f} MB/s")
 
 
 def gen_meta(scan_index, frame_index, shape):
@@ -57,17 +80,22 @@ def gen_fake_data(socket, scan_index, n, *, shape, unordered=False):
     thread = Thread(target=send, args=(socket, queue))
     thread.start()
 
+    darks = [np.random.randint(500, size=shape, dtype=np.uint16) 
+             for _ in range(10)]
+    whites = [3596 + np.random.randint(500, size=shape, dtype=np.uint16) 
+              for _ in range(10)]
+    projections = [np.random.randint(4096, size=shape, dtype=np.uint16)
+                   for _ in range(10)]
+
     for i in shuffled_range(0, n):
         meta = gen_meta(scan_index, i, shape)
         if scan_index == 0:
-            data = np.random.randint(500, size=shape, dtype=np.uint16)
+            data = darks[np.random.choice(len(darks))]
         elif scan_index == 1:
-            data = 3596 + np.random.randint(500, size=shape, dtype=np.uint16)
+            data = whites[np.random.choice(len(whites))]
         else:
-            data = np.random.randint(4096, size=shape, dtype=np.uint16)
+            data = projections[np.random.choice(len(projections))]
         queue.put((meta, data))
-
-    print("Number of data sent: ", i + 1)
 
     queue.put((None, sentinel))
     thread.join()
@@ -101,8 +129,6 @@ def stream_data_file(filepath, socket,  scan_index, *, start, end):
             ds.read_direct(data, np.s_[i % n_images, ...], None)
             queue.put((meta, data))
 
-    print("Number of data sent: ", i + 1)
-    
     queue.put((None, sentinel))
     thread.join()
 
@@ -158,7 +184,7 @@ def main():
     elif sock_type == "PUB":
         socket = context.socket(zmq.PUB)
     else:
-        raise RuntimeError(f"Unknow sock type: {sock_type}")
+        raise RuntimeError(f"Unknown sock type: {sock_type}")
     socket.bind(f"tcp://*:{port}")
 
     if datafile:

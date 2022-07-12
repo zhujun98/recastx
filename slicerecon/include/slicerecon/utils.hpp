@@ -4,6 +4,7 @@
 #include <numeric>
 
 #include <Eigen/Eigen>
+#include <oneapi/tbb.h>
 #include <spdlog/spdlog.h>
 
 #ifndef ASTRA_CUDA
@@ -102,47 +103,6 @@ inline std::vector<float> defaultAngles(int n) {
     return angles;
 }
 
-/**
- * @brief 
- *
- * major to minor: [i, j, k]
-   In projection_group we have: [projection_id, rows, cols ]
-   For sinogram we want: [rows, projection_id, cols]
- *  
- * @param projection 
- * @param sino 
- * @param rows 
- * @param cols 
- * @param proj_offset 
- * @param proj_end
- */
-inline void projection2sino(const std::vector<float>& proj, 
-                            std::vector<float>& sino, 
-                            int rows, 
-                            int cols, 
-                            int begin, 
-                            int end) {
 
-#if defined(WITH_MONITOR)
-    auto start = std::chrono::steady_clock::now();
-#endif    
-
-    int size = end - begin + 1;
-    for (int i = 0; i < rows; ++i) {
-        for (int j = begin; j <= end; ++j) {
-            for (int k = 0; k < cols; ++k) {
-                sino[i * size * cols + (j - begin) * cols + k] = 
-                    proj[j * cols * rows + i * cols + k];
-            }
-        }
-    }
-
-#if defined(WITH_MONITOR)
-    float duration = std::chrono::duration_cast<std::chrono::microseconds>(
-    std::chrono::steady_clock::now() -  start).count();
-    spdlog::info("[bench] Transposing into sino buffer took {} ms", duration / 1000);
-#endif
-
-}
 
 } // slicerecon::utils
