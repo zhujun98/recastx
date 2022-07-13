@@ -87,7 +87,7 @@ public:
     void pushProjection(ProjectionType k, 
                         int32_t proj_idx, 
                         const std::array<int32_t, 2>& shape, 
-                        char* data); 
+                        const char* data); 
 
     /**
      * @brief Copy projections (projection_id, rows, cols) to sinograms (rows, projection_id, cols).

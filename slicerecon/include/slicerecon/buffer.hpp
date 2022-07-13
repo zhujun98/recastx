@@ -76,7 +76,7 @@ class Buffer2 : public DoubleBufferInterface<T> {
     }
 
     template<typename D>
-    void fill(char* raw, int buffer_index, int index, int size) {
+    void fill(const char* raw, int buffer_index, int index, int size) {
         std::vector<T>* data;
         if (buffer_index == buffer_index_) {
             data = &(this->back_);

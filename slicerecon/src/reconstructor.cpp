@@ -104,7 +104,7 @@ void Reconstructor::start() {
 void Reconstructor::pushProjection(ProjectionType k, 
                                    int32_t proj_idx, 
                                    const std::array<int32_t, 2>& shape, 
-                                   char* data) {
+                                   const char* data) {
 
     if (shape[0] != rows_ || shape[1] != cols_) {
         spdlog::error("Received projection with wrong shape. Actual: {} x {}, expected: {} x {}", 
