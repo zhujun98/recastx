@@ -75,7 +75,8 @@ def gen_meta(scan_index, frame_index, shape):
     }
 
 
-def gen_fake_data(socket, scan_index, n, *, shape, unordered=False):
+def gen_fake_data(socket, scan_index, n, *, 
+                  shape, ordered):
     queue = Queue()
     thread = Thread(target=send, args=(socket, queue))
     thread.start()
@@ -87,7 +88,8 @@ def gen_fake_data(socket, scan_index, n, *, shape, unordered=False):
     projections = [np.random.randint(4096, size=shape, dtype=np.uint16)
                    for _ in range(10)]
 
-    for i in shuffled_range(0, n):
+    frange = range if ordered else shuffled_range
+    for i in frange(0, n):
         meta = gen_meta(scan_index, i, shape)
         if scan_index == 0:
             data = darks[np.random.choice(len(darks))]
@@ -101,7 +103,8 @@ def gen_fake_data(socket, scan_index, n, *, shape, unordered=False):
     thread.join()
 
 
-def stream_data_file(filepath, socket,  scan_index, *, start, end):
+def stream_data_file(filepath, socket,  scan_index, *, 
+                     start, end, ordered):
     queue = Queue()
     thread = Thread(target=send, args=(socket, queue))
     thread.start()
@@ -122,7 +125,8 @@ def stream_data_file(filepath, socket,  scan_index, *, start, end):
         shape = ds.shape[1:]
         data = np.zeros(shape, dtype=np.uint16)
         n_images = ds.shape[0]
-        for i in shuffled_range(start, end):
+        frange = range if ordered else shuffled_range
+        for i in frange(start, end):
             meta = gen_meta(scan_index, i, shape)
             # Repeating reading data from chunks if data size is smaller 
             # than the index range.
@@ -162,6 +166,8 @@ def main():
                         help="Number of projection images (default=128)")
     parser.add_argument('--start', default=0, type=int,
                         help="Starting index of the projection images (default=0)")
+    parser.add_argument('--ordered', action='store_true',
+                        help="Send out images with frame ID in order")
     parser.add_argument('--rows', default=1200, type=int,
                         help="Number of rows of the generated image (default=1200)")
     parser.add_argument('--cols', default=2016, type=int,
@@ -191,14 +197,20 @@ def main():
         print(f"Streaming data from {datafile} ...")
     for scan_index, n in enumerate([args.darks, args.flats, args.projections]):
         if not datafile:
-            gen_fake_data(socket, scan_index, n, shape=(args.rows, args.cols))
+            gen_fake_data(socket, scan_index, n, 
+                          shape=(args.rows, args.cols),
+                          ordered=args.ordered)
         else:
             if scan_index == 2:
                 stream_data_file(datafile, socket, scan_index, 
                                  start=args.start, 
-                                 end=args.start + n)
+                                 end=args.start + n,
+                                 ordered=args.ordered)
             else:
-                stream_data_file(datafile, socket, scan_index, start=0, end=n)
+                stream_data_file(datafile, socket, scan_index, 
+                                 start=0, 
+                                 end=n,
+                                 ordered=args.ordered)
 
 
 if __name__ == "__main__":
