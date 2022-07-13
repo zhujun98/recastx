@@ -39,10 +39,6 @@ def send(socket, queue):
 
         if data is sentinel:
             break
-        else:
-            if counter % print_every == 0:
-                print(f"Sent type {meta['image_attributes']['scan_index']}, "
-                    f"frame {meta['frame']}")
 
         socket.send_json(meta, flags=zmq.SNDMORE)
         socket.send(data)
@@ -51,6 +47,10 @@ def send(socket, queue):
         byte_sent += data.nbytes
         total_byte_sent += data.nbytes
         if counter % print_every == 0:
+            if counter % print_every == 0:
+                print(f"Sent type {meta['image_attributes']['scan_index']}, "
+                      f"frame {meta['frame']}")
+
             dt = time.time() - t0
             print(f"Number of data sent: {counter:>6d}, "
                   f"throughput: {byte_sent / dt / to_mb:>6.1f} MB/s")
