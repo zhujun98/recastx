@@ -79,8 +79,8 @@ void Reconstructor::start() {
                 std::lock_guard<std::mutex> lck(gpu_mutex_);
                 sino_uploaded_ = true;
                 gpu_buffer_index_ = 1 - gpu_buffer_index_;
-                gpu_cv_.notify_one();
             }
+            gpu_cv_.notify_one();
         }
     });
 

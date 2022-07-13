@@ -147,9 +147,11 @@ class SimpleBuffer3 : public TrippleBufferInterface<T>, public SimpleBufferInter
     }
 
     void prepare() override {
-        std::lock_guard lk(this->mtx_);
-        this->ready_.swap(this->back_);
-        this->is_ready_ = true;    
+        {
+            std::lock_guard lk(this->mtx_);
+            this->ready_.swap(this->back_);
+            this->is_ready_ = true;    
+        }
         this->cv_.notify_one();
     }
 
