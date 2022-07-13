@@ -1,6 +1,7 @@
 #pragma once
 
 #include <complex>
+#include <condition_variable>
 #include <cstdint>
 #include <iostream>
 #include <thread>
@@ -53,7 +54,10 @@ class Reconstructor {
     std::unique_ptr<Solver> solver_;
 
     int active_gpu_buffer_index_ = 0;
-    std::thread gpu_thread_;
+    bool sino_uploaded_ = false;
+    std::thread gpu_upload_thread_;
+    std::thread gpu_recon_thread_;
+    std::condition_variable gpu_cv_;
     std::mutex gpu_mutex_;
 
     int num_threads_;
