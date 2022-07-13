@@ -60,10 +60,10 @@ Solver::~Solver() {
     }
 }
 
-void Solver::uploadProjections(int buffer_idx, 
-                               const std::vector<float>& sino, 
-                               int begin, 
-                               int end) {
+void Solver::uploadSinograms(int buffer_idx, 
+                             const std::vector<float>& sino, 
+                             int begin, 
+                             int end) {
 #if defined(WITH_MONITOR)
     auto start = std::chrono::steady_clock::now();
 #endif
@@ -73,7 +73,7 @@ void Solver::uploadProjections(int buffer_idx,
 #if defined(WITH_MONITOR)
     float duration = std::chrono::duration_cast<std::chrono::microseconds>(
     std::chrono::steady_clock::now() -  start).count();
-    spdlog::info("[bench] Uploading projections to GPU took {} ms", duration / 1000);
+    spdlog::info("[bench] Uploading sinograms to GPU took {} ms", duration / 1000);
 #endif
 }
 

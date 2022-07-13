@@ -89,11 +89,6 @@ public:
                         const std::array<int32_t, 2>& shape, 
                         const char* data); 
 
-    /**
-     * @brief Copy projections (projection_id, rows, cols) to sinograms (rows, projection_id, cols).
-     */
-    void projectionToSino();
-
     slice_data reconstructSlice(orientation x); 
 
     const std::vector<float>& previewData();
