@@ -70,11 +70,12 @@ void Reconstructor::setSolver(std::unique_ptr<Solver>&& solver) {
 void Reconstructor::start() {
     gpu_upload_thread_ = std::thread([&] {
         while (true) {
-            spdlog::info("Uploading sinogram buffer to GPU ...");
-            
             sino_buffer_.fetch();
+
+            spdlog::info("Uploading sinogram buffer to GPU ...");
             solver_->uploadProjections(
                 1 - gpu_buffer_index_, sino_buffer_.front(), 0, buffer_size_ - 1);
+
             {
                 std::lock_guard<std::mutex> lck(gpu_mutex_);
                 sino_uploaded_ = true;
@@ -95,6 +96,9 @@ void Reconstructor::start() {
             preview_buffer_.prepare();
         }
     });
+
+    gpu_upload_thread_.detach();
+    gpu_recon_thread_.detach();
 }
 
 void Reconstructor::pushProjection(ProjectionType k, 
