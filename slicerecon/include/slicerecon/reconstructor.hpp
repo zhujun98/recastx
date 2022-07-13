@@ -1,7 +1,6 @@
 #pragma once
 
 #include <complex>
-#include <condition_variable>
 #include <cstdint>
 #include <iostream>
 #include <thread>
@@ -34,7 +33,7 @@ class Reconstructor {
     std::vector<float> dark_avg_;
     std::vector<float> reciprocal_;
     Buffer2<float> buffer_;
-    SimpleBuffer2<float> sino_buffer_;
+    SimpleBuffer3<float> sino_buffer_;
     SimpleBuffer3<float> preview_buffer_;
     bool initialized_ = false;
 
@@ -53,8 +52,6 @@ class Reconstructor {
     std::unique_ptr<Filter> filter_;
     std::unique_ptr<Solver> solver_;
 
-    std::mutex sino_mutex_;
-    std::condition_variable sino_cv_;
     int active_gpu_buffer_index_ = 0;
     std::thread gpu_thread_;
     std::mutex gpu_mutex_;
@@ -63,8 +60,6 @@ class Reconstructor {
     oneapi::tbb::task_arena arena_;
 
     void processProjections();
-
-    void reconstructPreview();
 
 public:
 
@@ -108,7 +103,7 @@ public:
     const std::vector<RawDtype>& darks() const;
     const std::vector<RawDtype>& flats() const;
     const Buffer2<float>& buffer() const;
-    const SimpleBuffer2<float>& sinoBuffer() const;
+    const SimpleBuffer3<float>& sinoBuffer() const;
 
 };
 

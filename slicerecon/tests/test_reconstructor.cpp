@@ -101,7 +101,7 @@ TEST_F(ReconTest, TestPushProjection) {
     // buffer will be swapped after the processing
     auto& buffer1 = recon_.buffer().back();
     auto& buffer2 = recon_.buffer().front();
-    auto& sino_buffer = recon_.sinoBuffer().front();
+    auto& sino_buffer = recon_.sinoBuffer().ready();
 
     // push projections (don't completely fill the buffer)
     pushProjection(0, num_projections_ - 1);
@@ -132,7 +132,7 @@ TEST_F(ReconTest, TestPushProjectionUnordered) {
     // buffer will be swapped after the processing
     auto& buffer1 = recon_.buffer().back();
     auto& buffer2 = recon_.buffer().front();
-    auto& sino_buffer = recon_.sinoBuffer().front();
+    auto& sino_buffer = recon_.sinoBuffer().ready();
 
     pushProjection(0, num_projections_ - 3);
     int overflow = 3;

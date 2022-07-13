@@ -120,13 +120,14 @@ class TrippleBufferInterface {
 
   public:
 
-    virtual void swap() = 0;
+    virtual void fetch() = 0;
     virtual void prepare() = 0;
 
     std::vector<T>& front() { return front_; }
     std::vector<T>& back() { return back_; };
 
     const std::vector<T>& front() const { return front_; }
+    const std::vector<T>& ready() const { return ready_; }
     const std::vector<T>& back() const { return back_; };
 };
 
@@ -138,7 +139,7 @@ class SimpleBuffer3 : public TrippleBufferInterface<T>, public SimpleBufferInter
     SimpleBuffer3() = default;
     ~SimpleBuffer3() = default;
 
-    void swap() override {
+    void fetch() override {
         std::unique_lock lk(this->mtx_);
         this->cv_.wait(lk, [this] { return this->is_ready_; });
         this->front_.swap(this->ready_); 
