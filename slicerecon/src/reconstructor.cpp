@@ -73,13 +73,12 @@ void Reconstructor::start() {
             spdlog::info("Uploading sinogram buffer to GPU ...");
             
             sino_buffer_.fetch();
-            
             solver_->uploadProjections(
-                active_gpu_buffer_index_, sino_buffer_.front(), 0, buffer_size_ - 1);
+                1 - gpu_buffer_index_, sino_buffer_.front(), 0, buffer_size_ - 1);
             {
                 std::lock_guard<std::mutex> lck(gpu_mutex_);
                 sino_uploaded_ = true;
-                active_gpu_buffer_index_ = 1 - active_gpu_buffer_index_;
+                gpu_buffer_index_ = 1 - gpu_buffer_index_;
                 gpu_cv_.notify_one();
             }
         }
@@ -90,7 +89,7 @@ void Reconstructor::start() {
             {
                 std::unique_lock<std::mutex> lck(gpu_mutex_);
                 gpu_cv_.wait(lck, [&] { return sino_uploaded_; });
-                solver_->reconstructPreview(preview_buffer_.back(), 1 - active_gpu_buffer_index_);
+                solver_->reconstructPreview(preview_buffer_.back(), gpu_buffer_index_);
                 sino_uploaded_ = false;
             }
             preview_buffer_.prepare();
@@ -171,7 +170,8 @@ void Reconstructor::pushProjection(ProjectionType k,
 }
 
 slice_data Reconstructor::reconstructSlice(orientation x) {
-    return solver_->reconstructSlice(x, active_gpu_buffer_index_);
+    std::lock_guard<std::mutex> lck(gpu_mutex_);
+    return solver_->reconstructSlice(x, gpu_buffer_index_);
 }
 
 const std::vector<float>& Reconstructor::previewData() { 

@@ -53,7 +53,7 @@ class Reconstructor {
     std::unique_ptr<Filter> filter_;
     std::unique_ptr<Solver> solver_;
 
-    int active_gpu_buffer_index_ = 0;
+    int gpu_buffer_index_ = 0;
     bool sino_uploaded_ = false;
     std::thread gpu_upload_thread_;
     std::thread gpu_recon_thread_;
