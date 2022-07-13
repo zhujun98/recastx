@@ -123,13 +123,13 @@ def stream_data_file(filepath, socket,  scan_index, *,
             raise ValueError(f"Unsupported scan_index: {scan_index}")
 
         shape = ds.shape[1:]
-        data = np.zeros(shape, dtype=np.uint16)
         n_images = ds.shape[0]
         frange = range if ordered else shuffled_range
         for i in frange(start, end):
             meta = gen_meta(scan_index, i, shape)
             # Repeating reading data from chunks if data size is smaller 
             # than the index range.
+            data = np.zeros(shape, dtype=np.uint16)
             ds.read_direct(data, np.s_[i % n_images, ...], None)
             queue.put((meta, data))
 
