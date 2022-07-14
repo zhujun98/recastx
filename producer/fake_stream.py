@@ -88,6 +88,9 @@ def gen_fake_data(socket, scan_index, n, *, shape):
     projections = [np.random.randint(4096, size=shape, dtype=np.uint16)
                    for _ in range(10)]
 
+    if n == 0:
+        n = 500
+
     for i in frange(0, n):
         meta = gen_meta(scan_index, i, shape)
         if scan_index == 0:
@@ -123,6 +126,9 @@ def stream_data_file(filepath, socket,  scan_index, *,
 
         shape = ds.shape[1:]
         n_images = ds.shape[0]
+        if start == end:
+            end = start + n_images
+
         for i in frange(start, end):
             meta = gen_meta(scan_index, i, shape)
             # Repeating reading data from chunks if data size is smaller 
@@ -160,12 +166,15 @@ def main():
                         help="Number of dark images (default=20)")
     parser.add_argument('--flats', default=20, type=int,
                         help="Number of flat images (default=20)")
-    parser.add_argument('--projections', default=128, type=int,
-                        help="Number of projection images (default=128)")
+    parser.add_argument('--projections', default=0, type=int,
+                        help="Number of projection images (default=0, i.e. "
+                             "the whole projection dataset when streaming from files or "
+                             "500 otherwise")
     parser.add_argument('--start', default=0, type=int,
                         help="Starting index of the projection images (default=0)")
     parser.add_argument('--ordered', action='store_true',
-                        help="Send out images with frame ID in order")
+                        help="Send out images with frame IDs in order. "
+                             "Note: enable ordered frame IDs to achieve higher throughput")
     parser.add_argument('--rows', default=1200, type=int,
                         help="Number of rows of the generated image (default=1200)")
     parser.add_argument('--cols', default=2016, type=int,
@@ -196,6 +205,9 @@ def main():
 
     if datafile:
         print(f"Streaming data from {datafile} ...")
+    else:
+        print("Streaming randomly generated data ...")
+
     for scan_index, n in enumerate([args.darks, args.flats, args.projections]):
         if not datafile:
             gen_fake_data(socket, scan_index, n, shape=(args.rows, args.cols))
