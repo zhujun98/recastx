@@ -240,7 +240,7 @@ void Reconstructor::processProjections() {
 
 const std::vector<RawDtype>& Reconstructor::darks() const { return all_darks_; }
 const std::vector<RawDtype>& Reconstructor::flats() const { return all_flats_; }
-const Buffer2<float>& Reconstructor::buffer() const { return buffer_; }
-const SimpleBuffer3<float>& Reconstructor::sinoBuffer() const { return sino_buffer_; }
+const DoubleBufferSp<float>& Reconstructor::buffer() const { return buffer_; }
+const TripleBuffer<float>& Reconstructor::sinoBuffer() const { return sino_buffer_; }
 
 } // namespace slicerecon

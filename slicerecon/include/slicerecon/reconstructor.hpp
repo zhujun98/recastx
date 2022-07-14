@@ -33,9 +33,9 @@ class Reconstructor {
     std::vector<RawDtype> all_flats_;
     std::vector<float> dark_avg_;
     std::vector<float> reciprocal_;
-    Buffer2<float> buffer_;
-    SimpleBuffer3<float> sino_buffer_;
-    SimpleBuffer3<float> preview_buffer_;
+    DoubleBufferSp<float> buffer_;
+    TripleBuffer<float> sino_buffer_;
+    TripleBuffer<float> preview_buffer_;
     bool initialized_ = false;
 
     int buffer_size_;
@@ -101,8 +101,8 @@ public:
 
     const std::vector<RawDtype>& darks() const;
     const std::vector<RawDtype>& flats() const;
-    const Buffer2<float>& buffer() const;
-    const SimpleBuffer3<float>& sinoBuffer() const;
+    const DoubleBufferSp<float>& buffer() const;
+    const TripleBuffer<float>& sinoBuffer() const;
 
 };
 

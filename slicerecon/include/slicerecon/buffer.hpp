@@ -6,7 +6,7 @@
 
 namespace slicerecon {
 
-class SimpleBufferInterface {
+class BufferInterface {
   public:
     virtual void initialize(size_t capacity) = 0;
 };
@@ -31,12 +31,12 @@ class DoubleBufferInterface {
 };
 
 template<typename T>
-class SimpleBuffer2 : public DoubleBufferInterface<T>, public SimpleBufferInterface {
+class DoubleBuffer : public DoubleBufferInterface<T>, public BufferInterface {
 
   public:
 
-    SimpleBuffer2() = default;
-    ~SimpleBuffer2() = default;
+    DoubleBuffer() = default;
+    ~DoubleBuffer() = default;
 
     void swap() override { this->front_.swap(this->back_); }
 
@@ -48,7 +48,7 @@ class SimpleBuffer2 : public DoubleBufferInterface<T>, public SimpleBufferInterf
 };
 
 template<typename T>
-class Buffer2 : public DoubleBufferInterface<T> {
+class DoubleBufferSp : public DoubleBufferInterface<T> {
 
     std::vector<int> indices_back_;
     std::vector<int> indices_front_;
@@ -59,8 +59,8 @@ class Buffer2 : public DoubleBufferInterface<T> {
 
   public:
 
-    Buffer2() = default;
-    ~Buffer2() = default;
+    DoubleBufferSp() = default;
+    ~DoubleBufferSp() = default;
 
     void swap() override {
         this->front_.swap(this->back_);
@@ -132,12 +132,12 @@ class TrippleBufferInterface {
 };
 
 template<typename T>
-class SimpleBuffer3 : public TrippleBufferInterface<T>, public SimpleBufferInterface {
+class TripleBuffer : public TrippleBufferInterface<T>, public BufferInterface {
 
   public:
 
-    SimpleBuffer3() = default;
-    ~SimpleBuffer3() = default;
+    TripleBuffer() = default;
+    ~TripleBuffer() = default;
 
     void fetch() override {
         std::unique_lock lk(this->mtx_);
