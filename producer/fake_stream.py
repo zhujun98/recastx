@@ -10,6 +10,8 @@ import h5py
 
 
 sentinel = object()
+frange = None
+
 
 def shuffled_range(start, end):
     prob = [0.2, 0.2, 0.1, 0.1, 0.1, 0.1, 0.05, 0.05, 0.05, 0.05]
@@ -47,9 +49,8 @@ def send(socket, queue):
         byte_sent += data.nbytes
         total_byte_sent += data.nbytes
         if counter % print_every == 0:
-            if counter % print_every == 0:
-                print(f"Sent type {meta['image_attributes']['scan_index']}, "
-                      f"frame {meta['frame']}")
+            print(f"Sent type {meta['image_attributes']['scan_index']}, "
+                  f"frame {meta['frame']}")
 
             dt = time.time() - t0
             print(f"Number of data sent: {counter:>6d}, "
@@ -75,8 +76,7 @@ def gen_meta(scan_index, frame_index, shape):
     }
 
 
-def gen_fake_data(socket, scan_index, n, *, 
-                  shape, ordered):
+def gen_fake_data(socket, scan_index, n, *, shape):
     queue = Queue()
     thread = Thread(target=send, args=(socket, queue))
     thread.start()
@@ -88,7 +88,6 @@ def gen_fake_data(socket, scan_index, n, *,
     projections = [np.random.randint(4096, size=shape, dtype=np.uint16)
                    for _ in range(10)]
 
-    frange = range if ordered else shuffled_range
     for i in frange(0, n):
         meta = gen_meta(scan_index, i, shape)
         if scan_index == 0:
@@ -104,7 +103,7 @@ def gen_fake_data(socket, scan_index, n, *,
 
 
 def stream_data_file(filepath, socket,  scan_index, *, 
-                     start, end, ordered):
+                     start, end):
     queue = Queue()
     thread = Thread(target=send, args=(socket, queue))
     thread.start()
@@ -124,7 +123,6 @@ def stream_data_file(filepath, socket,  scan_index, *,
 
         shape = ds.shape[1:]
         n_images = ds.shape[0]
-        frange = range if ordered else shuffled_range
         for i in frange(start, end):
             meta = gen_meta(scan_index, i, shape)
             # Repeating reading data from chunks if data size is smaller 
@@ -193,24 +191,23 @@ def main():
         raise RuntimeError(f"Unknown sock type: {sock_type}")
     socket.bind(f"tcp://*:{port}")
 
+    global frange
+    frange = range if args.ordered else shuffled_range
+
     if datafile:
         print(f"Streaming data from {datafile} ...")
     for scan_index, n in enumerate([args.darks, args.flats, args.projections]):
         if not datafile:
-            gen_fake_data(socket, scan_index, n, 
-                          shape=(args.rows, args.cols),
-                          ordered=args.ordered)
+            gen_fake_data(socket, scan_index, n, shape=(args.rows, args.cols))
         else:
             if scan_index == 2:
                 stream_data_file(datafile, socket, scan_index, 
                                  start=args.start, 
-                                 end=args.start + n,
-                                 ordered=args.ordered)
+                                 end=args.start + n)
             else:
                 stream_data_file(datafile, socket, scan_index, 
                                  start=0, 
-                                 end=n,
-                                 ordered=args.ordered)
+                                 end=n)
 
 
 if __name__ == "__main__":
