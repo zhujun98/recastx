@@ -80,7 +80,7 @@ public:
         return false;
     }
 
-    void uploadProjections(int buffer_idx, const std::vector<float>& sino, int begin, int end);
+    void uploadSinograms(int buffer_idx, const std::vector<float>& sino, int begin, int end);
 };
 
 class ParallelBeamSolver : public Solver {

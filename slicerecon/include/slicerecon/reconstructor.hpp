@@ -33,9 +33,9 @@ class Reconstructor {
     std::vector<RawDtype> all_flats_;
     std::vector<float> dark_avg_;
     std::vector<float> reciprocal_;
-    Buffer<float> buffer_;
-    SimpleBuffer<float> sino_buffer_;
-    SimpleBuffer<float> preview_buffer_;
+    DoubleBufferSp<float> buffer_;
+    TripleBuffer<float> sino_buffer_;
+    TripleBuffer<float> preview_buffer_;
     bool initialized_ = false;
 
     int buffer_size_;
@@ -53,20 +53,17 @@ class Reconstructor {
     std::unique_ptr<Filter> filter_;
     std::unique_ptr<Solver> solver_;
 
-    std::mutex sino_mutex_;
-    std::condition_variable sino_cv_;
-    int active_gpu_buffer_index_ = 0;
-    std::thread gpu_thread_;
+    int gpu_buffer_index_ = 0;
+    bool sino_uploaded_ = false;
+    std::thread gpu_upload_thread_;
+    std::thread gpu_recon_thread_;
+    std::condition_variable gpu_cv_;
     std::mutex gpu_mutex_;
-    std::mutex preview_mutex_;
-    std::condition_variable preview_cv_;
 
     int num_threads_;
     oneapi::tbb::task_arena arena_;
 
     void processProjections();
-
-    void reconstructPreview();
 
 public:
 
@@ -90,12 +87,7 @@ public:
     void pushProjection(ProjectionType k, 
                         int32_t proj_idx, 
                         const std::array<int32_t, 2>& shape, 
-                        char* data); 
-
-    /**
-     * @brief Copy projections (projection_id, rows, cols) to sinograms (rows, projection_id, cols).
-     */
-    void projectionToSino();
+                        const char* data); 
 
     slice_data reconstructSlice(orientation x); 
 
@@ -109,8 +101,8 @@ public:
 
     const std::vector<RawDtype>& darks() const;
     const std::vector<RawDtype>& flats() const;
-    const Buffer<float>& buffer() const;
-    const SimpleBuffer<float>& sinoBuffer() const;
+    const DoubleBufferSp<float>& buffer() const;
+    const TripleBuffer<float>& sinoBuffer() const;
 
 };
 

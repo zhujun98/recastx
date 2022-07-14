@@ -68,26 +68,43 @@ void Reconstructor::setSolver(std::unique_ptr<Solver>&& solver) {
 }
 
 void Reconstructor::start() {
-    gpu_thread_ = std::thread([&] {
+    gpu_upload_thread_ = std::thread([&] {
         while (true) {
-            std::lock_guard<std::mutex> gpu_lock(gpu_mutex_);
+            sino_buffer_.fetch();
 
-            spdlog::info("Uploading sinogram buffer to GPU ...");
-            active_gpu_buffer_index_ = 1 - active_gpu_buffer_index_;
+            spdlog::info("Uploading sinograms to GPU ...");
+            solver_->uploadSinograms(
+                1 - gpu_buffer_index_, sino_buffer_.front(), 0, buffer_size_ - 1);
+
             {
-                std::unique_lock<std::mutex> sino_lock(sino_mutex_);
-                sino_cv_.wait(sino_lock);
-                solver_->uploadProjections(active_gpu_buffer_index_, sino_buffer_.front(), 0, buffer_size_ - 1);
+                std::lock_guard<std::mutex> lck(gpu_mutex_);
+                sino_uploaded_ = true;
+                gpu_buffer_index_ = 1 - gpu_buffer_index_;
             }
-            reconstructPreview();
+            gpu_cv_.notify_one();
         }
     });
+
+    gpu_recon_thread_ = std::thread([&] {
+        while (true) {
+            {
+                std::unique_lock<std::mutex> lck(gpu_mutex_);
+                gpu_cv_.wait(lck, [&] { return sino_uploaded_; });
+                solver_->reconstructPreview(preview_buffer_.back(), gpu_buffer_index_);
+                sino_uploaded_ = false;
+            }
+            preview_buffer_.prepare();
+        }
+    });
+
+    gpu_upload_thread_.detach();
+    gpu_recon_thread_.detach();
 }
 
 void Reconstructor::pushProjection(ProjectionType k, 
                                    int32_t proj_idx, 
                                    const std::array<int32_t, 2>& shape, 
-                                   char* data) {
+                                   const char* data) {
 
     if (shape[0] != rows_ || shape[1] != cols_) {
         spdlog::error("Received projection with wrong shape. Actual: {} x {}, expected: {} x {}", 
@@ -122,15 +139,8 @@ void Reconstructor::pushProjection(ProjectionType k,
             // TODO: compute the average on the fly instead of storing the data in the buffer
             buffer_.fill<RawDtype>(data, proj_idx / buffer_size_, proj_idx % buffer_size_, pixels_);
             if (buffer_.full()) {
-                spdlog::info("Processing projection buffer ...");
+                spdlog::info("Processing projections ...");
                 processProjections();
-                buffer_.swap();
-                {
-                    std::lock_guard<std::mutex> sino_lock(sino_mutex_);
-                    projectionToSino();
-                    sino_buffer_.swap();
-                    sino_cv_.notify_one();
-                }
             }
 
             break;
@@ -163,12 +173,12 @@ void Reconstructor::pushProjection(ProjectionType k,
 }
 
 slice_data Reconstructor::reconstructSlice(orientation x) {
-    return solver_->reconstructSlice(x, active_gpu_buffer_index_);
+    std::lock_guard<std::mutex> lck(gpu_mutex_);
+    return solver_->reconstructSlice(x, gpu_buffer_index_);
 }
 
 const std::vector<float>& Reconstructor::previewData() { 
-    std::unique_lock<std::mutex> preview_lock(preview_mutex_);
-    preview_cv_.wait(preview_lock);
+    preview_buffer_.fetch();
     return preview_buffer_.front(); 
 }
 
@@ -181,76 +191,56 @@ void Reconstructor::processProjections() {
     auto start = std::chrono::steady_clock::now();
 #endif
 
-    auto data = buffer_.front().data();
+    auto projs = buffer_.back().data();
     using namespace oneapi;
     arena_.execute([&]{
         tbb::parallel_for(tbb::blocked_range<int>(0, buffer_size_),
                           [&](const tbb::blocked_range<int> &block) {
             for (auto i = block.begin(); i != block.end(); ++i) {
-                float* proj = &data[i * pixels_];
+                float* p = &projs[i * pixels_];
 
-                utils::flatField(proj, pixels_, dark_avg_, reciprocal_);
+                utils::flatField(p, pixels_, dark_avg_, reciprocal_);
 
-                if (paganin_) paganin_->apply(proj, i % num_threads_);
+                if (paganin_) paganin_->apply(p, i % num_threads_);
                 else
-                    utils::negativeLog(proj, pixels_);
+                    utils::negativeLog(p, pixels_);
 
-                filter_->apply(proj, tbb::this_task_arena::current_thread_index());
+                filter_->apply(p, tbb::this_task_arena::current_thread_index());
 
                 // TODO: Add FDK scaler for cone beam
             }
         });
     });
 
-#if defined(WITH_MONITOR)
-    float duration = std::chrono::duration_cast<std::chrono::microseconds>(
-    std::chrono::steady_clock::now() -  start).count();
-    spdlog::info("[bench] Processing projection buffer took {} ms", duration / 1000);
-#endif
-}
-
-void Reconstructor::projectionToSino() {
-
-#if defined(WITH_MONITOR)
-    auto start = std::chrono::steady_clock::now();
-#endif    
-
-    using namespace oneapi;
-
-    const auto& proj = buffer_.back();
-    auto& sino = sino_buffer_.back();
+    // (projection_id, rows, cols) -> (rows, projection_id, cols).
+    auto& sinos = sino_buffer_.back();
     arena_.execute([&]{
         tbb::parallel_for(tbb::blocked_range<int>(0, rows_),
                           [&](const tbb::blocked_range<int> &block) {
             for (auto i = block.begin(); i != block.end(); ++i) {
                 for (int j = 0; j < buffer_size_; ++j) {
                     for (int k = 0; k < cols_; ++k) {
-                        sino[i * buffer_size_ * cols_ + j * cols_ + k] = 
-                            proj[j * cols_ * rows_ + i * cols_ + k];
+                        sinos[i * buffer_size_ * cols_ + j * cols_ + k] = 
+                            projs[j * cols_ * rows_ + i * cols_ + k];
                     }
                 }
             }
         });
     });
 
+    buffer_.swap();
+    sino_buffer_.prepare();
+
 #if defined(WITH_MONITOR)
     float duration = std::chrono::duration_cast<std::chrono::microseconds>(
     std::chrono::steady_clock::now() -  start).count();
-    spdlog::info("[bench] Transposing into sino buffer took {} ms", duration / 1000);
+    spdlog::info("[bench] Processing projections took {} ms", duration / 1000);
 #endif
-
-}
-
-void Reconstructor::reconstructPreview() {
-    std::lock_guard<std::mutex> preview_lock(preview_mutex_);
-    solver_->reconstructPreview(preview_buffer_.back(), active_gpu_buffer_index_);
-    preview_buffer_.swap();
-    preview_cv_.notify_one();
 }
 
 const std::vector<RawDtype>& Reconstructor::darks() const { return all_darks_; }
 const std::vector<RawDtype>& Reconstructor::flats() const { return all_flats_; }
-const Buffer<float>& Reconstructor::buffer() const { return buffer_; }
-const SimpleBuffer<float>& Reconstructor::sinoBuffer() const { return sino_buffer_; }
+const DoubleBufferSp<float>& Reconstructor::buffer() const { return buffer_; }
+const TripleBuffer<float>& Reconstructor::sinoBuffer() const { return sino_buffer_; }
 
 } // namespace slicerecon

@@ -10,6 +10,8 @@ import h5py
 
 
 sentinel = object()
+frange = None
+
 
 def shuffled_range(start, end):
     prob = [0.2, 0.2, 0.1, 0.1, 0.1, 0.1, 0.05, 0.05, 0.05, 0.05]
@@ -39,10 +41,6 @@ def send(socket, queue):
 
         if data is sentinel:
             break
-        else:
-            if counter % print_every == 0:
-                print(f"Sent type {meta['image_attributes']['scan_index']}, "
-                    f"frame {meta['frame']}")
 
         socket.send_json(meta, flags=zmq.SNDMORE)
         socket.send(data)
@@ -51,6 +49,9 @@ def send(socket, queue):
         byte_sent += data.nbytes
         total_byte_sent += data.nbytes
         if counter % print_every == 0:
+            print(f"Sent type {meta['image_attributes']['scan_index']}, "
+                  f"frame {meta['frame']}")
+
             dt = time.time() - t0
             print(f"Number of data sent: {counter:>6d}, "
                   f"throughput: {byte_sent / dt / to_mb:>6.1f} MB/s")
@@ -75,7 +76,7 @@ def gen_meta(scan_index, frame_index, shape):
     }
 
 
-def gen_fake_data(socket, scan_index, n, *, shape, unordered=False):
+def gen_fake_data(socket, scan_index, n, *, shape):
     queue = Queue()
     thread = Thread(target=send, args=(socket, queue))
     thread.start()
@@ -87,7 +88,7 @@ def gen_fake_data(socket, scan_index, n, *, shape, unordered=False):
     projections = [np.random.randint(4096, size=shape, dtype=np.uint16)
                    for _ in range(10)]
 
-    for i in shuffled_range(0, n):
+    for i in frange(0, n):
         meta = gen_meta(scan_index, i, shape)
         if scan_index == 0:
             data = darks[np.random.choice(len(darks))]
@@ -101,7 +102,8 @@ def gen_fake_data(socket, scan_index, n, *, shape, unordered=False):
     thread.join()
 
 
-def stream_data_file(filepath, socket,  scan_index, *, start, end):
+def stream_data_file(filepath, socket,  scan_index, *, 
+                     start, end):
     queue = Queue()
     thread = Thread(target=send, args=(socket, queue))
     thread.start()
@@ -120,12 +122,12 @@ def stream_data_file(filepath, socket,  scan_index, *, start, end):
             raise ValueError(f"Unsupported scan_index: {scan_index}")
 
         shape = ds.shape[1:]
-        data = np.zeros(shape, dtype=np.uint16)
         n_images = ds.shape[0]
-        for i in shuffled_range(start, end):
+        for i in frange(start, end):
             meta = gen_meta(scan_index, i, shape)
             # Repeating reading data from chunks if data size is smaller 
             # than the index range.
+            data = np.zeros(shape, dtype=np.uint16)
             ds.read_direct(data, np.s_[i % n_images, ...], None)
             queue.put((meta, data))
 
@@ -162,6 +164,8 @@ def main():
                         help="Number of projection images (default=128)")
     parser.add_argument('--start', default=0, type=int,
                         help="Starting index of the projection images (default=0)")
+    parser.add_argument('--ordered', action='store_true',
+                        help="Send out images with frame ID in order")
     parser.add_argument('--rows', default=1200, type=int,
                         help="Number of rows of the generated image (default=1200)")
     parser.add_argument('--cols', default=2016, type=int,
@@ -187,6 +191,9 @@ def main():
         raise RuntimeError(f"Unknown sock type: {sock_type}")
     socket.bind(f"tcp://*:{port}")
 
+    global frange
+    frange = range if args.ordered else shuffled_range
+
     if datafile:
         print(f"Streaming data from {datafile} ...")
     for scan_index, n in enumerate([args.darks, args.flats, args.projections]):
@@ -198,7 +205,9 @@ def main():
                                  start=args.start, 
                                  end=args.start + n)
             else:
-                stream_data_file(datafile, socket, scan_index, start=0, end=n)
+                stream_data_file(datafile, socket, scan_index, 
+                                 start=0, 
+                                 end=n)
 
 
 if __name__ == "__main__":
