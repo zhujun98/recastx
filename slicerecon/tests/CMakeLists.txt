@@ -32,6 +32,7 @@ find_package(Threads REQUIRED)
 
 add_executable(test_slicerecon
     main.cpp
+    test_buffer.cpp
     test_reconstructor.cpp
     test_filter.cpp)
 target_include_directories(test_slicerecon

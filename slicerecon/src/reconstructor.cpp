@@ -33,9 +33,10 @@ void Reconstructor::initialize(int num_darks,
     dark_avg_.resize(pixels_);
     reciprocal_.resize(pixels_, 1.0f);
 
-    buffer_size_ = num_projections;
-    buffer_.initialize((size_t)buffer_size_, pixels_);
-    sino_buffer_.initialize((size_t)buffer_size_ * pixels_);
+    buffer_size_ = 100;
+    group_size_ = num_projections;
+    buffer_.initialize(buffer_size_, group_size_, pixels_);
+    sino_buffer_.initialize(group_size_ * pixels_);
     preview_buffer_.initialize(preview_size * preview_size * preview_size);
 
     initialized_ = true;
@@ -74,7 +75,7 @@ void Reconstructor::start() {
 
             spdlog::info("Uploading sinograms to GPU ...");
             solver_->uploadSinograms(
-                1 - gpu_buffer_index_, sino_buffer_.front(), 0, buffer_size_ - 1);
+                1 - gpu_buffer_index_, sino_buffer_.front(), 0, group_size_ - 1);
 
             {
                 std::lock_guard<std::mutex> lck(gpu_mutex_);
@@ -137,8 +138,9 @@ void Reconstructor::pushProjection(ProjectionType k,
             }
 
             // TODO: compute the average on the fly instead of storing the data in the buffer
-            buffer_.fill<RawDtype>(data, proj_idx / buffer_size_, proj_idx % buffer_size_, pixels_);
-            if (buffer_.full()) {
+            buffer_.fill<RawDtype>(data, proj_idx / group_size_, proj_idx % group_size_);
+            if (buffer_.isReady()) {
+                buffer_.fetch();
                 spdlog::info("Processing projections ...");
                 processProjections();
             }
@@ -184,17 +186,17 @@ const std::vector<float>& Reconstructor::previewData() {
 
 int Reconstructor::previewSize() const { return preview_size_; }
 
-int Reconstructor::bufferSize() const { return buffer_size_; }
+size_t Reconstructor::bufferSize() const { return group_size_; }
 
 void Reconstructor::processProjections() {
 #if defined(WITH_MONITOR)
     auto start = std::chrono::steady_clock::now();
 #endif
 
-    auto projs = buffer_.back().data();
+    auto projs = buffer_.front().data();
     using namespace oneapi;
     arena_.execute([&]{
-        tbb::parallel_for(tbb::blocked_range<int>(0, buffer_size_),
+        tbb::parallel_for(tbb::blocked_range<int>(0, group_size_),
                           [&](const tbb::blocked_range<int> &block) {
             for (auto i = block.begin(); i != block.end(); ++i) {
                 float* p = &projs[i * pixels_];
@@ -218,9 +220,9 @@ void Reconstructor::processProjections() {
         tbb::parallel_for(tbb::blocked_range<int>(0, rows_),
                           [&](const tbb::blocked_range<int> &block) {
             for (auto i = block.begin(); i != block.end(); ++i) {
-                for (int j = 0; j < buffer_size_; ++j) {
-                    for (int k = 0; k < cols_; ++k) {
-                        sinos[i * buffer_size_ * cols_ + j * cols_ + k] = 
+                for (size_t j = 0; j < group_size_; ++j) {
+                    for (size_t k = 0; k < cols_; ++k) {
+                        sinos[i * group_size_ * cols_ + j * cols_ + k] = 
                             projs[j * cols_ * rows_ + i * cols_ + k];
                     }
                 }
@@ -228,7 +230,6 @@ void Reconstructor::processProjections() {
         });
     });
 
-    buffer_.swap();
     sino_buffer_.prepare();
 
 #if defined(WITH_MONITOR)
@@ -240,7 +241,7 @@ void Reconstructor::processProjections() {
 
 const std::vector<RawDtype>& Reconstructor::darks() const { return all_darks_; }
 const std::vector<RawDtype>& Reconstructor::flats() const { return all_flats_; }
-const DoubleBufferSp<float>& Reconstructor::buffer() const { return buffer_; }
+const MemoryBuffer<float>& Reconstructor::buffer() const { return buffer_; }
 const TripleBuffer<float>& Reconstructor::sinoBuffer() const { return sino_buffer_; }
 
 } // namespace slicerecon

@@ -98,28 +98,27 @@ TEST_F(ReconTest, TestPushProjection) {
     pushDarks(num_darks_);
     pushFlats(num_flats_);
 
-    // buffer will be swapped after the processing
-    auto& buffer1 = recon_.buffer().back();
-    auto& buffer2 = recon_.buffer().front();
-    auto& sino_buffer = recon_.sinoBuffer().ready();
+    auto& sino = recon_.sinoBuffer().ready();
 
     // push projections (don't completely fill the buffer)
     pushProjection(0, num_projections_ - 1);
-    EXPECT_EQ(buffer1[0], 2.f);
-    EXPECT_EQ(buffer1[(num_projections_ - 1) * pixels_ - 1], 3.f); 
+    auto& projs_ready = recon_.buffer().ready();
+    EXPECT_EQ(projs_ready[0], 2.f);
+    EXPECT_EQ(projs_ready[(num_projections_ - 1) * pixels_ - 1], 3.f); 
 
     // push projections to fill the buffer
     pushProjection(num_projections_ - 1, num_projections_);
-    EXPECT_THAT(std::vector<float>(buffer2.begin(), buffer2.begin() + 10), 
+    auto& projs_front = recon_.buffer().front();
+    EXPECT_THAT(std::vector<float>(projs_front.begin(), projs_front.begin() + 10), 
                 Pointwise(FloatNear(1e-6), {0.110098f, -0.272487f, 0.133713f, -0.491590f, 0.520265f,
                                             0.099537f, -0.214807f, 0.464008f, -0.369369f, 0.020631f}));
-    EXPECT_THAT(std::vector<float>(buffer2.end() - 10, buffer2.end()), 
+    EXPECT_THAT(std::vector<float>(projs_front.end() - 10, projs_front.end()), 
                 Pointwise(FloatNear(1e-6), { 0.443812f,  0.056262f, -0.205481f,  0.034181f, -0.328773f,
                                             -0.028346f, -0.080572f, -0.066762f, -0.086848f,  0.262528f}));
-    EXPECT_THAT(std::vector<float>(sino_buffer.begin(), sino_buffer.begin() + 10), 
+    EXPECT_THAT(std::vector<float>(sino.begin(), sino.begin() + 10), 
                 Pointwise(FloatNear(1e-6), {0.110098f, -0.272487f, 0.133713f, -0.491590f, 0.520265f,
                                             0.101732f, -0.201946f, 0.119072f, -0.369920f, 0.351062f}));
-    EXPECT_THAT(std::vector<float>(sino_buffer.end() - 10, sino_buffer.end()), 
+    EXPECT_THAT(std::vector<float>(sino.end() - 10, sino.end()), 
                 Pointwise(FloatNear(1e-6), {-0.040253f, -0.094602f, -0.078659f, -0.107789f, 0.3213040f,
                                             -0.028346f, -0.080572f, -0.066762f, -0.086848f, 0.262528f}));
 }
@@ -129,39 +128,33 @@ TEST_F(ReconTest, TestPushProjectionUnordered) {
     pushDarks(num_darks_);
     pushFlats(num_flats_);
 
-    // buffer will be swapped after the processing
-    auto& buffer1 = recon_.buffer().back();
-    auto& buffer2 = recon_.buffer().front();
-    auto& sino_buffer = recon_.sinoBuffer().ready();
-
     pushProjection(0, num_projections_ - 3);
     int overflow = 3;
     pushProjection(num_projections_ - 1, num_projections_ + overflow);
-
-    EXPECT_EQ(buffer1[0], 2.f);
-    EXPECT_EQ(buffer1[num_projections_ * pixels_ - 1], 4.f);
-    EXPECT_EQ(buffer2[0], 2.f);
-    EXPECT_EQ(buffer1[overflow * pixels_ - 1], 3.f);
-    EXPECT_FALSE(recon_.buffer().full());
-    EXPECT_EQ(recon_.buffer().size(), num_projections_ - 2);
+    auto& projs_ready = recon_.buffer().ready();
+    EXPECT_EQ(projs_ready[0], 2.f);
+    EXPECT_EQ(projs_ready[overflow * pixels_ - 1], 3.f);
+    EXPECT_EQ(projs_ready[num_projections_ * pixels_ - 1], 4.f);
 
     pushProjection(num_projections_ - 3, num_projections_ - 1);
-    EXPECT_THAT(std::vector<float>(buffer2.begin(), buffer2.begin() + 10), 
+    auto& projs_front = recon_.buffer().front();
+    EXPECT_THAT(std::vector<float>(projs_front.begin(), projs_front.begin() + 10), 
                 Pointwise(FloatNear(1e-6), {0.110098f, -0.272487f, 0.133713f, -0.491590f, 0.520265f,
                                             0.099537f, -0.214807f, 0.464008f, -0.369369f, 0.020631f}));
-    EXPECT_THAT(std::vector<float>(buffer2.end() - 10, buffer2.end()), 
+    EXPECT_THAT(std::vector<float>(projs_front.end() - 10, projs_front.end()), 
                 Pointwise(FloatNear(1e-6), { 0.443812f,  0.056262f, -0.205481f,  0.034181f, -0.328773f,
                                             -0.028346f, -0.080572f, -0.066762f, -0.086848f,  0.262528f}));
-    EXPECT_THAT(std::vector<float>(sino_buffer.begin(), sino_buffer.begin() + 10), 
+
+    auto& sino = recon_.sinoBuffer().ready();
+    EXPECT_THAT(std::vector<float>(sino.begin(), sino.begin() + 10), 
                 Pointwise(FloatNear(1e-6), {0.110098f, -0.272487f, 0.133713f, -0.491590f, 0.520265f,
                                             0.101732f, -0.201946f, 0.119072f, -0.369920f, 0.351062f}));
-    EXPECT_THAT(std::vector<float>(sino_buffer.end() - 10, sino_buffer.end()), 
+    EXPECT_THAT(std::vector<float>(sino.end() - 10, sino.end()), 
                 Pointwise(FloatNear(1e-6), {-0.040253f, -0.094602f, -0.078659f, -0.107789f, 0.3213040f,
                                             -0.028346f, -0.080572f, -0.066762f, -0.086848f, 0.262528f}));
-    EXPECT_EQ(recon_.buffer().size(), overflow);
 
     pushProjection(num_projections_ + overflow, 2 * num_projections_);
-    EXPECT_THROW(pushProjection(0, 1), std::runtime_error);
+    pushProjection(0, 1); // trigger warn log message
 }
 
 TEST(TestUtils, TestComputeReciprocal) {
