@@ -68,10 +68,11 @@ void DataReceiver::start() {
             auto shape = meta["shape"];
 
             socket_.recv(update, zmq::recv_flags::none);
-            if (scan_index == ProjectionType::dark || scan_index == ProjectionType::flat) {
-                spdlog::info("Projection received: type = {0:d}, frame = {1:d}", 
-                             static_cast<int>(scan_index), frame);
-            }
+
+#if defined(WITH_VERBOSITY)
+            spdlog::info("Projection received: type = {0:d}, frame = {1:d}", 
+                         static_cast<int>(scan_index), frame);
+#endif
 
             recon_->pushProjection(scan_index,
                                    frame,

@@ -57,6 +57,9 @@ target_compile_options(slicerecon
 if (BUILD_MONITOR)
     target_compile_definitions(slicerecon PRIVATE WITH_MONITOR)
 endif()
+if (BUILD_VERBOSITY)
+    target_compile_definitions(slicerecon PRIVATE WITH_VERBOSITY)
+endif()
 
 if (BUILD_TEST)
     add_subdirectory(tests)

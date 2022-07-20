@@ -154,7 +154,6 @@ void Reconstructor::pushProjection(ProjectionType k,
             }
             memcpy(&all_darks_[received_darks_ * pixels_], data, sizeof(RawDtype) * pixels_);
             ++received_darks_;
-            spdlog::info("Received dark No. {0:d}", received_darks_);
             break;
         }
         case ProjectionType::flat: {
@@ -165,7 +164,6 @@ void Reconstructor::pushProjection(ProjectionType k,
             }
             memcpy(&all_flats_[received_flats_ * pixels_], data, sizeof(RawDtype) * pixels_);
             ++received_flats_;
-            spdlog::info("Received flat No. {0:d}", received_flats_);
             break;
         }
         default:
