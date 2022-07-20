@@ -22,6 +22,7 @@ Reconstructor::~Reconstructor() = default;
 void Reconstructor::initialize(int num_darks, 
                                int num_flats, 
                                int group_size,
+                               int buffer_size,
                                int preview_size) {
     num_darks_ = num_darks;
     num_flats_ = num_flats;
@@ -33,7 +34,7 @@ void Reconstructor::initialize(int num_darks,
     dark_avg_.resize(pixels_);
     reciprocal_.resize(pixels_, 1.0f);
 
-    buffer_size_ = 100;
+    buffer_size_ = buffer_size;
     buffer_.initialize(buffer_size_, group_size_, pixels_);
     sino_buffer_.initialize(group_size_ * pixels_);
     preview_buffer_.initialize(preview_size * preview_size * preview_size);

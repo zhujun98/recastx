@@ -85,6 +85,8 @@ int main(int argc, char** argv)
          "number of required flat images")
         ("group-size", po::value<int>()->default_value(128),
          "number of projections per scan")
+        ("buffer-size", po::value<int>()->default_value(100),
+         "maximum number of projection groups to be cached in the memory buffer")
         ("retrieve-phase", po::bool_switch(&retrieve_phase),
          "switch to Paganin filter")
         ("tilt", po::bool_switch(&tilt),
@@ -147,6 +149,7 @@ int main(int argc, char** argv)
     auto num_darks = opts["darks"].as<int>();
     auto num_flats = opts["flats"].as<int>();
     auto group_size = opts["group-size"].as<int>();
+    auto buffer_size = opts["buffer-size"].as<int>();
 
     auto filter_name = opts["filter"].as<std::string>();
 
@@ -168,7 +171,7 @@ int main(int argc, char** argv)
     // 1. set up reconstructor
     auto recon = std::make_shared<slicerecon::Reconstructor>(rows, cols, num_threads);
 
-    recon->initialize(num_darks, num_flats, group_size, preview_size);
+    recon->initialize(num_darks, num_flats, group_size, buffer_size, preview_size);
 
     if (retrieve_phase) recon->initPaganin(pixel_size, lambda, delta, beta, distance);
 

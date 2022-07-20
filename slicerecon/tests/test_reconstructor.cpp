@@ -21,7 +21,8 @@ class ReconTest : public testing::Test {
 
     int num_darks_ = 4;
     int num_flats_ = 6;
-    int num_projections_ = 16;
+    int group_size_ = 16;
+    int buffer_size_ = 100;
     std::vector<float> angles_;
     int slice_size_ = cols_;
     int preview_size_ = slice_size_ / 2;
@@ -37,11 +38,11 @@ class ReconTest : public testing::Test {
     slicerecon::Reconstructor recon_ {rows_, cols_, threads_};
 
     void SetUp() override {
-        angles_ = slicerecon::utils::defaultAngles(num_projections_);
+        angles_ = slicerecon::utils::defaultAngles(group_size_);
     }
 
     void buildRecon() {
-        recon_.initialize(num_darks_, num_flats_, num_projections_, preview_size_);
+        recon_.initialize(num_darks_, num_flats_, group_size_, buffer_size_, preview_size_);
         recon_.initFilter(filter_name_, gaussian_pass_);
         recon_.setSolver(std::make_unique<slicerecon::ParallelBeamSolver>(
             rows_, cols_, angles_, 
@@ -101,13 +102,13 @@ TEST_F(ReconTest, TestPushProjection) {
     auto& sino = recon_.sinoBuffer().ready();
 
     // push projections (don't completely fill the buffer)
-    pushProjection(0, num_projections_ - 1);
+    pushProjection(0, group_size_ - 1);
     auto& projs_ready = recon_.buffer().ready();
     EXPECT_EQ(projs_ready[0], 2.f);
-    EXPECT_EQ(projs_ready[(num_projections_ - 1) * pixels_ - 1], 3.f); 
+    EXPECT_EQ(projs_ready[(group_size_ - 1) * pixels_ - 1], 3.f); 
 
     // push projections to fill the buffer
-    pushProjection(num_projections_ - 1, num_projections_);
+    pushProjection(group_size_ - 1, group_size_);
     auto& projs_front = recon_.buffer().front();
     EXPECT_THAT(std::vector<float>(projs_front.begin(), projs_front.begin() + 10), 
                 Pointwise(FloatNear(1e-6), {0.110098f, -0.272487f, 0.133713f, -0.491590f, 0.520265f,
@@ -128,15 +129,15 @@ TEST_F(ReconTest, TestPushProjectionUnordered) {
     pushDarks(num_darks_);
     pushFlats(num_flats_);
 
-    pushProjection(0, num_projections_ - 3);
+    pushProjection(0, group_size_ - 3);
     int overflow = 3;
-    pushProjection(num_projections_ - 1, num_projections_ + overflow);
+    pushProjection(group_size_ - 1, group_size_ + overflow);
     auto& projs_ready = recon_.buffer().ready();
     EXPECT_EQ(projs_ready[0], 2.f);
     EXPECT_EQ(projs_ready[overflow * pixels_ - 1], 3.f);
-    EXPECT_EQ(projs_ready[num_projections_ * pixels_ - 1], 4.f);
+    EXPECT_EQ(projs_ready[group_size_ * pixels_ - 1], 4.f);
 
-    pushProjection(num_projections_ - 3, num_projections_ - 1);
+    pushProjection(group_size_ - 3, group_size_ - 1);
     auto& projs_front = recon_.buffer().front();
     EXPECT_THAT(std::vector<float>(projs_front.begin(), projs_front.begin() + 10), 
                 Pointwise(FloatNear(1e-6), {0.110098f, -0.272487f, 0.133713f, -0.491590f, 0.520265f,
@@ -153,7 +154,7 @@ TEST_F(ReconTest, TestPushProjectionUnordered) {
                 Pointwise(FloatNear(1e-6), {-0.040253f, -0.094602f, -0.078659f, -0.107789f, 0.3213040f,
                                             -0.028346f, -0.080572f, -0.066762f, -0.086848f, 0.262528f}));
 
-    pushProjection(num_projections_ + overflow, 2 * num_projections_);
+    pushProjection(group_size_ + overflow, 2 * group_size_);
     pushProjection(0, 1); // trigger warn log message
 }
 

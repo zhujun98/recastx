@@ -74,6 +74,7 @@ public:
     void initialize(int num_darks, 
                     int num_flats, 
                     int group_size,
+                    int buffer_size,
                     int preview_size);
 
     void initPaganin(float pixel_size, float lambda, float delta, float beta, float distance);
