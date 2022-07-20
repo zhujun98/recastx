@@ -21,11 +21,11 @@ Reconstructor::~Reconstructor() = default;
 
 void Reconstructor::initialize(int num_darks, 
                                int num_flats, 
-                               int num_projections,
+                               int group_size,
                                int preview_size) {
     num_darks_ = num_darks;
     num_flats_ = num_flats;
-    num_projections_ = num_projections;
+    group_size_ = group_size;
     preview_size_ = preview_size;
 
     all_darks_.resize(pixels_ * num_darks);
@@ -34,16 +34,15 @@ void Reconstructor::initialize(int num_darks,
     reciprocal_.resize(pixels_, 1.0f);
 
     buffer_size_ = 100;
-    group_size_ = num_projections;
     buffer_.initialize(buffer_size_, group_size_, pixels_);
     sino_buffer_.initialize(group_size_ * pixels_);
     preview_buffer_.initialize(preview_size * preview_size * preview_size);
 
     initialized_ = true;
     spdlog::info("Reconstructor initialized:");
-    spdlog::info("- Number of dark images: {}", num_darks_);
-    spdlog::info("- Number of flat images: {}", num_flats_);
-    spdlog::info("- Number of projection images: {}", num_projections_);
+    spdlog::info("- Number of required dark images: {}", num_darks_);
+    spdlog::info("- Number of required flat images: {}", num_flats_);
+    spdlog::info("- Number of projection images per tomogram: {}", group_size_);
 }
 
 void Reconstructor::initPaganin(float pixel_size, 

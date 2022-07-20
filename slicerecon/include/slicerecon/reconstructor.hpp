@@ -29,6 +29,10 @@ class Reconstructor {
     int cols_;
     int pixels_;
 
+    int num_darks_ = 1;
+    int num_flats_ = 1;
+    int preview_size_ = 1; 
+
     std::vector<RawDtype> all_darks_;
     std::vector<RawDtype> all_flats_;
     std::vector<float> dark_avg_;
@@ -40,11 +44,6 @@ class Reconstructor {
 
     size_t group_size_;
     size_t buffer_size_;
-
-    int num_darks_ = 1;
-    int num_flats_ = 1;
-    int num_projections_ = 1;
-    int preview_size_ = 1; 
 
     int32_t received_darks_ = 0;
     int32_t received_flats_ = 0;
@@ -74,7 +73,7 @@ public:
 
     void initialize(int num_darks, 
                     int num_flats, 
-                    int num_projections,
+                    int group_size,
                     int preview_size);
 
     void initPaganin(float pixel_size, float lambda, float delta, float beta, float distance);
