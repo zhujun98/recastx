@@ -154,8 +154,9 @@ TEST_F(ReconTest, TestPushProjectionUnordered) {
                 Pointwise(FloatNear(1e-6), {-0.040253f, -0.094602f, -0.078659f, -0.107789f, 0.3213040f,
                                             -0.028346f, -0.080572f, -0.066762f, -0.086848f, 0.262528f}));
 
-    pushProjection(group_size_ + overflow, 2 * group_size_);
-    pushProjection(0, 1); // trigger warn log message
+    pushProjection(group_size_ + overflow, 2 * group_size_ - 1);
+    // trigger warn log message, there must be at least one unfilled group in the buffer
+    pushProjection(0, 1);
 }
 
 TEST(TestUtils, TestComputeReciprocal) {

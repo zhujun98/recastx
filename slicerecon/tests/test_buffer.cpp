@@ -15,38 +15,74 @@ std::vector<char> _produceRawData(std::vector<RawDtype>&& data) {
     return raw;
 }
 
-TEST(TestMemoryBuffer, TestNormal) {
-    size_t capacity = 2;
-    size_t group_size = 4;
-    size_t chunk_size = 3;
+class MemoryBufferTest : public testing::Test {
+  protected:
 
-    auto buffer = MemoryBuffer<float>();
-    buffer.initialize(capacity, group_size, chunk_size);
+    size_t capacity_ = 2;
+    size_t group_size_ = 4;
+    size_t chunk_size_ = 3;
 
-    ASSERT_EQ(buffer.occupied(), 0);
-    EXPECT_THROW(buffer.ready(), std::out_of_range);
+    MemoryBuffer<float> buffer_ = MemoryBuffer<float>();
 
-    buffer.fill<RawDtype>(_produceRawData({1, 2, 3}).data(), 0, 0);
-    ASSERT_EQ(buffer.occupied(), 1);
-    buffer.fill<RawDtype>(_produceRawData({4, 5, 6}).data(), 0, 1);
-    buffer.fill<RawDtype>(_produceRawData({1, 2, 3}).data(), 0, 2);
-    ASSERT_FALSE(buffer.isReady());
-    buffer.fill<RawDtype>(_produceRawData({1, 2, 3}).data(), 0, 3);
-    ASSERT_TRUE(buffer.isReady());
-    buffer.fetch();
-    EXPECT_THAT(buffer.front(), Pointwise(FloatNear(1e-6), 
-                                          {1., 2., 3., 4., 5., 6., 1., 2., 3., 1., 2., 3.}));
-    ASSERT_EQ(buffer.occupied(), 0);
+    void SetUp() override {
+        buffer_.initialize(capacity_, group_size_, chunk_size_);
+    }
+};
 
-    buffer.fill<RawDtype>(_produceRawData({7, 8, 9}).data(), 1, 2);
-    ASSERT_EQ(buffer.occupied(), 1);
-    ASSERT_FALSE(buffer.isReady());
+TEST_F(MemoryBufferTest, TestNormal) {
 
-    ASSERT_EQ(buffer.occupied(), 1); 
-    ASSERT_FALSE(buffer.isReady());
-    EXPECT_THAT(buffer.ready(), Pointwise(FloatNear(1e-6), 
-                                          {0., 0., 0., 0., 0., 0., 7., 8., 9., 0., 0., 0.}));
-    EXPECT_EQ(&buffer.ready(), &buffer.back());
+    ASSERT_EQ(buffer_.occupied(), 0);
+    EXPECT_THROW(buffer_.ready(), std::out_of_range);
+
+    buffer_.fill<RawDtype>(_produceRawData({1, 2, 3}).data(), 0, 0);
+    ASSERT_EQ(buffer_.occupied(), 1);
+    buffer_.fill<RawDtype>(_produceRawData({4, 5, 6}).data(), 0, 1);
+    buffer_.fill<RawDtype>(_produceRawData({1, 2, 3}).data(), 0, 2);
+    ASSERT_FALSE(buffer_.isReady());
+    buffer_.fill<RawDtype>(_produceRawData({1, 2, 3}).data(), 0, 3);
+    ASSERT_TRUE(buffer_.isReady());
+    EXPECT_EQ(&buffer_.ready(), &buffer_.back());
+    buffer_.fetch();
+    EXPECT_THAT(buffer_.front(), Pointwise(FloatNear(1e-6), 
+                                           {1., 2., 3., 4., 5., 6., 1., 2., 3., 1., 2., 3.}));
+    ASSERT_EQ(buffer_.occupied(), 0);
+    ASSERT_FALSE(buffer_.isReady());
+}
+
+TEST_F(MemoryBufferTest, TestBufferFull) {
+    for (size_t j = 0; j < group_size_; ++j) {
+        buffer_.fill<RawDtype>(_produceRawData({1, 2, 3}).data(), 0, j); 
+    }
+    ASSERT_EQ(buffer_.occupied(), 1);
+    ASSERT_TRUE(buffer_.isReady());
+
+    for (size_t j = 0; j < group_size_; ++j) {
+        buffer_.fill<RawDtype>(_produceRawData({4, 5, 6}).data(), 1, j); 
+    }
+    ASSERT_EQ(buffer_.occupied(), 1); // previous filled group was removed
+    ASSERT_TRUE(buffer_.isReady());
+    EXPECT_THAT(buffer_.ready(), Pointwise(FloatNear(1e-6), 
+                                           {4., 5., 6., 4., 5., 6., 4., 5., 6., 4., 5., 6.}));
+
+    // there is a gap between group indices
+    for (size_t j = 0; j < group_size_ - 1; ++j) {
+        buffer_.fill<RawDtype>(_produceRawData({7, 8, 9}).data(), capacity_ + 2, j); 
+    }
+    ASSERT_EQ(buffer_.occupied(), 2);
+    ASSERT_FALSE(buffer_.isReady()); // it is still empty
+
+    for (size_t j = 0; j < group_size_-1; ++j) {
+        buffer_.fill<RawDtype>(_produceRawData({1, 4, 7}).data(), capacity_ + 1, j); 
+    }
+    ASSERT_EQ(buffer_.occupied(), 2);
+    ASSERT_FALSE(buffer_.isReady());
+
+    buffer_.fill<RawDtype>(_produceRawData({9, 8, 7}).data(), capacity_ + 2, group_size_ - 1); 
+    ASSERT_EQ(buffer_.occupied(), 1); // previous unfilled group was removed
+    ASSERT_TRUE(buffer_.isReady());
+    buffer_.fetch();
+    EXPECT_THAT(buffer_.front(), Pointwise(FloatNear(1e-6), 
+                                           {7., 8., 9., 7., 8., 9., 7., 8., 9., 9., 8., 7.}));
 }
 
 } // slicerecon::test
