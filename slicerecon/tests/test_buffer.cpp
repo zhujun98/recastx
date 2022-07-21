@@ -55,11 +55,11 @@ TEST_F(MemoryBufferTest, TestBufferFull) {
     for (size_t j = 0; j < group_size_; ++j) {
         buffer_.fill<RawDtype>(_produceRawData({4, 5, 6}).data(), 1, j); 
     }
-    ASSERT_EQ(buffer_.occupied(), 1); // previous filled group was removed
+    ASSERT_EQ(buffer_.occupied(), 1); // group 0 was dropped
     EXPECT_THAT(buffer_.ready(), Pointwise(FloatNear(1e-6), 
                                            {4., 5., 6., 4., 5., 6., 4., 5., 6., 4., 5., 6.}));
 
-    // there is a gap between group indices
+    // group 1 was dropped; group 2 was added first and then dropped
     for (size_t j = 0; j < group_size_ - 1; ++j) {
         buffer_.fill<RawDtype>(_produceRawData({7, 8, 9}).data(), capacity_ + 2, j); 
     }
@@ -71,7 +71,7 @@ TEST_F(MemoryBufferTest, TestBufferFull) {
     ASSERT_EQ(buffer_.occupied(), 2);
 
     buffer_.fill<RawDtype>(_produceRawData({9, 8, 7}).data(), capacity_ + 2, group_size_ - 1); 
-    ASSERT_EQ(buffer_.occupied(), 1); // previous unfilled group was removed
+    ASSERT_EQ(buffer_.occupied(), 1); // group 3 was dropped
     buffer_.fetch();
     EXPECT_THAT(buffer_.front(), Pointwise(FloatNear(1e-6), 
                                            {7., 8., 9., 7., 8., 9., 7., 8., 9., 9., 8., 7.}));

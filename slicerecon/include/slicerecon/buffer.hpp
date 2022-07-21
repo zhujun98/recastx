@@ -169,7 +169,11 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
             unoccupied_.pop();
         } else if (group_idx > indices_.back()) {
             for (int i = indices_.back() + 1; i <= group_idx; ++i) {
-                if (unoccupied_.empty()) this->pop();
+                if (unoccupied_.empty()) {
+                    int idx = indices_.front();
+                    this->pop();
+                    spdlog::warn("Group {} data dropped!", idx);
+                }
                 indices_.push(i);
                 size_t buffer_idx = unoccupied_.front();
                 map_[i] = buffer_idx;
@@ -193,7 +197,12 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
         ++counter_[group_idx];
         if (counter_[group_idx] == group_size_) {
             // Remove earlier groups, no matter they are ready or not.
-            while (group_idx != indices_.front()) pop();
+            int idx = indices_.front();
+            while (group_idx != idx) {
+                pop();
+                spdlog::warn("Group {} data dropped!", idx);
+                idx = indices_.front();
+            }
             is_ready_ = true;
             cv_.notify_one();
         }
