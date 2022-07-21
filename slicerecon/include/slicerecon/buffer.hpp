@@ -125,6 +125,8 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
     size_t chunk_size_ = 0;
     size_t group_size_ = 0;
 
+    std::mutex mtx_;
+    std::condition_variable cv_;
     bool is_ready_ = false;
 
     void pop() {
@@ -158,6 +160,8 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
 
     template<typename D>
     void fill(const char* raw, int group_idx, int chunk_idx) {
+        std::lock_guard lk(mtx_);
+
         if (indices_.empty()) {
             indices_.push(group_idx);
             size_t buffer_idx = unoccupied_.front();
@@ -191,12 +195,13 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
             // Remove earlier groups, no matter they are ready or not.
             while (group_idx != indices_.front()) pop();
             is_ready_ = true;
+            cv_.notify_one();
         }
     }
 
-    bool isReady() const { return is_ready_; }
-
     void fetch() override {
+        std::unique_lock lk(mtx_);
+        cv_.wait(lk, [this] { return this->is_ready_; });
         this->front_.swap(buffer_[map_.at(indices_.front())]);
         pop();
         is_ready_ = false;

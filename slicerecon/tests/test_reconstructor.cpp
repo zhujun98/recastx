@@ -1,3 +1,5 @@
+#include <chrono>
+#include <thread>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -39,6 +41,8 @@ class ReconTest : public testing::Test {
 
     void SetUp() override {
         angles_ = slicerecon::utils::defaultAngles(group_size_);
+        buildRecon();
+        recon_.startProcessing();
     }
 
     void buildRecon() {
@@ -86,7 +90,6 @@ class ReconTest : public testing::Test {
 };
 
 TEST_F(ReconTest, TestPushProjectionException) {
-    buildRecon();
     std::vector<RawDtype> img(pixels_);
     EXPECT_THROW(recon_.pushProjection(
         ProjectionType::dark, 0, {10, 10}, reinterpret_cast<char*>(img.data())), 
@@ -94,8 +97,6 @@ TEST_F(ReconTest, TestPushProjectionException) {
 }
 
 TEST_F(ReconTest, TestPushProjection) {
-    buildRecon();
-
     pushDarks(num_darks_);
     pushFlats(num_flats_);
 
@@ -109,6 +110,7 @@ TEST_F(ReconTest, TestPushProjection) {
 
     // push projections to fill the buffer
     pushProjection(group_size_ - 1, group_size_);
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
     auto& projs_front = recon_.buffer().front();
     EXPECT_THAT(std::vector<float>(projs_front.begin(), projs_front.begin() + 10), 
                 Pointwise(FloatNear(1e-6), {0.110098f, -0.272487f, 0.133713f, -0.491590f, 0.520265f,
@@ -124,8 +126,6 @@ TEST_F(ReconTest, TestPushProjection) {
                                             -0.028346f, -0.080572f, -0.066762f, -0.086848f, 0.262528f}));
 }
 TEST_F(ReconTest, TestPushProjectionUnordered) {
-    buildRecon();
-
     pushDarks(num_darks_);
     pushFlats(num_flats_);
 
@@ -138,6 +138,7 @@ TEST_F(ReconTest, TestPushProjectionUnordered) {
     EXPECT_EQ(projs_ready[group_size_ * pixels_ - 1], 4.f);
 
     pushProjection(group_size_ - 3, group_size_ - 1);
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
     auto& projs_front = recon_.buffer().front();
     EXPECT_THAT(std::vector<float>(projs_front.begin(), projs_front.begin() + 10), 
                 Pointwise(FloatNear(1e-6), {0.110098f, -0.272487f, 0.133713f, -0.491590f, 0.520265f,

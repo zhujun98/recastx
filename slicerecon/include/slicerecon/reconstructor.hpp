@@ -53,6 +53,8 @@ class Reconstructor {
     std::unique_ptr<Filter> filter_;
     std::unique_ptr<Solver> solver_;
 
+    std::thread processing_thread_;
+
     int gpu_buffer_index_ = 0;
     bool sino_uploaded_ = false;
     std::thread gpu_upload_thread_;
@@ -61,9 +63,8 @@ class Reconstructor {
     std::mutex gpu_mutex_;
 
     int num_threads_;
-    oneapi::tbb::task_arena arena_;
 
-    void processProjections();
+    void processProjections(oneapi::tbb::task_arena& arena);
 
 public:
 
@@ -83,7 +84,9 @@ public:
 
     void setSolver(std::unique_ptr<Solver>&& solver);
 
-    void start();
+    void startProcessing();
+
+    void startReconstructing();
 
     void pushProjection(ProjectionType k, 
                         int32_t proj_idx, 

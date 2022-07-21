@@ -14,8 +14,7 @@ Reconstructor::Reconstructor(int rows, int cols, int num_threads)
      : rows_(rows),
        cols_(cols),
        pixels_(rows * cols),
-       num_threads_(num_threads), 
-       arena_(num_threads) {}
+       num_threads_(num_threads) {}
 
 Reconstructor::~Reconstructor() = default;
 
@@ -68,7 +67,20 @@ void Reconstructor::setSolver(std::unique_ptr<Solver>&& solver) {
     solver_ = std::move(solver);
 }
 
-void Reconstructor::start() {
+void Reconstructor::startProcessing() {
+    processing_thread_ = std::thread([&] {
+        oneapi::tbb::task_arena arena(num_threads_);
+        while (true) {
+            buffer_.fetch();
+            spdlog::info("Processing projections ...");
+            processProjections(arena);
+        }
+    });
+
+    processing_thread_.detach();
+}
+
+void Reconstructor::startReconstructing() {
     gpu_upload_thread_ = std::thread([&] {
         while (true) {
             sino_buffer_.fetch();
@@ -139,12 +151,6 @@ void Reconstructor::pushProjection(ProjectionType k,
 
             // TODO: compute the average on the fly instead of storing the data in the buffer
             buffer_.fill<RawDtype>(data, proj_idx / group_size_, proj_idx % group_size_);
-            if (buffer_.isReady()) {
-                buffer_.fetch();
-                spdlog::info("Processing projections ...");
-                processProjections();
-            }
-
             break;
         }
         case ProjectionType::dark: {
@@ -186,14 +192,14 @@ int Reconstructor::previewSize() const { return preview_size_; }
 
 size_t Reconstructor::bufferSize() const { return group_size_; }
 
-void Reconstructor::processProjections() {
+void Reconstructor::processProjections(oneapi::tbb::task_arena& arena) {
 #if defined(WITH_MONITOR)
     auto start = std::chrono::steady_clock::now();
 #endif
 
     auto projs = buffer_.front().data();
     using namespace oneapi;
-    arena_.execute([&]{
+    arena.execute([&]{
         tbb::parallel_for(tbb::blocked_range<int>(0, group_size_),
                           [&](const tbb::blocked_range<int> &block) {
             for (auto i = block.begin(); i != block.end(); ++i) {
@@ -214,7 +220,7 @@ void Reconstructor::processProjections() {
 
     // (projection_id, rows, cols) -> (rows, projection_id, cols).
     auto& sinos = sino_buffer_.back();
-    arena_.execute([&]{
+    arena.execute([&]{
         tbb::parallel_for(tbb::blocked_range<int>(0, rows_),
                           [&](const tbb::blocked_range<int> &block) {
             for (auto i = block.begin(); i != block.end(); ++i) {
