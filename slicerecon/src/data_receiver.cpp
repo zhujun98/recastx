@@ -51,7 +51,7 @@ DataReceiver::~DataReceiver() {
 
 void DataReceiver::start() {
     thread_ = std::thread([&] {
-#if defined(WITH_MONITOR)
+#if (VERBOSITY >= 1)
         int monitor_every = recon_->bufferSize();
         int msg_counter = 0;
         float msg_size = 0.f;  // in MB
@@ -79,7 +79,7 @@ void DataReceiver::start() {
                                    {shape[0], shape[1]},
                                    static_cast<char*>(update.data()));
 
-#if defined(WITH_MONITOR)
+#if (VERBOSITY >= 1)
             if (!msg_size) {
                 msg_size = static_cast<float>(shape[0]) * static_cast<float>(shape[1])
                            * sizeof(RawDtype) / (1024 * 1024);

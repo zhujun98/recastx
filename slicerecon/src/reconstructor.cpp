@@ -193,7 +193,7 @@ int Reconstructor::previewSize() const { return preview_size_; }
 size_t Reconstructor::bufferSize() const { return group_size_; }
 
 void Reconstructor::processProjections(oneapi::tbb::task_arena& arena) {
-#if defined(WITH_MONITOR)
+#if (VERBOSITY >= 1)
     auto start = std::chrono::steady_clock::now();
 #endif
 
@@ -236,7 +236,7 @@ void Reconstructor::processProjections(oneapi::tbb::task_arena& arena) {
 
     sino_buffer_.prepare();
 
-#if defined(WITH_MONITOR)
+#if (VERBOSITY >= 1)
     float duration = std::chrono::duration_cast<std::chrono::microseconds>(
     std::chrono::steady_clock::now() -  start).count();
     spdlog::info("[bench] Processing projections took {} ms", duration / 1000);

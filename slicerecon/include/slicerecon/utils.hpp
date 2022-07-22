@@ -63,7 +63,7 @@ inline void computeReciprocal(const std::vector<RawDtype>& darks,
                               size_t pixels,
                               std::vector<float>& reciprocal,
                               std::vector<float>& dark_avg) {
-#if defined(WITH_MONITOR)
+#if (VERBOSITY >= 1)
     auto start = std::chrono::steady_clock::now();
 #endif
     averageImages<RawDtype>(darks, pixels, dark_avg);
@@ -76,7 +76,7 @@ inline void computeReciprocal(const std::vector<RawDtype>& darks,
             reciprocal[i] = 1.0f / (flat_avg[i] - dark_avg[i]);
         }
     }
-#if defined(WITH_MONITOR)
+#if (VERBOSITY >= 1)
     float duration = std::chrono::duration_cast<std::chrono::microseconds>(
         std::chrono::steady_clock::now() -  start).count();
     spdlog::info("[bench] Computing reciprocal took {} ms", duration/1000);
