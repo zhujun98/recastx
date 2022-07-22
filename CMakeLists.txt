@@ -9,7 +9,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(BUILD_GUI "Build OpenGL GUI only" OFF)
 option(BUILD_TEST "Build unit test" OFF)
 option(BUILD_MONITOR "Build with performance monitor" OFF)
-option(BUILD_VERBOSITY "Build with verbose debug message" OFF)
+option(VERBOSITY "Build with verbose performance monitoring and debug messages" 1)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
