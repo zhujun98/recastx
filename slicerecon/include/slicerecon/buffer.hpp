@@ -125,6 +125,10 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
     size_t chunk_size_ = 0;
     size_t group_size_ = 0;
 
+#if (VERBOSITY >= 2)
+    size_t data_received_ = 0;
+#endif
+
     std::mutex mtx_;
     std::condition_variable cv_;
     bool is_ready_ = false;
@@ -214,6 +218,15 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
             is_ready_ = true;
             cv_.notify_one();
         }
+
+#if (VERBOSITY >= 2)
+        ++data_received_;
+        if (data_received_ % group_size_ == 0) {
+            spdlog::info("{}/{} groups in the memory buffer are occupied", 
+                         occupied(), buffer_.size());
+        }
+#endif
+
     }
 
     void fetch() override {
