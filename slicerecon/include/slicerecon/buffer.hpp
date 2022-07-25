@@ -1,5 +1,5 @@
-#ifndef BUFFER_H
-#define BUFFER_H
+#ifndef SLICERECON_BUFFER_H
+#define SLICERECON_BUFFER_H
 
 #include <condition_variable>
 #include <queue>
@@ -242,4 +242,4 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
 
 } // slicerecon
 
-#endif // BUFFER_H
+#endif // SLICERECON_BUFFER_H
