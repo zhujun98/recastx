@@ -54,7 +54,7 @@ target_compile_options(slicerecon
     PUBLIC
         -Wall -Wextra -Wfatal-errors -fPIC -static)
 
-target_compile_definitions(slicerecon PRIVATE VERBOSITY=${VERBOSITY})
+target_compile_definitions(slicerecon PUBLIC VERBOSITY=${VERBOSITY})
 
 if (BUILD_TEST)
     add_subdirectory(tests)
