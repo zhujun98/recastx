@@ -172,7 +172,7 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
                 if (unoccupied_.empty()) {
                     int idx = indices_.front();
                     this->pop();
-                    spdlog::warn("Group {} data dropped!", idx);
+                    spdlog::warn("Memory buffer is full! Group {} dropped!", idx);
                 }
                 indices_.push(i);
                 size_t buffer_idx = unoccupied_.front();
@@ -180,7 +180,7 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
                 unoccupied_.pop();
             }
         } else if (group_idx < indices_.front()) {
-            spdlog::warn("Received projection with old group index: {}, data ignored!", 
+            spdlog::warn("Received projection with outdated group index: {}, data ignored!", 
                          group_idx);
         }
 
@@ -200,7 +200,7 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
             int idx = indices_.front();
             while (group_idx != idx) {
                 pop();
-                spdlog::warn("Group {} data dropped!", idx);
+                spdlog::warn("Group {} is ready! Earlier group {} dropped!", group_idx, idx);
                 idx = indices_.front();
             }
             is_ready_ = true;
