@@ -10,6 +10,15 @@ option(BUILD_GUI "Build OpenGL GUI only" OFF)
 option(BUILD_TEST "Build unit test" OFF)
 option(VERBOSITY "Build with verbose performance monitoring and debug messages" 1)
 
+# VERBOSITY values:
+# - 0: no verbosity
+# - 1: general performance benchmarks
+# - 2: performance benchmark of critical functions
+# - 3: received image data information (type, frame id, etc.)
+if((${VERBOSITY} LESS 0) OR (${VERBOSITY} GREATER 3}))
+    message(FATAL_ERROR "Available VERBOSITY values are 0, 1, 2 or 3. Actual: ${VERBOSITY}")
+endif()
+
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
