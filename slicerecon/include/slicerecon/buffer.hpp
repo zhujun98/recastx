@@ -120,7 +120,7 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
     std::vector<T> front_;
     std::deque<std::vector<T>> buffer_;
     std::queue<size_t> unoccupied_;
-    std::unordered_map<size_t, size_t> counter_;
+    std::vector<size_t> counter_;
 
     size_t chunk_size_ = 0;
     size_t group_size_ = 0;
@@ -156,7 +156,7 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
         for (size_t i = 0; i < capacity; ++i) {
             std::vector<T> group_buffer(chunk_size * group_size, 0);
             buffer_.emplace_back(std::move(group_buffer));
-            counter_[i] = 0;
+            counter_.push_back(0);
             unoccupied_.push(i);
         }
         front_.resize(chunk_size * group_size);
@@ -205,8 +205,8 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
             data[i] = static_cast<float>(v);
         }
 
-        ++counter_[group_idx];
-        if (counter_[group_idx] == group_size_) {
+        ++counter_[buffer_idx];
+        if (counter_[buffer_idx] == group_size_) {
             // Remove earlier groups, no matter they are ready or not.
             int idx = indices_.front();
             while (group_idx != idx) {
