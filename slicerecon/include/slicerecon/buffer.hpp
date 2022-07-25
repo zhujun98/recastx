@@ -192,6 +192,7 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
                          group_idx);
 #endif
 
+            return;
         }
 
         size_t buffer_idx = map_[group_idx];
@@ -220,6 +221,7 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
         }
 
 #if (VERBOSITY >= 2)
+        // Outdated data are excluded.
         ++data_received_;
         if (data_received_ % group_size_ == 0) {
             spdlog::info("{}/{} groups in the memory buffer are occupied", 
