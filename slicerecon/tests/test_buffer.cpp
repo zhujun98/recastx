@@ -18,7 +18,7 @@ std::vector<char> _produceRawData(std::vector<RawDtype>&& data) {
 class MemoryBufferTest : public testing::Test {
   protected:
 
-    size_t capacity_ = 2;
+    size_t capacity_ = 3;
     size_t group_size_ = 4;
     size_t chunk_size_ = 3;
 
@@ -63,18 +63,39 @@ TEST_F(MemoryBufferTest, TestBufferFull) {
     for (size_t j = 0; j < group_size_ - 1; ++j) {
         buffer_.fill<RawDtype>(_produceRawData({7, 8, 9}).data(), capacity_ + 2, j); 
     }
-    ASSERT_EQ(buffer_.occupied(), 2);
+    ASSERT_EQ(buffer_.occupied(), 3);
 
     for (size_t j = 0; j < group_size_-1; ++j) {
         buffer_.fill<RawDtype>(_produceRawData({1, 4, 7}).data(), capacity_ + 1, j); 
     }
-    ASSERT_EQ(buffer_.occupied(), 2);
+    ASSERT_EQ(buffer_.occupied(), 3);
 
     buffer_.fill<RawDtype>(_produceRawData({9, 8, 7}).data(), capacity_ + 2, group_size_ - 1); 
     ASSERT_EQ(buffer_.occupied(), 1); // group 3 was dropped
     buffer_.fetch();
     EXPECT_THAT(buffer_.front(), Pointwise(FloatNear(1e-6), 
                                            {7., 8., 9., 7., 8., 9., 7., 8., 9., 9., 8., 7.}));
+}
+
+TEST_F(MemoryBufferTest, TestSameDataReceivedRepeatedly) {
+    for (size_t i = 0; i < 8; ++i) {
+        // Attempt to fill the 1st group.
+        for (size_t j = 0; j < group_size_; ++j) {
+            buffer_.fill<RawDtype>(_produceRawData({1, 2, 3}).data(), 0, j); 
+        }
+        if (i % 2 == 0) buffer_.fetch();
+
+        // Attempt to fill half of the second group.
+        for (size_t j = 0; j < group_size_ / 2; ++j) {
+            buffer_.fill<RawDtype>(_produceRawData({1, 2, 3}).data(), 1, j); 
+        }
+        if (i % 2 == 1) {
+            buffer_.fetch();
+            ASSERT_EQ(buffer_.occupied(), 0);
+        } else {
+            ASSERT_EQ(buffer_.occupied(), 1);
+        }
+    }
 }
 
 } // slicerecon::test

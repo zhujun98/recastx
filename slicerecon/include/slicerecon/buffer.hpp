@@ -206,6 +206,8 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
         }
 
         ++counter_[buffer_idx];
+        // Caveat: We do not track the chunk indices. Therefore, if data with the same
+        //         frame idx arrives repeated, it will finally fill the group.
         if (counter_[buffer_idx] == group_size_) {
             // Remove earlier groups, no matter they are ready or not.
             int idx = indices_.front();
