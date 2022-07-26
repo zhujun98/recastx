@@ -44,7 +44,10 @@ struct Packet {
         socket.send(request, zmq::send_flags::none);
     }
 
+    virtual PacketDesc desc() const = 0;
+
     virtual std::size_t size() const = 0;
+
     virtual memory_buffer serialize(int size) const = 0;
     virtual void deserialize(memory_buffer buffer) = 0;
 
@@ -62,6 +65,8 @@ void fill(Derived& base, Buffer& buffer) {
 
 template <class Derived>
 struct PacketBase : public Packet {
+    PacketDesc desc() const override { return Derived::desc; }
+
     std::size_t size() const override {
         scale total;
         total | Derived::desc;
