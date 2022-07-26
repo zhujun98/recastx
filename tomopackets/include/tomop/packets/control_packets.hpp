@@ -7,7 +7,7 @@
 namespace tomop {
 
 struct ParameterBoolPacket : public PacketBase<ParameterBoolPacket> {
-    static constexpr auto desc = packet_desc::parameter_bool;
+    static constexpr auto desc = PacketDesc::parameter_bool;
     ParameterBoolPacket() = default;
     ParameterBoolPacket(std::string a, bool b)
         : name(a), value(b) {}
@@ -17,7 +17,7 @@ struct ParameterBoolPacket : public PacketBase<ParameterBoolPacket> {
 };
 
 struct ParameterFloatPacket : public PacketBase<ParameterFloatPacket> {
-    static constexpr auto desc = packet_desc::parameter_float;
+    static constexpr auto desc = PacketDesc::parameter_float;
     ParameterFloatPacket() = default;
     ParameterFloatPacket(std::string b, float c)
         : name(b), value(c) {}
@@ -27,7 +27,7 @@ struct ParameterFloatPacket : public PacketBase<ParameterFloatPacket> {
 };
 
 struct ParameterEnumPacket : public PacketBase<ParameterEnumPacket> {
-    static constexpr auto desc = packet_desc::parameter_enum;
+    static constexpr auto desc = PacketDesc::parameter_enum;
     ParameterEnumPacket() = default;
     ParameterEnumPacket(std::string a, std::vector<std::string> b)
         : name(a), values(b) {}

@@ -44,6 +44,7 @@ int main(int argc, char** argv) {
     renderer.register_ticker(input);
     renderer.register_ticker(scenes);
     renderer.register_ticker(server);
+
     renderer.register_target(interface);
     renderer.register_target(scenes);
 

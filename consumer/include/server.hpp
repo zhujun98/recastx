@@ -19,7 +19,7 @@ class Server {
     zmq::socket_t rep_socket_;
     zmq::socket_t pub_socket_;
 
-    void parse_packet(packet_desc desc);
+    void parse_packet(PacketDesc desc);
 
   public:
     explicit Server(int port);

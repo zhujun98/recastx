@@ -84,7 +84,7 @@ struct PacketBase : public Packet {
 
     void deserialize(memory_buffer buffer) override {
         auto om = omembuf<memory_buffer>(buffer);
-        packet_desc dummy;
+        PacketDesc dummy;
         om | dummy;
         fill(*(Derived*)this, om);
     }
@@ -99,7 +99,7 @@ struct PacketBase : public Packet {
     void deserialize(zmq::message_t& request) override {
         memory_span buffer(request.size(), (char*)request.data());
         auto om = omembuf<memory_span>(buffer);
-        packet_desc dummy;
+        PacketDesc dummy;
         om | dummy;
         fill(*(Derived*)this, om);
     }

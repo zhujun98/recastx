@@ -31,14 +31,13 @@ Server::Server(SceneList& scenes, int port)
 void Server::start() {
     std::cout << "Listening for incoming connections..\n";
 
-    // todo graceful shutdown, probably by sending a 'kill' packet to self
     thread_ = std::thread([&]() {
         while (true) {
             zmq::message_t request;
 
             //  Wait for next request from client
             rep_socket_.recv(request, zmq::recv_flags::none);
-            auto desc = ((tomop::packet_desc*)request.data())[0];
+            auto desc = ((tomop::PacketDesc*)request.data())[0];
             auto buffer = tomop::memory_buffer(request.size(), (char*)request.data());
 
             if (modules_.find(desc) == modules_.end()) {
@@ -49,7 +48,7 @@ void Server::start() {
             }
 
             // forward the packet to the handler
-            packets_.push({desc, std::move(modules_[desc]->read_packet(
+            packets_.push({desc, std::move(modules_[desc]->readPacket(
                 desc, buffer, rep_socket_))});
         }
     });
@@ -57,11 +56,11 @@ void Server::start() {
 
 void Server::tick(float) {
     while (!packets_.empty()) {
-        auto event_packet = std::move(packets_.front());
+        auto packet = std::move(packets_.front());
         packets_.pop();
 
-        modules_[event_packet.first]->process(
-            scenes_, event_packet.first, std::move(event_packet.second));
+        modules_[packet.first]->process(
+            scenes_, packet.first, std::move(packet.second));
     }
 }
 
