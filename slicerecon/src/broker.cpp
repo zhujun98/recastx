@@ -56,6 +56,11 @@ void Broker::start() {
             auto desc = ((tomop::PacketDesc*)update.data())[0];
             auto buffer = tomop::memory_buffer(update.size(), (char*)update.data());
 
+#if (VERBOSITY >= 3)
+            spdlog::info("Received packet with descriptor: 0x{0:x}", 
+                         std::underlying_type<tomop::PacketDesc>::type(desc));
+#endif
+
             switch (desc) {
                 case tomop::PacketDesc::set_slice: {
                     auto packet = std::make_unique<tomop::SetSlicePacket>();
@@ -77,7 +82,7 @@ void Broker::start() {
                     break;
                 }
                 default: {
-                    spdlog::warn("Unrecognized package with descriptor {0:x}", 
+                    spdlog::warn("Unrecognized packet with descriptor 0x{0:x}", 
                                  std::underlying_type<tomop::PacketDesc>::type(desc));
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
                     break;
