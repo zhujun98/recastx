@@ -48,7 +48,7 @@ void Server::start() {
             }
 
             // forward the packet to the handler
-            packets_.push({desc, std::move(modules_[desc]->read_packet(
+            packets_.push({desc, std::move(modules_[desc]->readPacket(
                 desc, buffer, rep_socket_))});
         }
     });
@@ -56,11 +56,11 @@ void Server::start() {
 
 void Server::tick(float) {
     while (!packets_.empty()) {
-        auto event_packet = std::move(packets_.front());
+        auto packet = std::move(packets_.front());
         packets_.pop();
 
-        modules_[event_packet.first]->process(
-            scenes_, event_packet.first, std::move(event_packet.second));
+        modules_[packet.first]->process(
+            scenes_, packet.first, std::move(packet.second));
     }
 }
 

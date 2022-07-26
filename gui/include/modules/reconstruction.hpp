@@ -12,13 +12,16 @@
 namespace gui {
 
 class ReconstructionProtocol : public SceneModuleProtocol {
+
+    int group_size_count_ = -1;
+    int group_size_requested_ = -1;
+
   public:
 
-    std::unique_ptr<tomop::Packet>
-
-    read_packet(tomop::PacketDesc desc,
-                tomop::memory_buffer& buffer,
-                zmq::socket_t& socket) override {
+    std::unique_ptr<tomop::Packet> readPacket(
+            tomop::PacketDesc desc,
+            tomop::memory_buffer& buffer,
+            zmq::socket_t& socket) override {
         switch (desc) {
             case tomop::PacketDesc::slice_data: {
                 auto packet = std::make_unique<tomop::SliceDataPacket>();
@@ -26,26 +29,24 @@ class ReconstructionProtocol : public SceneModuleProtocol {
                 ack(socket);
                 return packet;
             }
-
             case tomop::PacketDesc::volume_data: {
                 auto packet = std::make_unique<tomop::VolumeDataPacket>();
                 packet->deserialize(std::move(buffer));
                 ack(socket);
                 return packet;
             }
-
             case tomop::PacketDesc::group_request_slices: {
                 auto packet = std::make_unique<tomop::GroupRequestSlicesPacket>();
                 packet->deserialize(std::move(buffer));
                 ack(socket);
                 return packet;
             }
-
             default: { return nullptr; }
         }
     }
 
-    void process(SceneList& scenes, tomop::PacketDesc desc,
+    void process(SceneList& scenes, 
+                 tomop::PacketDesc desc,
                  std::unique_ptr<tomop::Packet> event_packet) override {
         switch (desc) {
             case tomop::PacketDesc::slice_data: {
@@ -57,10 +58,9 @@ class ReconstructionProtocol : public SceneModuleProtocol {
                                                   packet.slice_size,
                                                   packet.slice_id, 
                                                   packet.additive);
-                spdlog::info("Set slice data");
+                spdlog::info("Set slice data {}", packet.slice_id);
                 break;
             }
-
             case tomop::PacketDesc::volume_data: {
                 tomop::VolumeDataPacket& packet = *(tomop::VolumeDataPacket*)event_packet.get();
 
@@ -110,10 +110,6 @@ class ReconstructionProtocol : public SceneModuleProtocol {
                 tomop::PacketDesc::group_request_slices};
     }
 
-  private:
-
-    int group_size_count_ = -1;
-    int group_size_requested_ = -1;
 };
 
 } // namespace gui

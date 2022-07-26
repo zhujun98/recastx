@@ -14,8 +14,10 @@ namespace gui {
 // and an executor that knows how to execute a packet
 
 class SceneModuleProtocol {
+
   public:
-    virtual std::unique_ptr<tomop::Packet> read_packet(
+
+    virtual std::unique_ptr<tomop::Packet> readPacket(
         tomop::PacketDesc desc,
         tomop::memory_buffer& buffer,
         zmq::socket_t& socket) = 0;

@@ -14,9 +14,10 @@ namespace gui {
 
 class ControlProtocol : public SceneModuleProtocol {
   public:
-    std::unique_ptr<tomop::Packet> read_packet(tomop::PacketDesc desc,
-                                               tomop::memory_buffer& buffer,
-                                               zmq::socket_t& socket) override {
+    std::unique_ptr<tomop::Packet> readPacket(
+            tomop::PacketDesc desc,
+            tomop::memory_buffer& buffer,
+            zmq::socket_t& socket) override {
         switch (desc) {
             case tomop::PacketDesc::parameter_bool: {
                 auto packet = std::make_unique<tomop::ParameterBoolPacket>();
@@ -43,7 +44,6 @@ class ControlProtocol : public SceneModuleProtocol {
     void process(SceneList& scenes,
                  tomop::PacketDesc desc,
                  std::unique_ptr<tomop::Packet> event_packet) override {
-
         switch (desc) {
             case tomop::PacketDesc::parameter_bool: {
                 auto& packet = *(tomop::ParameterBoolPacket*)event_packet.get();
