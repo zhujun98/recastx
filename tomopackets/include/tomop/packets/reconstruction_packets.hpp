@@ -7,7 +7,7 @@
 namespace tomop {
 
 struct SliceDataPacket : public PacketBase<SliceDataPacket> {
-    static constexpr auto desc = packet_desc::slice_data;
+    static constexpr auto desc = PacketDesc::slice_data;
     SliceDataPacket() = default;
     SliceDataPacket(int32_t a, std::array<int32_t, 2> b,
                     std::vector<float> c, bool d)
@@ -20,7 +20,7 @@ struct SliceDataPacket : public PacketBase<SliceDataPacket> {
 };
 
 struct VolumeDataPacket : public PacketBase<VolumeDataPacket> {
-    static constexpr auto desc = packet_desc::volume_data;
+    static constexpr auto desc = PacketDesc::volume_data;
     VolumeDataPacket() = default;
     VolumeDataPacket(std::array<int32_t, 3> a, std::vector<float> b)
         : volume_size(a), data(b) {}
@@ -30,7 +30,7 @@ struct VolumeDataPacket : public PacketBase<VolumeDataPacket> {
 };
 
 struct SetSlicePacket : public PacketBase<SetSlicePacket> {
-    static constexpr auto desc = packet_desc::set_slice;
+    static constexpr auto desc = PacketDesc::set_slice;
     SetSlicePacket() = default;
     SetSlicePacket(int32_t a, std::array<float, 9> b)
         : slice_id(a), orientation(b) {}
@@ -40,7 +40,7 @@ struct SetSlicePacket : public PacketBase<SetSlicePacket> {
 };
 
 struct RemoveSlicePacket : public PacketBase<RemoveSlicePacket> {
-    static constexpr auto desc = packet_desc::remove_slice;
+    static constexpr auto desc = PacketDesc::remove_slice;
     RemoveSlicePacket() = default;
     RemoveSlicePacket(int32_t a) 
         : slice_id(a) {}
@@ -49,7 +49,7 @@ struct RemoveSlicePacket : public PacketBase<RemoveSlicePacket> {
 };
 
 struct GroupRequestSlicesPacket : public PacketBase<GroupRequestSlicesPacket> {
-    static constexpr auto desc = packet_desc::group_request_slices;
+    static constexpr auto desc = PacketDesc::group_request_slices;
     GroupRequestSlicesPacket() = default;
     GroupRequestSlicesPacket(int32_t a)
         : group_size(a) {}

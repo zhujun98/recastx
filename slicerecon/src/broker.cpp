@@ -21,14 +21,14 @@ Broker::Broker(const std::string& endpoint,
     sub_socket_.connect(subscribe_endpoint);
     spdlog::info("Connected to GUI server (PUB-SUB): {}", subscribe_endpoint);
 
-    std::vector<tomop::packet_desc> descriptors = {
-        tomop::packet_desc::set_slice,
-        tomop::packet_desc::remove_slice
+    std::vector<tomop::PacketDesc> descriptors = {
+        tomop::PacketDesc::set_slice,
+        tomop::PacketDesc::remove_slice
     };
 
     for (auto descriptor : descriptors) {
         int32_t filter[] = {
-            (std::underlying_type<tomop::packet_desc>::type)descriptor, 0
+            (std::underlying_type<tomop::PacketDesc>::type)descriptor, 0
         };
         sub_socket_.set(zmq::sockopt::subscribe, zmq::buffer(filter));
     }
@@ -53,18 +53,18 @@ void Broker::start() {
         while (true) {
             zmq::message_t update;
             sub_socket_.recv(update, zmq::recv_flags::none);
-            auto desc = ((tomop::packet_desc*)update.data())[0];
+            auto desc = ((tomop::PacketDesc*)update.data())[0];
             auto buffer = tomop::memory_buffer(update.size(), (char*)update.data());
 
             switch (desc) {
-                case tomop::packet_desc::set_slice: {
+                case tomop::PacketDesc::set_slice: {
                     auto packet = std::make_unique<tomop::SetSlicePacket>();
                     packet->deserialize(std::move(buffer));
 
                     makeSlice(packet->slice_id, packet->orientation);
                     break;
                 }
-                case tomop::packet_desc::remove_slice: {
+                case tomop::PacketDesc::remove_slice: {
                     auto packet = std::make_unique<tomop::RemoveSlicePacket>();
                     packet->deserialize(std::move(buffer));
 
@@ -78,7 +78,7 @@ void Broker::start() {
                 }
                 default: {
                     spdlog::warn("Unrecognized package with descriptor {0:x}", 
-                                 std::underlying_type<tomop::packet_desc>::type(desc));
+                                 std::underlying_type<tomop::PacketDesc>::type(desc));
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
                     break;
                 }

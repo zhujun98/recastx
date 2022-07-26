@@ -17,34 +17,34 @@ Server::Server(int port) :
         pub_socket_.bind("tcp://*:"s + std::to_string(port+1));
     }
 
-void Server::parse_packet(packet_desc desc) {
+void Server::parse_packet(PacketDesc desc) {
     switch (desc) {
-        case packet_desc::make_scene: {
+        case PacketDesc::make_scene: {
             std::cout << "Received: make scene" << std::endl;
             break;
         }
 
-        case packet_desc::slice_data: {
+        case PacketDesc::slice_data: {
             std::cout << "Received: slice data" << std::endl;
             break;
         }
 
-        case packet_desc::partial_slice_data: {
+        case PacketDesc::partial_slice_data: {
             std::cout << "Received: partial slice data" << std::endl;
             break;
         }
 
-        case packet_desc::volume_data: {
+        case PacketDesc::volume_data: {
             std::cout << "Received: volume data" << std::endl;
             break;
         }
 
-        case packet_desc::partial_volume_data: {
+        case PacketDesc::partial_volume_data: {
             std::cout << "Received: partial volume data" << std::endl;
             break;
         }
 
-        case packet_desc::group_request_slices: {
+        case PacketDesc::group_request_slices: {
             std::cout << "Received: group request slices" << std::endl;
             break;
         }
@@ -64,7 +64,7 @@ void Server::start() {
             zmq::message_t request;
 
             rep_socket_.recv(request, zmq::recv_flags::none);
-            auto desc = ((tomop::packet_desc*)request.data())[0];
+            auto desc = ((tomop::PacketDesc*)request.data())[0];
             auto buffer = tomop::memory_buffer(request.size(), (char*)request.data());
 
             // packets_->push({desc, std::move(modules_[desc]->read_packet(

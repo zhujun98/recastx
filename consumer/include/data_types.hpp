@@ -5,6 +5,6 @@
 
 
 namespace tomovis {
-    using PacketQueue = std::queue<std::pair<tomop::packet_desc, 
+    using PacketQueue = std::queue<std::pair<tomop::PacketDesc, 
                                    std::unique_ptr<tomop::Packet>>>;;
 }

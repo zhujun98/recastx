@@ -2,7 +2,7 @@
 
 namespace tomop {
 
-enum class packet_desc : int {
+enum class PacketDesc : int {
     // SCENE MANAGEMENT
     make_scene = 0x101,
     kill_scene = 0x102,

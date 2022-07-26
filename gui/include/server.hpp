@@ -27,12 +27,12 @@ class Server : public Ticker, public PacketListener {
     void handle(tomop::Packet& pkt) override;
 
   private:
-    std::map<tomop::packet_desc, std::shared_ptr<SceneModuleProtocol>> modules_;
+    std::map<tomop::PacketDesc, std::shared_ptr<SceneModuleProtocol>> modules_;
 
     SceneList& scenes_;
     std::thread thread_;
 
-    std::queue<std::pair<tomop::packet_desc, std::unique_ptr<tomop::Packet>>> packets_;
+    std::queue<std::pair<tomop::PacketDesc, std::unique_ptr<tomop::Packet>>> packets_;
 
     zmq::context_t context_;
     zmq::socket_t rep_socket_;
