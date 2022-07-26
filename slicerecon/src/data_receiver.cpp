@@ -67,7 +67,7 @@ void DataReceiver::start() {
 
             socket_.recv(update, zmq::recv_flags::none);
 
-#if (VERBOSITY >= 3)
+#if (VERBOSITY >= 4)
             spdlog::info("Projection received: type = {0:d}, frame = {1:d}", 
                          static_cast<int>(scan_index), frame);
 #endif
