@@ -1,3 +1,4 @@
+#include <chrono>
 #include <complex>
 #include <numeric>
 
@@ -99,6 +100,12 @@ void Reconstructor::startReconstructing() {
     });
 
     gpu_recon_thread_ = std::thread([&] {
+
+#if (VERBOSITY >= 1)
+        float data_size = pixels_ * sizeof(RawDtype) / (1024.f * 1024.f); // in MB
+        auto start = std::chrono::steady_clock::now();
+#endif
+ 
         while (true) {
             {
                 std::unique_lock<std::mutex> lck(gpu_mutex_);
@@ -107,6 +114,17 @@ void Reconstructor::startReconstructing() {
                 sino_uploaded_ = false;
             }
             preview_buffer_.prepare();
+
+#if (VERBOSITY >= 1)
+            // The throughtput is measured in the last step of the pipeline because
+            // data could be dropped beforehand.
+            float duration = std::chrono::duration_cast<std::chrono::microseconds>(
+                std::chrono::steady_clock::now() -  start).count();
+            spdlog::info("[bench] Throughput measured in the reconstructiing thread (MB/s): {}",
+                         data_size * group_size_ * 1000000 / duration);
+            start = std::chrono::steady_clock::now();
+#endif
+
         }
     });
 
