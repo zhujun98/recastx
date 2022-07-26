@@ -54,9 +54,7 @@ target_compile_options(slicerecon
     PUBLIC
         -Wall -Wextra -Wfatal-errors -fPIC -static)
 
-if (BUILD_MONITOR)
-    target_compile_definitions(slicerecon PRIVATE WITH_MONITOR)
-endif()
+target_compile_definitions(slicerecon PUBLIC VERBOSITY=${VERBOSITY})
 
 if (BUILD_TEST)
     add_subdirectory(tests)

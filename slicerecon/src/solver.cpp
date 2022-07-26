@@ -64,13 +64,13 @@ void Solver::uploadSinograms(int buffer_idx,
                              const std::vector<float>& sino, 
                              int begin, 
                              int end) {
-#if defined(WITH_MONITOR)
+#if (VERBOSITY >= 2)
     auto start = std::chrono::steady_clock::now();
 #endif
 
     astra::uploadMultipleProjections(proj_data_[buffer_idx].get(), &sino[0], begin, end);
 
-#if defined(WITH_MONITOR)
+#if (VERBOSITY >= 2)
     float duration = std::chrono::duration_cast<std::chrono::microseconds>(
     std::chrono::steady_clock::now() -  start).count();
     spdlog::info("[bench] Uploading sinograms to GPU took {} ms", duration / 1000);
@@ -139,7 +139,7 @@ ParallelBeamSolver::ParallelBeamSolver(int rows,
 
 slice_data ParallelBeamSolver::reconstructSlice(orientation x, int buffer_idx) {
 
-#if defined(WITH_MONITOR)
+#if (VERBOSITY >= 2)
     auto start = std::chrono::steady_clock::now();
 #endif
 
@@ -182,7 +182,7 @@ slice_data ParallelBeamSolver::reconstructSlice(orientation x, int buffer_idx) {
     auto pos = astraCUDA3d::SSubDimensions3D{n, n, 1, n, n, n, 1, 0, 0, 0};
     astraCUDA3d::copyFromGPUMemory(result.data(), vol_handle_, pos);
 
-#if defined(WITH_MONITOR)
+#if (VERBOSITY >= 2)
     float duration = std::chrono::duration_cast<std::chrono::microseconds>(
     std::chrono::steady_clock::now() -  start).count();
     spdlog::info("[bench] Reconstructing slices took {} ms", duration / 1000);
@@ -193,7 +193,7 @@ slice_data ParallelBeamSolver::reconstructSlice(orientation x, int buffer_idx) {
 
 void ParallelBeamSolver::reconstructPreview(std::vector<float>& preview_buffer, 
                                             int buffer_idx) {
-#if defined(WITH_MONITOR)
+#if (VERBOSITY >= 2)
     auto start = std::chrono::steady_clock::now();
 #endif
 
@@ -209,7 +209,7 @@ void ParallelBeamSolver::reconstructPreview(std::vector<float>& preview_buffer,
     float scale = factor * factor * factor;
     for (auto& x : preview_buffer) x *= scale;
 
-#if defined(WITH_MONITOR)
+#if (VERBOSITY >= 2)
     float duration = std::chrono::duration_cast<std::chrono::microseconds>(
     std::chrono::steady_clock::now() -  start).count();
     spdlog::info("[bench] Reconstructing preview took {} ms", duration / 1000);

@@ -29,21 +29,21 @@ class Reconstructor {
     int cols_;
     int pixels_;
 
+    int num_darks_ = 1;
+    int num_flats_ = 1;
+    int preview_size_ = 1; 
+
     std::vector<RawDtype> all_darks_;
     std::vector<RawDtype> all_flats_;
     std::vector<float> dark_avg_;
     std::vector<float> reciprocal_;
-    DoubleBufferSp<float> buffer_;
+    MemoryBuffer<float> buffer_;
     TripleBuffer<float> sino_buffer_;
     TripleBuffer<float> preview_buffer_;
     bool initialized_ = false;
 
-    int buffer_size_;
-
-    int num_darks_ = 1;
-    int num_flats_ = 1;
-    int num_projections_ = 1;
-    int preview_size_ = 1; 
+    size_t group_size_;
+    size_t buffer_size_;
 
     int32_t received_darks_ = 0;
     int32_t received_flats_ = 0;
@@ -53,6 +53,8 @@ class Reconstructor {
     std::unique_ptr<Filter> filter_;
     std::unique_ptr<Solver> solver_;
 
+    std::thread processing_thread_;
+
     int gpu_buffer_index_ = 0;
     bool sino_uploaded_ = false;
     std::thread gpu_upload_thread_;
@@ -61,9 +63,8 @@ class Reconstructor {
     std::mutex gpu_mutex_;
 
     int num_threads_;
-    oneapi::tbb::task_arena arena_;
 
-    void processProjections();
+    void processProjections(oneapi::tbb::task_arena& arena);
 
 public:
 
@@ -73,7 +74,8 @@ public:
 
     void initialize(int num_darks, 
                     int num_flats, 
-                    int num_projections,
+                    int group_size,
+                    int buffer_size,
                     int preview_size);
 
     void initPaganin(float pixel_size, float lambda, float delta, float beta, float distance);
@@ -82,7 +84,9 @@ public:
 
     void setSolver(std::unique_ptr<Solver>&& solver);
 
-    void start();
+    void startProcessing();
+
+    void startReconstructing();
 
     void pushProjection(ProjectionType k, 
                         int32_t proj_idx, 
@@ -95,13 +99,13 @@ public:
 
     int previewSize() const;
 
-    int bufferSize() const;
+    size_t bufferSize() const;
 
     // for unittest
 
     const std::vector<RawDtype>& darks() const;
     const std::vector<RawDtype>& flats() const;
-    const DoubleBufferSp<float>& buffer() const;
+    const MemoryBuffer<float>& buffer() const;
     const TripleBuffer<float>& sinoBuffer() const;
 
 };

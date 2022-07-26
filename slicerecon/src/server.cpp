@@ -80,11 +80,13 @@ int main(int argc, char** argv)
         ("threads", po::value<int>()->default_value(8),
          "number of threads used for data processing")
         ("darks", po::value<int>()->default_value(10),
-         "number of dark images")
+         "number of required dark images")
         ("flats", po::value<int>()->default_value(10),
-         "number of flat images")
-        ("projections", po::value<int>()->default_value(128),
-         "number of projections")
+         "number of required flat images")
+        ("group-size", po::value<int>()->default_value(128),
+         "number of projections per scan")
+        ("buffer-size", po::value<int>()->default_value(100),
+         "maximum number of projection groups to be cached in the memory buffer")
         ("retrieve-phase", po::bool_switch(&retrieve_phase),
          "switch to Paganin filter")
         ("tilt", po::bool_switch(&tilt),
@@ -146,7 +148,8 @@ int main(int argc, char** argv)
     auto num_threads = opts["threads"].as<int>();
     auto num_darks = opts["darks"].as<int>();
     auto num_flats = opts["flats"].as<int>();
-    auto num_projections = opts["projections"].as<int>();
+    auto group_size = opts["group-size"].as<int>();
+    auto buffer_size = opts["buffer-size"].as<int>();
 
     auto filter_name = opts["filter"].as<std::string>();
 
@@ -168,7 +171,7 @@ int main(int argc, char** argv)
     // 1. set up reconstructor
     auto recon = std::make_shared<slicerecon::Reconstructor>(rows, cols, num_threads);
 
-    recon->initialize(num_darks, num_flats, num_projections, preview_size);
+    recon->initialize(num_darks, num_flats, group_size, buffer_size, preview_size);
 
     if (retrieve_phase) recon->initPaganin(pixel_size, lambda, delta, beta, distance);
 
@@ -177,7 +180,7 @@ int main(int argc, char** argv)
     // set up solver
 
     // TODO:: receive/create angles in different ways.
-    auto angles = slicerecon::utils::defaultAngles(num_projections);
+    auto angles = slicerecon::utils::defaultAngles(group_size);
     if (cone_beam) {
         recon->setSolver(std::make_unique<slicerecon::ConeBeamSolver>(
             rows, cols, angles, volume_min_point, volume_max_point, preview_size, slice_size,
@@ -190,7 +193,8 @@ int main(int argc, char** argv)
         ));
     }
 
-    recon->start();
+    recon->startProcessing();
+    recon->startReconstructing();
 
     // set up data bridges
 

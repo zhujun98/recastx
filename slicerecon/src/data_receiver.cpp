@@ -1,5 +1,3 @@
-#include <chrono>
-
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 
@@ -51,12 +49,12 @@ DataReceiver::~DataReceiver() {
 
 void DataReceiver::start() {
     thread_ = std::thread([&] {
-#if defined(WITH_MONITOR)
+
+#if (VERBOSITY >= 1)
         int monitor_every = recon_->bufferSize();
         int msg_counter = 0;
-        float msg_size = 0.f;  // in MB
-        auto start = std::chrono::steady_clock::now();
 #endif
+
         zmq::message_t update;
         while (true) {
             socket_.recv(update, zmq::recv_flags::none);
@@ -68,39 +66,31 @@ void DataReceiver::start() {
             auto shape = meta["shape"];
 
             socket_.recv(update, zmq::recv_flags::none);
-            if (scan_index == ProjectionType::dark || scan_index == ProjectionType::flat) {
-                spdlog::info("Projection received: type = {0:d}, frame = {1:d}", 
-                             static_cast<int>(scan_index), frame);
-            }
+
+#if (VERBOSITY >= 3)
+            spdlog::info("Projection received: type = {0:d}, frame = {1:d}", 
+                         static_cast<int>(scan_index), frame);
+#endif
 
             recon_->pushProjection(scan_index,
                                    frame,
                                    {shape[0], shape[1]},
                                    static_cast<char*>(update.data()));
 
-#if defined(WITH_MONITOR)
-            if (!msg_size) {
-                msg_size = static_cast<float>(shape[0]) * static_cast<float>(shape[1])
-                           * sizeof(RawDtype) / (1024 * 1024);
-            }
+#if (VERBOSITY >= 1)
             if (scan_index == ProjectionType::projection) {
                 ++msg_counter;
                 if (msg_counter % monitor_every == 0) {
-                    float duration = std::chrono::duration_cast<std::chrono::microseconds>(
-                        std::chrono::steady_clock::now() -  start).count();
                     spdlog::info("**************************************************************");
-                    spdlog::info("# of projections received: {}, throughput (MB/s): {}", 
-                                    msg_counter, msg_size * monitor_every * 1000000 / (duration));
+                    spdlog::info("# of projections received: {}", msg_counter);
                     spdlog::info("**************************************************************");
-                    start = std::chrono::steady_clock::now();
                 }                
             } else {
                 // reset the counter and timer when dark/flat arrives
                 msg_counter = 0;
-                start = std::chrono::steady_clock::now();
             }
-
 #endif
+
         }
     });
 
