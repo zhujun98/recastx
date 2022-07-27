@@ -125,10 +125,15 @@ void Reconstructor::startReconstructing() {
             start = std::chrono::steady_clock::now();
 
             float tp = data_size * 1000000 / duration;
-            total_duration += duration;
             ++count;
-            float tp_avg = data_size * count * 1000000 / total_duration;
-
+            float tp_avg;
+            if (count == 1) tp_avg = tp;
+            else {
+                // skip the first group since the duration includes the time for initialization as well as
+                // processing darks and flats
+                total_duration += duration;
+                tp_avg = data_size * (count - 1) * 1000000 / total_duration;
+            }
             spdlog::info("[bench] Throughput (reconstruction) (MB/s). "
                          "Current: {:.1f}, averaged: {:.1f} ({})", tp, tp_avg, count);
 #endif
