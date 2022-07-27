@@ -52,8 +52,7 @@ void Input::tick(float /* time_elapsed */) {
     mouse_y = 2.0 * (mouse_y / h) - 1.0;
 
     for (auto& handler : instance(window_).handlers_) {
-        if (handler->handleMouseMoved(mouse_x, mouse_y))
-            return;
+        if (handler->handleMouseMoved(mouse_x, mouse_y)) return;
     }
 }
 

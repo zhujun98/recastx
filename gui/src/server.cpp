@@ -2,9 +2,10 @@
 #include <thread>
 #include <type_traits>
 
-#include "tomop/tomop.hpp"
-#include "zmq.hpp"
+#include <zmq.hpp>
+#include <spdlog/spdlog.h>
 
+#include "tomop/tomop.hpp"
 #include "modules/reconstruction.hpp"
 #include "modules/control.hpp"
 #include "scene.hpp"
@@ -35,19 +36,16 @@ void Server::start() {
         while (true) {
             zmq::message_t request;
 
-            //  Wait for next request from client
             rep_socket_.recv(request, zmq::recv_flags::none);
             auto desc = ((tomop::PacketDesc*)request.data())[0];
             auto buffer = tomop::memory_buffer(request.size(), (char*)request.data());
 
             if (modules_.find(desc) == modules_.end()) {
-                std::cout << "Unsupported package descriptor: "
-                          << std::hex << (std::underlying_type<decltype(desc)>::type)desc
-                          << "\n";
+                spdlog::warn("Unsupported package descriptor: 0x{0:x}",
+                             std::underlying_type<tomop::PacketDesc>::type(desc));
                 continue;
             }
 
-            // forward the packet to the handler
             packets_.push({desc, std::move(modules_[desc]->readPacket(
                 desc, buffer, rep_socket_))});
         }
@@ -64,15 +62,21 @@ void Server::tick(float) {
     }
 }
 
-void Server::handle(tomop::Packet& pkt) {
+void Server::handle(tomop::Packet& packet) {
     try {
-        auto pkt_size = pkt.size();
-        zmq::message_t message(pkt_size);
-        auto membuf = pkt.serialize(pkt_size);
-        memcpy(message.data(), membuf.buffer.get(), pkt_size);
+        auto size = packet.size();
+        zmq::message_t message(size);
+        auto membuf = packet.serialize(size);
+        memcpy(message.data(), membuf.buffer.get(), size);
         pub_socket_.send(message, zmq::send_flags::none);
+
+#if (VERBOSITY >= 3)
+        spdlog::info("Published packet: 0x{0:x}", 
+                     std::underlying_type<tomop::PacketDesc>::type(packet.desc()));
+#endif
+
     } catch (const std::exception& e) {
-        std::cout << "Failed sending: " << e.what() << "\n";
+        spdlog::error("Failed publishing packet: {}", e.what());
     }
 }
 

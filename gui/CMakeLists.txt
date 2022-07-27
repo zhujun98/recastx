@@ -75,7 +75,13 @@ target_link_libraries(${TARGET_NAME}
 target_include_directories(${TARGET_NAME} PRIVATE "include")
 target_compile_options(${TARGET_NAME} PRIVATE -Wall -Wextra -Wfatal-errors)
 # This is to work around GLM issue#754 <https://github.com/g-truc/glm/issues/754>
-target_compile_definitions(${TARGET_NAME} PRIVATE -DGLM_ENABLE_EXPERIMENTAL -DGLM_FORCE_CTOR_INIT)
+target_compile_definitions(${TARGET_NAME} 
+    PUBLIC
+        -DVERBOSITY=${VERBOSITY}
+    PRIVATE
+        -DGLM_ENABLE_EXPERIMENTAL
+        -DGLM_FORCE_CTOR_INIT
+)
 
 # INSTALL COMMANDS
 install(TARGETS ${TARGET_NAME} imgui
