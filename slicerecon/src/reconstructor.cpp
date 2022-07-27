@@ -102,7 +102,7 @@ void Reconstructor::startReconstructing() {
     gpu_recon_thread_ = std::thread([&] {
 
 #if (VERBOSITY >= 1)
-        float data_size = pixels_ * sizeof(RawDtype) / (1024.f * 1024.f); // in MB
+        const float data_size = group_size_ * pixels_ * sizeof(RawDtype) / (1024.f * 1024.f); // in MB
         auto start = std::chrono::steady_clock::now();
         float tp_ma = 0.f;
         size_t tp_count = 0;
@@ -122,8 +122,9 @@ void Reconstructor::startReconstructing() {
             // data could be dropped beforehand.
             float duration = std::chrono::duration_cast<std::chrono::microseconds>(
                 std::chrono::steady_clock::now() -  start).count();
-            float tp = data_size * group_size_ * 1000000 / duration;
-            tp_ma = (tp_ma * tp_count + tp)/(++tp_count);
+            float tp = data_size * 1000000 / duration;
+            tp_ma = (tp_ma * tp_count + tp)/(tp_count + 1);
+            ++tp_count;
 
             spdlog::info("[bench] Throughput (reconstruction) (MB/s). "
                          "Current: {:.1f}, averaged: {:.1f} ({})", tp, tp_ma, tp_count);
