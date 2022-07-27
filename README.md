@@ -9,9 +9,10 @@ conda create -n tomcat-live python==3.7.10
 conda activate tomcat-live
 conda install -c conda-forge cmake cppzmq eigen boost fftw libastra tbb-devel nlohmann_json spdlog
 
+cd /afs/psi.ch/project/TOMCAT_dev/tomcat-live
 git clone --recursive <repo>
 
-# On the GPU node x02da-gpu-1
+# On the GPU node `x02da-gpu-1`
 # Build and install the reconstruction server, the dummy consumer as well as
 # the Python bindings 
 mkdir build && cd build
@@ -19,7 +20,7 @@ cmake .. -DCMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"} \
          -DBUILD_TEST=ON 
 make -j12 && make install
 
-# On the graphics workstation x02da-gws-3
+# On the graphics workstation `x02da-gws-3`
 mkdir build-gui && cd build-gui
 cmake .. -DCMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"} \
          -DBUILD_GUI=ON -DBUILD_TEST=ON 
@@ -28,52 +29,49 @@ make -j12 && make install
 
 ## Running
 
-**Step 1**: Start the GUI 
+### Step 1: Start the GUI 
 
+Log in (no ssh) onto the graphics workstation `x02da-gws-3` and open a terminal
 ```sh
 conda activate tomcat-live
 tomcat-live-gui
 ```
 
-On the Ra cluster, you can only run the OpenGL GUI inside a [NoMachine](https://www.psi.ch/en/photon-science-data-services/remote-interactive-access
+Or on the Ra cluster, you can only run the OpenGL GUI inside a [NoMachine](https://www.psi.ch/en/photon-science-data-services/remote-interactive-access
 ) client by
 ```sh
 vglrun tomcat-live-gui
 ```
 **Note**: there is still a problem of linking the OpenGL GUI on Ra.
 
-**Step 2**: start the reconstruction server
-
+Or on a local PC
+```sh
+ssh -R 9970:localhost:9970 -R 9971:localhost:9971 x02da-gpu-1
 ```
+
+### Step 2: Start the reconstruction server
+
+```sh
 conda activate tomcat-live
-# with local data stream
-tomcat-live-server --data-port 5558 --data-socket pull --gui-server x02da-gws-3 --gui-port 5555 --filter-cores 20
-# with data stream from the DAQ node
-# tomcat-live-server --data-host xbl-daq-36 --data-port 9610 --data-socket sub --gui-server x02da-gws-3 --gui-port 5555 --filter-cores 20
+
+# Receiving data stream locally
+tomcat-live-server --gui-host x02da-gws-3 --rows 800 --cols 384 --projections 400 --threads 32
+
+# Receiving data stream from another node (e.g. a DAQ node)
+tomcat-live-server --data-host xbl-daq-36 --data-port 9667 --gui-host x02da-gws-3 --rows 800 --cols 384 --projections 400 --threads 32
 ```
 
-**Step 3**: stream the data
-
-From the same node as the reconstruction server:
-
-```
-python examples/fake_stream.py
+For more information, type
+```sh
+tomcat-live-server -h
 ```
 
-or from the DAQ node:
+### Step 3: Stream the data
 
+**Option1**: From the GPU node
+```sh
+cd /afs/psi.ch/project/TOMCAT_dev/tomcat-live
+python producer/fake_stream.py --datafile pet1 --ordered
 ```
-ssh x02da-gpu-1
-ssh xbl-daq-36
-sudo -i -u dbe
 
-# streaming the fake data
-# cd ~/git/gf_repstream
-# conda activate repstream
-# python -m gf_repstream.test.fake_stream -f ./gf_repstream/test/test_data -i 10000 -a tcp://*:9610 -m pub
-
-# connecting to the GigaFrost backend
-sudo systemctl {restart/status/start/stop} repstream-gf.service 
-# log
-#sudo journalctl -u repstream-gf.service -f
-```
+**Option2**: From the DAQ node:
