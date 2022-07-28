@@ -158,7 +158,7 @@ def parse_datafile(name: str):
 def main():
     parser = argparse.ArgumentParser(description='Fake GigaFrost Data Stream')
 
-    parser.add_argument('--port', default="5558", type=int,
+    parser.add_argument('--port', default="9667", type=int,
                         help="ZMQ socket port (default=5558)")
     parser.add_argument('--sock', default='push', type=str,
                         help="ZMQ socket type (default=PUSH)")
