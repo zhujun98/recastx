@@ -169,6 +169,11 @@ void Reconstructor::pushProjection(ProjectionType k,
 
                 spdlog::info("Computing reciprocal for flat fielding ...");
                 utils::computeReciprocal(all_darks_, all_flats_, pixels_, reciprocal_, dark_avg_);
+                buffer_.reset();
+
+#if (VERBOSITY >= 1)
+                spdlog::info("Memory buffer reset!");
+#endif
 
                 reciprocal_computed_ = true;
                 received_darks_ = 0;

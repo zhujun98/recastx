@@ -110,7 +110,7 @@ TEST_F(ReconTest, TestPushProjection) {
 
     // push projections to fill the buffer
     pushProjection(group_size_ - 1, group_size_);
-    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     auto& projs_front = recon_.buffer().front();
     EXPECT_THAT(std::vector<float>(projs_front.begin(), projs_front.begin() + 10), 
                 Pointwise(FloatNear(1e-6), {0.110098f, -0.272487f, 0.133713f, -0.491590f, 0.520265f,
@@ -125,6 +125,21 @@ TEST_F(ReconTest, TestPushProjection) {
                 Pointwise(FloatNear(1e-6), {-0.040253f, -0.094602f, -0.078659f, -0.107789f, 0.3213040f,
                                             -0.028346f, -0.080572f, -0.066762f, -0.086848f, 0.262528f}));
 }
+
+TEST_F(ReconTest, TestMemoryBufferReset) {
+    pushDarks(num_darks_);
+    pushFlats(num_flats_);
+    pushProjection(0, 1);
+    pushProjection(group_size_, group_size_ + 1);
+    EXPECT_EQ(recon_.buffer().occupied(), 2);
+
+    pushDarks(num_darks_);
+    pushFlats(num_flats_);
+    // buffer should have been reset
+    pushProjection(0, 1);
+    EXPECT_EQ(recon_.buffer().occupied(), 1);
+}
+
 TEST_F(ReconTest, TestPushProjectionUnordered) {
     pushDarks(num_darks_);
     pushFlats(num_flats_);
@@ -138,8 +153,9 @@ TEST_F(ReconTest, TestPushProjectionUnordered) {
     EXPECT_EQ(projs_ready[group_size_ * pixels_ - 1], 4.f);
 
     pushProjection(group_size_ - 3, group_size_ - 1);
-    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     auto& projs_front = recon_.buffer().front();
+    // FIXME: unittest fails from now and then
     EXPECT_THAT(std::vector<float>(projs_front.begin(), projs_front.begin() + 10), 
                 Pointwise(FloatNear(1e-6), {0.110098f, -0.272487f, 0.133713f, -0.491590f, 0.520265f,
                                             0.099537f, -0.214807f, 0.464008f, -0.369369f, 0.020631f}));
@@ -155,6 +171,7 @@ TEST_F(ReconTest, TestPushProjectionUnordered) {
                 Pointwise(FloatNear(1e-6), {-0.040253f, -0.094602f, -0.078659f, -0.107789f, 0.3213040f,
                                             -0.028346f, -0.080572f, -0.066762f, -0.086848f, 0.262528f}));
 
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     pushProjection(group_size_ + overflow, 2 * group_size_ - 1);
     // trigger warn log message, there must be at least one unfilled group in the buffer
     pushProjection(0, 1);
