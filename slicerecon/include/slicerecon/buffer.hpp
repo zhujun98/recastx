@@ -114,7 +114,7 @@ class TripleBuffer : public TrippleBufferInterface<std::vector<T>> {
 template<typename T>
 class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
 
-    std::queue<int> indices_;
+    std::queue<int> group_indices_;
     std::unordered_map<int, size_t> map_;
 
     std::vector<T> front_;
@@ -134,8 +134,8 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
     bool is_ready_ = false;
 
     void pop() {
-        int idx = indices_.front();
-        indices_.pop();
+        int idx = group_indices_.front();
+        group_indices_.pop();
 
         size_t buffer_idx = map_[idx];
         counter_[buffer_idx] = 0;
@@ -162,30 +162,41 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
         front_.resize(chunk_size * group_size);
     }
 
+    void reset() {
+        std::queue<int>().swap(group_indices_);
+        std::queue<size_t>().swap(unoccupied_);
+        map_.clear();
+        data_received_ = 0;
+        for (size_t i = 0; i < buffer_.size(); ++i) {
+            counter_[i] = 0;
+            unoccupied_.push(i);
+        }
+    }
+
     template<typename D>
     void fill(const char* raw, int group_idx, int chunk_idx) {
         std::lock_guard lk(mtx_);
 
-        if (indices_.empty()) {
-            indices_.push(group_idx);
+        if (group_indices_.empty()) {
+            group_indices_.push(group_idx);
             size_t buffer_idx = unoccupied_.front();
             map_[group_idx] = buffer_idx;
             unoccupied_.pop();
-        } else if (group_idx > indices_.back()) {
-            for (int i = indices_.back() + 1; i <= group_idx; ++i) {
+        } else if (group_idx > group_indices_.back()) {
+            for (int i = group_indices_.back() + 1; i <= group_idx; ++i) {
                 if (unoccupied_.empty()) {
-                    int idx = indices_.front();
+                    int idx = group_indices_.front();
                     this->pop();
 #if (VERBOSITY >= 1)
                     spdlog::warn("Memory buffer is full! Group {} dropped!", idx);
 #endif
                 }
-                indices_.push(i);
+                group_indices_.push(i);
                 size_t buffer_idx = unoccupied_.front();
                 map_[i] = buffer_idx;
                 unoccupied_.pop();
             }
-        } else if (group_idx < indices_.front()) {
+        } else if (group_idx < group_indices_.front()) {
 
 #if (VERBOSITY >= 1)
             spdlog::warn("Received projection with outdated group index: {}, data ignored!", 
@@ -210,13 +221,13 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
         //         frame idx arrives repeated, it will finally fill the group.
         if (counter_[buffer_idx] == group_size_) {
             // Remove earlier groups, no matter they are ready or not.
-            int idx = indices_.front();
+            int idx = group_indices_.front();
             while (group_idx != idx) {
                 pop();
 #if (VERBOSITY >= 1)
                 spdlog::warn("Group {} is ready! Earlier group {} dropped!", group_idx, idx);
 #endif
-                idx = indices_.front();
+                idx = group_indices_.front();
             }
             is_ready_ = true;
             cv_.notify_one();
@@ -236,7 +247,7 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
     void fetch() override {
         std::unique_lock lk(mtx_);
         cv_.wait(lk, [this] { return this->is_ready_; });
-        this->front_.swap(buffer_[map_.at(indices_.front())]);
+        this->front_.swap(buffer_[map_.at(group_indices_.front())]);
         pop();
         is_ready_ = false;
     }
@@ -247,17 +258,17 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
         return this->front_;
     }
     std::vector<T>& back() override {
-        return buffer_[map_.at(indices_.front())];
+        return buffer_[map_.at(group_indices_.front())];
     }
 
     const std::vector<T>& front() const override {
         return this->front_;
     }
     const std::vector<T>& ready() const override {
-        return buffer_[map_.at(indices_.front())]; 
+        return buffer_[map_.at(group_indices_.front())]; 
     }
     const std::vector<T>& back() const override {
-        return buffer_[map_.at(indices_.front())]; 
+        return buffer_[map_.at(group_indices_.front())]; 
     }
 
     size_t capacity() const { return buffer_.size(); }
