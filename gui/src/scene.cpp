@@ -39,7 +39,7 @@ SceneList::~SceneList() = default;
 
 void SceneList::addScene(const std::string& name, int dimension) {
     auto scene = std::make_unique<Scene>(name, dimension);
-    scene->object().addListener(this);
+    scene->object().addPublisher(this);
     scenes_[name] = std::move(scene);
     if (active_scene_ == nullptr) activate(name);
 }
@@ -84,10 +84,6 @@ bool SceneList::handleMouseMoved(double x, double y) {
 
 bool SceneList::handleKey(int key, bool down, int mods) {
     return active_scene_->object().handleKey(key, down, mods);
-}
-
-void SceneList::handle(tomop::Packet& packet) {
-    send(packet);
 }
 
 } // namespace gui

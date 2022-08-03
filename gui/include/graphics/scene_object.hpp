@@ -8,7 +8,7 @@
 #include <glm/glm.hpp>
 
 #include "object_component.hpp"
-#include "packet_listener.hpp"
+#include "packet_publisher.hpp"
 #include "ticker.hpp"
 
 namespace gui {

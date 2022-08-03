@@ -20,7 +20,7 @@ Server::Server(SceneList& scenes, int port)
     : scenes_(scenes),
       rep_socket_(context_, ZMQ_REP),
       pub_socket_(context_, ZMQ_PUB) {
-    scenes_.addListener(this);
+    scenes_.addPublisher(this);
 
     rep_socket_.bind("tcp://*:"s + std::to_string(port));
     pub_socket_.bind("tcp://*:"s + std::to_string(port+1));
@@ -62,7 +62,7 @@ void Server::tick(float) {
     }
 }
 
-void Server::handle(tomop::Packet& packet) {
+void Server::sendPacket(tomop::Packet& packet) {
     try {
         auto size = packet.size();
         zmq::message_t message(size);

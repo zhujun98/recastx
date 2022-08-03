@@ -8,7 +8,7 @@
 #include <glm/glm.hpp>
 
 #include "input_handler.hpp"
-#include "packet_listener.hpp"
+#include "packet_publisher.hpp"
 #include "ticker.hpp"
 #include "graphics/render_target.hpp"
 #include "graphics/scene_object.hpp"
@@ -43,7 +43,6 @@ class Scene : public RenderTarget {
 class SceneList : public RenderTarget,
                   public InputHandler,
                   public PacketPublisher,
-                  public PacketListener,
                   public Ticker {
 
     std::unordered_map<std::string, std::unique_ptr<Scene>> scenes_;
@@ -69,8 +68,6 @@ class SceneList : public RenderTarget,
     bool handleScroll(double offset) override;
     bool handleMouseMoved(double x, double y) override;
     bool handleKey(int key, bool down, int mods) override;
-
-    void handle(tomop::Packet& packet) override;
 };
 
 }  // namespace gui

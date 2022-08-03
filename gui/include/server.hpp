@@ -8,7 +8,7 @@
 #include "tomop/tomop.hpp"
 
 #include "modules/scene_module.hpp"
-#include "packet_listener.hpp"
+#include "packet_publisher.hpp"
 #include "ticker.hpp"
 
 namespace gui {
@@ -16,17 +16,8 @@ namespace gui {
 class SceneList;
 class SceneModuleProtocol;
 
-class Server : public Ticker, public PacketListener {
-  public:
-    Server(SceneList& scenes, int port);
+class Server : public Ticker, public PacketPublisher {
 
-    void start();
-
-    void tick(float) override;
-
-    void handle(tomop::Packet& pkt) override;
-
-  private:
     std::map<tomop::PacketDesc, std::shared_ptr<SceneModuleProtocol>> modules_;
 
     SceneList& scenes_;
@@ -38,7 +29,17 @@ class Server : public Ticker, public PacketListener {
     zmq::socket_t rep_socket_;
     zmq::socket_t pub_socket_;
 
+    void sendPacket(tomop::Packet& packet) override;
+
     void registerModule(const std::shared_ptr<SceneModuleProtocol>& module);
+  
+  public:
+
+    Server(SceneList& scenes, int port);
+
+    void start();
+
+    void tick(float) override;
 };
 
 }  // namespace gui
