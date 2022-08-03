@@ -27,7 +27,7 @@ class Renderer {
     Renderer();
     ~Renderer();
 
-    void main_loop();
+    void spin();
     void register_target(RenderTarget& target);
     void register_ticker(Ticker& ticker);
 

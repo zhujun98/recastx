@@ -37,7 +37,7 @@ Renderer::Renderer() {
 
 Renderer::~Renderer() { glfwTerminate(); }
 
-void Renderer::main_loop() {
+void Renderer::spin() {
     while (!glfwWindowShouldClose(window_)) {
         glfwPollEvents();
 

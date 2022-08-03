@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
 
     server.start();
 
-    renderer.main_loop();
+    renderer.spin();
 
     return 0;
 }
