@@ -39,7 +39,7 @@ SceneList::~SceneList() = default;
 
 void SceneList::addScene(const std::string& name, int dimension) {
     auto scene = std::make_unique<Scene>(name, dimension);
-    scene->object().add_listener(this);
+    scene->object().addListener(this);
     scenes_[name] = std::move(scene);
     if (active_scene_ == nullptr) activate(name);
 }

@@ -20,7 +20,7 @@ Server::Server(SceneList& scenes, int port)
     : scenes_(scenes),
       rep_socket_(context_, ZMQ_REP),
       pub_socket_(context_, ZMQ_PUB) {
-    scenes_.add_listener(this);
+    scenes_.addListener(this);
 
     rep_socket_.bind("tcp://*:"s + std::to_string(port));
     pub_socket_.bind("tcp://*:"s + std::to_string(port+1));
