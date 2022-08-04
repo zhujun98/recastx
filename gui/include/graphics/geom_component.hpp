@@ -19,15 +19,17 @@
 
 namespace gui {
 
-struct projection {
-    projection(int id_) : id(id_), data_texture(32, 32) {
+class Projection {
+
+  public:
+
+    Projection(int id_) : id(id_), data_texture(32, 32) {
         set_orientation(glm::vec3(-4.0f, -1.0f, -1.0f),
                         glm::vec3(0.0f, 0.0f, 2.0f),
                         glm::vec3(0.0f, 2.0f, 0.0f));
     }
 
-    projection(projection&& other)
-        : data_texture(std::move(other.data_texture)) {
+    Projection(Projection&& other) : data_texture(std::move(other.data_texture)) {
         source_position = other.source_position;
         detector_orientation = other.detector_orientation;
         parallel = other.parallel;
@@ -62,7 +64,7 @@ struct projection {
     std::array<int, 2> size;
 };
 
-class GeometryComponent : public ObjectComponent {
+class GeomComponent : public ObjectComponent {
 
     SceneObject& object_;
 
@@ -83,7 +85,7 @@ class GeometryComponent : public ObjectComponent {
     float speed_ = 0.0f;
     float total_time_elapsed_ = -1.0f;
     int current_projection_ = -1;
-    std::vector<projection> projections_;
+    std::vector<Projection> projections_;
 
     Recorder recorder_;
 
@@ -91,22 +93,21 @@ class GeometryComponent : public ObjectComponent {
 
   public:
 
-    explicit GeometryComponent(SceneObject& object);
-    ~GeometryComponent();
+    explicit GeomComponent(SceneObject& object);
+    ~GeomComponent();
 
     void draw(glm::mat4 world_to_screen) override;
     [[nodiscard]] std::string identifier() const override { return "geometry"; }
 
     void tick(float time_elapsed) override;
     void describe() override;
-    void push_projection(projection&& proj) {
+    void push_projection(Projection&& proj) {
         projections_.push_back(std::move(proj));
     }
 
     auto& get_projection(int projection_id) {
-        auto proj =
-            std::find_if(projections_.begin(), projections_.end(),
-                         [=](const auto& x) { return x.id == projection_id; });
+        auto proj = std::find_if(projections_.begin(), projections_.end(),
+                                 [=](const auto& x) { return x.id == projection_id; });
         if (proj == projections_.end()) {
             projections_.emplace_back(projection_id);
             return projections_[projections_.size() - 1];

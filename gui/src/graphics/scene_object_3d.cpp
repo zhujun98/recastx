@@ -7,7 +7,7 @@
 #include "graphics/axes_component.hpp"
 #include "graphics/control_component.hpp"
 #include "graphics/recon_component.hpp"
-#include "graphics/geometry_component.hpp"
+#include "graphics/geom_component.hpp"
 #include "graphics/partitioning_component.hpp"
 
 namespace gui {
@@ -17,7 +17,7 @@ SceneObject3d::SceneObject3d() : SceneObject() {
     this->add_component(std::make_unique<AxesComponent>(*this));
     this->add_component(std::make_unique<ControlComponent>(*this));
     this->add_component(std::make_unique<ReconComponent>(*this));
-    this->add_component(std::make_unique<GeometryComponent>(*this));
+    this->add_component(std::make_unique<GeomComponent>(*this));
     this->add_component(std::make_unique<PartitioningComponent>(*this));
 }
 

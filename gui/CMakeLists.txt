@@ -52,7 +52,7 @@ set(SOURCE_NAMES
     "src/graphics/render_target.cpp"
     "src/graphics/interface.cpp"
     "src/graphics/recon_component.cpp"
-    "src/graphics/geometry_component.cpp"
+    "src/graphics/geom_component.cpp"
     "src/graphics/axes_component.cpp"
     "src/graphics/control_component.cpp"
     "src/graphics/partitioning_component.cpp"
