@@ -4,7 +4,7 @@
 #include <spdlog/spdlog.h>
 
 #include "tomop/tomop.hpp"
-#include "graphics/reconstruction_component.hpp"
+#include "graphics/recon_component.hpp"
 #include "scene.hpp"
 #include "scene_module.hpp"
 #include "util.hpp"
@@ -52,21 +52,19 @@ class ReconstructionProtocol : public SceneModuleProtocol {
             case tomop::PacketDesc::slice_data: {
                 tomop::SliceDataPacket& packet = *(tomop::SliceDataPacket*)event_packet.get();
 
-                auto& reconstruction_component =
-                    (ReconstructionComponent&)scenes.object().get_component("reconstruction");
-                reconstruction_component.set_data(packet.data, 
-                                                  packet.slice_size,
-                                                  packet.slice_id, 
-                                                  packet.additive);
+                auto& recon_component = (ReconComponent&)scenes.object().get_component("reconstruction");
+                recon_component.setSliceData(packet.data, 
+                                             packet.slice_size,
+                                             packet.slice_id, 
+                                             packet.additive);
                 spdlog::info("Set slice data {}", packet.slice_id);
                 break;
             }
             case tomop::PacketDesc::volume_data: {
                 tomop::VolumeDataPacket& packet = *(tomop::VolumeDataPacket*)event_packet.get();
 
-                auto& reconstruction_component =
-                    (ReconstructionComponent&)scenes.object().get_component("reconstruction");
-                reconstruction_component.set_volume_data(packet.data, packet.volume_size);
+                auto& recon_component = (ReconComponent&)scenes.object().get_component("reconstruction");
+                recon_component.setVolumeData(packet.data, packet.volume_size);
                 spdlog::info("Set volume data");
                 break;
             }
@@ -90,9 +88,8 @@ class ReconstructionProtocol : public SceneModuleProtocol {
                     group_size_count_ = -1;
                     group_size_requested_ = -1;
 
-                    auto& reconstruction_component =
-                        (ReconstructionComponent&)scenes.object().get_component("reconstruction");
-                    reconstruction_component.send_slices();
+                    auto& recon_component = (ReconComponent&)scenes.object().get_component("reconstruction");
+                    recon_component.requestSlices();
                 }
 
                 break;

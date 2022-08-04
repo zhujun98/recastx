@@ -6,7 +6,6 @@
 #include <memory>
 #include <string>
 
-#include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include "../utils/recorder.hpp"
@@ -49,7 +48,7 @@ struct projection {
 
     void update_texture() {
         auto packed_data = pack(data);
-        data_texture.set_data(packed_data, size[0], size[1]);
+        data_texture.setData(packed_data, size[0], size[1]);
     }
 
     glm::vec3 source_position = {4.0f, 0.0f, 0.0f};
@@ -57,7 +56,7 @@ struct projection {
 
     int contributions = 0;
     int id;
-    texture<uint32_t> data_texture;
+    Texture<uint32_t> data_texture;
     glm::mat4 detector_orientation;
     std::vector<float> data;
     std::array<int, 2> size;

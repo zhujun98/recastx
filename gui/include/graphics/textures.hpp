@@ -1,4 +1,5 @@
-#pragma once
+#ifndef GUI_GRAPHICS_TEXTURES_H
+#define GUI_GRAPHICS_TEXTURES_H
 
 #include <algorithm>
 #include <limits>
@@ -36,7 +37,7 @@ template <>
 inline GLint format_type<float>() { return GL_R32F; }
 
 template <typename T = unsigned char>
-class texture {
+class Texture {
 
     GLuint texture_id_ = -1;
     int x_ = -1;
@@ -44,7 +45,7 @@ class texture {
 
   public:
 
-    texture(int x, int y) : x_(x), y_(y) {
+    Texture(int x, int y) : x_(x), y_(y) {
         glGenTextures(1, &texture_id_);
         std::vector<T> data(x * y);
         auto lim = std::numeric_limits<T>::max() - 2;
@@ -54,20 +55,20 @@ class texture {
         fill_texture(data);
     }
 
-    ~texture() {
+    ~Texture() {
         if (texture_id_ >= 0) {
             glDeleteTextures(1, &texture_id_);
         }
     }
 
-    texture(texture&& other) noexcept {
+    Texture(Texture&& other) noexcept {
         x_ = other.x_;
         y_ = other.y_;
         texture_id_ = other.texture_id_;
         other.texture_id_ = -1;
     }
 
-    void set_data(std::vector<T>& data, int x, int y) {
+    void setData(std::vector<T>& data, int x, int y) {
         x_ = x;
         y_ = y;
         assert((int)data.size() == x * y);
@@ -105,7 +106,7 @@ class texture {
 };
 
 template <typename T = unsigned char>
-class texture3d {
+class Texture3d {
 
     GLuint texture_id_;
     int x_ = -1;
@@ -114,7 +115,7 @@ class texture3d {
 
   public:
 
-    texture3d(int x, int y, int z) : x_(x), y_(y), z_(z) {
+    Texture3d(int x, int y, int z) : x_(x), y_(y), z_(z) {
         glGenTextures(1, &texture_id_);
         std::vector<T> data(x * y * z);
         auto lim = std::numeric_limits<T>::max() - 2;
@@ -124,12 +125,12 @@ class texture3d {
         fill_texture(data);
     }
 
-    ~texture3d() { glDeleteTextures(1, &texture_id_); }
+    ~Texture3d() { glDeleteTextures(1, &texture_id_); }
 
-    texture3d(const texture3d&) = delete;
-    texture3d(const texture3d&&) = delete;
+    Texture3d(const Texture3d&) = delete;
+    Texture3d(const Texture3d&&) = delete;
 
-    void set_data(int x, int y, int z, std::vector<T>& data) {
+    void setData(int x, int y, int z, std::vector<T>& data) {
         x_ = x;
         y_ = y;
         z_ = z;
@@ -176,3 +177,5 @@ class texture3d {
 };
 
 }  // namespace gui
+
+#endif // GUI_GRAPHICS_TEXTURES_H

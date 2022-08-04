@@ -39,7 +39,7 @@ class SceneObject : public InputHandler, public PacketPublisher, public Ticker {
 
     virtual SceneCamera& camera() { return *camera_; }
 
-    virtual void set_data(std::vector<unsigned char>& /* data */, int /* slice */) {}
+    virtual void setData(std::vector<unsigned char>& /* data */, int /* slice */) {}
 
     void add_component(std::unique_ptr<ObjectComponent> component) {
         components_.insert(

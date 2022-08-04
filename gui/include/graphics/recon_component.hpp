@@ -6,8 +6,6 @@
 #include <memory>
 #include <string>
 
-#include <glm/glm.hpp>
-
 #include "scene_object.hpp"
 #include "shader_program.hpp"
 #include "slice.hpp"
@@ -17,7 +15,7 @@
 
 namespace gui {
 
-class ReconstructionComponent;
+class ReconComponent;
 
 enum class recon_drag_machine_kind : int {
     none,
@@ -27,23 +25,25 @@ enum class recon_drag_machine_kind : int {
 
 class ReconDragMachine {
   protected:
-    ReconstructionComponent& comp_;
+    ReconComponent& comp_;
     glm::vec2 initial_;
 
   public:
-    ReconDragMachine(ReconstructionComponent& comp, glm::vec2 initial)
+    ReconDragMachine(ReconComponent& comp, glm::vec2 initial)
         : comp_(comp), initial_(initial) {}
 
     virtual void on_drag(glm::vec2 delta) = 0;
     virtual recon_drag_machine_kind kind() = 0;
 };
 
-class ReconstructionComponent : public ObjectComponent {
+class ReconComponent : public ObjectComponent {
 
-    void update_image_(slice* s);
+    std::map<int, std::unique_ptr<Slice>> slices_;
+    std::map<int, std::unique_ptr<Slice>> fixed_slices_;
 
-    std::map<int, std::unique_ptr<slice>> slices_;
-    std::map<int, std::unique_ptr<slice>> fixed_slices_;
+    std::vector<float> volume_data_;
+    Texture3d<float> volume_texture_;
+    GLuint colormap_texture_;
 
     glm::mat4 volume_transform_;
 
@@ -63,13 +63,9 @@ class ReconstructionComponent : public ObjectComponent {
     SceneObject& object_;
     int next_idx_ = 3;
 
-    GLuint colormap_texture_;
-    texture3d<float> volume_texture_;
-    std::vector<float> volume_data_;
-
     std::unique_ptr<ReconDragMachine> drag_machine_;
-    slice* dragged_slice_ = nullptr;
-    slice* hovered_slice_ = nullptr;
+    Slice* dragged_slice_ = nullptr;
+    Slice* hovered_slice_ = nullptr;
 
     std::vector<float> histogram_;
 
@@ -87,24 +83,31 @@ class ReconstructionComponent : public ObjectComponent {
     bool show_ = true;
     bool transparency_mode_ = false;
 
+    void initSlices();
+  
+    void initVolume();
+  
+    void updateSliceImage(Slice* slice);
+  
   public:
 
-    explicit ReconstructionComponent(SceneObject& object);
-    ~ReconstructionComponent();
+    explicit ReconComponent(SceneObject& object);
+    ~ReconComponent();
 
     void draw(glm::mat4 world_to_screen) override;
     void describe() override;
 
-    void set_data(std::vector<float>& data,
-                  const std::array<int32_t, 2>& size,
-                  int slice,
-                  bool additive = true);
-    void set_volume_data(std::vector<float>& data,
-                         const std::array<int32_t, 3>& volume_size);
-    void set_volume_position(glm::vec3 min_pt, glm::vec3 max_pt);
+    void setSliceData(std::vector<float>& data,
+                      const std::array<int32_t, 2>& size,
+                      int slice_idx,
+                      bool additive = true);
+
+    void setVolumeData(std::vector<float>& data,
+                       const std::array<int32_t, 3>& volume_size);
+
     void update_histogram(const std::vector<float>& data);
 
-    void send_slices();
+    void requestSlices();
 
     void switch_if_necessary(recon_drag_machine_kind kind);
     bool handleMouseButton(int button, bool down) override;
@@ -112,7 +115,6 @@ class ReconstructionComponent : public ObjectComponent {
     int index_hovering_over(float x, float y);
     void check_hovered(float x, float y);
 
-    std::map<int, std::unique_ptr<slice>>& slices() { return slices_; }
     glm::mat4 volume_transform() { return volume_transform_; }
     auto& object() { return object_; }
     auto& dragged_slice() { return dragged_slice_; }
@@ -142,7 +144,7 @@ class SliceTranslator : public ReconDragMachine {
 
 class SliceRotator : public ReconDragMachine {
   public:
-    SliceRotator(ReconstructionComponent& comp, glm::vec2 initial);
+    SliceRotator(ReconComponent& comp, glm::vec2 initial);
 
     void on_drag(glm::vec2 delta) override;
 

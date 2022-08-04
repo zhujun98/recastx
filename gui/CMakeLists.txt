@@ -51,7 +51,7 @@ set(SOURCE_NAMES
     "src/graphics/renderer.cpp"
     "src/graphics/render_target.cpp"
     "src/graphics/interface.cpp"
-    "src/graphics/reconstruction_component.cpp"
+    "src/graphics/recon_component.cpp"
     "src/graphics/geometry_component.cpp"
     "src/graphics/axes_component.cpp"
     "src/graphics/control_component.cpp"

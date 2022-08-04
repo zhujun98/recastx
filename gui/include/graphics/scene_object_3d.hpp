@@ -4,7 +4,6 @@
 
 #include "scene_camera_3d.hpp"
 #include "scene_object.hpp"
-#include "slice.hpp"
 
 namespace gui {
 

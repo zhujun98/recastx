@@ -32,8 +32,8 @@ class Scene : public RenderTarget {
 
     [[nodiscard]] const std::string& name() const { return name_; }
 
-    void set_data(std::vector<unsigned char>& data, int slice = 0) {
-        object_->set_data(data, slice);
+    void setData(std::vector<unsigned char>& data, int slice = 0) {
+        object_->setData(data, slice);
     }
 
     [[nodiscard]] int dimension() const { return dimension_; }
