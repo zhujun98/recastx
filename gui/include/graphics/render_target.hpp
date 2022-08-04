@@ -10,6 +10,7 @@ class RenderTarget {
   public:
     RenderTarget();
     virtual ~RenderTarget();
+
     virtual void render(glm::mat4 window_matrix) = 0;
     [[nodiscard]] virtual int zPriority() const { return 0; }
 };

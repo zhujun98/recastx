@@ -67,4 +67,6 @@ bool SceneObject::handleKey(int key, bool down, int mods) {
     return false;
 }
 
+SceneCamera& SceneObject::camera() { return *camera_; }
+
 }  // namespace gui

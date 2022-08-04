@@ -3,7 +3,7 @@
 #include <glm/glm.hpp>
 
 #include "graphics/scene_camera_3d.hpp"
-#include "graphics/scene_object_3d.hpp"
+#include "graphics/scene_object3d.hpp"
 #include "graphics/axes_component.hpp"
 #include "graphics/control_component.hpp"
 #include "graphics/recon_component.hpp"

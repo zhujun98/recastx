@@ -1,4 +1,5 @@
-#pragma once
+#ifndef GUI_GRAPHICS_SCENE_OBJECT3D_H
+#define GUI_GRAPHICS_SCENE_OBJECT3D_H
 
 #include <memory>
 
@@ -8,7 +9,9 @@
 namespace gui {
 
 class SceneObject3d : public SceneObject {
-   public:
+
+  public:
+
     SceneObject3d();
     ~SceneObject3d() override;
 
@@ -16,3 +19,5 @@ class SceneObject3d : public SceneObject {
 };
 
 }  // namespace gui
+
+#endif // GUI_GRAPHICS_SCENE_OBJECT3D_H

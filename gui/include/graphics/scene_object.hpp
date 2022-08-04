@@ -1,4 +1,5 @@
-#pragma once
+#ifndef GUI_GRAPHICS_SCENE_OBJECT_H
+#define GUI_GRAPHICS_SCENE_OBJECT_H
 
 #include <map>
 #include <memory>
@@ -19,8 +20,6 @@ class SceneCamera;
 class SceneObject : public InputHandler, public PacketPublisher, public Ticker {
   protected:
 
-    virtual void update_image_(int /* slice */) {}
-
     GLuint vao_handle_;
     GLuint vbo_handle_;
     std::unique_ptr<ShaderProgram> program_;
@@ -37,13 +36,8 @@ class SceneObject : public InputHandler, public PacketPublisher, public Ticker {
 
     virtual void draw(glm::mat4 window_matrix) = 0;
 
-    virtual SceneCamera& camera() { return *camera_; }
-
-    virtual void setData(std::vector<unsigned char>& /* data */, int /* slice */) {}
-
     void add_component(std::unique_ptr<ObjectComponent> component) {
-        components_.insert(
-            std::make_pair(component->identifier(), std::move(component)));
+        components_.insert(std::make_pair(component->identifier(), std::move(component)));
     }
 
     ObjectComponent& get_component(const std::string& identifier) {
@@ -56,6 +50,10 @@ class SceneObject : public InputHandler, public PacketPublisher, public Ticker {
     bool handleKey(int key, bool down, int mods) override;
     void tick(float time_elapsed) override;
     void describe();
+
+    [[nodiscard]] SceneCamera& camera();
 };
 
 }  // namespace gui
+
+#endif // GUI_GRAPHICS_SCENE_OBJECT_H
