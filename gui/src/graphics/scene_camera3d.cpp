@@ -1,11 +1,8 @@
 #include <imgui.h>
 
-#include "graphics/scene_camera_3d.hpp"
+#include "graphics/scene_camera3d.hpp"
 
 #include <GLFW/glfw3.h>
-#include <glm/gtx/transform.hpp>
-
-#include "path.hpp"
 
 namespace gui {
 
@@ -172,28 +169,31 @@ void SceneCamera3d::describe() {
     SceneCamera::describe();
     ImGui::Checkbox("Instant Camera", &instant_);
 
-    if (ImGui::Button("camera xy")) {
+    if (ImGui::Button("X-Y")) {
         rotation_ = glm::mat4(1.0f);
         position_ = center_;
         position_.z += 5.0;
         up_ = glm::vec3(0.0f, 1.0f, 0.0f);
         right_ = glm::vec3(1.0f, 0.0f, 0.0f);
     }
-    if (ImGui::Button("camera yz")) {
+    ImGui::SameLine();
+    if (ImGui::Button("Y-Z")) {
         rotation_ = glm::mat4(1.0f);
         position_ = center_;
         position_.x += 5.0;
         up_ = glm::vec3(0.0f, 0.0f, 1.0f);
         right_ = glm::vec3(0.0f, 1.0f, 0.0f);
     }
-    if (ImGui::Button("camera xz")) {
+    ImGui::SameLine();
+    if (ImGui::Button("X-Z")) {
         rotation_ = glm::mat4(1.0f);
         position_ = center_;
         position_.y -= 5.0;
         up_ = glm::vec3(0.0f, 0.0f, 1.0f);
         right_ = glm::vec3(1.0f, 0.0f, 0.0f);
     }
-    if (ImGui::Button("camera persp")) {
+    ImGui::SameLine();
+    if (ImGui::Button("Perspective")) {
         rotation_ = glm::mat4(1.0f);
         position_ = center_;
         position_.z += 5.0;

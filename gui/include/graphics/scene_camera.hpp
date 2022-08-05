@@ -1,4 +1,5 @@
-#pragma once
+#ifndef GUI_GRAPHICS_SCENE_CAMERA_H
+#define GUI_GRAPHICS_SCENE_CAMERA_H
 
 #include <vector>
 #include <utility>
@@ -45,3 +46,5 @@ class SceneCamera : public InputHandler, public Ticker {
 };
 
 } // namespace gui
+
+#endif // GUI_GRAPHICS_SCENE_CAMERA_H

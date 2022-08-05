@@ -1,6 +1,4 @@
-#include <iostream>
-
-#include "graphics/scene_camera_2d.hpp"
+#include "graphics/scene_camera2d.hpp"
 #include "graphics/scene_object2d.hpp"
 #include "graphics/shader_program.hpp"
 

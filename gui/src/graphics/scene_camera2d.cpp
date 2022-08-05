@@ -1,4 +1,4 @@
-#include "graphics/scene_camera_2d.hpp"
+#include "graphics/scene_camera2d.hpp"
 
 #include <GLFW/glfw3.h>
 #include <glm/gtx/transform.hpp>

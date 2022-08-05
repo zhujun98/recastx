@@ -4,13 +4,11 @@
 #include <glm/gtc/constants.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/string_cast.hpp>
-#include <glm/gtx/transform.hpp>
 #include <imgui.h>
 
-#include "graphics/colormap.hpp"
 #include "graphics/recon_component.hpp"
 #include "graphics/primitives.hpp"
-#include "graphics/scene_camera_3d.hpp"
+#include "graphics/scene_camera3d.hpp"
 
 namespace gui {
 

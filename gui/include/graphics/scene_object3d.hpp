@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include "scene_camera_3d.hpp"
+#include "scene_camera3d.hpp"
 #include "scene_object.hpp"
 
 namespace gui {
