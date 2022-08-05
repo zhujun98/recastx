@@ -63,14 +63,16 @@ add_executable(${TARGET_NAME} ${SOURCE_NAMES})
 target_link_libraries(${TARGET_NAME}
     PRIVATE
         imgui
-        X11
         pthread
-        tomopackets
         glm
         Eigen3::Eigen
         Boost::program_options
         spdlog::spdlog
+        tomopackets
 )
+if (NOT APPLE)
+    target_link_libraries(${TARGET_NAME} PRIVATE X11)
+endif()
 target_include_directories(${TARGET_NAME} PRIVATE "include")
 target_compile_options(${TARGET_NAME} PRIVATE -Wall -Wextra -Wfatal-errors)
 # This is to work around GLM issue#754 <https://github.com/g-truc/glm/issues/754>
