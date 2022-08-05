@@ -25,8 +25,7 @@ add_library(imgui ${IMGUI_SOURCE_FILES})
 target_include_directories(imgui
     PUBLIC
         "${IMGUI_DIR}"
-        "${IMGUI_DIR}/examples/libs/gl3w/"
-        "${IMGUI_DIR}/examples/opengl3_example/")
+        "${IMGUI_DIR}/examples/libs/gl3w/")
 
 target_link_libraries(imgui PUBLIC dl glfw OpenGL::GL)
 
