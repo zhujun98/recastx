@@ -39,19 +39,19 @@ class Slice {
 
   public:
 
-    Slice(int slice_id);
+    explicit Slice(int slice_id);
 
-    int id() const;
+    [[nodiscard]] int id() const;
 
     void setData(const DataType& data, const SizeType& size);
     void addData(const DataType& data, const SizeType& size);
 
     void updateTexture();
 
-    bool empty() const;
-    bool hovered() const;
-    bool inactive() const;
-    bool transparent() const;
+    [[nodiscard]] bool empty() const;
+    [[nodiscard]] bool hovered() const;
+    [[nodiscard]] bool inactive() const;
+    [[nodiscard]] bool transparent() const;
 
     void setHovered(bool state);
 
@@ -60,10 +60,10 @@ class Slice {
     void setOrientation(glm::vec3 base, glm::vec3 x, glm::vec3 y);
     void setOrientation(const Slice::Orient4Type& orient);
 
-    const Orient3Type& orientation3() const;
+    [[nodiscard]] Orient3Type orientation3() const;
     Orient4Type& orientation4();
 
-    const std::array<float, 2>& minMaxVals() const; 
+    [[nodiscard]] const std::array<float, 2>& minMaxVals() const;
 };
 
 } // namespace gui
