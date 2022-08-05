@@ -65,7 +65,6 @@ target_link_libraries(${TARGET_NAME}
         imgui
         X11
         pthread
-        stdc++fs
         tomopackets
         glm
         Eigen3::Eigen
