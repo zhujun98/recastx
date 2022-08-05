@@ -39,7 +39,7 @@ void SceneObject2d::draw(glm::mat4 window_matrix) {
     glBindTexture(GL_TEXTURE_2D, texture_id_);
 
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_1D, camera_->colormap());
+    glBindTexture(GL_TEXTURE_1D, camera_->colormapTextureId());
 
     GLint loc = glGetUniformLocation(program_->handle(), "size");
     glUniform1f(loc, (1.0 / 20.0) * pixel_size_);

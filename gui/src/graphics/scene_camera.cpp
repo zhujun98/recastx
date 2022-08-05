@@ -10,65 +10,19 @@
 
 namespace gui {
 
-static std::map<std::string, std::array<std::vector<std::pair<double, double>>, 3>>
-color_data = {{"bone",
-               {{{
-                     {0.0, 0.0}, {0.746032, 0.652778}, {1.0, 1.0},
-                 },
-                 {
-                     {0.0, 0.0},
-                     {0.365079, 0.319444},
-                     {0.746032, 0.777778},
-                     {1.0, 1.0},
-                 },
-                 {
-                     {0.0, 0.0}, {0.365079, 0.444444}, {1.0, 1.0},
-                 }}}},
-              {"gray",
-               {{{
-                     {0.0, 0.0}, {1.0, 1.0},
-                 },
-                 {
-                     {0.0, 0.0}, {1.0, 1.0},
-                 },
-                 {
-                     {0.0, 0.0}, {1.0, 1.0},
-                 }}}},
-              {"hot",
-               {{{
-                     {0.0, 0.416}, {0.36, 1.0}, {1.0, 1.0},
-                 },
-                 {
-                     {0.0, 0.0},
-                     {0.365079, 0.0},
-                     {0.746032, 1.0},
-                     {1.0, 1.0},
-                 },
-                 {
-                     {0.0, 0.0}, {0.74, 0.0}, {1.0, 1.0},
-                 }}}}
-
-};
-
-SceneCamera::SceneCamera() {
-    glGenTextures(1, &colormap_texture_id_);
-    schemes_ = {"bone", "gray", "hot"};
-    set_colormap(0);
+SceneCamera::SceneCamera() : curr_cm_("hot") {
+    glGenTextures(1, &cm_texture_id_);
+    setColormap(curr_cm_);
 }
 
 SceneCamera::~SceneCamera() = default;
 
-void SceneCamera::set_colormap(int scheme) {
-    auto name = schemes_[scheme];
+void SceneCamera::setColormap(const std::string& name) {
     constexpr int samples = 100;
 
-    if (color_data.find(name) == color_data.end()) {
-        std::cout << "ERROR: colorscheme '" << name << "' not found\n";
-    }
+    auto& gradient = SceneCamera::gradients().at(name);
 
-    current_scheme_ = scheme;
-
-    auto cm_data = color_data.find(name)->second;
+    curr_cm_ = name;
     auto interpolate =
         [](double z, std::vector<std::pair<double, double>>& xys) -> double {
         for (int i = 1; i < (int)xys.size(); ++i) {
@@ -90,12 +44,11 @@ void SceneCamera::set_colormap(int scheme) {
     for (int j = 0; j < samples; ++j) {
         for (int i = 0; i < 3; ++i) {
             double intensity = (double)j / samples;
-            image[j * 3 + i] =
-                (unsigned char)(255 * interpolate(intensity, cm_data[i]));
+            image[j * 3 + i] = (unsigned char)(255 * interpolate(intensity, gradient[i]));
         }
     }
 
-    glBindTexture(GL_TEXTURE_1D, colormap_texture_id_);
+    glBindTexture(GL_TEXTURE_1D, cm_texture_id_);
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, samples, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
     glGenerateMipmap(GL_TEXTURE_1D);
@@ -103,17 +56,18 @@ void SceneCamera::set_colormap(int scheme) {
 }
 
 void SceneCamera::describe() {
-    auto current_scheme = current_scheme_;
-    ImGui::ListBox("Color scheme", &current_scheme_,
-                   [](void* data, int idx, const char** out) -> bool {
-                       const std::vector<std::string>& options =
-                           *(std::vector<std::string>*)data;
-                       *out = options[idx].c_str();
-                       return true;
-                   },
-                   (void*)&schemes_, (int)schemes_.size());
+    const std::string prev_cm = curr_cm_;
+    if (ImGui::BeginCombo("Colormap", curr_cm_.c_str())) {
+        for (auto& gradient : SceneCamera::gradients()) {
+          bool is_selected = (curr_cm_ == gradient.first);
+          if (ImGui::Selectable(gradient.first.c_str(), is_selected))
+              curr_cm_ = gradient.first;
+          if (is_selected) ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
 
-    if (current_scheme != current_scheme_) set_colormap(current_scheme_);
+    if (prev_cm != curr_cm_) setColormap(curr_cm_);
 }
 
 } // namespace gui

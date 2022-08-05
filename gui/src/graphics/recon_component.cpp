@@ -69,7 +69,7 @@ ReconComponent::ReconComponent(SceneObject& object)
 
     initVolume();
 
-    colormap_texture_ = object.camera().colormap();
+    cm_texture_id_ = object.camera().colormapTextureId();
 }
 
 ReconComponent::~ReconComponent() {
@@ -220,7 +220,7 @@ void ReconComponent::draw(glm::mat4 world_to_screen) {
     program_->uniform("transparency_mode", (int)transparency_mode_);
 
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_1D, colormap_texture_);
+    glBindTexture(GL_TEXTURE_1D, cm_texture_id_);
 
     auto full_transform = world_to_screen * volume_transform_;
 

@@ -62,7 +62,7 @@ GeomComponent::GeomComponent(SceneObject& object) : object_(object) {
 
     speed_ = 0.0f;
 
-    colormap_texture_ = object.camera().colormap();
+    cm_texture_id_ = object.camera().colormapTextureId();
 }
 
 GeomComponent::~GeomComponent() {}
@@ -103,7 +103,7 @@ void GeomComponent::draw(glm::mat4 world_to_screen) {
     glEnable(GL_BLEND);
 
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_1D, colormap_texture_);
+    glBindTexture(GL_TEXTURE_1D, cm_texture_id_);
 
     auto draw_projection = [&](auto& proj) {
         cube_program_->use();

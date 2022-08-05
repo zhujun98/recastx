@@ -43,7 +43,7 @@ class ReconComponent : public ObjectComponent {
 
     std::vector<float> volume_data_;
     Texture3d<float> volume_texture_;
-    GLuint colormap_texture_;
+    GLuint cm_texture_id_;
 
     glm::mat4 volume_transform_;
 

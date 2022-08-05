@@ -80,7 +80,7 @@ class GeomComponent : public ObjectComponent {
     GLuint beam_vbo_handle_;
     std::unique_ptr<ShaderProgram> beam_program_;
 
-    GLuint colormap_texture_;
+    GLuint cm_texture_id_;
 
     float speed_ = 0.0f;
     float total_time_elapsed_ = -1.0f;
