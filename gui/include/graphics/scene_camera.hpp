@@ -7,8 +7,8 @@
 #include <utility>
 #include <string>
 
-#include <glm/glm.hpp>
 #include <GL/gl3w.h>
+#include <glm/glm.hpp>
 
 #include "input_handler.hpp"
 #include "ticker.hpp"

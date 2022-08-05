@@ -6,26 +6,41 @@ message(STATUS "Found OpenGL at ${OPENGL_LIBRARIES}, ${OPENGL_INCLUDE_DIR}")
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 message(STATUS "Found Eigen3 ${Eigen3_VERSION}")
 
+# glm
 add_subdirectory(${PROJECT_SOURCE_DIR}/../ext/glm glm)
 
+# glfw
 add_subdirectory(${PROJECT_SOURCE_DIR}/../ext/glfw glfw)
-set(glfw3_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/../ext/glfw/include)
 
+# gl3w
+set(GL3W_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/gl3w)
+file(MAKE_DIRECTORY ${GL3W_BUILD_DIR})
+message(STATUS ${GL3W_BUILD_DIR})
+execute_process(COMMAND ${CMAKE_COMMAND} -G
+                ${CMAKE_GENERATOR} ${PROJECT_SOURCE_DIR}/../ext/gl3w
+                WORKING_DIRECTORY ${GL3W_BUILD_DIR})
+execute_process(COMMAND ${CMAKE_COMMAND} --build .
+                WORKING_DIRECTORY ${GL3W_BUILD_DIR})
+
+# imgui
 set(IMGUI_DIR "${PROJECT_SOURCE_DIR}/../ext/imgui")
 set(IMGUI_SOURCE_FILES
-    "${IMGUI_DIR}/imgui.cpp"
-    "${IMGUI_DIR}/imgui_draw.cpp"
-    "${IMGUI_DIR}/imgui_widgets.cpp"
-    "${IMGUI_DIR}/examples/imgui_impl_opengl3.cpp"
-    "${IMGUI_DIR}/examples/imgui_impl_glfw.cpp"
-    "${IMGUI_DIR}/examples/libs/gl3w/GL/gl3w.c"
+    ${IMGUI_DIR}/imgui.cpp
+    ${IMGUI_DIR}/imgui_draw.cpp
+    ${IMGUI_DIR}/imgui_widgets.cpp
+    ${IMGUI_DIR}/imgui_tables.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
+    ${GL3W_BUILD_DIR}/src/gl3w.c
 )
 set_source_files_properties(${IMGUI_SOURCE_FILES} PROPERTIES COMPILE_FLAGS "-w")
 add_library(imgui ${IMGUI_SOURCE_FILES})
 target_include_directories(imgui
     PUBLIC
-        "${IMGUI_DIR}"
-        "${IMGUI_DIR}/examples/libs/gl3w/")
+        ${IMGUI_DIR}
+        ${IMGUI_DIR}/backends
+        ${GL3W_BUILD_DIR}/include
+)
 
 target_link_libraries(imgui PUBLIC dl glfw OpenGL::GL)
 
