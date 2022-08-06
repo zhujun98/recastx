@@ -7,7 +7,6 @@
 
 #include "tomop/tomop.hpp"
 #include "modules/reconstruction.hpp"
-#include "modules/control.hpp"
 #include "scene.hpp"
 #include "server.hpp"
 
@@ -26,7 +25,6 @@ Server::Server(SceneList& scenes, int port)
     pub_socket_.bind("tcp://*:"s + std::to_string(port+1));
 
     registerModule(std::make_shared<ReconstructionProtocol>());
-    registerModule(std::make_shared<ControlProtocol>());
 }
 
 void Server::start() {

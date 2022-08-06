@@ -69,7 +69,6 @@ set(SOURCE_NAMES
     "src/graphics/recon_component.cpp"
     "src/graphics/geom_component.cpp"
     "src/graphics/axes_component.cpp"
-    "src/graphics/control_component.cpp"
     "src/graphics/partitioning_component.cpp"
 )
 
