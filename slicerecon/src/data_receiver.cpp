@@ -97,5 +97,4 @@ void DataReceiver::start() {
     thread_.detach();
 }
 
-
 } // namespace slicerecon

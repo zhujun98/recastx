@@ -4,14 +4,13 @@
 #include <glm/gtx/transform.hpp>
 #include <imgui.h>
 
-#include "graphics/geometry_component.hpp"
+#include "graphics/geom_component.hpp"
 #include "graphics/primitives.hpp"
-#include "graphics/scene_camera_3d.hpp"
+#include "graphics/scene_camera3d.hpp"
 
 namespace gui {
 
-GeometryComponent::GeometryComponent(SceneObject& object)
-    : object_(object) {
+GeomComponent::GeomComponent(SceneObject& object) : object_(object) {
     current_projection_ = 0;
 
     glGenVertexArrays(1, &vao_handle_);
@@ -63,12 +62,12 @@ GeometryComponent::GeometryComponent(SceneObject& object)
 
     speed_ = 0.0f;
 
-    colormap_texture_ = object.camera().colormap();
+    cm_texture_id_ = object.camera().colormapTextureId();
 }
 
-GeometryComponent::~GeometryComponent() {}
+GeomComponent::~GeomComponent() {}
 
-void GeometryComponent::describe() {
+void GeomComponent::describe() {
     ImGui::Checkbox("Show geometry", &show_);
     ImGui::SliderInt("Projection", &current_projection_, 0,
                      projections_.size() - 1);
@@ -77,34 +76,34 @@ void GeometryComponent::describe() {
     recorder_.describe();
 }
 
-void GeometryComponent::tick(float time_elapsed) {
-    if (projections_.empty())
-        return;
+void GeomComponent::tick(float time_elapsed) {
+    if (projections_.empty()) return;
+
     if (total_time_elapsed_ < 0.0f) {
         total_time_elapsed_ = 0.01f;
     } else {
         total_time_elapsed_ += speed_ * time_elapsed * projections_.size();
     }
+
     while (total_time_elapsed_ > 1.0f) {
         current_projection_ = (current_projection_ + 1) % projections_.size();
         total_time_elapsed_ -= 1.0f;
     }
 }
 
-void GeometryComponent::draw(glm::mat4 world_to_screen) {
+void GeomComponent::draw(glm::mat4 world_to_screen) {
     if (!show_) {
         recorder_.capture();
         return;
     }
 
-    if (projections_.empty())
-        return;
+    if (projections_.empty()) return;
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
 
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_1D, colormap_texture_);
+    glBindTexture(GL_TEXTURE_1D, cm_texture_id_);
 
     auto draw_projection = [&](auto& proj) {
         cube_program_->use();

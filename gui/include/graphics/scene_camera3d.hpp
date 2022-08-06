@@ -1,4 +1,5 @@
-#pragma once
+#ifndef GUI_GRAPHICS_SCENE_CAMERA3D_H
+#define GUI_GRAPHICS_SCENE_CAMERA3D_H
 
 #include <map>
 #include <memory>
@@ -109,5 +110,6 @@ class SceneCamera3d : public SceneCamera {
     void describe() override;
 };
 
-
 } // namespace gui
+
+#endif // GUI_GRAPHICS_SCENE_CAMERA3D_H

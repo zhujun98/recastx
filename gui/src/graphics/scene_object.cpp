@@ -22,7 +22,7 @@ void SceneObject::tick(float time_elapsed) {
 }
 
 void SceneObject::describe() {
-    if (ImGui::CollapsingHeader("camera")) camera_->describe();
+    camera_->describe();
 
     for (auto& id_and_comp : components_) {
         if (ImGui::CollapsingHeader(id_and_comp.first.c_str())) {
@@ -66,5 +66,7 @@ bool SceneObject::handleKey(int key, bool down, int mods) {
     if (camera_ && camera_->handleKey(key, down, mods)) return true;
     return false;
 }
+
+SceneCamera& SceneObject::camera() { return *camera_; }
 
 }  // namespace gui

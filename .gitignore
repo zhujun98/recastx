@@ -1,3 +1,5 @@
+.DS_Store
+
 .idea
 .vscode
 
@@ -5,8 +7,7 @@
 *.so
 *.egg-info
 
-cmake-build-debug
-cmake-build-debug-*
+cmake-build-*
 build
 */build
 build-*

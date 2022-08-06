@@ -4,18 +4,16 @@
 #include <glm/gtc/constants.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/string_cast.hpp>
-#include <glm/gtx/transform.hpp>
 #include <imgui.h>
 
-#include "graphics/colormap.hpp"
-#include "graphics/reconstruction_component.hpp"
+#include "graphics/recon_component.hpp"
 #include "graphics/primitives.hpp"
-#include "graphics/scene_camera_3d.hpp"
+#include "graphics/scene_camera3d.hpp"
 
 namespace gui {
 
-ReconstructionComponent::ReconstructionComponent(SceneObject& object)
-    : object_(object), volume_texture_(16, 16, 16) {
+ReconComponent::ReconComponent(SceneObject& object)
+        : object_(object), volume_texture_(16, 16, 16) {
     glGenVertexArrays(1, &vao_handle_);
     glBindVertexArray(vao_handle_);
     glGenBuffers(1, &vbo_handle_);
@@ -64,35 +62,17 @@ ReconstructionComponent::ReconstructionComponent(SceneObject& object)
     auto cube_frag =
 #include "../src/shaders/wireframe_cube.frag"
         ;
-    cube_program_ =
-        std::make_unique<ShaderProgram>(cube_vert, cube_frag, false);
+    cube_program_ = std::make_unique<ShaderProgram>(cube_vert, cube_frag, false);
 
-    slices_[0] = std::make_unique<slice>(0);
-    slices_[1] = std::make_unique<slice>(1);
-    slices_[2] = std::make_unique<slice>(2);
+    initSlices();
+    requestSlices();
 
-    // slice along axis 0 = x
-    slices_[0]->set_orientation(glm::vec3(0.0f, -1.0f, -1.0f),
-                                glm::vec3(0.0f, 2.0f, 0.0f),
-                                glm::vec3(0.0f, 0.0f, 2.0f));
+    initVolume();
 
-    // slice along axis 1 = y
-    slices_[1]->set_orientation(glm::vec3(-1.0f, 0.0f, -1.0f),
-                                glm::vec3(2.0f, 0.0f, 0.0f),
-                                glm::vec3(0.0f, 0.0f, 2.0f));
-
-    // slice along axis 2 = z
-    slices_[2]->set_orientation(glm::vec3(-1.0f, -1.0f, 0.0f),
-                                glm::vec3(2.0f, 0.0f, 0.0f),
-                                glm::vec3(0.0f, 2.0f, 0.0f));
-
-    send_slices();
-
-    set_volume_position(glm::vec3(-1.0f), glm::vec3(1.0f));
-    colormap_texture_ = object.camera().colormap();
+    cm_texture_id_ = object.camera().colormapTextureId();
 }
 
-ReconstructionComponent::~ReconstructionComponent() {
+ReconComponent::~ReconComponent() {
     glDeleteVertexArrays(1, &cube_vao_handle_);
     glDeleteBuffers(1, &cube_vbo_handle_);
     glDeleteVertexArrays(1, &vao_handle_);
@@ -105,60 +85,53 @@ ReconstructionComponent::~ReconstructionComponent() {
     glDeleteBuffers(1, &line_vbo_handle_);
 }
 
-void ReconstructionComponent::send_slices() {
+void ReconComponent::requestSlices() {
     for (auto& slice : slices_) {
         auto packet = tomop::SetSlicePacket(
-            slice.first, slice.second->packed_orientation());
+            slice.first, slice.second->orientation3());
         object_.send(packet);
     }
 
     for (auto& slice : fixed_slices_) {
         auto packet = tomop::SetSlicePacket(
-            slice.first, slice.second->packed_orientation());
+            slice.first, slice.second->orientation3());
         object_.send(packet);
     }
 }
 
-void ReconstructionComponent::set_data(std::vector<float>& data,
-                                       const std::array<int32_t, 2>& size,
-                                       int slice_idx,
-                                       bool additive) {
-    slice* s = nullptr;
+void ReconComponent::setSliceData(std::vector<float>& data,
+                                  const std::array<int32_t, 2>& size,
+                                  int slice_idx,
+                                  bool additive) {
+    Slice* slice = nullptr;
     if (slices_.find(slice_idx) != slices_.end()) {
-        s = slices_[slice_idx].get();
+        slice = slices_[slice_idx].get();
     } else if (fixed_slices_.find(slice_idx) != fixed_slices_.end()) {
-        s = fixed_slices_[slice_idx].get();
+        slice = fixed_slices_[slice_idx].get();
     } else {
         std::cout << "Updating inactive slice: " << slice_idx << "\n";
         return;
     }
 
-    if (s == dragged_slice_) {
-        return;
-    }
+    if (slice == dragged_slice_) return;
 
-    if (!additive || !s->has_data()) {
-        s->size = size;
-        s->data = data;
+    if (!additive || slice->empty()) {
+        slice->setData(data, size);
     } else {
-        assert(s->size == size);
-        s->add_data(data);
+        slice->addData(data, size);
     }
 
-    s->min_value = *std::min_element(s->data.begin(), s->data.end());
-    s->max_value = *std::max_element(s->data.begin(), s->data.end());
-
-    update_image_(s);
+    updateSliceImage(slice);
 }
 
-void ReconstructionComponent::set_volume_data(
-        std::vector<float>& data, const std::array<int32_t, 3>& volume_size) {
+void ReconComponent::setVolumeData(std::vector<float>& data, 
+                                   const std::array<int32_t, 3>& size) {
     volume_data_ = data;
-    volume_texture_.set_data(volume_size[0], volume_size[1], volume_size[2], data);
+    volume_texture_.setData(size[0], size[1], size[2], data);
     update_histogram(data);
 }
 
-void ReconstructionComponent::update_histogram(const std::vector<float>& data) {
+void ReconComponent::update_histogram(const std::vector<float>& data) {
     auto bins = 30;
     auto min = *std::min_element(data.begin(), data.end());
     auto max = *std::max_element(data.begin(), data.end());
@@ -184,7 +157,7 @@ void ReconstructionComponent::update_histogram(const std::vector<float>& data) {
     volume_max_ = max;
 }
 
-void ReconstructionComponent::describe() {
+void ReconComponent::describe() {
     ImGui::Checkbox("Show reconstruction", &show_);
     ImGui::Checkbox("Transparent mode (experimental)", &transparency_mode_);
 
@@ -201,7 +174,7 @@ void ReconstructionComponent::describe() {
         ImGui::Begin("Slices");
         auto to_remove = std::vector<int>{};
         for (auto&& [slice_idx, slice] : fixed_slices_) {
-            ImGui::Image((void*)(intptr_t)slice->get_texture().id(), ImVec2(200, 200));
+            ImGui::Image((void*)(intptr_t)slice->texture().id(), ImVec2(200, 200));
             if (ImGui::Button((std::string("remove##") + std::to_string(slice_idx)).c_str())) {
                 to_remove.push_back(slice_idx);
             }
@@ -213,44 +186,23 @@ void ReconstructionComponent::describe() {
     }
 }
 
-std::pair<float, float> ReconstructionComponent::overall_min_and_max() {
+std::pair<float, float> ReconComponent::overall_min_and_max() {
     auto overall_min = std::numeric_limits<float>::max();
     auto overall_max = std::numeric_limits<float>::min();
     for (auto&& [slice_idx, slice] : slices_) {
         (void)slice_idx;
-        overall_min =
-            slice->min_value < overall_min ? slice->min_value : overall_min;
-        overall_max =
-            slice->max_value > overall_max ? slice->max_value : overall_max;
+
+        auto[min_v, max_v] = slice->minMaxVals(); 
+        overall_min = min_v < overall_min ? min_v : overall_min;
+        overall_max = max_v > overall_max ? max_v : overall_max;
     }
 
     return {overall_min - (0.2f * (overall_max - overall_min)),
             overall_max + (0.2f * (overall_max - overall_min))};
 }
 
-void ReconstructionComponent::update_image_(slice* s) {
-    auto nonzero = std::fabs(s->min_value) > 1e-6 &&
-                   std::fabs(s->max_value) > 1e-6;
-    if (value_not_set_ && nonzero) {
-        lower_value_ = s->min_value;
-        upper_value_ = s->max_value;
-        value_not_set_ = false;
-    }
-    s->update_texture();
-}
-
-void ReconstructionComponent::set_volume_position(glm::vec3 min_pt, glm::vec3 max_pt) {
-    auto center = 0.5f * (min_pt + max_pt);
-    volume_transform_ = glm::translate(center) *
-                        glm::scale(glm::vec3(max_pt - min_pt)) *
-                        glm::scale(glm::vec3(0.5f));
-    object_.camera().set_look_at(center);
-}
-
-void ReconstructionComponent::draw(glm::mat4 world_to_screen) {
-    if (!show_) {
-        return;
-    }
+void ReconComponent::draw(glm::mat4 world_to_screen) {
+    if (!show_) return;
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
@@ -268,36 +220,35 @@ void ReconstructionComponent::draw(glm::mat4 world_to_screen) {
     program_->uniform("transparency_mode", (int)transparency_mode_);
 
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_1D, colormap_texture_);
+    glBindTexture(GL_TEXTURE_1D, cm_texture_id_);
 
     auto full_transform = world_to_screen * volume_transform_;
 
-    auto draw_slice = [&](slice& the_slice) {
-        the_slice.get_texture().bind();
+    auto draw_slice = [&](Slice& the_slice) {
+        the_slice.texture().bind();
 
         program_->uniform("world_to_screen_matrix", full_transform);
         program_->uniform("orientation_matrix",
-                          the_slice.orientation *
-                              glm::translate(glm::vec3(0.0, 0.0, 1.0)));
-        program_->uniform("hovered", (int)(the_slice.hovered));
-        program_->uniform("has_data", (int)(the_slice.has_data()));
+                          the_slice.orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0)));
+        program_->uniform("hovered", (int)(the_slice.hovered()));
+        program_->uniform("has_data", (int)(!the_slice.empty()));
 
         glBindVertexArray(vao_handle_);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-        the_slice.get_texture().unbind();
+        the_slice.texture().unbind();
     };
 
-    std::vector<slice*> slices;
+    std::vector<Slice*> slices;
     for (auto& id_slice : slices_) {
-        if (id_slice.second.get()->inactive) {
+        if (id_slice.second.get()->inactive()) {
             continue;
         }
         slices.push_back(id_slice.second.get());
     }
     std::sort(slices.begin(), slices.end(), [](auto& lhs, auto& rhs) -> bool {
         if (rhs->transparent() == lhs->transparent()) {
-            return rhs->id < lhs->id;
+            return rhs->id() < lhs->id();
         }
         return rhs->transparent();
     });
@@ -318,8 +269,7 @@ void ReconstructionComponent::draw(glm::mat4 world_to_screen) {
 
     glDisable(GL_DEPTH_TEST);
 
-    if (drag_machine_ &&
-        drag_machine_->kind() == recon_drag_machine_kind::rotator) {
+    if (drag_machine_ && drag_machine_->kind() == recon_drag_machine_kind::rotator) {
         auto& rotator = *(SliceRotator*)drag_machine_.get();
         cube_program_->uniform(
             "transform_matrix",
@@ -334,10 +284,8 @@ void ReconstructionComponent::draw(glm::mat4 world_to_screen) {
     glDisable(GL_BLEND);
 }
 
-bool ReconstructionComponent::handleMouseButton(int button, bool down) {
-    if (!show_) {
-        return false;
-    }
+bool ReconComponent::handleMouseButton(int button, bool down) {
+    if (!show_) return false;
 
     if (down) {
         if (button == 0) {
@@ -358,14 +306,13 @@ bool ReconstructionComponent::handleMouseButton(int button, bool down) {
             if (hovering_) {
                 // hovered over slice gets fixed
                 int new_id = generate_slice_idx();
-                auto new_slice = std::make_unique<slice>(new_id);
-                new_slice->orientation = hovered_slice_->orientation;
+                auto new_slice = std::make_unique<Slice>(new_id);
+                new_slice->setOrientation(hovered_slice_->orientation4());
 
-                auto packet = tomop::SetSlicePacket(
-                    new_slice->id, new_slice->packed_orientation());
+                auto packet = tomop::SetSlicePacket(new_id, new_slice->orientation3());
                 object_.send(packet);
 
-                fixed_slices_[new_slice->id] = std::move(new_slice);
+                fixed_slices_[new_id] = std::move(new_slice);
             }
         }
     }
@@ -373,7 +320,7 @@ bool ReconstructionComponent::handleMouseButton(int button, bool down) {
     if (!down) {
         if (dragged_slice_) {
             auto packet = tomop::SetSlicePacket(
-                dragged_slice_->id, dragged_slice_->packed_orientation());
+                dragged_slice_->id(), dragged_slice_->orientation3());
             object_.send(packet);
 
             dragged_slice_ = nullptr;
@@ -388,7 +335,7 @@ bool ReconstructionComponent::handleMouseButton(int button, bool down) {
     return false;
 }
 
-bool ReconstructionComponent::handleMouseMoved(double x, double y) {
+bool ReconComponent::handleMouseMoved(double x, double y) {
     if (!show_) return false;
 
     // update slice that is being hovered over
@@ -412,10 +359,14 @@ bool ReconstructionComponent::handleMouseMoved(double x, double y) {
     return false;
 }
 
-std::tuple<bool, float, glm::vec3> ReconstructionComponent::intersection_point(
-    glm::mat4 inv_matrix, glm::mat4 orientation, glm::vec2 point) {
-    auto intersect_ray_plane = [](glm::vec3 origin, glm::vec3 direction,
-                                  glm::vec3 base, glm::vec3 normal,
+std::tuple<bool, float, glm::vec3>
+ReconComponent::intersection_point(glm::mat4 inv_matrix, 
+                                   glm::mat4 orientation, 
+                                   glm::vec2 point) {
+    auto intersect_ray_plane = [](glm::vec3 origin, 
+                                  glm::vec3 direction,
+                                  glm::vec3 base, 
+                                  glm::vec3 normal,
                                   float& distance) -> bool {
         auto alpha = glm::dot(normal, direction);
         if (glm::abs(alpha) > 0.001f) {
@@ -461,15 +412,16 @@ std::tuple<bool, float, glm::vec3> ReconstructionComponent::intersection_point(
     return std::make_tuple(does_intersect, distance, intersection_point);
 }
 
-int ReconstructionComponent::index_hovering_over(float x, float y) {
+int ReconComponent::index_hovering_over(float x, float y) {
     auto inv_matrix = glm::inverse(object_.camera().matrix() * volume_transform_);
     int best_slice_index = -1;
     float best_z = std::numeric_limits<float>::max();
     for (auto& id_slice : slices_) {
         auto& slice = id_slice.second;
-        if (slice->inactive) continue;
-        slice->hovered = false;
-        auto maybe_point = intersection_point(inv_matrix, slice->orientation, glm::vec2(x, y));
+        if (slice->inactive()) continue;
+        slice->setHovered(false);
+        auto maybe_point = intersection_point(
+            inv_matrix, slice->orientation4(), glm::vec2(x, y));
         if (std::get<0>(maybe_point)) {
             auto z = std::get<1>(maybe_point);
             if (z < best_z) {
@@ -482,11 +434,11 @@ int ReconstructionComponent::index_hovering_over(float x, float y) {
     return best_slice_index;
 }
 
-void ReconstructionComponent::check_hovered(float x, float y) {
+void ReconComponent::check_hovered(float x, float y) {
     int best_slice_index = index_hovering_over(x, y);
 
     if (best_slice_index >= 0) {
-        slices_[best_slice_index]->hovered = true;
+        slices_[best_slice_index]->setHovered(true);
         hovering_ = true;
         hovered_slice_ = slices_[best_slice_index].get();
     } else {
@@ -495,7 +447,7 @@ void ReconstructionComponent::check_hovered(float x, float y) {
     }
 }
 
-void ReconstructionComponent::switch_if_necessary(
+void ReconComponent::switch_if_necessary(
     recon_drag_machine_kind kind) {
     if (!drag_machine_ || drag_machine_->kind() != kind) {
         switch (kind) {
@@ -513,21 +465,61 @@ void ReconstructionComponent::switch_if_necessary(
     }
 }
 
+void ReconComponent::initSlices() {
+    for (size_t i = 0; i < 3; ++i) slices_[i] = std::make_unique<Slice>(i);
+
+    // slice along axis 0 = x
+    slices_[0]->setOrientation(glm::vec3(0.0f, -1.0f, -1.0f),
+                               glm::vec3(0.0f, 2.0f, 0.0f),
+                               glm::vec3(0.0f, 0.0f, 2.0f));
+
+    // slice along axis 1 = y
+    slices_[1]->setOrientation(glm::vec3(-1.0f, 0.0f, -1.0f),
+                               glm::vec3(2.0f, 0.0f, 0.0f),
+                               glm::vec3(0.0f, 0.0f, 2.0f));
+
+    // slice along axis 2 = z
+    slices_[2]->setOrientation(glm::vec3(-1.0f, -1.0f, 0.0f),
+                               glm::vec3(2.0f, 0.0f, 0.0f),
+                               glm::vec3(0.0f, 2.0f, 0.0f));
+}
+
+void ReconComponent::initVolume() {
+    glm::vec3 min_pt(-1.0f), max_pt(1.0f);
+    auto center = 0.5f * (min_pt + max_pt);
+    volume_transform_ = glm::translate(center) *
+                        glm::scale(glm::vec3(max_pt - min_pt)) *
+                        glm::scale(glm::vec3(0.5f));
+    object_.camera().set_look_at(center);
+}
+
+void ReconComponent::updateSliceImage(Slice* slice) {
+    auto[min_v, max_v] = slice->minMaxVals();
+    auto nonzero = std::fabs(min_v) > 1e-6 && std::fabs(max_v) > 1e-6;
+    
+    if (value_not_set_ && nonzero) {
+        lower_value_ = min_v;
+        upper_value_ = max_v;
+        value_not_set_ = false;
+    }
+    slice->updateTexture();
+}
+
 void SliceTranslator::on_drag(glm::vec2 delta) {
     // 1) what are we dragging, and does it have data?
     // if it does then we need to make a new slice
     // else we drag the current slice along the normal
     if (!comp_.dragged_slice()) {
-        std::unique_ptr<slice> new_slice;
+        std::unique_ptr<Slice> new_slice;
         int id = comp_.generate_slice_idx();
         int to_remove = -1;
         for (auto& id_the_slice : comp_.get_slices()) {
             auto& the_slice = id_the_slice.second;
-            if (the_slice->hovered) {
-                if (the_slice->has_data()) {
-                    new_slice = std::make_unique<slice>(id);
-                    new_slice->orientation = the_slice->orientation;
-                    to_remove = the_slice->id;
+            if (the_slice->hovered()) {
+                if (!the_slice->empty()) {
+                    new_slice = std::make_unique<Slice>(id);
+                    new_slice->setOrientation(the_slice->orientation4());
+                    to_remove = the_slice->id();
                     // FIXME need to generate a new id and upon 'popping'
                     // send a UpdateSlice packet
                     comp_.dragged_slice() = new_slice.get();
@@ -538,7 +530,7 @@ void SliceTranslator::on_drag(glm::vec2 delta) {
             }
         }
         if (new_slice) {
-            comp_.get_slices()[new_slice->id] = std::move(new_slice);
+            comp_.get_slices()[new_slice->id()] = std::move(new_slice);
         }
         if (to_remove >= 0) {
             comp_.get_slices().erase(to_remove);
@@ -553,7 +545,7 @@ void SliceTranslator::on_drag(glm::vec2 delta) {
     }
 
     auto slice = comp_.dragged_slice();
-    auto& o = slice->orientation;
+    auto& o = slice->orientation4();
 
     auto axis1 = glm::vec3(o[0][0], o[0][1], o[0][2]);
     auto axis2 = glm::vec3(o[1][0], o[1][1], o[1][2]);
@@ -585,7 +577,7 @@ void SliceTranslator::on_drag(glm::vec2 delta) {
     o[2][2] += dx[2];
 }
 
-SliceRotator::SliceRotator(ReconstructionComponent& comp, glm::vec2 initial)
+SliceRotator::SliceRotator(ReconComponent& comp, glm::vec2 initial)
     : ReconDragMachine(comp, initial) {
     // 1. need to identify the opposite axis
     // a) get the position within the slice
@@ -594,7 +586,7 @@ SliceRotator::SliceRotator(ReconstructionComponent& comp, glm::vec2 initial)
 
     auto slice = comp.hovered_slice();
     assert(slice);
-    auto o = slice->orientation;
+    auto o = slice->orientation4();
 
     auto maybe_point = comp.intersection_point(inv_matrix, o, initial_);
     assert(std::get<0>(maybe_point));
@@ -652,16 +644,16 @@ void SliceRotator::on_drag(glm::vec2 delta) {
     // if it does then we need to make a new slice
     // else we drag the current slice along the normal
     if (!comp_.dragged_slice()) {
-        std::unique_ptr<slice> new_slice;
+        std::unique_ptr<Slice> new_slice;
         int id = comp_.generate_slice_idx();
         int to_remove = -1;
         for (auto& id_the_slice : comp_.get_slices()) {
             auto& the_slice = id_the_slice.second;
-            if (the_slice->hovered) {
-                if (the_slice->has_data()) {
-                    new_slice = std::make_unique<slice>(id);
-                    new_slice->orientation = the_slice->orientation;
-                    to_remove = the_slice->id;
+            if (the_slice->hovered()) {
+                if (!the_slice->empty()) {
+                    new_slice = std::make_unique<Slice>(id);
+                    new_slice->setOrientation(the_slice->orientation4());
+                    to_remove = the_slice->id();
                     // FIXME need to generate a new id and upon 'popping'
                     // send a UpdateSlice packet
                     comp_.dragged_slice() = new_slice.get();
@@ -672,7 +664,7 @@ void SliceRotator::on_drag(glm::vec2 delta) {
             }
         }
         if (new_slice) {
-            comp_.get_slices()[new_slice->id] = std::move(new_slice);
+            comp_.get_slices()[new_slice->id()] = std::move(new_slice);
         }
         if (to_remove >= 0) {
             comp_.get_slices().erase(to_remove);
@@ -684,7 +676,7 @@ void SliceRotator::on_drag(glm::vec2 delta) {
     }
 
     auto slice = comp_.dragged_slice();
-    auto& o = slice->orientation;
+    auto& o = slice->orientation4();
 
     auto axis1 = glm::vec3(o[0][0], o[0][1], o[0][2]);
     auto axis2 = glm::vec3(o[1][0], o[1][1], o[1][2]);
@@ -699,7 +691,7 @@ void SliceRotator::on_drag(glm::vec2 delta) {
     b = glm::rotate(b, weight, rot_end - rot_base) + rot_base;
     c = glm::rotate(c, weight, rot_end - rot_base) + rot_base;
 
-    slice->set_orientation(a, b - a, c - a);
+    slice->setOrientation(a, b - a, c - a);
 }
 
 } // namespace gui

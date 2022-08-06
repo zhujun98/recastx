@@ -7,7 +7,6 @@
 
 #include "tomop/tomop.hpp"
 #include "modules/reconstruction.hpp"
-#include "modules/control.hpp"
 #include "scene.hpp"
 #include "server.hpp"
 
@@ -20,13 +19,12 @@ Server::Server(SceneList& scenes, int port)
     : scenes_(scenes),
       rep_socket_(context_, ZMQ_REP),
       pub_socket_(context_, ZMQ_PUB) {
-    scenes_.add_listener(this);
+    scenes_.addPublisher(this);
 
     rep_socket_.bind("tcp://*:"s + std::to_string(port));
     pub_socket_.bind("tcp://*:"s + std::to_string(port+1));
 
     registerModule(std::make_shared<ReconstructionProtocol>());
-    registerModule(std::make_shared<ControlProtocol>());
 }
 
 void Server::start() {
@@ -62,7 +60,7 @@ void Server::tick(float) {
     }
 }
 
-void Server::handle(tomop::Packet& packet) {
+void Server::sendPacket(tomop::Packet& packet) {
     try {
         auto size = packet.size();
         zmq::message_t message(size);

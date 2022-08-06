@@ -5,8 +5,8 @@
 
 #include <tomop/tomop.hpp>
 
-#include "graphics/scene_object_2d.hpp"
-#include "graphics/scene_object_3d.hpp"
+#include "graphics/scene_object2d.hpp"
+#include "graphics/scene_object3d.hpp"
 #include "scene.hpp"
 
 
@@ -39,7 +39,7 @@ SceneList::~SceneList() = default;
 
 void SceneList::addScene(const std::string& name, int dimension) {
     auto scene = std::make_unique<Scene>(name, dimension);
-    scene->object().add_listener(this);
+    scene->object().addPublisher(this);
     scenes_[name] = std::move(scene);
     if (active_scene_ == nullptr) activate(name);
 }
@@ -84,10 +84,6 @@ bool SceneList::handleMouseMoved(double x, double y) {
 
 bool SceneList::handleKey(int key, bool down, int mods) {
     return active_scene_->object().handleKey(key, down, mods);
-}
-
-void SceneList::handle(tomop::Packet& packet) {
-    send(packet);
 }
 
 } // namespace gui

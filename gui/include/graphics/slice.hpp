@@ -1,4 +1,5 @@
-#pragma once
+#ifndef GUI_GRAPHICS_SLICE_H
+#define GUI_GRAPHICS_SLICE_H
 
 #include <array>
 #include <cstddef>
@@ -10,54 +11,61 @@
 
 namespace gui {
 
-struct slice {
-    slice(int id_);
+class Slice {
 
-    void update_texture();
-    void set_orientation(glm::vec3 base, glm::vec3 x, glm::vec3 y);
+  public:
 
-    std::vector<float> data;
+    using DataType = std::vector<float>;
+    using SizeType = std::array<int32_t, 2>;
+    using Orient3Type = std::array<float, 9>; // for SlicePacket
+    using Orient4Type = glm::mat4;
 
-    void add_data(std::vector<float> other) {
-        for (auto i = 0u; i < data.size(); ++i) {
-            data[i] += other[i];
-        }
-    }
+  private:
 
-    void add_partial_data(std::vector<float> other,
-                          std::array<int32_t, 2> offset,
-                          std::array<int32_t, 2> partial_size) {
-        int idx = 0;
-        for (auto j = offset[1]; j < partial_size[1] + offset[1]; ++j) {
-            for (auto i = offset[0]; i < partial_size[0] + offset[0]; ++i) {
-                data[j * size[0] + i] += other[idx];
-            }
-        }
-    }
+    int id_ = -1;
+    DataType data_;
+    SizeType size_;
+  
+    Texture<float> texture_;
 
-    int id = -1;
-    int replaces_id = -1;
-    bool hovered = false;
-    bool inactive = false;
-    bool has_data() { return !data.empty(); }
-    bool transparent() { return hovered || !has_data(); }
+    bool hovered_ = false;
+    bool inactive_ = false;
 
-    std::array<int32_t, 2> size;
+    std::array<float, 2> minMaxVals_ {-1.f, 1.f};
 
-    auto& get_texture() { return tex_; }
+    Orient4Type orient_;
 
-    texture<float> tex_;
-    glm::mat4 orientation;
+    void updateMinMaxVal();
 
-    std::array<float, 9> packed_orientation() {
-        return std::array<float, 9>{
-            orientation[0][0], orientation[0][1], orientation[0][2],
-            orientation[1][0], orientation[1][1], orientation[1][2],
-            orientation[2][0], orientation[2][1], orientation[2][2]};
-    }
+  public:
 
-    float min_value = 1.0f;
-    float max_value = -1.0f;
+    explicit Slice(int slice_id);
+
+    [[nodiscard]] int id() const;
+
+    void setData(const DataType& data, const SizeType& size);
+    void addData(const DataType& data, const SizeType& size);
+
+    void updateTexture();
+
+    [[nodiscard]] bool empty() const;
+    [[nodiscard]] bool hovered() const;
+    [[nodiscard]] bool inactive() const;
+    [[nodiscard]] bool transparent() const;
+
+    void setHovered(bool state);
+
+    auto& texture() { return texture_; }
+
+    void setOrientation(glm::vec3 base, glm::vec3 x, glm::vec3 y);
+    void setOrientation(const Slice::Orient4Type& orient);
+
+    [[nodiscard]] Orient3Type orientation3() const;
+    Orient4Type& orientation4();
+
+    [[nodiscard]] const std::array<float, 2>& minMaxVals() const;
 };
 
 } // namespace gui
+
+#endif // GUI_GRAPHICS_SLICE_H
