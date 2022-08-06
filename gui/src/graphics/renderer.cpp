@@ -4,6 +4,7 @@
 #include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
 #include <glm/gtx/transform.hpp>
+#include <imgui.h>
 
 #include "graphics/renderer.hpp"
 
@@ -41,6 +42,7 @@ Renderer::Renderer() {
 Renderer::~Renderer() { glfwTerminate(); }
 
 void Renderer::spin() {
+    ImVec4 bg_color = ImVec4(0.6f, 0.6f, 0.6f, 1.0f);
     while (!glfwWindowShouldClose(window_)) {
         glfwPollEvents();
 
@@ -62,7 +64,7 @@ void Renderer::spin() {
         int display_w, display_h;
         glfwGetFramebufferSize(window_, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClearColor(bg_color.x, bg_color.y, bg_color.z, bg_color.w);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         float ratio = (float)display_h / (float)display_w;
