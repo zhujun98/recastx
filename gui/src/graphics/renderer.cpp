@@ -22,6 +22,9 @@ Renderer::Renderer() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#if defined(__APPLE__)
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
     glfwWindowHint(GLFW_SAMPLES, 4);
 
     window_ = glfwCreateWindow(1920, 1080, "TOMCAT 3D Live Reconstruction", NULL, NULL);
