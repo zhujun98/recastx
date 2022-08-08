@@ -22,41 +22,35 @@ GeomComponent::GeomComponent(SceneObject& object) : object_(object) {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
 
-  auto tex_vert =
+    const char* tex_vert =
 #include "../src/shaders/show_texture.vert"
-      ;
-  auto tex_frag =
+    ;
+    const char* tex_frag =
 #include "../src/shaders/show_texture.frag"
-      ;
-    program_ = std::make_unique<ShaderProgram>(
-        tex_vert, tex_frag, false);
+    ;
+    program_ = std::make_unique<ShaderProgram>(tex_vert, tex_frag);
 
-  auto cube_vert =
+    const char* cube_vert =
 #include "../src/shaders/wireframe_cube.vert"
-      ;
-  auto cube_frag =
+    ;
+    const char* cube_frag =
 #include "../src/shaders/wireframe_cube.frag"
-      ;
-    cube_program_ =
-        std::make_unique<ShaderProgram>(cube_vert,
-                                        cube_frag, false);
+    ;
+    cube_program_ = std::make_unique<ShaderProgram>(cube_vert, cube_frag);
 
-  auto beam_vert =
+    const char* beam_vert =
 #include "../src/shaders/beam.vert"
-      ;
-  auto beam_frag =
+    ;
+    const char* beam_frag =
 #include "../src/shaders/beam.frag"
-      ;
-    beam_program_ = std::make_unique<ShaderProgram>(beam_vert,
-                                                    beam_frag, false);
-
+    ;
+    beam_program_ = std::make_unique<ShaderProgram>(beam_vert, beam_frag);
 
     glGenVertexArrays(1, &beam_vao_handle_);
     glBindVertexArray(beam_vao_handle_);
     glGenBuffers(1, &beam_vbo_handle_);
     glBindBuffer(GL_ARRAY_BUFFER, beam_vbo_handle_);
-    glBufferData(GL_ARRAY_BUFFER, 9 * 12 * sizeof(GLfloat), alt_pyramid(),
-                 GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 9 * 12 * sizeof(GLfloat), alt_pyramid(), GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
 
@@ -65,7 +59,7 @@ GeomComponent::GeomComponent(SceneObject& object) : object_(object) {
     cm_texture_id_ = object.camera().colormapTextureId();
 }
 
-GeomComponent::~GeomComponent() {}
+GeomComponent::~GeomComponent() = default;
 
 void GeomComponent::describe() {
     ImGui::Checkbox("Show geometry", &show_);
@@ -114,7 +108,7 @@ void GeomComponent::draw(glm::mat4 world_to_screen) {
 
         auto transform_matrix = world_to_screen * object_matrix;
 
-        cube_program_->uniform("transform_matrix", transform_matrix);
+        cube_program_->setMat4("transform_matrix", transform_matrix);
 
         glBindVertexArray(cube_vao_handle_);
         glDrawArrays(GL_TRIANGLES, 0, 12 * 3);
@@ -122,13 +116,13 @@ void GeomComponent::draw(glm::mat4 world_to_screen) {
         // DRAW PROJECTION
         program_->use();
 
-        program_->uniform("texture_sampler", 0);
+        program_->setInt("texture_sampler", 0);
         proj.data_texture.bind();
 
-        program_->uniform("colormap_sampler", 1);
+        program_->setInt("colormap_sampler", 1);
 
-        program_->uniform("orientation_matrix", proj.detector_orientation);
-        program_->uniform("world_to_screen_matrix", world_to_screen);
+        program_->setMat4("orientation_matrix", proj.detector_orientation);
+        program_->setMat4("world_to_screen_matrix", world_to_screen);
 
         glBindVertexArray(vao_handle_);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -144,8 +138,8 @@ void GeomComponent::draw(glm::mat4 world_to_screen) {
             glm::translate(proj.source_position) * orientation;
 
         beam_program_->use();
-        beam_program_->uniform("transform_matrix", world_to_screen);
-        beam_program_->uniform("beam_matrix", beam_to_world);
+        beam_program_->setMat4("transform_matrix", world_to_screen);
+        beam_program_->setMat4("beam_matrix", beam_to_world);
         glBindVertexArray(beam_vao_handle_);
 
         glEnable(GL_CULL_FACE);

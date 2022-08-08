@@ -32,8 +32,8 @@ SceneObject2d::~SceneObject2d() = default;
 void SceneObject2d::draw(glm::mat4 window_matrix) {
     program_->use();
 
-    glUniform1i(glGetUniformLocation(program_->handle(), "texture_sampler"), 0);
-    glUniform1i(glGetUniformLocation(program_->handle(), "colormap_sampler"), 1);
+    program_->setInt("texture_sampler", 0);
+    program_->setInt("colormap_sampler", 1);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture_id_);
@@ -41,18 +41,11 @@ void SceneObject2d::draw(glm::mat4 window_matrix) {
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_1D, camera_->colormapTextureId());
 
-    GLint loc = glGetUniformLocation(program_->handle(), "size");
-    glUniform1f(loc, (1.0 / 20.0) * pixel_size_);
-
-    auto asp = (float)size_[0] / size_[1];
-    GLint loc_asp = glGetUniformLocation(program_->handle(), "aspect_ratio");
-    glUniform1f(loc_asp, asp);
-    GLint loc_iasp = glGetUniformLocation(program_->handle(), "inv_aspect_ratio");
-    glUniform1f(loc_iasp, 1.0f / asp);
-
-    GLint matrix_loc = glGetUniformLocation(program_->handle(), "transform_matrix");
-    auto transform_matrix = window_matrix * camera_->matrix();
-    glUniformMatrix4fv(matrix_loc, 1, GL_FALSE, &transform_matrix[0][0]);
+    program_->setFloat("size", 1.f / 20.f * pixel_size_);
+    GLfloat aspect_ratio = (float)size_[0] / (float)size_[1];
+    program_->setFloat("aspect_ratio", aspect_ratio);
+    program_->setFloat("inv_aspect_ratio", 1.f / aspect_ratio);
+    program_->setMat4("transform_matrix", window_matrix * camera_->matrix());
 
     glBindVertexArray(vao_handle_);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);

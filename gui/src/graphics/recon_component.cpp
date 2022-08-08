@@ -49,20 +49,20 @@ ReconComponent::ReconComponent(SceneObject& object)
 
     auto simple_vert =
 #include "../src/shaders/simple_3d.vert"
-        ;
+    ;
     auto simple_frag =
 #include "../src/shaders/simple_3d.frag"
-        ;
+    ;
 
-    program_ = std::make_unique<ShaderProgram>(simple_vert, simple_frag, false);
+    program_ = std::make_unique<ShaderProgram>(simple_vert, simple_frag);
 
     auto cube_vert =
 #include "../src/shaders/wireframe_cube.vert"
-        ;
+    ;
     auto cube_frag =
 #include "../src/shaders/wireframe_cube.frag"
-        ;
-    cube_program_ = std::make_unique<ShaderProgram>(cube_vert, cube_frag, false);
+    ;
+    cube_program_ = std::make_unique<ShaderProgram>(cube_vert, cube_frag);
 
     initSlices();
     requestSlices();
@@ -209,15 +209,15 @@ void ReconComponent::draw(glm::mat4 world_to_screen) {
 
     program_->use();
 
-    program_->uniform("texture_sampler", 0);
-    program_->uniform("colormap_sampler", 1);
-    program_->uniform("volume_data_sampler", 3);
+    program_->setInt("texture_sampler", 0);
+    program_->setInt("colormap_sampler", 1);
+    program_->setInt("volume_data_sampler", 3);
 
-    program_->uniform("min_value", lower_value_);
-    program_->uniform("max_value", upper_value_);
-    program_->uniform("volume_min_value", volume_min_);
-    program_->uniform("volume_max_value", volume_max_);
-    program_->uniform("transparency_mode", (int)transparency_mode_);
+    program_->setFloat("min_value", lower_value_);
+    program_->setFloat("max_value", upper_value_);
+    program_->setFloat("volume_min_value", volume_min_);
+    program_->setFloat("volume_max_value", volume_max_);
+    program_->setBool("transparency_mode", (int)transparency_mode_);
 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_1D, cm_texture_id_);
@@ -227,11 +227,11 @@ void ReconComponent::draw(glm::mat4 world_to_screen) {
     auto draw_slice = [&](Slice& the_slice) {
         the_slice.texture().bind();
 
-        program_->uniform("world_to_screen_matrix", full_transform);
-        program_->uniform("orientation_matrix",
+        program_->setMat4("world_to_screen_matrix", full_transform);
+        program_->setMat4("orientation_matrix",
                           the_slice.orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0)));
-        program_->uniform("hovered", (int)(the_slice.hovered()));
-        program_->uniform("has_data", (int)(!the_slice.empty()));
+        program_->setBool("hovered", the_slice.hovered());
+        program_->setBool("has_data", !the_slice.empty());
 
         glBindVertexArray(vao_handle_);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -260,8 +260,8 @@ void ReconComponent::draw(glm::mat4 world_to_screen) {
     volume_texture_.unbind();
 
     cube_program_->use();
-    cube_program_->uniform("transform_matrix", full_transform);
-    cube_program_->uniform("line_color", glm::vec4(0.5f, 0.5f, 0.5f, 0.3f));
+    cube_program_->setMat4("transform_matrix", full_transform);
+    cube_program_->setVec4("line_color", glm::vec4(0.5f, 0.5f, 0.5f, 0.3f));
 
     glBindVertexArray(cube_vao_handle_);
     glLineWidth(3.0f);
@@ -271,11 +271,9 @@ void ReconComponent::draw(glm::mat4 world_to_screen) {
 
     if (drag_machine_ && drag_machine_->kind() == recon_drag_machine_kind::rotator) {
         auto& rotator = *(SliceRotator*)drag_machine_.get();
-        cube_program_->uniform(
-            "transform_matrix",
-            full_transform * glm::translate(rotator.rot_base) *
-                glm::scale(rotator.rot_end - rotator.rot_base));
-        cube_program_->uniform("line_color", glm::vec4(1.0f, 1.0f, 0.5f, 0.5f));
+        cube_program_->setMat4("transform_matrix",
+                               full_transform * glm::translate(rotator.rot_base) * glm::scale(rotator.rot_end - rotator.rot_base));
+        cube_program_->setVec4("line_color", glm::vec4(1.0f, 1.0f, 0.5f, 0.5f));
         glBindVertexArray(line_vao_handle_);
         glLineWidth(5.0f);
         glDrawArrays(GL_LINES, 0, 2);
