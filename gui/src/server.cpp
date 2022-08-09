@@ -44,8 +44,7 @@ void Server::start() {
                 continue;
             }
 
-            packets_.push({desc, std::move(modules_[desc]->readPacket(
-                desc, buffer, rep_socket_))});
+            packets_.push({desc, modules_[desc]->readPacket(desc, buffer, rep_socket_)});
         }
     });
 }
