@@ -13,7 +13,7 @@
 namespace gui {
 
 ReconComponent::ReconComponent(SceneObject& object)
-        : object_(object), volume_texture_(16, 16, 16) {
+        : volume_texture_(16, 16, 16), object_(object) {
     glGenVertexArrays(1, &vao_handle_);
     glBindVertexArray(vao_handle_);
     glGenBuffers(1, &vbo_handle_);

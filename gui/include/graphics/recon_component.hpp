@@ -32,6 +32,8 @@ class ReconDragMachine {
     ReconDragMachine(ReconComponent& comp, glm::vec2 initial)
         : comp_(comp), initial_(initial) {}
 
+    virtual ~ReconDragMachine() = default;
+
     virtual void on_drag(glm::vec2 delta) = 0;
     virtual recon_drag_machine_kind kind() = 0;
 };

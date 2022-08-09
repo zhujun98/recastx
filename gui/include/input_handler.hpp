@@ -11,7 +11,7 @@ class InputHandler {
     // glfwGetCursorPos takes double as arguments
     virtual bool handleMouseMoved(double /* x */, double /* y */) { return false; }
 
-    virtual int priority() const { return 10; }
+    [[nodiscard]] virtual int priority() const { return 10; }
 };
 
 } // namespace gui

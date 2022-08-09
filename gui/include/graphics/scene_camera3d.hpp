@@ -22,6 +22,7 @@ enum class drag_machine_kind : int {
 class CameraDragMachine : public Ticker {
   public:
     explicit CameraDragMachine(SceneCamera3d& camera) : camera_(camera) {}
+    virtual ~CameraDragMachine() = default;
 
     virtual void on_drag(glm::vec2 cur, glm::vec2 delta) = 0;
     virtual drag_machine_kind kind() = 0;
