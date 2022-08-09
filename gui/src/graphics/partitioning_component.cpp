@@ -50,16 +50,16 @@ PartitioningComponent::PartitioningComponent(SceneObject& object)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
 
-  auto part_vert =
+    const char* part_vert =
 #include "../src/shaders/part.vert"
-      ;
-  auto part_frag =
+    ;
+    const char* part_frag =
 #include "../src/shaders/part.frag"
-      ;
-    part_program_ = std::make_unique<ShaderProgram>(part_vert, part_frag, false);
+    ;
+    part_program_ = std::make_unique<ShaderProgram>(part_vert, part_frag);
 }
 
-PartitioningComponent::~PartitioningComponent() {}
+PartitioningComponent::~PartitioningComponent() = default;
 
 void PartitioningComponent::describe() {
     ImGui::Checkbox("Show partitioning", &show_);
@@ -67,13 +67,9 @@ void PartitioningComponent::describe() {
 }
 
 void PartitioningComponent::draw(glm::mat4 world_to_screen) {
-    if (!show_) {
-        return;
-    }
+    if (!show_) return;
 
-    if (parts_.empty()) {
-        return;
-    }
+    if (parts_.empty()) return;
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
@@ -86,12 +82,8 @@ void PartitioningComponent::draw(glm::mat4 world_to_screen) {
             glm::scale(global_scale_ * (the_part.max_pt - the_part.min_pt)) *
             glm::translate(-glm::vec3(0.5f));
 
-        auto transform_matrix = world_to_screen * object_matrix;
-
-        part_program_->uniform("transform_matrix", transform_matrix);
-
-        auto color = hue_to_rgb((float)the_part.id / parts_.size());
-        part_program_->uniform("rgb_color", color);
+        part_program_->setMat4("transform_matrix", world_to_screen * object_matrix);
+        part_program_->setVec3("rgb_color", hue_to_rgb((float)the_part.id / parts_.size()));
 
         glBindVertexArray(cube_vao_handle_);
         glDrawArrays(GL_TRIANGLES, 0, 12 * 3);

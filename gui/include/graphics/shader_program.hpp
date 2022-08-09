@@ -8,23 +8,30 @@
 namespace gui {
 
 class ShaderProgram {
+
+    GLuint program_;
+
+    void checkCompileErrors(GLuint shader, const std::string& type);
+
+    void compileShaderProgram(const char* vcode, const char* fcode);
+
   public:
-    ShaderProgram(std::string vert, std::string frag, bool file = true);
+
+    ShaderProgram(const char* vcode, const char* fcode);
+
+    ShaderProgram(const std::string& vfile_path, const std::string& ffile_path);
+
     ~ShaderProgram();
 
-    void use();
-    GLuint handle() { return shader_program_; }
+    void use() const;
 
-    void uniform(std::string name, glm::mat4 m);
-    void uniform(std::string name, glm::vec3 v);
-    void uniform(std::string name, glm::vec4 v);
-    void uniform(std::string name, float x);
-    void uniform(std::string name, int x);
+    void setMat4(const std::string& name, glm::mat4 value);
+    void setVec3(const std::string& name, glm::vec3 value);
+    void setVec4(const std::string& name, glm::vec4 value);
+    void setFloat(const std::string& name, float value);
+    void setInt(const std::string& name, int value);
+    void setBool(const std::string& name, bool value);
 
-  private:
-    GLuint shader_program_;
-    GLuint vert_shader_;
-    GLuint frag_shader_;
 };
 
 } // namespace gui

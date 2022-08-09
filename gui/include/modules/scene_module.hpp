@@ -17,6 +17,9 @@ class SceneModuleProtocol {
 
   public:
 
+    SceneModuleProtocol() = default;
+    virtual ~SceneModuleProtocol() = default;
+
     virtual std::unique_ptr<tomop::Packet> readPacket(
         tomop::PacketDesc desc,
         tomop::memory_buffer& buffer,
