@@ -8,12 +8,12 @@
 
 namespace gui {
 
-class Scene3d : public Scene {
+class Scene3dSliceView : public Scene {
 
   public:
 
-    Scene3d();
-    ~Scene3d() override;
+    Scene3dSliceView();
+    ~Scene3dSliceView() override;
 
     void draw(glm::mat4 window_matrix) override;
 };

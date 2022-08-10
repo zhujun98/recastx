@@ -6,14 +6,14 @@
 #include "tomop/tomop.hpp"
 
 #include "scenes/scene2d.hpp"
-#include "scenes/scene3d.hpp"
+#include "scenes/scene_3d_slice_view.hpp"
 #include "window.hpp"
 
 
 namespace gui {
 
 MainWindow::MainWindow() {
-    std::unique_ptr<Scene> scene = std::make_unique<Scene3d>();
+    std::unique_ptr<Scene> scene = std::make_unique<Scene3dSliceView>();
     scene->addPublisher(this);
     addScene("TOMCAT live 3D preview", std::move(scene));
 };

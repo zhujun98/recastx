@@ -66,7 +66,7 @@ set(SOURCE_NAMES
     "src/graphics/partitioning_component.cpp"
     "src/scenes/scene.cpp"
     "src/scenes/scene2d.cpp"
-    "src/scenes/scene3d.cpp"
+    "src/scenes/scene_3d_slice_view.cpp"
     "src/scenes/scene_camera.cpp"
     "src/scenes/scene_camera2d.cpp"
     "src/scenes/scene_camera3d.cpp"
