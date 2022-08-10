@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "shader_program.hpp"
+#include "shaders/shader_program.hpp"
 #include "object_component.hpp"
 
 namespace gui {

@@ -7,8 +7,8 @@
 #include <string>
 
 #include "scenes/scene.hpp"
+#include "shaders/shader_program.hpp"
 #include "object_component.hpp"
-#include "shader_program.hpp"
 #include "slice.hpp"
 #include "textures.hpp"
 #include "util.hpp"

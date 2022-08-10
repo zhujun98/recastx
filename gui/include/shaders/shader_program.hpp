@@ -1,4 +1,5 @@
-#pragma once
+#ifndef GUI_SHADERS_SHADER_PROGRAM_H
+#define GUI_SHADERS_SHADER_PROGRAM_H
 
 #include <string>
 
@@ -35,3 +36,5 @@ class ShaderProgram {
 };
 
 } // namespace gui
+
+#endif // GUI_SHADERS_SHADER_PROGRAM_H

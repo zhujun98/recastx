@@ -4,7 +4,7 @@
 
 #include <glm/glm.hpp>
 
-#include "graphics/shader_program.hpp"
+#include "shaders/shader_program.hpp"
 
 namespace gui {
 
