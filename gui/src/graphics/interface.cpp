@@ -34,7 +34,7 @@ Interface::Interface(GLFWwindow* window, SceneList& scenes) : scenes_(scenes) {
     }
     io.MouseDrawCursor = false;
 
-    ImGui::StyleColorsLight();
+    ImGui::StyleColorsDark();
 
     // prevent ini file
     io.IniFilename = "";
