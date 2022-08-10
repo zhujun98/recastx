@@ -1,5 +1,5 @@
-#ifndef GUI_GRAPHICS_SCENE_H
-#define GUI_GRAPHICS_SCENE_H
+#ifndef GUI_SCENES_SCENE_H
+#define GUI_SCENES_SCENE_H
 
 #include <map>
 #include <memory>
@@ -56,4 +56,4 @@ class Scene : public InputHandler, public PacketPublisher, public Ticker {
 
 }  // namespace gui
 
-#endif // GUI_GRAPHICS_SCENE_H
+#endif // GUI_SCENES_SCENE_H

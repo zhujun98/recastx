@@ -1,5 +1,5 @@
-#ifndef GUI_GRAPHICS_SCENE3D_H
-#define GUI_GRAPHICS_SCENE3D_H
+#ifndef GUI_SCENES_SCENE_3D_SLICE_VIEW_H
+#define GUI_SCENES_SCENE_3D_SLICE_VIEW_H
 
 #include <memory>
 
@@ -20,4 +20,4 @@ class Scene3dSliceView : public Scene {
 
 }  // namespace gui
 
-#endif // GUI_GRAPHICS_SCENE3D_H
+#endif // GUI_SCENES_SCENE_3D_SLICE_VIEW_H

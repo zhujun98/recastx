@@ -8,7 +8,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "scenes/scene.hpp"
-#include "shader_program.hpp"
+#include "shaders/shader_program.hpp"
 #include "object_component.hpp"
 
 namespace gui {
@@ -39,7 +39,7 @@ class PartitioningComponent : public ObjectComponent {
   public:
 
     explicit PartitioningComponent(Scene& scene);
-    ~PartitioningComponent();
+    ~PartitioningComponent() override;
 
     void draw(glm::mat4 world_to_screen) override;
 

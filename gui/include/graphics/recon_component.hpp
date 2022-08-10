@@ -7,8 +7,8 @@
 #include <string>
 
 #include "scenes/scene.hpp"
+#include "shaders/shader_program.hpp"
 #include "object_component.hpp"
-#include "shader_program.hpp"
 #include "slice.hpp"
 #include "textures.hpp"
 #include "util.hpp"
@@ -94,7 +94,7 @@ class ReconComponent : public ObjectComponent {
   public:
 
     explicit ReconComponent(Scene& scene);
-    ~ReconComponent();
+    ~ReconComponent() override;
 
     void draw(glm::mat4 world_to_screen) override;
     void describe() override;

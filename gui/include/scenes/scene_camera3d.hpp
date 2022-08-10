@@ -1,5 +1,5 @@
-#ifndef GUI_GRAPHICS_SCENE_CAMERA3D_H
-#define GUI_GRAPHICS_SCENE_CAMERA3D_H
+#ifndef GUI_SCENES_SCENE_CAMERA3D_H
+#define GUI_SCENES_SCENE_CAMERA3D_H
 
 #include <map>
 #include <memory>
@@ -114,4 +114,4 @@ class SceneCamera3d : public SceneCamera {
 
 } // namespace gui
 
-#endif // GUI_GRAPHICS_SCENE_CAMERA3D_H
+#endif // GUI_SCENES_SCENE_CAMERA3D_H

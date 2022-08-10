@@ -1,5 +1,5 @@
-#ifndef GUI_GRAPHICS_SCENE_CAMERA2D_H
-#define GUI_GRAPHICS_SCENE_CAMERA2D_H
+#ifndef GUI_SCENES_SCENE_CAMERA2D_H
+#define GUI_SCENES_SCENE_CAMERA2D_H
 
 #include "glm/glm.hpp"
 
@@ -37,4 +37,4 @@ class SceneCamera2d : public SceneCamera {
 
 }  // namespace gui
 
-#endif // GUI_GRAPHICS_SCENE_CAMERA2D_H
+#endif // GUI_SCENES_SCENE_CAMERA2D_H

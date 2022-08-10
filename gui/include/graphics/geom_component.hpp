@@ -9,9 +9,9 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "scenes/scene.hpp"
-#include "graphics/shader_program.hpp"
 #include "graphics/slice.hpp"
 #include "graphics/textures.hpp"
+#include "shaders/shader_program.hpp"
 #include "utils/recorder.hpp"
 #include "object_component.hpp"
 #include "util.hpp"
@@ -93,7 +93,7 @@ class GeomComponent : public ObjectComponent {
   public:
 
     explicit GeomComponent(Scene& scene);
-    ~GeomComponent();
+    ~GeomComponent() override;
 
     void draw(glm::mat4 world_to_screen) override;
     [[nodiscard]] std::string identifier() const override { return "geometry"; }

@@ -1,5 +1,5 @@
-#ifndef GUI_GRAPHICS_SCENE2D_H
-#define GUI_GRAPHICS_SCENE2D_H
+#ifndef GUI_SCENES_SCENE2D_H
+#define GUI_SCENES_SCENE2D_H
 
 #include "scene.hpp"
 
@@ -21,4 +21,4 @@ class Scene2d : public Scene {
 
 } // namespace gui
 
-#endif // GUI_GRAPHICS_SCENE2D_H
+#endif // GUI_SCENES_SCENE2D_H
