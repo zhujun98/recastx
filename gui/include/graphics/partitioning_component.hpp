@@ -39,7 +39,7 @@ class PartitioningComponent : public ObjectComponent {
   public:
 
     explicit PartitioningComponent(Scene& scene);
-    ~PartitioningComponent();
+    ~PartitioningComponent() override;
 
     void draw(glm::mat4 world_to_screen) override;
 

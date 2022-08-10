@@ -94,7 +94,7 @@ class ReconComponent : public ObjectComponent {
   public:
 
     explicit ReconComponent(Scene& scene);
-    ~ReconComponent();
+    ~ReconComponent() override;
 
     void draw(glm::mat4 world_to_screen) override;
     void describe() override;

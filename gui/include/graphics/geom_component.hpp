@@ -93,7 +93,7 @@ class GeomComponent : public ObjectComponent {
   public:
 
     explicit GeomComponent(Scene& scene);
-    ~GeomComponent();
+    ~GeomComponent() override;
 
     void draw(glm::mat4 world_to_screen) override;
     [[nodiscard]] std::string identifier() const override { return "geometry"; }
