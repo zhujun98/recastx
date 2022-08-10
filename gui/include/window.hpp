@@ -1,4 +1,5 @@
-#pragma once
+#ifndef GUI_WINDOW_H
+#define GUI_WINDOW_H
 
 #include <iostream>
 #include <memory>
@@ -11,42 +12,21 @@
 #include "packet_publisher.hpp"
 #include "ticker.hpp"
 #include "graphics/render_target.hpp"
-#include "graphics/scene_object.hpp"
+#include "graphics/scene.hpp"
 
 namespace gui {
 
-class Scene : public RenderTarget {
-
-    std::unique_ptr<SceneObject> object_;
-    std::string name_;
-    int dimension_;
-
-  public:
-
-    Scene(const std::string& name, int dimension);
-    ~Scene() override;
-
-    void render(glm::mat4 window_matrix) override;
-
-    SceneObject& object() { return *object_; }
-
-    [[nodiscard]] const std::string& name() const { return name_; }
-
-    [[nodiscard]] int dimension() const { return dimension_; }
-};
-
-
-class SceneList : public RenderTarget,
-                  public InputHandler,
-                  public PacketPublisher,
-                  public Ticker {
+class MainWindow : public RenderTarget,
+                   public InputHandler,
+                   public PacketPublisher,
+                   public Ticker {
 
     std::unordered_map<std::string, std::unique_ptr<Scene>> scenes_;
     Scene* active_scene_ = nullptr;
 
   public:
-    SceneList();
-    ~SceneList() override;
+    MainWindow();
+    ~MainWindow() override;
 
     void addScene(const std::string& name, int dimension);
 
@@ -54,7 +34,7 @@ class SceneList : public RenderTarget,
 
     void activate(const std::string& name);
 
-    SceneObject& object();
+    Scene& scene();
 
     void tick(float dt) override;
 
@@ -67,3 +47,5 @@ class SceneList : public RenderTarget,
 };
 
 }  // namespace gui
+
+#endif // GUI_WINDOW_H

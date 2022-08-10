@@ -7,7 +7,7 @@
 
 #include "tomop/tomop.hpp"
 #include "modules/reconstruction.hpp"
-#include "scene.hpp"
+#include "window.hpp"
 #include "server.hpp"
 
 
@@ -15,11 +15,11 @@ namespace gui {
 
 using namespace std::string_literals;
 
-Server::Server(SceneList& scenes, int port)
-    : scenes_(scenes),
+Server::Server(MainWindow& window, int port)
+    : window_(window),
       rep_socket_(context_, ZMQ_REP),
       pub_socket_(context_, ZMQ_PUB) {
-    scenes_.addPublisher(this);
+    window_.addPublisher(this);
 
     rep_socket_.bind("tcp://*:"s + std::to_string(port));
     pub_socket_.bind("tcp://*:"s + std::to_string(port+1));
@@ -55,7 +55,7 @@ void Server::tick(float) {
         packets_.pop();
 
         modules_[packet.first]->process(
-            scenes_, packet.first, std::move(packet.second));
+            window_, packet.first, std::move(packet.second));
     }
 }
 

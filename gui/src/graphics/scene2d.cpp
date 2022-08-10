@@ -1,10 +1,10 @@
 #include "graphics/scene_camera2d.hpp"
-#include "graphics/scene_object2d.hpp"
+#include "graphics/scene2d.hpp"
 #include "graphics/shader_program.hpp"
 
 namespace gui {
 
-SceneObject2d::SceneObject2d() : size_{32, 32} {
+Scene2d::Scene2d() : size_{32, 32} {
     static const GLfloat square[4][2] = {{-1.0f, -1.0f},
                                          {-1.0f, 1.0f},
                                          {1.0f, 1.0f},
@@ -27,9 +27,9 @@ SceneObject2d::SceneObject2d() : size_{32, 32} {
     camera_ = std::make_unique<SceneCamera2d>();
 }
 
-SceneObject2d::~SceneObject2d() = default;
+Scene2d::~Scene2d() = default;
 
-void SceneObject2d::draw(glm::mat4 window_matrix) {
+void Scene2d::draw(glm::mat4 window_matrix) {
     program_->use();
 
     program_->setInt("texture_sampler", 0);

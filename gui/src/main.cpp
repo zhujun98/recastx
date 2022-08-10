@@ -7,7 +7,7 @@
 #include "graphics/scene_camera.hpp"
 #include "input.hpp"
 
-#include "scene.hpp"
+#include "window.hpp"
 #include "server.hpp"
 
 
@@ -34,19 +34,19 @@ int main(int argc, char** argv) {
 
     auto& input = gui::Input::instance(renderer.window());
 
-    gui::SceneList scenes;
-    gui::Interface interface(renderer.window(), scenes);
-    gui::Server server(scenes, opts["port"].as<int>());
+    gui::MainWindow window;
+    gui::Interface interface(renderer.window(), window);
+    gui::Server server(window, opts["port"].as<int>());
 
     input.registerHandler(interface);
-    input.registerHandler(scenes);
+    input.registerHandler(window);
 
     renderer.register_ticker(input);
-    renderer.register_ticker(scenes);
+    renderer.register_ticker(window);
     renderer.register_ticker(server);
 
     renderer.register_target(interface);
-    renderer.register_target(scenes);
+    renderer.register_target(window);
 
     server.start();
 

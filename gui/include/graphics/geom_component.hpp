@@ -9,7 +9,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "../utils/recorder.hpp"
-#include "graphics/scene_object.hpp"
+#include "graphics/scene.hpp"
 #include "graphics/shader_program.hpp"
 #include "graphics/slice.hpp"
 #include "graphics/textures.hpp"
@@ -66,7 +66,7 @@ class Projection {
 
 class GeomComponent : public ObjectComponent {
 
-    SceneObject& object_;
+    Scene& scene_;
 
     GLuint vao_handle_;
     GLuint vbo_handle_;
@@ -93,7 +93,7 @@ class GeomComponent : public ObjectComponent {
 
   public:
 
-    explicit GeomComponent(SceneObject& object);
+    explicit GeomComponent(Scene& scene);
     ~GeomComponent();
 
     void draw(glm::mat4 world_to_screen) override;

@@ -13,14 +13,13 @@
 
 namespace gui {
 
-class SceneList;
 class SceneModuleProtocol;
 
 class Server : public Ticker, public PacketPublisher {
 
     std::map<tomop::PacketDesc, std::shared_ptr<SceneModuleProtocol>> modules_;
 
-    SceneList& scenes_;
+    MainWindow& window_;
     std::thread thread_;
 
     std::queue<std::pair<tomop::PacketDesc, std::unique_ptr<tomop::Packet>>> packets_;
@@ -35,7 +34,7 @@ class Server : public Ticker, public PacketPublisher {
   
   public:
 
-    Server(SceneList& scenes, int port);
+    Server(MainWindow& window, int port);
 
     void start();
 

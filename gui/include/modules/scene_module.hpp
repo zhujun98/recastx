@@ -5,7 +5,7 @@
 
 #include "tomop/tomop.hpp"
 
-#include "../scene.hpp"
+#include "../window.hpp"
 
 namespace gui {
 
@@ -25,7 +25,7 @@ class SceneModuleProtocol {
         tomop::memory_buffer& buffer,
         zmq::socket_t& socket) = 0;
 
-    virtual void process(SceneList& scenes,
+    virtual void process(MainWindow& window,
                          tomop::PacketDesc desc,
                          std::unique_ptr<tomop::Packet> event_packet) = 0;
 

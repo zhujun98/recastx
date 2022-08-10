@@ -1,5 +1,5 @@
-#ifndef GUI_GRAPHICS_SCENE_OBJECT_H
-#define GUI_GRAPHICS_SCENE_OBJECT_H
+#ifndef GUI_GRAPHICS_SCENE_H
+#define GUI_GRAPHICS_SCENE_H
 
 #include <map>
 #include <memory>
@@ -17,7 +17,7 @@ namespace gui {
 class ShaderProgram;
 class SceneCamera;
 
-class SceneObject : public InputHandler, public PacketPublisher, public Ticker {
+class Scene : public InputHandler, public PacketPublisher, public Ticker {
   protected:
 
     GLuint vao_handle_;
@@ -31,8 +31,8 @@ class SceneObject : public InputHandler, public PacketPublisher, public Ticker {
 
   public:
 
-    SceneObject();
-    virtual ~SceneObject();
+    Scene();
+    virtual ~Scene();
 
     virtual void draw(glm::mat4 window_matrix) = 0;
 
@@ -56,4 +56,4 @@ class SceneObject : public InputHandler, public PacketPublisher, public Ticker {
 
 }  // namespace gui
 
-#endif // GUI_GRAPHICS_SCENE_OBJECT_H
+#endif // GUI_GRAPHICS_SCENE_H

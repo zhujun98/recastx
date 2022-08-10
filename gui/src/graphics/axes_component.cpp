@@ -7,8 +7,7 @@
 
 namespace gui {
 
-AxesComponent::AxesComponent(SceneObject &object)
-        : object_(object) {
+AxesComponent::AxesComponent(Scene &scene) : scene_(scene) {
     glGenVertexArrays(1, &axes_vao_handle_);
     glBindVertexArray(axes_vao_handle_);
 

@@ -7,7 +7,7 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include "scene_object.hpp"
+#include "scene.hpp"
 #include "shader_program.hpp"
 #include "object_component.hpp"
 
@@ -25,7 +25,7 @@ struct part {
 
 class PartitioningComponent : public ObjectComponent {
 
-    SceneObject& object_;
+    Scene& scene_;
 
     GLuint cube_vao_handle_;
     GLuint cube_vbo_handle_;
@@ -38,7 +38,7 @@ class PartitioningComponent : public ObjectComponent {
 
   public:
 
-    explicit PartitioningComponent(SceneObject& object);
+    explicit PartitioningComponent(Scene& scene);
     ~PartitioningComponent();
 
     void draw(glm::mat4 world_to_screen) override;
