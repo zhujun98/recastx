@@ -1,13 +1,11 @@
 #include <algorithm>
 
-#include <glm/glm.hpp>
-
-#include "graphics/scene_camera3d.hpp"
-#include "graphics/scene3d.hpp"
 #include "graphics/axes_component.hpp"
-#include "graphics/recon_component.hpp"
 #include "graphics/geom_component.hpp"
 #include "graphics/partitioning_component.hpp"
+#include "graphics/recon_component.hpp"
+#include "scenes/scene3d.hpp"
+#include "scenes/scene_camera3d.hpp"
 
 namespace gui {
 

@@ -5,10 +5,10 @@
 #include <memory>
 #include <vector>
 
-#include <GL/gl3w.h>
-#include <glm/glm.hpp>
+#include "GL/gl3w.h"
+#include "glm/glm.hpp"
 
-#include "object_component.hpp"
+#include "graphics/object_component.hpp"
 #include "packet_publisher.hpp"
 #include "ticker.hpp"
 

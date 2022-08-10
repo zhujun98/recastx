@@ -8,11 +8,11 @@
 
 #include <glm/glm.hpp>
 
+#include "graphics/render_target.hpp"
+#include "scenes/scene.hpp"
 #include "input_handler.hpp"
 #include "packet_publisher.hpp"
 #include "ticker.hpp"
-#include "graphics/render_target.hpp"
-#include "graphics/scene.hpp"
 
 namespace gui {
 

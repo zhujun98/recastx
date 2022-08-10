@@ -1,12 +1,10 @@
 #include <algorithm>
-#include <array>
 #include <iostream>
-#include <map>
 #include <vector>
 
 #include <imgui.h>
 
-#include "graphics/scene_camera.hpp"
+#include "scenes/scene_camera.hpp"
 
 namespace gui {
 

@@ -7,7 +7,7 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include "scene.hpp"
+#include "scenes/scene.hpp"
 #include "shader_program.hpp"
 #include "object_component.hpp"
 

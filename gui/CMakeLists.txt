@@ -55,12 +55,6 @@ set(SOURCE_NAMES
     "src/packet_publisher.cpp"
     "src/utils/recorder.cpp"
     "src/graphics/primitives.cpp"
-    "src/graphics/scene.cpp"
-    "src/graphics/scene2d.cpp"
-    "src/graphics/scene3d.cpp"
-    "src/graphics/scene_camera.cpp"
-    "src/graphics/scene_camera2d.cpp"
-    "src/graphics/scene_camera3d.cpp"
     "src/graphics/shader_program.cpp"
     "src/graphics/slice.cpp"
     "src/graphics/renderer.cpp"
@@ -70,6 +64,12 @@ set(SOURCE_NAMES
     "src/graphics/geom_component.cpp"
     "src/graphics/axes_component.cpp"
     "src/graphics/partitioning_component.cpp"
+    "src/scenes/scene.cpp"
+    "src/scenes/scene2d.cpp"
+    "src/scenes/scene3d.cpp"
+    "src/scenes/scene_camera.cpp"
+    "src/scenes/scene_camera2d.cpp"
+    "src/scenes/scene_camera3d.cpp"
 )
 
 set(TARGET_NAME "tomcat-live-gui")

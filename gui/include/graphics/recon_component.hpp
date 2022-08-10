@@ -6,11 +6,11 @@
 #include <memory>
 #include <string>
 
-#include "scene.hpp"
+#include "scenes/scene.hpp"
+#include "object_component.hpp"
 #include "shader_program.hpp"
 #include "slice.hpp"
 #include "textures.hpp"
-#include "object_component.hpp"
 #include "util.hpp"
 
 namespace gui {

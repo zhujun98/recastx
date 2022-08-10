@@ -8,13 +8,12 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include "../utils/recorder.hpp"
-#include "graphics/scene.hpp"
+#include "scenes/scene.hpp"
 #include "graphics/shader_program.hpp"
 #include "graphics/slice.hpp"
 #include "graphics/textures.hpp"
+#include "utils/recorder.hpp"
 #include "object_component.hpp"
-
 #include "util.hpp"
 
 namespace gui {

@@ -1,7 +1,8 @@
-#include "graphics/scene_camera2d.hpp"
-
+#include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
 #include <glm/gtx/transform.hpp>
+
+#include "scenes/scene_camera2d.hpp"
 
 namespace gui {
 

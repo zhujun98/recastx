@@ -5,8 +5,8 @@
 
 #include <tomop/tomop.hpp>
 
-#include "graphics/scene2d.hpp"
-#include "graphics/scene3d.hpp"
+#include "scenes/scene2d.hpp"
+#include "scenes/scene3d.hpp"
 #include "window.hpp"
 
 

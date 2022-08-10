@@ -1,9 +1,8 @@
 #include <imgui.h>
-#include <GL/gl3w.h>
 
-#include "graphics/scene.hpp"
 #include "graphics/shader_program.hpp"
-#include "graphics/scene_camera.hpp"
+#include "scenes/scene.hpp"
+#include "scenes/scene_camera.hpp"
 
 namespace gui {
 

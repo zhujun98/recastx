@@ -5,10 +5,11 @@
 #include <memory>
 #include <vector>
 
-#include "graphics/scene_camera.hpp"
-#include "path.hpp"
 #include <glm/glm.hpp>
 #include <glm/gtx/rotate_vector.hpp>
+
+#include "scenes/scene_camera.hpp"
+#include "path.hpp"
 
 namespace gui {
 

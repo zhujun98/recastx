@@ -1,9 +1,9 @@
 #include <iostream>
 
-#include "graphics/axes_component.hpp"
-#include "graphics/scene_camera3d.hpp"
-
 #include <imgui.h>
+
+#include "graphics/axes_component.hpp"
+#include "scenes/scene_camera3d.hpp"
 
 namespace gui {
 

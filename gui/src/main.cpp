@@ -4,11 +4,10 @@
 
 #include "graphics/interface.hpp"
 #include "graphics/renderer.hpp"
-#include "graphics/scene_camera.hpp"
+#include "scenes/scene_camera.hpp"
 #include "input.hpp"
-
-#include "window.hpp"
 #include "server.hpp"
+#include "window.hpp"
 
 
 int main(int argc, char** argv) {

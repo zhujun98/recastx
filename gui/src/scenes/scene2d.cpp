@@ -1,6 +1,6 @@
-#include "graphics/scene_camera2d.hpp"
-#include "graphics/scene2d.hpp"
 #include "graphics/shader_program.hpp"
+#include "scenes/scene2d.hpp"
+#include "scenes/scene_camera2d.hpp"
 
 namespace gui {
 
