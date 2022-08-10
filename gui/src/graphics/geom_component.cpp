@@ -6,11 +6,11 @@
 
 #include "graphics/geom_component.hpp"
 #include "graphics/primitives.hpp"
-#include "graphics/scene_camera3d.hpp"
+#include "scenes/scene_camera3d.hpp"
 
 namespace gui {
 
-GeomComponent::GeomComponent(SceneObject& object) : object_(object) {
+GeomComponent::GeomComponent(Scene& scene) : scene_(scene) {
     current_projection_ = 0;
 
     glGenVertexArrays(1, &vao_handle_);
@@ -56,7 +56,7 @@ GeomComponent::GeomComponent(SceneObject& object) : object_(object) {
 
     speed_ = 0.0f;
 
-    cm_texture_id_ = object.camera().colormapTextureId();
+    cm_texture_id_ = scene_.camera().colormapTextureId();
 }
 
 GeomComponent::~GeomComponent() = default;

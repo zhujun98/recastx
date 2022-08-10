@@ -1,19 +1,19 @@
 #include <iostream>
-#include <tomop/tomop.hpp>
 
 #include <glm/gtc/constants.hpp>
 #include <glm/gtx/rotate_vector.hpp>
-#include <glm/gtx/string_cast.hpp>
 #include <imgui.h>
+
+#include "tomop/tomop.hpp"
 
 #include "graphics/recon_component.hpp"
 #include "graphics/primitives.hpp"
-#include "graphics/scene_camera3d.hpp"
+#include "scenes/scene_camera3d.hpp"
 
 namespace gui {
 
-ReconComponent::ReconComponent(SceneObject& object)
-        : volume_texture_(16, 16, 16), object_(object) {
+ReconComponent::ReconComponent(Scene& scene)
+        : volume_texture_(16, 16, 16), scene_(scene) {
     glGenVertexArrays(1, &vao_handle_);
     glBindVertexArray(vao_handle_);
     glGenBuffers(1, &vbo_handle_);
@@ -69,7 +69,7 @@ ReconComponent::ReconComponent(SceneObject& object)
 
     initVolume();
 
-    cm_texture_id_ = object.camera().colormapTextureId();
+    cm_texture_id_ = scene_.camera().colormapTextureId();
 }
 
 ReconComponent::~ReconComponent() {
@@ -89,13 +89,13 @@ void ReconComponent::requestSlices() {
     for (auto& slice : slices_) {
         auto packet = tomop::SetSlicePacket(
             slice.first, slice.second->orientation3());
-        object_.send(packet);
+        scene_.send(packet);
     }
 
     for (auto& slice : fixed_slices_) {
         auto packet = tomop::SetSlicePacket(
             slice.first, slice.second->orientation3());
-        object_.send(packet);
+        scene_.send(packet);
     }
 }
 
@@ -308,7 +308,7 @@ bool ReconComponent::handleMouseButton(int button, bool down) {
                 new_slice->setOrientation(hovered_slice_->orientation4());
 
                 auto packet = tomop::SetSlicePacket(new_id, new_slice->orientation3());
-                object_.send(packet);
+                scene_.send(packet);
 
                 fixed_slices_[new_id] = std::move(new_slice);
             }
@@ -319,7 +319,7 @@ bool ReconComponent::handleMouseButton(int button, bool down) {
         if (dragged_slice_) {
             auto packet = tomop::SetSlicePacket(
                 dragged_slice_->id(), dragged_slice_->orientation3());
-            object_.send(packet);
+            scene_.send(packet);
 
             dragged_slice_ = nullptr;
             dragging_ = false;
@@ -411,7 +411,7 @@ ReconComponent::intersection_point(glm::mat4 inv_matrix,
 }
 
 int ReconComponent::index_hovering_over(float x, float y) {
-    auto inv_matrix = glm::inverse(object_.camera().matrix() * volume_transform_);
+    auto inv_matrix = glm::inverse(scene_.camera().matrix() * volume_transform_);
     int best_slice_index = -1;
     float best_z = std::numeric_limits<float>::max();
     for (auto& id_slice : slices_) {
@@ -488,7 +488,7 @@ void ReconComponent::initVolume() {
     volume_transform_ = glm::translate(center) *
                         glm::scale(glm::vec3(max_pt - min_pt)) *
                         glm::scale(glm::vec3(0.5f));
-    object_.camera().set_look_at(center);
+    scene_.camera().set_look_at(center);
 }
 
 void ReconComponent::updateSliceImage(Slice* slice) {
@@ -534,7 +534,7 @@ void SliceTranslator::on_drag(glm::vec2 delta) {
             comp_.get_slices().erase(to_remove);
             // send slice packet
             auto packet = tomop::RemoveSlicePacket(to_remove);
-            comp_.object().send(packet);
+            comp_.scene().send(packet);
         }
         if (!comp_.dragged_slice()) {
             std::cout << "WARNING: No dragged slice found." << std::endl;
@@ -556,9 +556,9 @@ void SliceTranslator::on_drag(glm::vec2 delta) {
         glm::vec3(o[2][0], o[2][1], o[2][2]) + 0.5f * (axis1 + axis2);
     auto end_point_normal = base_point_normal + normal;
 
-    auto a = comp_.object().camera().matrix() * comp_.volume_transform() *
+    auto a = comp_.scene().camera().matrix() * comp_.volume_transform() *
              glm::vec4(base_point_normal, 1.0f);
-    auto b = comp_.object().camera().matrix() * comp_.volume_transform() *
+    auto b = comp_.scene().camera().matrix() * comp_.volume_transform() *
              glm::vec4(end_point_normal, 1.0f);
     auto normal_delta = b - a;
     float difference =
@@ -579,7 +579,7 @@ SliceRotator::SliceRotator(ReconComponent& comp, glm::vec2 initial)
     : ReconDragMachine(comp, initial) {
     // 1. need to identify the opposite axis
     // a) get the position within the slice
-    auto tf = comp.object().camera().matrix() * comp.volume_transform();
+    auto tf = comp.scene().camera().matrix() * comp.volume_transform();
     auto inv_matrix = glm::inverse(tf);
 
     auto slice = comp.hovered_slice();
@@ -668,7 +668,7 @@ void SliceRotator::on_drag(glm::vec2 delta) {
             comp_.get_slices().erase(to_remove);
             // send slice packet
             auto packet = tomop::RemoveSlicePacket(to_remove);
-            comp_.object().send(packet);
+            comp_.scene().send(packet);
         }
         assert(comp_.dragged_slice());
     }

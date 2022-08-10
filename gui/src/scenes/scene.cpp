@@ -1,27 +1,26 @@
 #include <imgui.h>
-#include <GL/gl3w.h>
 
-#include "graphics/scene_object.hpp"
 #include "graphics/shader_program.hpp"
-#include "graphics/scene_camera.hpp"
+#include "scenes/scene.hpp"
+#include "scenes/scene_camera.hpp"
 
 namespace gui {
 
-SceneObject::SceneObject() = default;
+Scene::Scene() = default;
 
-SceneObject::~SceneObject() {
+Scene::~Scene() {
     glDeleteVertexArrays(1, &vao_handle_);
     glDeleteBuffers(1, &vbo_handle_);
 }
 
-void SceneObject::tick(float time_elapsed) {
+void Scene::tick(float time_elapsed) {
     camera_->tick(time_elapsed);
     for (auto& id_and_comp : components_) {
         id_and_comp.second->tick(time_elapsed);
     }
 }
 
-void SceneObject::describe() {
+void Scene::describe() {
     camera_->describe();
 
     for (auto& id_and_comp : components_) {
@@ -31,7 +30,7 @@ void SceneObject::describe() {
     }
 }
 
-bool SceneObject::handleMouseButton(int button, bool down) {
+bool Scene::handleMouseButton(int button, bool down) {
     for (auto& id_and_comp : components_) {
         if (id_and_comp.second->handleMouseButton(button, down)) return true;
     }
@@ -40,7 +39,7 @@ bool SceneObject::handleMouseButton(int button, bool down) {
     return false;
 }
 
-bool SceneObject::handleScroll(double offset) {
+bool Scene::handleScroll(double offset) {
     for (auto& id_and_comp : components_) {
         if (id_and_comp.second->handleScroll(offset)) return true;
     }
@@ -49,7 +48,7 @@ bool SceneObject::handleScroll(double offset) {
     return false;
 }
 
-bool SceneObject::handleMouseMoved(double x, double y) {
+bool Scene::handleMouseMoved(double x, double y) {
     for (auto& id_and_comp : components_) {
         if (id_and_comp.second->handleMouseMoved(x, y)) return true;
     }
@@ -58,7 +57,7 @@ bool SceneObject::handleMouseMoved(double x, double y) {
     return false;
 }
 
-bool SceneObject::handleKey(int key, bool down, int mods) {
+bool Scene::handleKey(int key, bool down, int mods) {
     for (auto& id_and_comp : components_) {
         if (id_and_comp.second->handleKey(key, down, mods)) return true;
     }
@@ -67,6 +66,6 @@ bool SceneObject::handleKey(int key, bool down, int mods) {
     return false;
 }
 
-SceneCamera& SceneObject::camera() { return *camera_; }
+SceneCamera& Scene::camera() { return *camera_; }
 
 }  // namespace gui

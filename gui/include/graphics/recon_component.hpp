@@ -6,11 +6,11 @@
 #include <memory>
 #include <string>
 
-#include "scene_object.hpp"
+#include "scenes/scene.hpp"
+#include "object_component.hpp"
 #include "shader_program.hpp"
 #include "slice.hpp"
 #include "textures.hpp"
-#include "object_component.hpp"
 #include "util.hpp"
 
 namespace gui {
@@ -62,7 +62,7 @@ class ReconComponent : public ObjectComponent {
     int cube_index_count_;
     std::unique_ptr<ShaderProgram> cube_program_;
 
-    SceneObject& object_;
+    Scene& scene_;
     int next_idx_ = 3;
 
     std::unique_ptr<ReconDragMachine> drag_machine_;
@@ -93,7 +93,7 @@ class ReconComponent : public ObjectComponent {
   
   public:
 
-    explicit ReconComponent(SceneObject& object);
+    explicit ReconComponent(Scene& scene);
     ~ReconComponent();
 
     void draw(glm::mat4 world_to_screen) override;
@@ -118,7 +118,7 @@ class ReconComponent : public ObjectComponent {
     void check_hovered(float x, float y);
 
     glm::mat4 volume_transform() { return volume_transform_; }
-    auto& object() { return object_; }
+    auto& scene() { return scene_; }
     auto& dragged_slice() { return dragged_slice_; }
     auto hovered_slice() { return hovered_slice_; }
     auto& get_slices() { return slices_; }

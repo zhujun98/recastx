@@ -7,11 +7,11 @@
 
 namespace gui {
 
-class SceneObject;
+class Scene;
 
 class AxesComponent : public ObjectComponent {
 
-    SceneObject& object_;
+    Scene& scene_;
 
     GLuint axes_vao_handle_;
     GLuint axes_vbo_handle_;
@@ -23,7 +23,7 @@ class AxesComponent : public ObjectComponent {
 
    public:
 
-    explicit AxesComponent(SceneObject& object);
+    explicit AxesComponent(Scene& scene);
 
     void draw(glm::mat4 world_to_screen) override;
 

@@ -1,14 +1,13 @@
 #include <iostream>
 
-#include "graphics/axes_component.hpp"
-#include "graphics/scene_camera3d.hpp"
-
 #include <imgui.h>
+
+#include "graphics/axes_component.hpp"
+#include "scenes/scene_camera3d.hpp"
 
 namespace gui {
 
-AxesComponent::AxesComponent(SceneObject &object)
-        : object_(object) {
+AxesComponent::AxesComponent(Scene &scene) : scene_(scene) {
     glGenVertexArrays(1, &axes_vao_handle_);
     glBindVertexArray(axes_vao_handle_);
 

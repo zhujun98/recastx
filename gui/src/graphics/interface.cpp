@@ -12,7 +12,7 @@
 
 namespace gui {
 
-Interface::Interface(GLFWwindow* window, SceneList& scenes) : scenes_(scenes) {
+Interface::Interface(GLFWwindow* glfw_window, MainWindow& main_window) : window_(main_window) {
     // Setup ImGui binding
     ImGui::CreateContext();
 
@@ -21,7 +21,7 @@ Interface::Interface(GLFWwindow* window, SceneList& scenes) : scenes_(scenes) {
     // extra_fonts/README.txt for more details)
     ImGuiIO& io = ImGui::GetIO();
 
-    ImGui_ImplGlfw_InitForOpenGL(window, false);
+    ImGui_ImplGlfw_InitForOpenGL(glfw_window, false);
     ImGui_ImplOpenGL3_Init();
 
     std::string other_font = "../data/iosevka-medium.ttf";
@@ -34,7 +34,7 @@ Interface::Interface(GLFWwindow* window, SceneList& scenes) : scenes_(scenes) {
     }
     io.MouseDrawCursor = false;
 
-    ImGui::StyleColorsLight();
+    ImGui::StyleColorsDark();
 
     // prevent ini file
     io.IniFilename = "";
@@ -47,7 +47,7 @@ void Interface::render(glm::mat4) {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    scenes_.describe();
+    window_.describe();
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

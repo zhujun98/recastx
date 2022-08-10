@@ -42,7 +42,7 @@ Renderer::Renderer() {
 Renderer::~Renderer() { glfwTerminate(); }
 
 void Renderer::spin() {
-    ImVec4 bg_color = ImVec4(0.6f, 0.6f, 0.6f, 1.0f);
+    ImVec4 bg_color = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
     while (!glfwWindowShouldClose(window_)) {
         glfwPollEvents();
 

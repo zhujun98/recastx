@@ -1,8 +1,9 @@
 #ifndef GUI_GRAPHICS_SCENE_CAMERA2D_H
 #define GUI_GRAPHICS_SCENE_CAMERA2D_H
 
-#include <glm/glm.hpp>
-#include "graphics/scene_camera.hpp"
+#include "glm/glm.hpp"
+
+#include "scene_camera.hpp"
 
 namespace gui {
 

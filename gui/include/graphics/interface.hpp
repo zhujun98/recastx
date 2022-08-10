@@ -4,23 +4,20 @@
 
 #include "graphics/render_target.hpp"
 #include "input_handler.hpp"
-#include "scene.hpp"
+#include "window.hpp"
 
 
 struct GLFWwindow;
 
 namespace gui {
 
-class Window;
-
 class Interface : public RenderTarget, public InputHandler {
 
-    SceneList& scenes_;
-    std::vector<Window*> windows_;
+    MainWindow& window_;
 
   public:
 
-    Interface(GLFWwindow* window, SceneList& scenes);
+    Interface(GLFWwindow* glfw_window, MainWindow& main_window);
     ~Interface() override;
 
     void render(glm::mat4) override;
@@ -33,7 +30,7 @@ class Interface : public RenderTarget, public InputHandler {
     bool handleChar(unsigned int c) override;
     bool handleMouseMoved(double x, double y) override;
 
-    int priority() const override { return 1; }
+    [[nodiscard]] int priority() const override { return 1; }
 };
 
 } // namespace gui
