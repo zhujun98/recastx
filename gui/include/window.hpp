@@ -28,7 +28,7 @@ class MainWindow : public RenderTarget,
     MainWindow();
     ~MainWindow() override;
 
-    void addScene(const std::string& name, int dimension);
+    void addScene(const std::string& name, std::unique_ptr<Scene>&& scene);
 
     void describe();
 

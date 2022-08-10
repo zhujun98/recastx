@@ -13,20 +13,14 @@
 namespace gui {
 
 MainWindow::MainWindow() {
-    addScene("TOMCAT live 3D preview", 3);
+    std::unique_ptr<Scene> scene = std::make_unique<Scene3d>();
+    scene->addPublisher(this);
+    addScene("TOMCAT live 3D preview", std::move(scene));
 };
 
 MainWindow::~MainWindow() = default;
 
-void MainWindow::addScene(const std::string& name, int dimension) {
-    std::unique_ptr<Scene> scene;
-    if (dimension == 2) {
-        scene = std::make_unique<Scene2d>();
-    } else if (dimension == 3) {
-        scene = std::make_unique<Scene3d>();
-    } else {
-        throw;
-    }
+void MainWindow::addScene(const std::string& name, std::unique_ptr<Scene>&& scene) {
     scene->addPublisher(this);
     scenes_[name] = std::move(scene);
     if (active_scene_ == nullptr) activate(name);
