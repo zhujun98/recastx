@@ -226,7 +226,7 @@ void Reconstructor::pushProjection(ProjectionType k,
     }
 }
 
-void Reconstructor::updateSlice(int slice_id, const Orientation& orientation) {
+void Reconstructor::setSlice(int slice_id, const Orientation& orientation) {
     std::lock_guard lk(slice_mtx_);
     if (slices_.find(slice_id) == slices_.end()) {
         TripleBuffer<float> slice_buffer;

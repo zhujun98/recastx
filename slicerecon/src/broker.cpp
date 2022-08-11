@@ -63,13 +63,23 @@ void Broker::start() {
                 case PacketDesc::set_slice: {
                     auto packet = std::make_unique<SetSlicePacket>();
                     packet->deserialize(std::move(buffer));
-                    recon_->updateSlice(packet->slice_id, packet->orientation);
+                    recon_->setSlice(packet->slice_id, packet->orientation);
+
+#if (VERBOSITY >= 3)
+                    spdlog::info("Set slice {}", packet->slice_id);
+#endif
+
                     break;
                 }
                 case PacketDesc::remove_slice: {
                     auto packet = std::make_unique<RemoveSlicePacket>();
                     packet->deserialize(std::move(buffer));
                     recon_->removeSlice(packet->slice_id);
+
+#if (VERBOSITY >= 3)
+                    spdlog::info("Remove slice {}", packet->slice_id);
+#endif
+
                     break;
                 }
                 default: {

@@ -99,7 +99,7 @@ class Reconstructor {
                         const std::array<int32_t, 2>& shape, 
                         const char* data); 
 
-    void updateSlice(int slice_id, const Orientation& orientation);
+    void setSlice(int slice_id, const Orientation& orientation);
     void removeSlice(int slice_id);
 
     tomop::VolumeDataPacket previewData();
