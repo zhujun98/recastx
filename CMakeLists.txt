@@ -16,7 +16,8 @@ option(VERBOSITY "Build with verbose performance monitoring and debug messages" 
 # - 2: performance benchmark of critical functions, 
 #      monitoring occupation of the memory buffer
 # - 3: communications between the GUI and the reconstruction server
-# - 4: received image data information (type, frame id, etc.)
+# - 4: received image data information (type, frame id, etc.),
+#      handling of mouse events in the GUI
 if((${VERBOSITY} LESS 0) OR (${VERBOSITY} GREATER 4}))
     message(FATAL_ERROR "Available VERBOSITY values are 0, 1, 2, 3 or 4. Actual: ${VERBOSITY}")
 endif()

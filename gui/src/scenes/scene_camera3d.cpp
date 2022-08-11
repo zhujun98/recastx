@@ -17,7 +17,7 @@ Rotator::Rotator(SceneCamera3d& camera, float x, float y, bool instant)
     instant_ = instant;
 }
 
-void Rotator::on_drag(glm::vec2 cur, glm::vec2 delta) {
+void Rotator::onDrag(glm::vec2 cur, glm::vec2 delta) {
     if (instant_) {
       camera_.rotate(3.0f * delta.x, -3.0f * delta.y);
     } else {
@@ -157,7 +157,7 @@ bool SceneCamera3d::handleMouseMoved(double x, double y) {
 
     // TODO: fix for screen ratio ratio
     if (dragging_) {
-        drag_machine_->on_drag({x, y}, delta);
+        drag_machine_->onDrag({x, y}, delta);
         return true;
     }
 

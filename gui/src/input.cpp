@@ -1,5 +1,3 @@
-#include <algorithm>
-
 #include "input.hpp"
 #include "input_handler.hpp"
 

@@ -25,7 +25,7 @@ class CameraDragMachine : public Ticker {
     explicit CameraDragMachine(SceneCamera3d& camera) : camera_(camera) {}
     virtual ~CameraDragMachine() = default;
 
-    virtual void on_drag(glm::vec2 cur, glm::vec2 delta) = 0;
+    virtual void onDrag(glm::vec2 cur, glm::vec2 delta) = 0;
     virtual drag_machine_kind kind() = 0;
     void tick(float) override {}
 
@@ -48,7 +48,7 @@ class Rotator : public CameraDragMachine {
 
     Rotator(SceneCamera3d& camera, float x, float y, bool instant = true);
 
-    void on_drag(glm::vec2 cur, glm::vec2 delta) override;
+    void onDrag(glm::vec2 cur, glm::vec2 delta) override;
 
     void tick(float time_elapsed) override;
 

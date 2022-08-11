@@ -1,5 +1,7 @@
 #include <iostream>
 
+#include <spdlog/spdlog.h>
+
 #include <glm/gtc/constants.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <GL/gl3w.h>
@@ -241,7 +243,7 @@ void ReconComponent::draw(glm::mat4 world_to_screen) {
 
     glDisable(GL_DEPTH_TEST);
 
-    if (drag_machine_ && drag_machine_->kind() == recon_drag_machine_kind::rotator) {
+    if (drag_machine_ != nullptr && drag_machine_->type() == DragType::rotator) {
         auto& rotator = *(SliceRotator*)drag_machine_.get();
         cube_program_->setMat4("transform_matrix",
                                full_transform * glm::translate(rotator.rot_base) * glm::scale(rotator.rot_end - rotator.rot_base));
@@ -259,32 +261,38 @@ bool ReconComponent::handleMouseButton(int button, int action) {
 
     if (action == GLFW_PRESS) {
         if (button == GLFW_MOUSE_BUTTON_LEFT) {
-            if (hovering_) {
-                switch_if_necessary(recon_drag_machine_kind::translator);
-                dragging_ = true;
+            if (hovered_slice_ != nullptr) {
+                maybeSwitchDragMachine(DragType::translator);
+                dragged_slice_ = hovered_slice_;
+
+#if (VERBOSITY >= 4)
+                spdlog::info("Set dragged slice: {}", dragged_slice_->id());
+#endif
+
                 return true;
             }
         } else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
-            if (hovering_) {
-                switch_if_necessary(recon_drag_machine_kind::rotator);
-                dragging_ = true;
+            if (hovered_slice_ != nullptr) {
+                maybeSwitchDragMachine(DragType::rotator);
+                dragged_slice_ = hovered_slice_;
+
+#if (VERBOSITY >= 4)
+                spdlog::info("Set dragged slice: {}", dragged_slice_->id());
+#endif
+
                 return true;
             }
-        } else if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
         }
     } else if (action == GLFW_RELEASE) {
-        if (dragged_slice_) {
+        if (dragged_slice_ != nullptr) {
             auto packet = tomop::SetSlicePacket(
                 dragged_slice_->id(), dragged_slice_->orientation3());
-            std::cout << 111111111 << std::endl;
             scene_.send(packet);
 
             dragged_slice_ = nullptr;
-            dragging_ = false;
             drag_machine_ = nullptr;
             return true;
         }
-        dragging_ = false;
         drag_machine_ = nullptr;
     }
 
@@ -306,119 +314,15 @@ bool ReconComponent::handleMouseMoved(double x, double y) {
     prev_x_ = x;
     prev_y_ = y;
 
-    // TODO: fix for screen ratio ratio
-    if (dragging_) {
-        drag_machine_->on_drag(delta);
+    // TODO: fix for screen ratio
+    if (dragged_slice_ != nullptr) {
+        drag_machine_->onDrag(delta);
         return true;
     }
-    check_hovered(x, y);
+
+    updateHoveringSlice(x, y);
+
     return false;
-}
-
-std::tuple<bool, float, glm::vec3>
-ReconComponent::intersection_point(glm::mat4 inv_matrix, 
-                                   glm::mat4 orientation, 
-                                   glm::vec2 point) {
-    auto intersect_ray_plane = [](glm::vec3 origin, 
-                                  glm::vec3 direction,
-                                  glm::vec3 base, 
-                                  glm::vec3 normal,
-                                  float& distance) -> bool {
-        auto alpha = glm::dot(normal, direction);
-        if (glm::abs(alpha) > 0.001f) {
-            distance = glm::dot((base - origin), normal) / alpha;
-            if (distance >= 0.001f) return true;
-        }
-        return false;
-    };
-
-    // how do we want to do this
-    // end points of plane/line?
-    // first see where the end
-    // points of the square end up
-    // within the box.
-    // in world space:
-    auto o = orientation;
-    auto axis1 = glm::vec3(o[0][0], o[0][1], o[0][2]);
-    auto axis2 = glm::vec3(o[1][0], o[1][1], o[1][2]);
-    auto base = glm::vec3(o[2][0], o[2][1], o[2][2]);
-    base += 0.5f * (axis1 + axis2);
-    auto normal = glm::normalize(glm::cross(axis1, axis2));
-    float distance = -1.0f;
-
-    auto from = inv_matrix * glm::vec4(point.x, point.y, -1.0f, 1.0f);
-    from /= from[3];
-    auto to = inv_matrix * glm::vec4(point.x, point.y, 1.0f, 1.0f);
-    to /= to[3];
-    auto direction = glm::normalize(glm::vec3(to) - glm::vec3(from));
-
-    bool does_intersect =
-        intersect_ray_plane(glm::vec3(from), direction, base, normal, distance);
-
-    // now check if the actual point is inside the plane
-    auto intersection_point = glm::vec3(from) + direction * distance;
-    intersection_point -= base;
-    auto along_1 = glm::dot(intersection_point, glm::normalize(axis1));
-    auto along_2 = glm::dot(intersection_point, glm::normalize(axis2));
-    if (glm::abs(along_1) > 0.5f * glm::length(axis1) ||
-        glm::abs(along_2) > 0.5f * glm::length(axis2)) {
-        does_intersect = false;
-    }
-
-    return std::make_tuple(does_intersect, distance, intersection_point);
-}
-
-int ReconComponent::index_hovering_over(float x, float y) {
-    auto inv_matrix = glm::inverse(scene_.camera().matrix() * volume_transform_);
-    int best_slice_index = -1;
-    float best_z = std::numeric_limits<float>::max();
-    for (auto& id_slice : slices_) {
-        auto& slice = id_slice.second;
-        if (slice->inactive()) continue;
-        slice->setHovered(false);
-        auto maybe_point = intersection_point(
-            inv_matrix, slice->orientation4(), glm::vec2(x, y));
-        if (std::get<0>(maybe_point)) {
-            auto z = std::get<1>(maybe_point);
-            if (z < best_z) {
-                best_z = z;
-                best_slice_index = id_slice.first;
-            }
-        }
-    }
-
-    return best_slice_index;
-}
-
-void ReconComponent::check_hovered(float x, float y) {
-    int best_slice_index = index_hovering_over(x, y);
-
-    if (best_slice_index >= 0) {
-        slices_[best_slice_index]->setHovered(true);
-        hovering_ = true;
-        hovered_slice_ = slices_[best_slice_index].get();
-    } else {
-        hovering_ = false;
-        hovered_slice_ = nullptr;
-    }
-}
-
-void ReconComponent::switch_if_necessary(
-    recon_drag_machine_kind kind) {
-    if (!drag_machine_ || drag_machine_->kind() != kind) {
-        switch (kind) {
-        case recon_drag_machine_kind::translator:
-            drag_machine_ = std::make_unique<SliceTranslator>(
-                *this, glm::vec2{prev_x_, prev_y_});
-            break;
-        case recon_drag_machine_kind::rotator:
-            drag_machine_ = std::make_unique<SliceRotator>(
-                *this, glm::vec2{prev_x_, prev_y_});
-            break;
-        default:
-            break;
-        }
-    }
 }
 
 void ReconComponent::initSlices() {
@@ -449,10 +353,62 @@ void ReconComponent::initVolume() {
     scene_.camera().set_look_at(center);
 }
 
+std::tuple<bool, float, glm::vec3> ReconComponent::intersectionPoint(
+        glm::mat4 inv_matrix,
+        glm::mat4 orientation,
+        glm::vec2 point) {
+    auto intersect_ray_plane = [](glm::vec3 origin,
+                                  glm::vec3 direction,
+                                  glm::vec3 base,
+                                  glm::vec3 normal,
+                                  float& distance) -> bool {
+        auto alpha = glm::dot(normal, direction);
+        if (glm::abs(alpha) > 0.001f) {
+            distance = glm::dot((base - origin), normal) / alpha;
+            if (distance >= 0.001f) return true;
+        }
+        return false;
+    };
+
+    // how do we want to do this
+    // end points of plane/line?
+    // first see where the end
+    // points of the square end up
+    // within the box.
+    // in world space:
+    auto o = orientation;
+    auto axis1 = glm::vec3(o[0][0], o[0][1], o[0][2]);
+    auto axis2 = glm::vec3(o[1][0], o[1][1], o[1][2]);
+    auto base = glm::vec3(o[2][0], o[2][1], o[2][2]);
+    base += 0.5f * (axis1 + axis2);
+    auto normal = glm::normalize(glm::cross(axis1, axis2));
+    float distance = -1.0f;
+
+    auto from = inv_matrix * glm::vec4(point.x, point.y, -1.0f, 1.0f);
+    from /= from[3];
+    auto to = inv_matrix * glm::vec4(point.x, point.y, 1.0f, 1.0f);
+    to /= to[3];
+    auto direction = glm::normalize(glm::vec3(to) - glm::vec3(from));
+
+    bool does_intersect = intersect_ray_plane(glm::vec3(from), direction, base, normal, distance);
+
+    // now check if the actual point is inside the plane
+    auto intersection = glm::vec3(from) + direction * distance;
+    intersection -= base;
+    auto along_1 = glm::dot(intersection, glm::normalize(axis1));
+    auto along_2 = glm::dot(intersection, glm::normalize(axis2));
+    if (glm::abs(along_1) > 0.5f * glm::length(axis1) ||
+        glm::abs(along_2) > 0.5f * glm::length(axis2)) {
+        does_intersect = false;
+    }
+
+    return std::make_tuple(does_intersect, distance, intersection);
+}
+
 void ReconComponent::updateSliceImage(Slice* slice) {
     auto[min_v, max_v] = slice->minMaxVals();
     auto nonzero = std::fabs(min_v) > 1e-6 && std::fabs(max_v) > 1e-6;
-    
+
     if (value_not_set_ && nonzero) {
         lower_value_ = min_v;
         upper_value_ = max_v;
@@ -461,7 +417,67 @@ void ReconComponent::updateSliceImage(Slice* slice) {
     slice->updateTexture();
 }
 
-void SliceTranslator::on_drag(glm::vec2 delta) {
+void ReconComponent::updateHoveringSlice(float x, float y) {
+    auto inv_matrix = glm::inverse(scene_.camera().matrix() * volume_transform_);
+    int slice_id = -1;
+    float best_z = std::numeric_limits<float>::max();
+    for (auto& [sid, slice] : slices_) {
+        if (slice->inactive()) continue;
+        slice->setHovered(false);
+        auto maybe_point = intersectionPoint(
+            inv_matrix, slice->orientation4(), glm::vec2(x, y));
+        if (std::get<0>(maybe_point)) {
+            auto z = std::get<1>(maybe_point);
+            if (z < best_z) {
+                best_z = z;
+                slice_id = sid;
+            }
+        }
+    }
+
+    if (slice_id >= 0) {
+        slices_[slice_id]->setHovered(true);
+        hovered_slice_ = slices_[slice_id].get();
+    } else {
+        hovered_slice_ = nullptr;
+    }
+}
+
+void ReconComponent::maybeSwitchDragMachine(ReconComponent::DragType type) {
+    if (drag_machine_ == nullptr || drag_machine_->type() != type) {
+        switch (type) {
+            case DragType::translator:
+                drag_machine_ = std::make_unique<SliceTranslator>(
+                        *this, glm::vec2{prev_x_, prev_y_});
+                break;
+            case DragType::rotator:
+                drag_machine_ = std::make_unique<SliceRotator>(
+                        *this, glm::vec2{prev_x_, prev_y_});
+                break;
+            default:
+                break;
+        }
+    }
+}
+
+// ReconComponent::DragMachine
+
+ReconComponent::DragMachine::DragMachine(ReconComponent& comp,
+                                         const glm::vec2& initial,
+                                         DragType type)
+    : comp_(comp), initial_(initial), type_(type) {}
+
+ReconComponent::DragMachine::~DragMachine() = default;
+
+// ReconComponent::SliceTranslator
+
+ReconComponent::SliceTranslator::SliceTranslator(ReconComponent &comp,
+                                                 const glm::vec2& initial)
+    : DragMachine(comp, initial, DragType::translator) {}
+
+ReconComponent::SliceTranslator::~SliceTranslator() = default;
+
+void ReconComponent::SliceTranslator::onDrag(glm::vec2 delta) {
     // 1) what are we dragging, and does it have data?
     // if it does then we need to make a new slice
     // else we drag the current slice along the normal
@@ -469,7 +485,7 @@ void SliceTranslator::on_drag(glm::vec2 delta) {
         std::unique_ptr<Slice> new_slice;
         int id = comp_.generate_slice_idx();
         int to_remove = -1;
-        for (auto& id_the_slice : comp_.get_slices()) {
+        for (auto& id_the_slice : comp_.slices()) {
             auto& the_slice = id_the_slice.second;
             if (the_slice->hovered()) {
                 if (!the_slice->empty()) {
@@ -486,10 +502,10 @@ void SliceTranslator::on_drag(glm::vec2 delta) {
             }
         }
         if (new_slice) {
-            comp_.get_slices()[new_slice->id()] = std::move(new_slice);
+            comp_.slices()[new_slice->id()] = std::move(new_slice);
         }
         if (to_remove >= 0) {
-            comp_.get_slices().erase(to_remove);
+            comp_.slices().erase(to_remove);
             // send slice packet
             auto packet = tomop::RemoveSlicePacket(to_remove);
             comp_.scene().send(packet);
@@ -533,8 +549,11 @@ void SliceTranslator::on_drag(glm::vec2 delta) {
     o[2][2] += dx[2];
 }
 
-SliceRotator::SliceRotator(ReconComponent& comp, glm::vec2 initial)
-    : ReconDragMachine(comp, initial) {
+// ReconComponent::SliceRotator
+
+ReconComponent::SliceRotator::SliceRotator(ReconComponent& comp,
+                                           const glm::vec2& initial)
+    : DragMachine(comp, initial, DragType::rotator) {
     // 1. need to identify the opposite axis
     // a) get the position within the slice
     auto tf = comp.scene().camera().matrix() * comp.volume_transform();
@@ -544,7 +563,7 @@ SliceRotator::SliceRotator(ReconComponent& comp, glm::vec2 initial)
     assert(slice);
     auto o = slice->orientation4();
 
-    auto maybe_point = comp.intersection_point(inv_matrix, o, initial_);
+    auto maybe_point = ReconComponent::intersectionPoint(inv_matrix, o, initial_);
     assert(std::get<0>(maybe_point));
 
     auto axis1 = glm::vec3(o[0][0], o[0][1], o[0][2]);
@@ -595,7 +614,9 @@ SliceRotator::SliceRotator(ReconComponent& comp, glm::vec2 initial)
     screen_direction = glm::normalize(from - to);
 }
 
-void SliceRotator::on_drag(glm::vec2 delta) {
+ReconComponent::SliceRotator::~SliceRotator() = default;
+
+void ReconComponent::SliceRotator::onDrag(glm::vec2 delta) {
     // 1) what are we dragging, and does it have data?
     // if it does then we need to make a new slice
     // else we drag the current slice along the normal
@@ -603,7 +624,7 @@ void SliceRotator::on_drag(glm::vec2 delta) {
         std::unique_ptr<Slice> new_slice;
         int id = comp_.generate_slice_idx();
         int to_remove = -1;
-        for (auto& id_the_slice : comp_.get_slices()) {
+        for (auto& id_the_slice : comp_.slices()) {
             auto& the_slice = id_the_slice.second;
             if (the_slice->hovered()) {
                 if (!the_slice->empty()) {
@@ -620,10 +641,10 @@ void SliceRotator::on_drag(glm::vec2 delta) {
             }
         }
         if (new_slice) {
-            comp_.get_slices()[new_slice->id()] = std::move(new_slice);
+            comp_.slices()[new_slice->id()] = std::move(new_slice);
         }
         if (to_remove >= 0) {
-            comp_.get_slices().erase(to_remove);
+            comp_.slices().erase(to_remove);
             // send slice packet
             auto packet = tomop::RemoveSlicePacket(to_remove);
             comp_.scene().send(packet);
