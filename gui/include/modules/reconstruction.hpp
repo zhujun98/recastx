@@ -47,10 +47,7 @@ class ReconstructionProtocol : public SceneModuleProtocol {
                 tomop::SliceDataPacket& packet = *(tomop::SliceDataPacket*)event_packet.get();
 
                 auto& recon_component = (ReconComponent&)window.scene().get_component("reconstruction");
-                recon_component.setSliceData(packet.data, 
-                                             packet.slice_size,
-                                             packet.slice_id, 
-                                             packet.additive);
+                recon_component.setSliceData(packet.data, packet.slice_size, packet.slice_id);
                 spdlog::info("Set slice data {}", packet.slice_id);
                 break;
             }

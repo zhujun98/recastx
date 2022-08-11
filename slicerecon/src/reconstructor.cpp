@@ -254,7 +254,7 @@ std::vector<SliceDataPacket> Reconstructor::sliceData() {
         std::lock_guard lk(slice_mtx_);
         for (size_t i = 0; i < slices_buffer_.size(); ++i) {
             ret.emplace_back(SliceDataPacket(
-                i, {slice_size_, slice_size_}, slices_buffer_[i].front(), false));    
+                i, {slice_size_, slice_size_}, slices_buffer_[i].front()));
         }
     }    
     return ret;

@@ -19,14 +19,6 @@ void Slice::setData(const DataType& data, const SizeType& size) {
     updateMinMaxVal();
 }
 
-void Slice::addData(const DataType& data, const SizeType& size) {
-    if (size_ != size) throw std::runtime_error("Inconsistent data size!");
-
-    for (size_t i = 0; i < data_.size(); ++i) data_[i] += data[i];
-
-    updateMinMaxVal();
-}
-
 void Slice::updateTexture() {
     if (data_.empty()) return;
 

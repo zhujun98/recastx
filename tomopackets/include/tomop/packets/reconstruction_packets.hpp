@@ -10,13 +10,12 @@ struct SliceDataPacket : public PacketBase<SliceDataPacket> {
     static constexpr auto desc = PacketDesc::slice_data;
     SliceDataPacket() = default;
     SliceDataPacket(int32_t a, std::array<int32_t, 2> b,
-                    std::vector<float> c, bool d)
-        : slice_id(a), slice_size(b), data(c), additive(d) {}
+                    std::vector<float> c)
+        : slice_id(a), slice_size(b), data(c) {}
     BOOST_HANA_DEFINE_STRUCT(SliceDataPacket, 
                              (int32_t, slice_id),
                              (std::array<int32_t, 2>, slice_size),
-                             (std::vector<float>, data), 
-                             (bool, additive));
+                             (std::vector<float>, data));
 };
 
 struct VolumeDataPacket : public PacketBase<VolumeDataPacket> {

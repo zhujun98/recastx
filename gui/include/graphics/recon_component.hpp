@@ -100,8 +100,7 @@ class ReconComponent : public ObjectComponent {
 
     void setSliceData(std::vector<float>& data,
                       const std::array<int32_t, 2>& size,
-                      int slice_idx,
-                      bool additive = true);
+                      int slice_idx);
 
     void setVolumeData(std::vector<float>& data,
                        const std::array<int32_t, 3>& volume_size);

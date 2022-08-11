@@ -95,9 +95,8 @@ void ReconComponent::requestSlices() {
 
 void ReconComponent::setSliceData(std::vector<float>& data,
                                   const std::array<int32_t, 2>& size,
-                                  int slice_idx,
-                                  bool additive) {
-    Slice* slice = nullptr;
+                                  int slice_idx) {
+    Slice* slice;
     if (slices_.find(slice_idx) != slices_.end()) {
         slice = slices_[slice_idx].get();
     } else {
@@ -107,11 +106,7 @@ void ReconComponent::setSliceData(std::vector<float>& data,
 
     if (slice == dragged_slice_) return;
 
-    if (!additive || slice->empty()) {
-        slice->setData(data, size);
-    } else {
-        slice->addData(data, size);
-    }
+    slice->setData(data, size);
 
     updateSliceImage(slice);
 }
