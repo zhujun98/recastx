@@ -18,10 +18,9 @@
 #include "astra/ParallelVecProjectionGeometry3D.h"
 #include "astra/VolumeGeometry3D.h"
 
-#include "data_types.hpp"
+#include "tomop/tomop.hpp"
 
-
-namespace slicerecon {
+namespace tomop::slicerecon {
 
 class Solver {
 
@@ -71,8 +70,12 @@ public:
 
     virtual ~Solver();
 
-    virtual slice_data reconstructSlice(orientation x, int buffer_idx) = 0;
-    virtual void reconstructPreview(std::vector<float>& preview_buffer, int buffer_idx) = 0;
+    virtual void reconstructSlice(std::vector<float>& slice_buffer, 
+                                  Orientation x, 
+                                  int buffer_idx) = 0;
+
+    virtual void reconstructPreview(std::vector<float>& preview_buffer, 
+                                    int buffer_idx) = 0;
 
     // returns true if we want to trigger a re-reconstruction
     virtual bool
@@ -119,11 +122,15 @@ public:
                        const std::array<float, 2>& detector_size);
     // FIXME ~solver clean up
 
-    slice_data reconstructSlice(orientation x, int buffer_idx) override;
+    void reconstructSlice(std::vector<float>& slice_buffer, 
+                          Orientation x, 
+                          int buffer_idx) override;
 
-    void reconstructPreview(std::vector<float>& preview_buffer, int buffer_idx) override;
+    void reconstructPreview(std::vector<float>& preview_buffer, 
+                            int buffer_idx) override;
 
-    bool parameterChanged(std::string param, std::variant<float, std::string, bool> value) override;
+    bool parameterChanged(std::string param, 
+                          std::variant<float, std::string, bool> value) override;
 };
 
 class ConeBeamSolver : public Solver {
@@ -165,9 +172,14 @@ public:
                    float origin_det);
     // FIXME ~solver clean up
 
-    slice_data reconstructSlice(orientation x, int buffer_idx) override;
-    void reconstructPreview(std::vector<float>& preview_buffer, int buffer_idx) override;
+    void reconstructSlice(std::vector<float>& slice_buffer, 
+                          Orientation x, 
+                          int buffer_idx) override;
+
+    void reconstructPreview(std::vector<float>& preview_buffer, 
+                            int buffer_idx) override;
+
     std::vector<float> fdk_weights();
 };
 
-} // slicerecon
+} // tomop::slicerecon

@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <iostream>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 
 #include <spdlog/spdlog.h>
@@ -15,13 +16,12 @@ extern "C" {
 }
 
 #include "buffer.hpp"
-#include "data_types.hpp"
 #include "phase.hpp"
 #include "filter.hpp"
 #include "solver.hpp"
 
 
-namespace slicerecon {
+namespace tomop::slicerecon {
 
 class Reconstructor {
 
@@ -31,7 +31,11 @@ class Reconstructor {
 
     int num_darks_ = 1;
     int num_flats_ = 1;
-    int preview_size_ = 1; 
+    int preview_size_ = 0;
+    int slice_size_ = 0;
+    const int num_slices_ = 3;
+    std::unordered_map<int, Orientation> slices_;
+    std::mutex slice_mtx_;
 
     std::vector<RawDtype> all_darks_;
     std::vector<RawDtype> all_flats_;
@@ -40,6 +44,7 @@ class Reconstructor {
     MemoryBuffer<float> buffer_;
     TripleBuffer<float> sino_buffer_;
     TripleBuffer<float> preview_buffer_;
+    std::unordered_map<int, TripleBuffer<float>> slices_buffer_;
     bool initialized_ = false;
 
     size_t group_size_;
@@ -66,7 +71,7 @@ class Reconstructor {
 
     void processProjections(oneapi::tbb::task_arena& arena);
 
-public:
+  public:
 
     Reconstructor(int rows, int cols, int num_threads); 
 
@@ -76,7 +81,8 @@ public:
                     int num_flats, 
                     int group_size,
                     int buffer_size,
-                    int preview_size);
+                    int preview_size,
+                    int slice_size);
 
     void initPaganin(float pixel_size, float lambda, float delta, float beta, float distance);
 
@@ -93,11 +99,12 @@ public:
                         const std::array<int32_t, 2>& shape, 
                         const char* data); 
 
-    slice_data reconstructSlice(orientation x); 
+    void updateSlice(int slice_id, const Orientation& orientation);
+    void removeSlice(int slice_id);
 
-    const std::vector<float>& previewData();
+    tomop::VolumeDataPacket previewData();
 
-    int previewSize() const;
+    std::vector<tomop::SliceDataPacket> sliceData();
 
     size_t bufferSize() const;
 
@@ -110,4 +117,4 @@ public:
 
 };
 
-} // namespace slicerecon
+} // tomop::slicerecon

@@ -48,13 +48,4 @@ struct RemoveSlicePacket : public PacketBase<RemoveSlicePacket> {
                              (int32_t, slice_id));
 };
 
-struct GroupRequestSlicesPacket : public PacketBase<GroupRequestSlicesPacket> {
-    static constexpr auto desc = PacketDesc::group_request_slices;
-    GroupRequestSlicesPacket() = default;
-    GroupRequestSlicesPacket(int32_t a)
-        : group_size(a) {}
-    BOOST_HANA_DEFINE_STRUCT(GroupRequestSlicesPacket, 
-                             (int32_t, group_size));
-};
-
 } // namespace tomop

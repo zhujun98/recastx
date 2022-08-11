@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include "slicerecon/data_types.hpp"
+#include "tomop/tomop.hpp"
 #include "slicerecon/buffer.hpp"
 
-namespace slicerecon::test {
+namespace tomop::slicerecon::test {
 
 using ::testing::Pointwise;
 using ::testing::FloatNear;
@@ -98,4 +98,4 @@ TEST_F(MemoryBufferTest, TestSameDataReceivedRepeatedly) {
     }
 }
 
-} // slicerecon::test
+} // tomop::slicerecon::test

@@ -1,11 +1,10 @@
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 
-#include "slicerecon/data_types.hpp"
 #include "slicerecon/data_receiver.hpp"
 
 
-namespace slicerecon {
+namespace tomop::slicerecon {
 
 using namespace std::string_literals;
 
@@ -97,4 +96,4 @@ void DataReceiver::start() {
     thread_.detach();
 }
 
-} // namespace slicerecon
+} // tomop::slicerecon

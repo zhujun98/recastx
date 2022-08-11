@@ -13,9 +13,6 @@ namespace gui {
 
 class ReconstructionProtocol : public SceneModuleProtocol {
 
-    int group_size_count_ = -1;
-    int group_size_requested_ = -1;
-
   public:
 
     ReconstructionProtocol() = default;
@@ -34,12 +31,6 @@ class ReconstructionProtocol : public SceneModuleProtocol {
             }
             case tomop::PacketDesc::volume_data: {
                 auto packet = std::make_unique<tomop::VolumeDataPacket>();
-                packet->deserialize(std::move(buffer));
-                ack(socket);
-                return packet;
-            }
-            case tomop::PacketDesc::group_request_slices: {
-                auto packet = std::make_unique<tomop::GroupRequestSlicesPacket>();
                 packet->deserialize(std::move(buffer));
                 ack(socket);
                 return packet;
@@ -69,32 +60,6 @@ class ReconstructionProtocol : public SceneModuleProtocol {
                 auto& recon_component = (ReconComponent&)window.scene().get_component("reconstruction");
                 recon_component.setVolumeData(packet.data, packet.volume_size);
                 spdlog::info("Set volume data");
-                break;
-            }
-
-            case tomop::PacketDesc::group_request_slices: {
-                tomop::GroupRequestSlicesPacket& packet = *(tomop::GroupRequestSlicesPacket*)event_packet.get();
-
-                if (group_size_requested_ < 0) {
-                    group_size_requested_ = packet.group_size;
-                    group_size_count_ = 1;
-                } else {
-                    if (group_size_requested_ != packet.group_size) {
-                        std::cout << "Group request for different group sizes "
-                                  << group_size_requested_
-                                  << " != " << packet.group_size << "\n";
-                    }
-                    group_size_count_ += 1;
-                }
-
-                if (group_size_count_ == group_size_requested_) {
-                    group_size_count_ = -1;
-                    group_size_requested_ = -1;
-
-                    auto& recon_component = (ReconComponent&)window.scene().get_component("reconstruction");
-                    recon_component.requestSlices();
-                }
-
                 break;
             }
             default: {

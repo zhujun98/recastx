@@ -9,7 +9,7 @@
 #include "slicerecon/utils.hpp"
 
 
-namespace slicerecon {
+namespace tomop::slicerecon {
 
 Reconstructor::Reconstructor(int rows, int cols, int num_threads)
      : rows_(rows),
@@ -23,11 +23,13 @@ void Reconstructor::initialize(int num_darks,
                                int num_flats, 
                                int group_size,
                                int buffer_size,
-                               int preview_size) {
+                               int preview_size,
+                               int slice_size) {
     num_darks_ = num_darks;
     num_flats_ = num_flats;
     group_size_ = group_size;
     preview_size_ = preview_size;
+    slice_size_ = slice_size;
 
     all_darks_.resize(pixels_ * num_darks);
     all_flats_.resize(pixels_ * num_flats);
@@ -44,6 +46,8 @@ void Reconstructor::initialize(int num_darks,
     spdlog::info("- Number of required dark images: {}", num_darks_);
     spdlog::info("- Number of required flat images: {}", num_flats_);
     spdlog::info("- Number of projection images per tomogram: {}", group_size_);
+    spdlog::info("- Preview size: {}", preview_size_);
+    spdlog::info("- Slice size: {}", slice_size_);
 }
 
 void Reconstructor::initPaganin(float pixel_size, 
@@ -112,10 +116,18 @@ void Reconstructor::startReconstructing() {
             {
                 std::unique_lock<std::mutex> lck(gpu_mutex_);
                 gpu_cv_.wait(lck, [&] { return sino_uploaded_; });
+
                 solver_->reconstructPreview(preview_buffer_.back(), gpu_buffer_index_);
+
+                std::lock_guard lk(slice_mtx_);
+                for (const auto& [sid, orientation] : slices_) {
+                    solver_->reconstructSlice(
+                        slices_buffer_[sid].back(), orientation, gpu_buffer_index_);
+                }
                 sino_uploaded_ = false;
             }
             preview_buffer_.prepare();
+            for (auto& slice_buffer : slices_buffer_) slice_buffer.second.prepare();
 
 #if (VERBOSITY >= 1)
             // The throughtput is measured in the last step of the pipeline because
@@ -214,17 +226,39 @@ void Reconstructor::pushProjection(ProjectionType k,
     }
 }
 
-slice_data Reconstructor::reconstructSlice(orientation x) {
-    std::lock_guard<std::mutex> lck(gpu_mutex_);
-    return solver_->reconstructSlice(x, gpu_buffer_index_);
+void Reconstructor::updateSlice(int slice_id, const Orientation& orientation) {
+    std::lock_guard lk(slice_mtx_);
+    if (slices_.find(slice_id) == slices_.end()) {
+        TripleBuffer<float> slice_buffer;
+        slice_buffer.initialize(slice_size_ * slice_size_);
+        slices_buffer_[slice_id] = std::move(slice_buffer);
+    }
+    slices_[slice_id] = orientation;
 }
 
-const std::vector<float>& Reconstructor::previewData() { 
+void Reconstructor::removeSlice(int slice_id) {
+    std::lock_guard lk(slice_mtx_);
+    slices_.erase(slice_id);
+    slices_buffer_.erase(slice_id);
+}
+
+VolumeDataPacket Reconstructor::previewData() { 
     preview_buffer_.fetch();
-    return preview_buffer_.front(); 
+    return VolumeDataPacket({preview_size_, preview_size_, preview_size_}, 
+                            preview_buffer_.front());
 }
 
-int Reconstructor::previewSize() const { return preview_size_; }
+std::vector<SliceDataPacket> Reconstructor::sliceData() {
+    std::vector<SliceDataPacket> ret;
+    {
+        std::lock_guard lk(slice_mtx_);
+        for (size_t i = 0; i < slices_buffer_.size(); ++i) {
+            ret.emplace_back(SliceDataPacket(
+                i, {slice_size_, slice_size_}, slices_buffer_[i].front(), false));    
+        }
+    }    
+    return ret;
+}
 
 size_t Reconstructor::bufferSize() const { return group_size_; }
 
@@ -284,4 +318,4 @@ const std::vector<RawDtype>& Reconstructor::flats() const { return all_flats_; }
 const MemoryBuffer<float>& Reconstructor::buffer() const { return buffer_; }
 const TripleBuffer<float>& Reconstructor::sinoBuffer() const { return sino_buffer_; }
 
-} // namespace slicerecon
+} // tomop::slicerecon

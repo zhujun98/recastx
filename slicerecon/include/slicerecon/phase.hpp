@@ -5,7 +5,7 @@ extern "C" {
 #include <fftw3.h>
 }
 
-namespace slicerecon {
+namespace tomop::slicerecon {
 
 namespace details {
     std::vector<float> paganinFilter(
@@ -34,4 +34,4 @@ class Paganin {
 
 };
 
-} // slicerecon
+} // tomop::slicerecon

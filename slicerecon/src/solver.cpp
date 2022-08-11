@@ -3,7 +3,7 @@
 #include "slicerecon/solver.hpp"
 #include "slicerecon/utils.hpp"
 
-namespace slicerecon {
+namespace tomop::slicerecon {
 
 // class Solver
 
@@ -137,7 +137,9 @@ ParallelBeamSolver::ParallelBeamSolver(int rows,
     }
 }
 
-slice_data ParallelBeamSolver::reconstructSlice(orientation x, int buffer_idx) {
+void ParallelBeamSolver::reconstructSlice(std::vector<float>& slice_buffer, 
+                                          Orientation x, 
+                                          int buffer_idx) {
 
 #if (VERBOSITY >= 2)
     auto start = std::chrono::steady_clock::now();
@@ -178,9 +180,8 @@ slice_data ParallelBeamSolver::reconstructSlice(orientation x, int buffer_idx) {
     algs_[buffer_idx]->run();
 
     unsigned int n = slice_size_;
-    auto result = std::vector<float>(n * n, 0.0f);
     auto pos = astraCUDA3d::SSubDimensions3D{n, n, 1, n, n, n, 1, 0, 0, 0};
-    astraCUDA3d::copyFromGPUMemory(result.data(), vol_handle_, pos);
+    astraCUDA3d::copyFromGPUMemory(slice_buffer.data(), vol_handle_, pos);
 
 #if (VERBOSITY >= 2)
     float duration = std::chrono::duration_cast<std::chrono::microseconds>(
@@ -188,7 +189,6 @@ slice_data ParallelBeamSolver::reconstructSlice(orientation x, int buffer_idx) {
     spdlog::info("[bench] Reconstructing slices took {} ms", duration / 1000);
 #endif
 
-    return {{(int)n, (int)n}, std::move(result)};
 }
 
 void ParallelBeamSolver::reconstructPreview(std::vector<float>& preview_buffer, 
@@ -332,7 +332,9 @@ ConeBeamSolver::ConeBeamSolver(int rows,
     }
 }
 
-slice_data ConeBeamSolver::reconstructSlice(orientation x, int buffer_idx) {
+void ConeBeamSolver::reconstructSlice(std::vector<float>& slice_buffer, 
+                                      Orientation x, 
+                                      int buffer_idx) {
     auto k = vol_geom_->getWindowMaxX();
 
     auto [delta, rot, scale] = utils::slice_transform(
@@ -366,11 +368,8 @@ slice_data ConeBeamSolver::reconstructSlice(orientation x, int buffer_idx) {
     algs_[buffer_idx]->run();
 
     unsigned int n = slice_size_;
-    auto result = std::vector<float>(n * n, 0.0f);
     auto pos = astraCUDA3d::SSubDimensions3D{n, n, 1, n, n, n, 1, 0, 0, 0};
-    astraCUDA3d::copyFromGPUMemory(result.data(), vol_handle_, pos);
-
-    return {{(int)n, (int)n}, std::move(result)};
+    astraCUDA3d::copyFromGPUMemory(slice_buffer.data(), vol_handle_, pos);
 }
 
 void ConeBeamSolver::reconstructPreview(std::vector<float>& preview_buffer, int buffer_idx) {
@@ -410,4 +409,4 @@ std::vector<float> ConeBeamSolver::fdk_weights() {
     return result;
 }
 
-} // slicerecon
+} // tomop::slicerecon

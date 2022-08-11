@@ -18,9 +18,9 @@
 #include "astra/ParallelVecProjectionGeometry3D.h"
 #include "astra/VolumeGeometry3D.h"
 
-#include "data_types.hpp"
+#include "tomop/tomop.hpp"
 
-namespace slicerecon::utils {
+namespace tomop::slicerecon::utils {
 
 std::unique_ptr<astra::CParallelVecProjectionGeometry3D>
 parallel_beam_to_vec(astra::CParallelProjectionGeometry3D* parallel_geom);
@@ -105,4 +105,4 @@ inline std::vector<float> defaultAngles(int n) {
 
 
 
-} // slicerecon::utils
+} // tomop::slicerecon::utils

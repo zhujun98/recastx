@@ -9,7 +9,7 @@
 #include "slicerecon/utils.hpp"
 
 
-namespace slicerecon::test {
+namespace tomop::slicerecon::test {
 
 using ::testing::ElementsAreArray;
 using ::testing::Pointwise;
@@ -46,7 +46,8 @@ class ReconTest : public testing::Test {
     }
 
     void buildRecon() {
-        recon_.initialize(num_darks_, num_flats_, group_size_, buffer_size_, preview_size_);
+        recon_.initialize(num_darks_, num_flats_, group_size_, buffer_size_, 
+                          preview_size_, slice_size_);
         recon_.initFilter(filter_name_, gaussian_pass_);
         recon_.setSolver(std::make_unique<slicerecon::ParallelBeamSolver>(
             rows_, cols_, angles_, 
@@ -206,4 +207,4 @@ TEST(TestUtils, TestComputeReciprocal) {
         -0.25,       1.,         0.42857143}));
 }
 
-} // slicerecon::test
+} // tomop::slicerecon::test
