@@ -30,12 +30,12 @@ void Scene::describe() {
     }
 }
 
-bool Scene::handleMouseButton(int button, bool down) {
+bool Scene::handleMouseButton(int button, int action) {
     for (auto& id_and_comp : components_) {
-        if (id_and_comp.second->handleMouseButton(button, down)) return true;
+        if (id_and_comp.second->handleMouseButton(button, action)) return true;
     }
 
-    if (camera_ && camera_->handleMouseButton(button, down)) return true;
+    if (camera_ && camera_->handleMouseButton(button, action)) return true;
     return false;
 }
 

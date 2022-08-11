@@ -44,7 +44,7 @@ class Scene : public InputHandler, public PacketPublisher, public Ticker {
         return *components_[identifier].get();
     }
 
-    bool handleMouseButton(int button, bool down) override;
+    bool handleMouseButton(int button, int action) override;
     bool handleScroll(double offset) override;
     bool handleMouseMoved(double x, double y) override;
     bool handleKey(int key, bool down, int mods) override;

@@ -110,7 +110,7 @@ class ReconComponent : public ObjectComponent {
     void requestSlices();
 
     void switch_if_necessary(recon_drag_machine_kind kind);
-    bool handleMouseButton(int button, bool down) override;
+    bool handleMouseButton(int button, int action) override;
     bool handleMouseMoved(double x, double y) override;
     int index_hovering_over(float x, float y);
     void check_hovered(float x, float y);

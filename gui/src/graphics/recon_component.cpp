@@ -2,6 +2,8 @@
 
 #include <glm/gtc/constants.hpp>
 #include <glm/gtx/rotate_vector.hpp>
+#include <GL/gl3w.h>
+#include <GLFW/glfw3.h>
 #include <imgui.h>
 
 #include "tomop/tomop.hpp"
@@ -252,32 +254,29 @@ void ReconComponent::draw(glm::mat4 world_to_screen) {
     glDisable(GL_BLEND);
 }
 
-bool ReconComponent::handleMouseButton(int button, bool down) {
+bool ReconComponent::handleMouseButton(int button, int action) {
     if (!show_) return false;
 
-    if (down) {
-        if (button == 0) {
+    if (action == GLFW_PRESS) {
+        if (button == GLFW_MOUSE_BUTTON_LEFT) {
             if (hovering_) {
                 switch_if_necessary(recon_drag_machine_kind::translator);
                 dragging_ = true;
                 return true;
             }
-        }
-        if (button == 1) {
+        } else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
             if (hovering_) {
                 switch_if_necessary(recon_drag_machine_kind::rotator);
                 dragging_ = true;
                 return true;
             }
+        } else if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
         }
-        if (button == 2) {
-        }
-    }
-
-    if (!down) {
+    } else if (action == GLFW_RELEASE) {
         if (dragged_slice_) {
             auto packet = tomop::SetSlicePacket(
                 dragged_slice_->id(), dragged_slice_->orientation3());
+            std::cout << 111111111 << std::endl;
             scene_.send(packet);
 
             dragged_slice_ = nullptr;

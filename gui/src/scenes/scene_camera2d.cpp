@@ -20,8 +20,8 @@ glm::mat4 SceneCamera2d::matrix() {
     return camera_matrix;
 }
 
-bool SceneCamera2d::handleMouseButton(int /* button */, bool down) {
-    dragging_ = down;
+bool SceneCamera2d::handleMouseButton(int /* button */, int action) {
+    dragging_ = action == GLFW_PRESS;
     return true;
 }
 

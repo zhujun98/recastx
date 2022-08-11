@@ -54,8 +54,8 @@ void MainWindow::tick(float dt) {
     active_scene_->tick(dt);
 }
 
-bool MainWindow::handleMouseButton(int button, bool down) {
-    return active_scene_->handleMouseButton(button, down);
+bool MainWindow::handleMouseButton(int button, int action) {
+    return active_scene_->handleMouseButton(button, action);
 }
 
 bool MainWindow::handleScroll(double offset) {

@@ -73,11 +73,10 @@ glm::mat4 SceneCamera3d::matrix() {
     return camera_matrix;
 }
 
-bool SceneCamera3d::handleMouseButton(int /* button */, bool down) {
-    if (interaction_disabled_) {
-        return false;
-    }
-    dragging_ = down;
+bool SceneCamera3d::handleMouseButton(int /* button */, int action) {
+    if (interaction_disabled_) return false;
+
+    dragging_ = action == GLFW_PRESS;
     if (!dragging_) {
         drag_machine_ = nullptr;
     } else {

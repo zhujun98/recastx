@@ -26,7 +26,7 @@ class SceneCamera2d : public SceneCamera {
 
     glm::mat4 matrix() override;
 
-    bool handleMouseButton(int button, bool down) override;
+    bool handleMouseButton(int button, int action) override;
     bool handleScroll(double offset) override;
     bool handleMouseMoved(double x, double y) override;
     bool handleKey(int key, bool down, int mods) override;

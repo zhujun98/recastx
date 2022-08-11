@@ -24,7 +24,7 @@ class Interface : public RenderTarget, public InputHandler {
 
     [[nodiscard]] int zPriority() const override { return 10; }
 
-    bool handleMouseButton(int button, bool down) override;
+    bool handleMouseButton(int button, int action) override;
     bool handleScroll(double offset) override;
     bool handleKey(int key, bool down, int mods) override;
     bool handleChar(unsigned int c) override;
