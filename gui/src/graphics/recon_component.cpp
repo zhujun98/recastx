@@ -91,12 +91,6 @@ void ReconComponent::requestSlices() {
             slice.first, slice.second->orientation3());
         scene_.send(packet);
     }
-
-    for (auto& slice : fixed_slices_) {
-        auto packet = tomop::SetSlicePacket(
-            slice.first, slice.second->orientation3());
-        scene_.send(packet);
-    }
 }
 
 void ReconComponent::setSliceData(std::vector<float>& data,
@@ -106,8 +100,6 @@ void ReconComponent::setSliceData(std::vector<float>& data,
     Slice* slice = nullptr;
     if (slices_.find(slice_idx) != slices_.end()) {
         slice = slices_[slice_idx].get();
-    } else if (fixed_slices_.find(slice_idx) != fixed_slices_.end()) {
-        slice = fixed_slices_[slice_idx].get();
     } else {
         std::cout << "Updating inactive slice: " << slice_idx << "\n";
         return;
@@ -135,9 +127,7 @@ void ReconComponent::update_histogram(const std::vector<float>& data) {
     auto bins = 30;
     auto min = *std::min_element(data.begin(), data.end());
     auto max = *std::max_element(data.begin(), data.end());
-    if (max == min) {
-        max = min + 1;
-    }
+    if (max == min) max = min + 1;
 
     histogram_.clear();
     histogram_.resize(bins);
@@ -169,21 +159,6 @@ void ReconComponent::describe() {
     auto minmax = overall_min_and_max();
     ImGui::SliderFloat("Lower", &lower_value_, minmax.first, minmax.second);
     ImGui::SliderFloat("Upper", &upper_value_, minmax.first, minmax.second);
-
-    if (fixed_slices_.size() > 0)  {
-        ImGui::Begin("Slices");
-        auto to_remove = std::vector<int>{};
-        for (auto&& [slice_idx, slice] : fixed_slices_) {
-            ImGui::Image((void*)(intptr_t)slice->texture().id(), ImVec2(200, 200));
-            if (ImGui::Button((std::string("remove##") + std::to_string(slice_idx)).c_str())) {
-                to_remove.push_back(slice_idx);
-            }
-        }
-        for (auto remove : to_remove) {
-            fixed_slices_.erase(remove);
-        }
-        ImGui::End();
-    }
 }
 
 std::pair<float, float> ReconComponent::overall_min_and_max() {
@@ -301,17 +276,6 @@ bool ReconComponent::handleMouseButton(int button, bool down) {
             }
         }
         if (button == 2) {
-            if (hovering_) {
-                // hovered over slice gets fixed
-                int new_id = generate_slice_idx();
-                auto new_slice = std::make_unique<Slice>(new_id);
-                new_slice->setOrientation(hovered_slice_->orientation4());
-
-                auto packet = tomop::SetSlicePacket(new_id, new_slice->orientation3());
-                scene_.send(packet);
-
-                fixed_slices_[new_id] = std::move(new_slice);
-            }
         }
     }
 

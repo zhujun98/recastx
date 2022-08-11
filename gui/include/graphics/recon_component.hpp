@@ -41,7 +41,6 @@ class ReconDragMachine {
 class ReconComponent : public ObjectComponent {
 
     std::map<int, std::unique_ptr<Slice>> slices_;
-    std::map<int, std::unique_ptr<Slice>> fixed_slices_;
 
     std::vector<float> volume_data_;
     Texture3d<float> volume_texture_;
