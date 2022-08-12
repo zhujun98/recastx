@@ -8,7 +8,7 @@
 
 #include <spdlog/spdlog.h>
 
-namespace slicerecon {
+namespace tomop::slicerecon {
 
 template<typename T>
 class DoubleBufferInterface {
@@ -80,6 +80,24 @@ class TripleBuffer : public TrippleBufferInterface<std::vector<T>> {
 
     TripleBuffer() = default;
     ~TripleBuffer() = default;
+
+    TripleBuffer(TripleBuffer&& other) {
+        std::lock_guard lk(other.mtx_);
+        back_ = std::move(other.back_);
+        ready_ = std::move(other.ready_);
+        front_ = std::move(other.front_);
+        is_ready_ = other.is_ready_;
+    }
+
+    TripleBuffer& operator=(TripleBuffer&& other) {
+        std::lock_guard lk(other.mtx_);
+        back_ = std::move(other.back_);
+        ready_ = std::move(other.ready_);
+        front_ = std::move(other.front_);
+        is_ready_ = other.is_ready_;
+
+        return *this;
+    }
 
     void initialize(size_t capacity) {
         this->back_.resize(capacity);
@@ -276,6 +294,6 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
     size_t occupied() const { return buffer_.size() - unoccupied_.size(); }
 };
 
-} // slicerecon
+} // tomop::slicerecon
 
 #endif // SLICERECON_BUFFER_H

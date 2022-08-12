@@ -6,7 +6,7 @@
 
 #include "graphics/partitioning_component.hpp"
 
-namespace gui {
+namespace tomop::gui {
 
 inline glm::vec3 hue_to_rgb(float hue) {
     int h = (int)(hue * 360);
@@ -97,4 +97,4 @@ void PartitioningComponent::draw(glm::mat4 world_to_screen) {
     glDisable(GL_DEPTH_TEST);
 }
 
-} // namespace gui
+} // tomop::gui

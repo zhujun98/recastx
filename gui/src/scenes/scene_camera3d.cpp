@@ -4,7 +4,7 @@
 
 #include "scenes/scene_camera3d.hpp"
 
-namespace gui {
+namespace tomop::gui {
 
 // class Rotator
 
@@ -17,7 +17,7 @@ Rotator::Rotator(SceneCamera3d& camera, float x, float y, bool instant)
     instant_ = instant;
 }
 
-void Rotator::on_drag(glm::vec2 cur, glm::vec2 delta) {
+void Rotator::onDrag(glm::vec2 cur, glm::vec2 delta) {
     if (instant_) {
       camera_.rotate(3.0f * delta.x, -3.0f * delta.y);
     } else {
@@ -73,11 +73,10 @@ glm::mat4 SceneCamera3d::matrix() {
     return camera_matrix;
 }
 
-bool SceneCamera3d::handleMouseButton(int /* button */, bool down) {
-    if (interaction_disabled_) {
-        return false;
-    }
-    dragging_ = down;
+bool SceneCamera3d::handleMouseButton(int /* button */, int action) {
+    if (interaction_disabled_) return false;
+
+    dragging_ = action == GLFW_PRESS;
     if (!dragging_) {
         drag_machine_ = nullptr;
     } else {
@@ -158,7 +157,7 @@ bool SceneCamera3d::handleMouseMoved(double x, double y) {
 
     // TODO: fix for screen ratio ratio
     if (dragging_) {
-        drag_machine_->on_drag({x, y}, delta);
+        drag_machine_->onDrag({x, y}, delta);
         return true;
     }
 
@@ -208,4 +207,4 @@ void SceneCamera3d::tick(float time_elapsed) {
     if (dragging_) drag_machine_->tick(time_elapsed);
 }
 
-} // namespace gui
+} // tomop::gui

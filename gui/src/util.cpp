@@ -6,7 +6,7 @@
 
 #include "util.hpp"
 
-namespace gui {
+namespace tomop::gui {
 
 std::vector<uint32_t> pack(const std::vector<float> &data,
                            float min_value, float max_value) {
@@ -29,4 +29,4 @@ std::vector<uint32_t> pack(const std::vector<float> &data,
   return data_buffer;
 }
 
-} // namespace gui
+} // tomop::gui

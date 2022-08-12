@@ -9,7 +9,7 @@
 
 #include "textures.hpp"
 
-namespace gui {
+namespace tomop::gui {
 
 class Slice {
 
@@ -44,7 +44,6 @@ class Slice {
     [[nodiscard]] int id() const;
 
     void setData(const DataType& data, const SizeType& size);
-    void addData(const DataType& data, const SizeType& size);
 
     void updateTexture();
 
@@ -66,6 +65,6 @@ class Slice {
     [[nodiscard]] const std::array<float, 2>& minMaxVals() const;
 };
 
-} // namespace gui
+} // tomop::gui
 
 #endif // GUI_GRAPHICS_SLICE_H

@@ -1,10 +1,10 @@
 #pragma once
 
-namespace gui {
+namespace tomop::gui {
 
 class InputHandler {
   public:
-    virtual bool handleMouseButton(int /* button */, bool /* down */) { return false; }
+    virtual bool handleMouseButton(int /* button */, int /* action */) { return false; }
     virtual bool handleScroll(double /* offset */) { return false; }
     virtual bool handleKey(int /* key */, bool /* down */, int /* mods */) { return false; }
     virtual bool handleChar(unsigned int /* c */) { return false; }
@@ -14,4 +14,4 @@ class InputHandler {
     [[nodiscard]] virtual int priority() const { return 10; }
 };
 
-} // namespace gui
+} // tomop::gui

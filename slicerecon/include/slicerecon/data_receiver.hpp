@@ -5,7 +5,7 @@
 
 #include "reconstructor.hpp"
 
-namespace slicerecon {
+namespace tomop::slicerecon {
 
 class DataReceiver {
 
@@ -27,4 +27,4 @@ public:
 };
 
 
-} // namespace slicerecon
+} // tomop::slicerecon

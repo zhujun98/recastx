@@ -5,7 +5,7 @@
 
 #include "scene_camera.hpp"
 
-namespace gui {
+namespace tomop::gui {
 
 class SceneCamera2d : public SceneCamera {
 
@@ -26,7 +26,7 @@ class SceneCamera2d : public SceneCamera {
 
     glm::mat4 matrix() override;
 
-    bool handleMouseButton(int button, bool down) override;
+    bool handleMouseButton(int button, int action) override;
     bool handleScroll(double offset) override;
     bool handleMouseMoved(double x, double y) override;
     bool handleKey(int key, bool down, int mods) override;
@@ -35,6 +35,6 @@ class SceneCamera2d : public SceneCamera {
     glm::vec3& look_at() override { return look_at_; }
 };
 
-}  // namespace gui
+}  // tomop::gui
 
 #endif // GUI_SCENES_SCENE_CAMERA2D_H

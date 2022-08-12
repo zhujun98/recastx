@@ -3,7 +3,7 @@
 #include "slicerecon/broker.hpp"
 
 
-namespace slicerecon {
+namespace tomop::slicerecon {
 
 Broker::Broker(const std::string& endpoint,
                const std::string& subscribe_endpoint,
@@ -21,15 +21,12 @@ Broker::Broker(const std::string& endpoint,
     sub_socket_.connect(subscribe_endpoint);
     spdlog::info("Connected to GUI server (PUB-SUB): {}", subscribe_endpoint);
 
-    std::vector<tomop::PacketDesc> descriptors = {
-        tomop::PacketDesc::set_slice,
-        tomop::PacketDesc::remove_slice
+    std::vector<PacketDesc> descriptors = {
+        PacketDesc::set_slice,
+        PacketDesc::remove_slice
     };
-
     for (auto descriptor : descriptors) {
-        int32_t filter[] = {
-            (std::underlying_type<tomop::PacketDesc>::type)descriptor, 0
-        };
+        int32_t filter[] = {(std::underlying_type<PacketDesc>::type)descriptor};
         sub_socket_.set(zmq::sockopt::subscribe, zmq::buffer(filter));
     }
 }
@@ -40,50 +37,51 @@ Broker::~Broker() {
     context_.close();
 }
 
-void Broker::send(const tomop::Packet& packet) {
-    std::lock_guard<std::mutex> guard(socket_mutex_);
-
+void Broker::send(const Packet& packet) {
     zmq::message_t reply;
     packet.send(req_socket_);
     req_socket_.recv(reply, zmq::recv_flags::none);
 }
 
 void Broker::start() {
-    thread_ = std::thread([&] {
+    sub_thread_ = std::thread([&] {
         while (true) {
             zmq::message_t update;
             sub_socket_.recv(update, zmq::recv_flags::none);
-            auto desc = ((tomop::PacketDesc*)update.data())[0];
+            auto desc = ((PacketDesc*)update.data())[0];
             auto buffer = tomop::memory_buffer(update.size(), (char*)update.data());
 
 #if (VERBOSITY >= 3)
             spdlog::info("Received packet with descriptor: 0x{0:x}", 
-                         std::underlying_type<tomop::PacketDesc>::type(desc));
+                         std::underlying_type<PacketDesc>::type(desc));
 #endif
 
             switch (desc) {
-                case tomop::PacketDesc::set_slice: {
-                    auto packet = std::make_unique<tomop::SetSlicePacket>();
+                case PacketDesc::set_slice: {
+                    auto packet = std::make_unique<SetSlicePacket>();
                     packet->deserialize(std::move(buffer));
+                    recon_->setSlice(packet->slice_id, packet->orientation);
 
-                    makeSlice(packet->slice_id, packet->orientation);
+#if (VERBOSITY >= 3)
+                    spdlog::info("Set slice {}", packet->slice_id);
+#endif
+
                     break;
                 }
-                case tomop::PacketDesc::remove_slice: {
-                    auto packet = std::make_unique<tomop::RemoveSlicePacket>();
+                case PacketDesc::remove_slice: {
+                    auto packet = std::make_unique<RemoveSlicePacket>();
                     packet->deserialize(std::move(buffer));
+                    recon_->removeSlice(packet->slice_id);
 
-                    auto to_erase = std::find_if(
-                        slices_.begin(), slices_.end(), [&](auto x) {
-                            return x.first == packet->slice_id;
-                        });
-                    slices_.erase(to_erase);
+#if (VERBOSITY >= 3)
+                    spdlog::info("Remove slice {}", packet->slice_id);
+#endif
 
                     break;
                 }
                 default: {
                     spdlog::warn("Unrecognized packet with descriptor 0x{0:x}", 
-                                 std::underlying_type<tomop::PacketDesc>::type(desc));
+                                 std::underlying_type<PacketDesc>::type(desc));
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
                     break;
                 }
@@ -91,49 +89,23 @@ void Broker::start() {
         }
     });
 
-    preview_thread_ = std::thread([&] {
+    req_thread_ = std::thread([&] {
         while (true) {
-
             zmq::message_t reply;
 
-            int n = recon_->previewSize();
-            auto volprev = tomop::VolumeDataPacket({n, n, n}, recon_->previewData());
-            send(volprev);
+            send(recon_->previewData());
             spdlog::info("Volume preview data sent");
 
-            auto grsp = tomop::GroupRequestSlicesPacket(1);
-            send(grsp);
+            for (auto& slice_data : recon_->sliceData()) {
+                int slice_id = slice_data.slice_id;
+                send(slice_data);
+                spdlog::info("Slice data {} sent", slice_id);
+            }
         }
     });
 
-    thread_.detach();
-    preview_thread_.detach();
+    sub_thread_.detach();
+    req_thread_.detach();
 }
 
-void Broker::makeSlice(int32_t slice_id, const std::array<float, 9>& orientation) {
-    int32_t update_slice_index = -1;
-    int32_t i = 0;
-    for (auto& id_and_slice : slices_) {
-        if (id_and_slice.first == slice_id) {
-            update_slice_index = i;
-            break;
-        }
-        ++i;
-    }
-
-    if (update_slice_index >= 0) {
-        slices_[update_slice_index] = std::make_pair(slice_id, orientation);
-    } else {
-        slices_.push_back(std::make_pair(slice_id, orientation));
-    }
-
-    auto result = recon_->reconstructSlice(orientation);
-
-    if (!result.first.empty()) {
-        auto data_packet = tomop::SliceDataPacket(
-            slice_id, result.first, std::move(result.second), false);
-        send(data_packet);
-    }
-}
-
-} // namespace slicerecon
+} // tomop::slicerecon

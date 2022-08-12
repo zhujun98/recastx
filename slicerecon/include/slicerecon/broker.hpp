@@ -1,7 +1,6 @@
 #pragma once
 
 #include <array>
-#include <mutex>
 #include <string>
 #include <thread>
 
@@ -9,9 +8,8 @@
 
 #include "tomop/tomop.hpp"
 #include "reconstructor.hpp"
-#include "data_types.hpp"
 
-namespace slicerecon {
+namespace tomop::slicerecon {
 
 class Broker {
     zmq::context_t context_;
@@ -19,12 +17,8 @@ class Broker {
     zmq::socket_t req_socket_;
     zmq::socket_t sub_socket_;
 
-    std::thread thread_;
-    std::thread preview_thread_;
-
-    std::vector<std::pair<int32_t, std::array<float, 9>>> slices_;
-
-    std::mutex socket_mutex_;
+    std::thread req_thread_;
+    std::thread sub_thread_;
 
     std::shared_ptr<Reconstructor> recon_;
 
@@ -39,8 +33,6 @@ class Broker {
     void send(const tomop::Packet& packet);
 
     void start();
-
-    void makeSlice(int32_t slice_id, const std::array<float, 9>& orientation);
 };
 
-} // namespace slicerecon
+} // tomop::slicerecon

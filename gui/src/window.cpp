@@ -10,7 +10,7 @@
 #include "window.hpp"
 
 
-namespace gui {
+namespace tomop::gui {
 
 MainWindow::MainWindow() {
     std::unique_ptr<Scene> scene = std::make_unique<Scene3dSliceView>();
@@ -54,8 +54,8 @@ void MainWindow::tick(float dt) {
     active_scene_->tick(dt);
 }
 
-bool MainWindow::handleMouseButton(int button, bool down) {
-    return active_scene_->handleMouseButton(button, down);
+bool MainWindow::handleMouseButton(int button, int action) {
+    return active_scene_->handleMouseButton(button, action);
 }
 
 bool MainWindow::handleScroll(double offset) {
@@ -70,4 +70,4 @@ bool MainWindow::handleKey(int key, bool down, int mods) {
     return active_scene_->handleKey(key, down, mods);
 }
 
-} // namespace gui
+} // tomop::gui

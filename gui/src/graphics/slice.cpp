@@ -4,7 +4,7 @@
 #include "math_common.hpp"
 #include "util.hpp"
 
-namespace gui {
+namespace tomop::gui {
 
 Slice::Slice(int slice_id) : id_(slice_id), size_{32, 32}, texture_(32, 32) {
     updateTexture();
@@ -15,14 +15,6 @@ int Slice::id() const { return id_; }
 void Slice::setData(const DataType& data, const SizeType& size) {
     data_ = data;
     size_ = size;
-
-    updateMinMaxVal();
-}
-
-void Slice::addData(const DataType& data, const SizeType& size) {
-    if (size_ != size) throw std::runtime_error("Inconsistent data size!");
-
-    for (size_t i = 0; i < data_.size(); ++i) data_[i] += data[i];
 
     updateMinMaxVal();
 }
@@ -74,4 +66,4 @@ void Slice::updateMinMaxVal() {
     minMaxVals_[1] = *std::max_element(data_.begin(), data_.end());
 }
 
-} // namespace gui
+} // tomop::gui

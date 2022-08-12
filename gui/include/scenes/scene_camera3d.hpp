@@ -11,7 +11,7 @@
 #include "scenes/scene_camera.hpp"
 #include "path.hpp"
 
-namespace gui {
+namespace tomop::gui {
 
 class SceneCamera3d;
 
@@ -25,7 +25,7 @@ class CameraDragMachine : public Ticker {
     explicit CameraDragMachine(SceneCamera3d& camera) : camera_(camera) {}
     virtual ~CameraDragMachine() = default;
 
-    virtual void on_drag(glm::vec2 cur, glm::vec2 delta) = 0;
+    virtual void onDrag(glm::vec2 cur, glm::vec2 delta) = 0;
     virtual drag_machine_kind kind() = 0;
     void tick(float) override {}
 
@@ -48,7 +48,7 @@ class Rotator : public CameraDragMachine {
 
     Rotator(SceneCamera3d& camera, float x, float y, bool instant = true);
 
-    void on_drag(glm::vec2 cur, glm::vec2 delta) override;
+    void onDrag(glm::vec2 cur, glm::vec2 delta) override;
 
     void tick(float time_elapsed) override;
 
@@ -93,7 +93,7 @@ class SceneCamera3d : public SceneCamera {
 
     void switch_if_necessary(drag_machine_kind kind);
 
-    bool handleMouseButton(int button, bool down) override;
+    bool handleMouseButton(int button, int action) override;
     bool handleScroll(double offset) override;
     bool handleMouseMoved(double x, double y) override;
     bool handleKey(int key, bool down, int mods) override;
@@ -112,6 +112,6 @@ class SceneCamera3d : public SceneCamera {
     void describe() override;
 };
 
-} // namespace gui
+} // tomop::gui
 
 #endif // GUI_SCENES_SCENE_CAMERA3D_H

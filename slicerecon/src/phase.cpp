@@ -1,7 +1,7 @@
 #include "slicerecon/phase.hpp"
 
 
-namespace slicerecon {
+namespace tomop::slicerecon {
 
 namespace details {
 
@@ -81,4 +81,4 @@ void Paganin::apply(float* data, int idx) {
     }
 }
 
-}; // slicerecon
+}; // tomop::slicerecon

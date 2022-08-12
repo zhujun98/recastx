@@ -6,7 +6,7 @@
 #include "input_handler.hpp"
 #include "ticker.hpp"
 
-namespace gui {
+namespace tomop::gui {
 
 class ObjectComponent : public InputHandler, public Ticker {
   public:
@@ -22,4 +22,4 @@ class ObjectComponent : public InputHandler, public Ticker {
     [[nodiscard]] int priority() const override { return 1; }
 };
 
-} // namespace gui
+} // tomop::gui

@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 
 
-namespace gui {
+namespace tomop::gui {
 
 class RenderTarget {
   public:
@@ -15,6 +15,6 @@ class RenderTarget {
     [[nodiscard]] virtual int zPriority() const { return 0; }
 };
 
-} // namespace gui
+} // tomop::gui
 
 #endif // GUI_GRAPHICS_RENDER_TARGET_H

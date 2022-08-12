@@ -4,7 +4,7 @@
 #include "scene.hpp"
 
 
-namespace gui {
+namespace tomop::gui {
 
 class Scene2d : public Scene {
 
@@ -19,6 +19,6 @@ class Scene2d : public Scene {
     void draw(glm::mat4 window_matrix) override;
 };
 
-} // namespace gui
+} // tomop::gui
 
 #endif // GUI_SCENES_SCENE2D_H

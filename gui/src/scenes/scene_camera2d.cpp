@@ -4,7 +4,7 @@
 
 #include "scenes/scene_camera2d.hpp"
 
-namespace gui {
+namespace tomop::gui {
 
 SceneCamera2d::SceneCamera2d() = default;
 
@@ -20,8 +20,8 @@ glm::mat4 SceneCamera2d::matrix() {
     return camera_matrix;
 }
 
-bool SceneCamera2d::handleMouseButton(int /* button */, bool down) {
-    dragging_ = down;
+bool SceneCamera2d::handleMouseButton(int /* button */, int action) {
+    dragging_ = action == GLFW_PRESS;
     return true;
 }
 
@@ -82,4 +82,4 @@ bool SceneCamera2d::handleMouseMoved(double x, double y) {
     return false;
 }
 
-} // namespace gui
+} // tomop::gui

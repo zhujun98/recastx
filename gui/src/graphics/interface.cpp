@@ -10,7 +10,7 @@
 
 #include "graphics/interface.hpp"
 
-namespace gui {
+namespace tomop::gui {
 
 Interface::Interface(GLFWwindow* glfw_window, MainWindow& main_window) : window_(main_window) {
     // Setup ImGui binding
@@ -53,9 +53,8 @@ void Interface::render(glm::mat4) {
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-bool Interface::handleMouseButton(int button, bool down) {
-    ImGui_ImplGlfw_MouseButtonCallback(
-        nullptr, button, down ? GLFW_PRESS : GLFW_RELEASE, 0);
+bool Interface::handleMouseButton(int button, int action) {
+    ImGui_ImplGlfw_MouseButtonCallback(nullptr, button, action, 0);
     auto io = ImGui::GetIO();
     return io.WantCaptureMouse;
 }
@@ -84,4 +83,4 @@ bool Interface::handleMouseMoved(double /* x */, double /* y */) {
     return io.WantCaptureMouse;
 }
 
-} // namespace gui
+} // tomop::gui

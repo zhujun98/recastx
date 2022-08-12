@@ -4,7 +4,7 @@
 
 #include "ticker.hpp"
 
-namespace gui {
+namespace tomop::gui {
 
 class Recorder {
   public:
@@ -26,4 +26,4 @@ class Recorder {
     int height_ = 768;
 };
 
-} // namespace gui
+} // tomop::gui

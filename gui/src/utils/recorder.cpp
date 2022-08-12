@@ -6,7 +6,7 @@
 
 #include "utils/recorder.hpp"
 
-namespace gui {
+namespace tomop::gui {
 
 Recorder::Recorder() = default;
 Recorder::~Recorder() = default;
@@ -88,4 +88,4 @@ void Recorder::capture() {
     fwrite(buffer_, sizeof(int) * width_ * height_, 1, ffmpeg_);
 }
 
-} // namespace gui
+} // tomop::gui

@@ -8,7 +8,7 @@
 #include "graphics/primitives.hpp"
 #include "scenes/scene_camera3d.hpp"
 
-namespace gui {
+namespace tomop::gui {
 
 GeomComponent::GeomComponent(Scene& scene) : scene_(scene) {
     current_projection_ = 0;
@@ -154,4 +154,4 @@ void GeomComponent::draw(glm::mat4 world_to_screen) {
     glDisable(GL_DEPTH_TEST);
 }
 
-} // namespace gui
+} // tomop::gui

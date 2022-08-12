@@ -11,7 +11,7 @@
 #include "shaders/shader_program.hpp"
 #include "object_component.hpp"
 
-namespace gui {
+namespace tomop::gui {
 
 struct part {
     part(int id_) : id(id_) {}
@@ -49,4 +49,4 @@ class PartitioningComponent : public ObjectComponent {
     void describe() override;
 };
 
-}  // namespace gui
+}  // tomop::gui

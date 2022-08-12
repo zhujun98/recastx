@@ -7,9 +7,7 @@ extern "C" {
 #include <fftw3.h>
 }
 
-#include "data_types.hpp"
-
-namespace slicerecon {
+namespace tomop::slicerecon {
 
 class Filter {
     std::vector<std::vector<std::complex<float>>> freq_;
@@ -44,6 +42,6 @@ class Filter {
     static std::vector<float> gaussian(int n, float sigma);
 };
 
-} // slicerecon
+} // tomop::slicerecon
 
 
