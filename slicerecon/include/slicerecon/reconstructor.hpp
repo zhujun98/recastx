@@ -33,7 +33,6 @@ class Reconstructor {
     int num_flats_ = 1;
     int preview_size_ = 0;
     int slice_size_ = 0;
-    const int num_slices_ = 3;
     std::unordered_map<int, Orientation> slices_;
     std::mutex slice_mtx_;
 
