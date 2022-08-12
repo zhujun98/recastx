@@ -127,7 +127,7 @@ void Reconstructor::startReconstructing() {
                 sino_uploaded_ = false;
             }
             preview_buffer_.prepare();
-            for (auto& slice_buffer : slices_buffer_) slice_buffer.second.prepare();
+            for (auto& buffer : slices_buffer_) buffer.second.prepare();
 
 #if (VERBOSITY >= 1)
             // The throughtput is measured in the last step of the pipeline because
@@ -252,9 +252,9 @@ std::vector<SliceDataPacket> Reconstructor::sliceData() {
     std::vector<SliceDataPacket> ret;
     {
         std::lock_guard lk(slice_mtx_);
-        for (size_t i = 0; i < slices_buffer_.size(); ++i) {
+        for (auto& buffer : slices_buffer_) {
             ret.emplace_back(SliceDataPacket(
-                i, {slice_size_, slice_size_}, slices_buffer_[i].front()));
+                buffer.first, {slice_size_, slice_size_}, buffer.second.front()));
         }
     }    
     return ret;

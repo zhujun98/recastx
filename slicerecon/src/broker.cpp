@@ -25,11 +25,8 @@ Broker::Broker(const std::string& endpoint,
         PacketDesc::set_slice,
         PacketDesc::remove_slice
     };
-
     for (auto descriptor : descriptors) {
-        int32_t filter[] = {
-            (std::underlying_type<PacketDesc>::type)descriptor, 0
-        };
+        int32_t filter[] = {(std::underlying_type<PacketDesc>::type)descriptor};
         sub_socket_.set(zmq::sockopt::subscribe, zmq::buffer(filter));
     }
 }
