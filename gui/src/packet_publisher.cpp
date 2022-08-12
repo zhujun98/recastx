@@ -3,10 +3,7 @@
 
 namespace tomcat::gui {
 
-void PacketPublisher::sendPacket(Packet& /*packet*/) {}
-
 void PacketPublisher::send(Packet& packet) {
-    sendPacket(packet);
     for (auto child : children_) child->send(packet);
 }
 
