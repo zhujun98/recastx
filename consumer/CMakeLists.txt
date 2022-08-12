@@ -11,7 +11,7 @@ target_link_libraries(${TARGET_NAME}
     PRIVATE
         pthread
         stdc++fs
-        tomopackets
+        tomcat
         Boost::program_options
 )
 target_include_directories(${TARGET_NAME} PRIVATE "include")

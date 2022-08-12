@@ -6,7 +6,7 @@
 
 #include "shaders/shader_program.hpp"
 
-namespace tomop::gui {
+namespace tomcat::gui {
 
 ShaderProgram::ShaderProgram(const char* vcode, const char* fcode) {
     compileShaderProgram(vcode, fcode);
@@ -116,4 +116,4 @@ void ShaderProgram::compileShaderProgram(const char* vcode, const char* fcode) {
     glDeleteShader(fragment);
 }
 
-} // tomop::gui
+} // tomcat::gui

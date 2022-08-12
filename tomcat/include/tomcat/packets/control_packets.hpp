@@ -4,7 +4,7 @@
 
 #include "../packets.hpp"
 
-namespace tomop {
+namespace tomcat {
 
 struct ParameterBoolPacket : public PacketBase<ParameterBoolPacket> {
     static constexpr auto desc = PacketDesc::parameter_bool;
@@ -36,4 +36,4 @@ struct ParameterEnumPacket : public PacketBase<ParameterEnumPacket> {
                              (std::vector<std::string>, values));
 };
 
-} // namespace tomop
+} // namespace tomcat

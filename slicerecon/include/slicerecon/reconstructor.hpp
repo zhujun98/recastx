@@ -21,7 +21,7 @@ extern "C" {
 #include "solver.hpp"
 
 
-namespace tomop::slicerecon {
+namespace tomcat::slicerecon {
 
 class Reconstructor {
 
@@ -101,9 +101,9 @@ class Reconstructor {
     void setSlice(int slice_id, const Orientation& orientation);
     void removeSlice(int slice_id);
 
-    tomop::VolumeDataPacket previewData();
+    VolumeDataPacket previewData();
 
-    std::vector<tomop::SliceDataPacket> sliceData();
+    std::vector<SliceDataPacket> sliceData();
 
     size_t bufferSize() const;
 
@@ -116,4 +116,4 @@ class Reconstructor {
 
 };
 
-} // tomop::slicerecon
+} // tomcat::slicerecon

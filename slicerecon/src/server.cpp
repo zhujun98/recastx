@@ -36,7 +36,7 @@ std::array<float, 3> makeVolumeMinmaxPoint(const po::variable_value& point, floa
 
 int main(int argc, char** argv)
 {
-    using namespace tomop::slicerecon;
+    using namespace tomcat::slicerecon;
 
     po::options_description general_desc("General options");
     general_desc.add_options()

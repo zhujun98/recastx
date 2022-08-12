@@ -7,7 +7,7 @@
 #include "scenes/scene_3d_slice_view.hpp"
 #include "scenes/scene_camera3d.hpp"
 
-namespace tomop::gui {
+namespace tomcat::gui {
 
 Scene3dSliceView::Scene3dSliceView() : Scene() {
     camera_ = std::make_unique<SceneCamera3d>();
@@ -31,4 +31,4 @@ void Scene3dSliceView::draw(glm::mat4 window_matrix) {
     for (auto drawable : drawables) drawable->draw(world_to_screen);
 }
 
-} // tomop::gui
+} // tomcat::gui

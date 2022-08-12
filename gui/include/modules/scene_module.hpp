@@ -3,11 +3,11 @@
 #include <memory>
 #include <vector>
 
-#include "tomop/tomop.hpp"
+#include "tomcat/tomcat.hpp"
 
 #include "../window.hpp"
 
-namespace tomop::gui {
+namespace tomcat::gui {
 
 // for the 'one-way-communication' we have two parts
 // a handler that knows how to read in a packet
@@ -22,7 +22,7 @@ class SceneModuleProtocol {
 
     virtual std::unique_ptr<Packet> readPacket(
         PacketDesc desc,
-        tomop::memory_buffer& buffer,
+        tomcat::memory_buffer& buffer,
         zmq::socket_t& socket) = 0;
 
     virtual void process(MainWindow& window,
@@ -39,4 +39,4 @@ class SceneModuleProtocol {
     }
 };
 
-}  // tomop::gui
+}  // tomcat::gui

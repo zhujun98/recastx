@@ -1,6 +1,6 @@
 #include "graphics/render_target.hpp"
 
-namespace tomop::gui {
+namespace tomcat::gui {
   
     RenderTarget::RenderTarget() = default;
 

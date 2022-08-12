@@ -3,14 +3,14 @@
 
 #include <imgui.h>
 
-#include "tomop/tomop.hpp"
+#include "tomcat/tomcat.hpp"
 
 #include "scenes/scene2d.hpp"
 #include "scenes/scene_3d_slice_view.hpp"
 #include "window.hpp"
 
 
-namespace tomop::gui {
+namespace tomcat::gui {
 
 MainWindow::MainWindow() {
     std::unique_ptr<Scene> scene = std::make_unique<Scene3dSliceView>();
@@ -70,4 +70,4 @@ bool MainWindow::handleKey(int key, bool down, int mods) {
     return active_scene_->handleKey(key, down, mods);
 }
 
-} // tomop::gui
+} // tomcat::gui

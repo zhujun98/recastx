@@ -8,13 +8,13 @@
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 
-#include "tomop/tomop.hpp"
+#include "tomcat/tomcat.hpp"
 
 #include "graphics/recon_component.hpp"
 #include "graphics/primitives.hpp"
 #include "scenes/scene_camera3d.hpp"
 
-namespace tomop::gui {
+namespace tomcat::gui {
 
 ReconComponent::ReconComponent(Scene& scene)
         : volume_texture_(16, 16, 16), scene_(scene) {
@@ -669,4 +669,4 @@ void ReconComponent::SliceRotator::onDrag(glm::vec2 delta) {
     slice->setOrientation(a, b - a, c - a);
 }
 
-} // tomop::gui
+} // tomcat::gui

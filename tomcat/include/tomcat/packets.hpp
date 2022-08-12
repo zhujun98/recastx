@@ -10,7 +10,7 @@
 #include <boost/hana.hpp>
 namespace hana = boost::hana;
 
-namespace tomop {
+namespace tomcat {
 
 struct Packet {
     template <typename BufferT>
@@ -110,4 +110,4 @@ struct PacketBase : public Packet {
     }
 };
 
-} // namespace tomop
+} // namespace tomcat

@@ -1,7 +1,7 @@
 #include "packet_publisher.hpp"
 
 
-namespace tomop::gui {
+namespace tomcat::gui {
 
 void PacketPublisher::sendPacket(Packet& /*packet*/) {}
 
@@ -14,4 +14,4 @@ void PacketPublisher::addPublisher(PacketPublisher* pub) {
     children_.push_back(pub);
 }
 
-}  // tomop::gui
+}  // tomcat::gui

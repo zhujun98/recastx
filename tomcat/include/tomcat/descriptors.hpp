@@ -1,6 +1,6 @@
 #pragma once
 
-namespace tomop {
+namespace tomcat {
 
 enum class PacketDesc : int {
     // SCENE MANAGEMENT
@@ -9,12 +9,9 @@ enum class PacketDesc : int {
 
     // RECONSTRUCTION
     slice_data = 0x201,
-    partial_slice_data = 0x202,
     volume_data = 0x203,
-    partial_volume_data = 0x204,
     set_slice = 0x205,
     remove_slice = 0x206,
-    group_request_slices = 0x207,
 
     // GEOMETRY
     geometry_specification = 0x301,
@@ -36,4 +33,4 @@ enum class PacketDesc : int {
     parameter_enum = 0x503,
 };
 
-} // namespace tomop
+} // namespace tomcat

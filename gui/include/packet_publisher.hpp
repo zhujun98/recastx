@@ -2,9 +2,9 @@
 
 #include <vector>
 
-#include "tomop/tomop.hpp"
+#include "tomcat/tomcat.hpp"
 
-namespace tomop::gui {
+namespace tomcat::gui {
 
 class PacketPublisher {
 
@@ -19,4 +19,4 @@ class PacketPublisher {
     void addPublisher(PacketPublisher* pub);
 };
 
-}  // tomop::gui
+}  // tomcat::gui

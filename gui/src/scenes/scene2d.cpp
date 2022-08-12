@@ -2,7 +2,7 @@
 #include "scenes/scene_camera2d.hpp"
 #include "shaders/shader_program.hpp"
 
-namespace tomop::gui {
+namespace tomcat::gui {
 
 Scene2d::Scene2d() : size_{32, 32} {
     static const GLfloat square[4][2] = {{-1.0f, -1.0f},
@@ -51,4 +51,4 @@ void Scene2d::draw(glm::mat4 window_matrix) {
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
-}  // tomop::gui
+}  // tomcat::gui

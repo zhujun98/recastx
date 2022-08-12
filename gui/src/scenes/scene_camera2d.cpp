@@ -4,7 +4,7 @@
 
 #include "scenes/scene_camera2d.hpp"
 
-namespace tomop::gui {
+namespace tomcat::gui {
 
 SceneCamera2d::SceneCamera2d() = default;
 
@@ -82,4 +82,4 @@ bool SceneCamera2d::handleMouseMoved(double x, double y) {
     return false;
 }
 
-} // tomop::gui
+} // tomcat::gui

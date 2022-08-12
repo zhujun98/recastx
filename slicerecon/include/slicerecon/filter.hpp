@@ -7,7 +7,7 @@ extern "C" {
 #include <fftw3.h>
 }
 
-namespace tomop::slicerecon {
+namespace tomcat::slicerecon {
 
 class Filter {
     std::vector<std::vector<std::complex<float>>> freq_;
@@ -42,6 +42,6 @@ class Filter {
     static std::vector<float> gaussian(int n, float sigma);
 };
 
-} // tomop::slicerecon
+} // tomcat::slicerecon
 
 

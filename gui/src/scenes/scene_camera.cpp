@@ -6,7 +6,7 @@
 
 #include "scenes/scene_camera.hpp"
 
-namespace tomop::gui {
+namespace tomcat::gui {
 
 SceneCamera::SceneCamera() : curr_cm_("hot") {
     glGenTextures(1, &cm_texture_id_);
@@ -68,4 +68,4 @@ void SceneCamera::describe() {
     if (prev_cm != curr_cm_) setColormap(curr_cm_);
 }
 
-} // tomop::gui
+} // tomcat::gui

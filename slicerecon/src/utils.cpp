@@ -2,7 +2,7 @@
 
 #include "slicerecon/utils.hpp"
 
-namespace tomop::slicerecon::utils {
+namespace tomcat::slicerecon::utils {
 
 std::unique_ptr<astra::CParallelVecProjectionGeometry3D>
 parallel_beam_to_vec(astra::CParallelProjectionGeometry3D* parallel_geom) {
@@ -202,4 +202,4 @@ std::string info(const astra::CVolumeGeometry3D& x) {
     return ss.str();
 }
 
-} // tomop::slicerecon::util
+} // tomcat::slicerecon::util

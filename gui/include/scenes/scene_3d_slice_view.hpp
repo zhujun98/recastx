@@ -6,7 +6,7 @@
 #include "scene_camera3d.hpp"
 #include "scene.hpp"
 
-namespace tomop::gui {
+namespace tomcat::gui {
 
 class Scene3dSliceView : public Scene {
 
@@ -18,6 +18,6 @@ class Scene3dSliceView : public Scene {
     void draw(glm::mat4 window_matrix) override;
 };
 
-}  // tomop::gui
+}  // tomcat::gui
 
 #endif // GUI_SCENES_SCENE_3D_SLICE_VIEW_H

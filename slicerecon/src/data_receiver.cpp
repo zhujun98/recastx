@@ -4,7 +4,7 @@
 #include "slicerecon/data_receiver.hpp"
 
 
-namespace tomop::slicerecon {
+namespace tomcat::slicerecon {
 
 using namespace std::string_literals;
 
@@ -96,4 +96,4 @@ void DataReceiver::start() {
     thread_.detach();
 }
 
-} // tomop::slicerecon
+} // tomcat::slicerecon

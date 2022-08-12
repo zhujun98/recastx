@@ -39,7 +39,7 @@ target_include_directories(slicerecon
 
 target_link_libraries(slicerecon
     PUBLIC
-        tomopackets
+        tomcat
         spdlog::spdlog
         Eigen3::Eigen
         astra-toolbox

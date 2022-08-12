@@ -3,12 +3,10 @@
 
 #include <zmq.hpp>
 
-#include "tomop/tomop.hpp"
+#include "tomcat/tomcat.hpp"
 #include "data_types.hpp"
 
-namespace tomovis {
-
-using namespace tomop;
+namespace tomcat::consumer {
 
 class Server {
     std::thread server_thread_;
@@ -27,4 +25,4 @@ class Server {
     void start();
 };
 
-}  // namespace tomovis
+}  // tomcat::consumer

@@ -9,7 +9,7 @@
 #include "slicerecon/utils.hpp"
 
 
-namespace tomop::slicerecon {
+namespace tomcat::slicerecon {
 
 Reconstructor::Reconstructor(int rows, int cols, int num_threads)
      : rows_(rows),
@@ -319,4 +319,4 @@ const std::vector<RawDtype>& Reconstructor::flats() const { return all_flats_; }
 const MemoryBuffer<float>& Reconstructor::buffer() const { return buffer_; }
 const TripleBuffer<float>& Reconstructor::sinoBuffer() const { return sino_buffer_; }
 
-} // tomop::slicerecon
+} // tomcat::slicerecon
