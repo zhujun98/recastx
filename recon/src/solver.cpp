@@ -173,9 +173,6 @@ void ParallelBeamSolver::reconstructSlice(std::vector<float>& slice_buffer,
     proj_geom_ = std::make_unique<astra::CParallelVecProjectionGeometry3D>(
         projections_, rows_, cols_, vec_buf_.data());
 
-    spdlog::info("Reconstructing slice: [{}, {}, {}], [{}, {}, {}], [{}, {}, {}] buffer ({}).", 
-                 x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], buffer_idx);
-
     proj_data_[buffer_idx]->changeGeometry(proj_geom_.get());
     algs_[buffer_idx]->run();
 
@@ -186,7 +183,10 @@ void ParallelBeamSolver::reconstructSlice(std::vector<float>& slice_buffer,
 #if (VERBOSITY >= 2)
     float duration = std::chrono::duration_cast<std::chrono::microseconds>(
     std::chrono::steady_clock::now() -  start).count();
-    spdlog::info("[bench] Reconstructing slices took {} ms", duration / 1000);
+    spdlog::info("[bench] Reconstructing slices "
+                 "([{:.2f}, {:.2f}, {:.2f}], [{:.2f}, {:.2f}, {:.2f}], [{:.2f}, {:.2f}, {:.2f}])"
+                 " from buffer {} took {} ms",
+                 x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], buffer_idx, duration / 1000);
 #endif
 
 }
