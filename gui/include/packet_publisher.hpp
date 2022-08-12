@@ -4,19 +4,19 @@
 
 #include "tomop/tomop.hpp"
 
-namespace gui {
+namespace tomop::gui {
 
 class PacketPublisher {
 
     std::vector<PacketPublisher*> children_;
 
-    virtual void sendPacket(tomop::Packet& /*packet*/);
+    virtual void sendPacket(Packet& /*packet*/);
 
   public:
 
-    void send(tomop::Packet& packet);
+    void send(Packet& packet);
 
     void addPublisher(PacketPublisher* pub);
 };
 
-}  // namespace gui
+}  // tomop::gui

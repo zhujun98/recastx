@@ -7,7 +7,7 @@
 #include "glm/glm.hpp"
 #include "path.hpp"
 
-namespace gui {
+namespace tomop::gui {
 
 template <typename T>
 std::vector<Eigen::DenseIndex>
@@ -430,4 +430,4 @@ Eigen::RowVector3f Path3::unit_binormal(float param) const {
     return unit_tangent(param).cross(unit_normal(param));
 }
 
-} // namespace gui
+} // tomop::gui

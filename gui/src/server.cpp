@@ -11,7 +11,7 @@
 #include "server.hpp"
 
 
-namespace gui {
+namespace tomop::gui {
 
 using namespace std::string_literals;
 
@@ -35,12 +35,12 @@ void Server::start() {
             zmq::message_t request;
 
             rep_socket_.recv(request, zmq::recv_flags::none);
-            auto desc = ((tomop::PacketDesc*)request.data())[0];
+            auto desc = ((PacketDesc*)request.data())[0];
             auto buffer = tomop::memory_buffer(request.size(), (char*)request.data());
 
             if (modules_.find(desc) == modules_.end()) {
                 spdlog::warn("Unsupported package descriptor: 0x{0:x}",
-                             std::underlying_type<tomop::PacketDesc>::type(desc));
+                             std::underlying_type<PacketDesc>::type(desc));
                 continue;
             }
 
@@ -59,7 +59,7 @@ void Server::tick(float) {
     }
 }
 
-void Server::sendPacket(tomop::Packet& packet) {
+void Server::sendPacket(Packet& packet) {
     try {
         auto size = packet.size();
         zmq::message_t message(size);
@@ -69,7 +69,7 @@ void Server::sendPacket(tomop::Packet& packet) {
 
 #if (VERBOSITY >= 3)
         spdlog::info("Published packet: 0x{0:x}", 
-                     std::underlying_type<tomop::PacketDesc>::type(packet.desc()));
+                     std::underlying_type<PacketDesc>::type(packet.desc()));
 #endif
 
     } catch (const std::exception& e) {
@@ -81,4 +81,4 @@ void Server::registerModule(const std::shared_ptr<SceneModuleProtocol>& module) 
     for (auto desc : module->descriptors()) modules_[desc] = module;
 }
 
-} // namespace gui
+} // tomop::gui

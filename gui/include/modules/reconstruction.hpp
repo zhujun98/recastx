@@ -9,7 +9,7 @@
 #include "scene_module.hpp"
 #include "util.hpp"
 
-namespace gui {
+namespace tomop::gui {
 
 class ReconstructionProtocol : public SceneModuleProtocol {
 
@@ -18,19 +18,19 @@ class ReconstructionProtocol : public SceneModuleProtocol {
     ReconstructionProtocol() = default;
     ~ReconstructionProtocol() override = default;
 
-    std::unique_ptr<tomop::Packet> readPacket(
+    std::unique_ptr<Packet> readPacket(
             tomop::PacketDesc desc,
             tomop::memory_buffer& buffer,
             zmq::socket_t& socket) override {
         switch (desc) {
-            case tomop::PacketDesc::slice_data: {
-                auto packet = std::make_unique<tomop::SliceDataPacket>();
+            case PacketDesc::slice_data: {
+                auto packet = std::make_unique<SliceDataPacket>();
                 packet->deserialize(std::move(buffer));
                 ack(socket);
                 return packet;
             }
-            case tomop::PacketDesc::volume_data: {
-                auto packet = std::make_unique<tomop::VolumeDataPacket>();
+            case PacketDesc::volume_data: {
+                auto packet = std::make_unique<VolumeDataPacket>();
                 packet->deserialize(std::move(buffer));
                 ack(socket);
                 return packet;
@@ -74,4 +74,4 @@ class ReconstructionProtocol : public SceneModuleProtocol {
 
 };
 
-} // namespace gui
+} // tomop::gui

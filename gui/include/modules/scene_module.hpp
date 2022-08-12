@@ -7,7 +7,7 @@
 
 #include "../window.hpp"
 
-namespace gui {
+namespace tomop::gui {
 
 // for the 'one-way-communication' we have two parts
 // a handler that knows how to read in a packet
@@ -20,16 +20,16 @@ class SceneModuleProtocol {
     SceneModuleProtocol() = default;
     virtual ~SceneModuleProtocol() = default;
 
-    virtual std::unique_ptr<tomop::Packet> readPacket(
-        tomop::PacketDesc desc,
+    virtual std::unique_ptr<Packet> readPacket(
+        PacketDesc desc,
         tomop::memory_buffer& buffer,
         zmq::socket_t& socket) = 0;
 
     virtual void process(MainWindow& window,
-                         tomop::PacketDesc desc,
-                         std::unique_ptr<tomop::Packet> event_packet) = 0;
+                         PacketDesc desc,
+                         std::unique_ptr<Packet> event_packet) = 0;
 
-    virtual std::vector<tomop::PacketDesc> descriptors() = 0;
+    virtual std::vector<PacketDesc> descriptors() = 0;
 
     void ack(zmq::socket_t& socket) {
         zmq::message_t reply(sizeof(int));
@@ -39,4 +39,4 @@ class SceneModuleProtocol {
     }
 };
 
-}  // namespace gui
+}  // tomop::gui

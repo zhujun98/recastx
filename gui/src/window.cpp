@@ -10,7 +10,7 @@
 #include "window.hpp"
 
 
-namespace gui {
+namespace tomop::gui {
 
 MainWindow::MainWindow() {
     std::unique_ptr<Scene> scene = std::make_unique<Scene3dSliceView>();
@@ -70,4 +70,4 @@ bool MainWindow::handleKey(int key, bool down, int mods) {
     return active_scene_->handleKey(key, down, mods);
 }
 
-} // namespace gui
+} // tomop::gui

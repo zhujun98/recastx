@@ -1,6 +1,6 @@
 #pragma once
 
-namespace gui {
+namespace tomop::gui {
 
 class InputHandler {
   public:
@@ -14,4 +14,4 @@ class InputHandler {
     [[nodiscard]] virtual int priority() const { return 10; }
 };
 
-} // namespace gui
+} // tomop::gui

@@ -10,7 +10,7 @@
 #include <GL/gl3w.h>
 #include <glm/glm.hpp>
 
-namespace gui {
+namespace tomop::gui {
 
 template <typename T>
 inline GLenum data_type();
@@ -176,6 +176,6 @@ class Texture3d {
     auto id() const { return texture_id_; }
 };
 
-}  // namespace gui
+}  // tomop::gui
 
 #endif // GUI_GRAPHICS_TEXTURES_H

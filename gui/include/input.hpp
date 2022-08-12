@@ -8,7 +8,7 @@
 
 struct GLFWwindow;
 
-namespace gui {
+namespace tomop::gui {
 
 class Input : public Ticker {
 
@@ -45,4 +45,4 @@ class Input : public Ticker {
     void tick(float time_elapsed) override;
 };
 
-} // namespace gui
+} // tomop::gui

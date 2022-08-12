@@ -10,7 +10,7 @@
 
 #include "graphics/interface.hpp"
 
-namespace gui {
+namespace tomop::gui {
 
 Interface::Interface(GLFWwindow* glfw_window, MainWindow& main_window) : window_(main_window) {
     // Setup ImGui binding
@@ -83,4 +83,4 @@ bool Interface::handleMouseMoved(double /* x */, double /* y */) {
     return io.WantCaptureMouse;
 }
 
-} // namespace gui
+} // tomop::gui

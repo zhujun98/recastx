@@ -11,6 +11,7 @@
 
 
 int main(int argc, char** argv) {
+    using namespace tomop::gui;
     namespace po = boost::program_options;
 
     po::options_description desc("Options");
@@ -29,13 +30,13 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    gui::Renderer renderer;
+    Renderer renderer;
 
-    auto& input = gui::Input::instance(renderer.window());
+    auto& input = Input::instance(renderer.window());
 
-    gui::MainWindow window;
-    gui::Interface interface(renderer.window(), window);
-    gui::Server server(window, opts["port"].as<int>());
+    MainWindow window;
+    Interface interface(renderer.window(), window);
+    Server server(window, opts["port"].as<int>());
 
     input.registerHandler(interface);
     input.registerHandler(window);

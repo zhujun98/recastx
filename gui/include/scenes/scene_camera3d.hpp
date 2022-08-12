@@ -11,7 +11,7 @@
 #include "scenes/scene_camera.hpp"
 #include "path.hpp"
 
-namespace gui {
+namespace tomop::gui {
 
 class SceneCamera3d;
 
@@ -112,6 +112,6 @@ class SceneCamera3d : public SceneCamera {
     void describe() override;
 };
 
-} // namespace gui
+} // tomop::gui
 
 #endif // GUI_SCENES_SCENE_CAMERA3D_H

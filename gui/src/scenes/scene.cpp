@@ -4,7 +4,7 @@
 #include "scenes/scene_camera.hpp"
 #include "shaders/shader_program.hpp"
 
-namespace gui {
+namespace tomop::gui {
 
 Scene::Scene() = default;
 
@@ -68,4 +68,4 @@ bool Scene::handleKey(int key, bool down, int mods) {
 
 SceneCamera& Scene::camera() { return *camera_; }
 
-}  // namespace gui
+}  // tomop::gui

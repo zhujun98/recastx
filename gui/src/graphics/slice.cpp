@@ -4,7 +4,7 @@
 #include "math_common.hpp"
 #include "util.hpp"
 
-namespace gui {
+namespace tomop::gui {
 
 Slice::Slice(int slice_id) : id_(slice_id), size_{32, 32}, texture_(32, 32) {
     updateTexture();
@@ -66,4 +66,4 @@ void Slice::updateMinMaxVal() {
     minMaxVals_[1] = *std::max_element(data_.begin(), data_.end());
 }
 
-} // namespace gui
+} // tomop::gui

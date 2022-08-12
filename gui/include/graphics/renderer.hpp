@@ -6,7 +6,7 @@
 
 struct GLFWwindow;
 
-namespace gui {
+namespace tomop::gui {
 
 class Renderer {
     GLFWwindow* window_;
@@ -34,4 +34,4 @@ class Renderer {
     [[nodiscard]] GLFWwindow* window() const { return window_; }
 };
 
-} // namespace gui
+} // tomop::gui

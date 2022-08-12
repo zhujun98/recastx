@@ -12,7 +12,7 @@
 #include "packet_publisher.hpp"
 #include "ticker.hpp"
 
-namespace gui {
+namespace tomop::gui {
 
 class ShaderProgram;
 class SceneCamera;
@@ -54,6 +54,6 @@ class Scene : public InputHandler, public PacketPublisher, public Ticker {
     [[nodiscard]] SceneCamera& camera();
 };
 
-}  // namespace gui
+}  // tomop::gui
 
 #endif // GUI_SCENES_SCENE_H

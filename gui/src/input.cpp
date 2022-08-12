@@ -3,7 +3,7 @@
 
 #include <GLFW/glfw3.h>
 
-namespace gui {
+namespace tomop::gui {
 
 Input::Input(GLFWwindow* window) : window_(window) {
     glfwSetMouseButtonCallback(window, mouseButtonCallback);
@@ -58,4 +58,4 @@ void Input::registerHandler(InputHandler& handler) {
     handlers_.insert(&handler);
 }
 
-} // namespace gui
+} // tomop::gui

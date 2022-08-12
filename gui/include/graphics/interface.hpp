@@ -9,7 +9,7 @@
 
 struct GLFWwindow;
 
-namespace gui {
+namespace tomop::gui {
 
 class Interface : public RenderTarget, public InputHandler {
 
@@ -33,4 +33,4 @@ class Interface : public RenderTarget, public InputHandler {
     [[nodiscard]] int priority() const override { return 1; }
 };
 
-} // namespace gui
+} // tomop::gui

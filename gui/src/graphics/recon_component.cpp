@@ -14,7 +14,7 @@
 #include "graphics/primitives.hpp"
 #include "scenes/scene_camera3d.hpp"
 
-namespace gui {
+namespace tomop::gui {
 
 ReconComponent::ReconComponent(Scene& scene)
         : volume_texture_(16, 16, 16), scene_(scene) {
@@ -91,8 +91,7 @@ ReconComponent::~ReconComponent() {
 
 void ReconComponent::requestSlices() {
     for (auto& slice : slices_) {
-        auto packet = tomop::SetSlicePacket(
-            slice.first, slice.second->orientation3());
+        auto packet = SetSlicePacket(slice.first, slice.second->orientation3());
         scene_.send(packet);
     }
 }
@@ -285,8 +284,7 @@ bool ReconComponent::handleMouseButton(int button, int action) {
         }
     } else if (action == GLFW_RELEASE) {
         if (dragged_slice_ != nullptr) {
-            auto packet = tomop::SetSlicePacket(
-                dragged_slice_->id(), dragged_slice_->orientation3());
+            auto packet = SetSlicePacket(dragged_slice_->id(), dragged_slice_->orientation3());
             scene_.send(packet);
 
             dragged_slice_ = nullptr;
@@ -507,7 +505,7 @@ void ReconComponent::SliceTranslator::onDrag(glm::vec2 delta) {
         if (to_remove >= 0) {
             comp_.slices().erase(to_remove);
             // send slice packet
-            auto packet = tomop::RemoveSlicePacket(to_remove);
+            auto packet = RemoveSlicePacket(to_remove);
             comp_.scene().send(packet);
         }
         if (!comp_.dragged_slice()) {
@@ -646,7 +644,7 @@ void ReconComponent::SliceRotator::onDrag(glm::vec2 delta) {
         if (to_remove >= 0) {
             comp_.slices().erase(to_remove);
             // send slice packet
-            auto packet = tomop::RemoveSlicePacket(to_remove);
+            auto packet = RemoveSlicePacket(to_remove);
             comp_.scene().send(packet);
         }
         assert(comp_.dragged_slice());
@@ -671,4 +669,4 @@ void ReconComponent::SliceRotator::onDrag(glm::vec2 delta) {
     slice->setOrientation(a, b - a, c - a);
 }
 
-} // namespace gui
+} // tomop::gui

@@ -5,7 +5,7 @@
 #include "shaders/shader_program.hpp"
 #include "object_component.hpp"
 
-namespace gui {
+namespace tomop::gui {
 
 class Scene;
 
@@ -32,4 +32,4 @@ class AxesComponent : public ObjectComponent {
     void describe() override;
 };
 
-}  // namespace gui
+}  // tomop::gui
