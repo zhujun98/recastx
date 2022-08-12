@@ -253,6 +253,7 @@ std::vector<SliceDataPacket> Reconstructor::sliceData() {
     {
         std::lock_guard lk(slice_mtx_);
         for (auto& buffer : slices_buffer_) {
+            buffer.second.fetch();
             ret.emplace_back(SliceDataPacket(
                 buffer.first, {slice_size_, slice_size_}, buffer.second.front()));
         }
