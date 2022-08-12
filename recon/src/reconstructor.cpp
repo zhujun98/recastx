@@ -121,13 +121,11 @@ void Reconstructor::startReconstructing() {
 
                 std::lock_guard lk(slice_mtx_);
                 for (const auto& [sid, orientation] : slices_) {
-                    solver_->reconstructSlice(
-                        slices_buffer_[sid].back(), orientation, gpu_buffer_index_);
+                    solver_->reconstructSlice(slices_buffer_[sid], orientation, gpu_buffer_index_);
                 }
                 sino_uploaded_ = false;
             }
             preview_buffer_.prepare();
-            for (auto& buffer : slices_buffer_) buffer.second.prepare();
 
 #if (VERBOSITY >= 1)
             // The throughtput is measured in the last step of the pipeline because
@@ -229,8 +227,7 @@ void Reconstructor::pushProjection(ProjectionType k,
 void Reconstructor::setSlice(int slice_id, const Orientation& orientation) {
     std::lock_guard lk(slice_mtx_);
     if (slices_.find(slice_id) == slices_.end()) {
-        TripleBuffer<float> slice_buffer;
-        slice_buffer.initialize(slice_size_ * slice_size_);
+        std::vector<float> slice_buffer(slice_size_ * slice_size_);
         slices_buffer_[slice_id] = std::move(slice_buffer);
     }
     slices_[slice_id] = orientation;
@@ -253,9 +250,9 @@ std::vector<SliceDataPacket> Reconstructor::sliceData() {
     {
         std::lock_guard lk(slice_mtx_);
         for (auto& buffer : slices_buffer_) {
-            buffer.second.fetch();
+            // FIXME: implement a move construct for SliceDataPacket
             ret.emplace_back(SliceDataPacket(
-                buffer.first, {slice_size_, slice_size_}, buffer.second.front()));
+                buffer.first, {slice_size_, slice_size_}, buffer.second));
         }
     }    
     return ret;

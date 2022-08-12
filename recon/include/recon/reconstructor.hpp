@@ -43,7 +43,7 @@ class Reconstructor {
     MemoryBuffer<float> buffer_;
     TripleBuffer<float> sino_buffer_;
     TripleBuffer<float> preview_buffer_;
-    std::unordered_map<int, TripleBuffer<float>> slices_buffer_;
+    std::unordered_map<int, std::vector<float>> slices_buffer_;
     bool initialized_ = false;
 
     size_t group_size_;
