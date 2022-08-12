@@ -10,11 +10,9 @@ class PacketPublisher {
 
     std::vector<PacketPublisher*> children_;
 
-    virtual void sendPacket(Packet& /*packet*/);
-
   public:
 
-    void send(Packet& packet);
+    virtual void send(Packet& packet);
 
     void addPublisher(PacketPublisher* pub);
 };

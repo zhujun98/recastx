@@ -14,7 +14,6 @@ namespace tomcat::gui {
 
 MainWindow::MainWindow() {
     std::unique_ptr<Scene> scene = std::make_unique<Scene3dSliceView>();
-    scene->addPublisher(this);
     addScene("TOMCAT live 3D preview", std::move(scene));
 };
 

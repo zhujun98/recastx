@@ -28,7 +28,7 @@ class Server : public Ticker, public PacketPublisher {
     zmq::socket_t rep_socket_;
     zmq::socket_t pub_socket_;
 
-    void sendPacket(Packet& packet) override;
+    void send(Packet& packet) override;
 
     void registerModule(const std::shared_ptr<SceneModuleProtocol>& module);
   

@@ -59,7 +59,7 @@ void Server::tick(float) {
     }
 }
 
-void Server::sendPacket(Packet& packet) {
+void Server::send(Packet& packet) {
     try {
         auto size = packet.size();
         zmq::message_t message(size);
