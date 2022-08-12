@@ -37,7 +37,7 @@ find_package(Boost 1.61 COMPONENTS program_options REQUIRED)
 
 find_package(spdlog REQUIRED)
 
-add_subdirectory(tomopackets)
+add_subdirectory(tomcat)
 
 if (BUILD_GUI)
     add_subdirectory(gui)

@@ -9,7 +9,7 @@
 
 #include "textures.hpp"
 
-namespace tomop::gui {
+namespace tomcat::gui {
 
 class Slice {
 
@@ -65,6 +65,6 @@ class Slice {
     [[nodiscard]] const std::array<float, 2>& minMaxVals() const;
 };
 
-} // tomop::gui
+} // tomcat::gui
 
 #endif // GUI_GRAPHICS_SLICE_H

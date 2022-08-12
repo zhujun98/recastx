@@ -3,7 +3,7 @@
 #include "slicerecon/broker.hpp"
 
 
-namespace tomop::slicerecon {
+namespace tomcat::slicerecon {
 
 Broker::Broker(const std::string& endpoint,
                const std::string& subscribe_endpoint,
@@ -49,7 +49,7 @@ void Broker::start() {
             zmq::message_t update;
             sub_socket_.recv(update, zmq::recv_flags::none);
             auto desc = ((PacketDesc*)update.data())[0];
-            auto buffer = tomop::memory_buffer(update.size(), (char*)update.data());
+            auto buffer = tomcat::memory_buffer(update.size(), (char*)update.data());
 
 #if (VERBOSITY >= 3)
             spdlog::info("Received packet with descriptor: 0x{0:x}", 
@@ -108,4 +108,4 @@ void Broker::start() {
     req_thread_.detach();
 }
 
-} // tomop::slicerecon
+} // tomcat::slicerecon

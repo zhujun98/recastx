@@ -5,13 +5,13 @@
 #include <thread>
 
 #include "zmq.hpp"
-#include "tomop/tomop.hpp"
+#include "tomcat/tomcat.hpp"
 
 #include "modules/scene_module.hpp"
 #include "packet_publisher.hpp"
 #include "ticker.hpp"
 
-namespace tomop::gui {
+namespace tomcat::gui {
 
 class SceneModuleProtocol;
 
@@ -41,4 +41,4 @@ class Server : public Ticker, public PacketPublisher {
     void tick(float) override;
 };
 
-}  // tomop::gui
+}  // tomcat::gui

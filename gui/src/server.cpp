@@ -5,13 +5,13 @@
 #include <zmq.hpp>
 #include <spdlog/spdlog.h>
 
-#include "tomop/tomop.hpp"
+#include "tomcat/tomcat.hpp"
 #include "modules/reconstruction.hpp"
 #include "window.hpp"
 #include "server.hpp"
 
 
-namespace tomop::gui {
+namespace tomcat::gui {
 
 using namespace std::string_literals;
 
@@ -36,7 +36,7 @@ void Server::start() {
 
             rep_socket_.recv(request, zmq::recv_flags::none);
             auto desc = ((PacketDesc*)request.data())[0];
-            auto buffer = tomop::memory_buffer(request.size(), (char*)request.data());
+            auto buffer = tomcat::memory_buffer(request.size(), (char*)request.data());
 
             if (modules_.find(desc) == modules_.end()) {
                 spdlog::warn("Unsupported package descriptor: 0x{0:x}",
@@ -81,4 +81,4 @@ void Server::registerModule(const std::shared_ptr<SceneModuleProtocol>& module) 
     for (auto desc : module->descriptors()) modules_[desc] = module;
 }
 
-} // tomop::gui
+} // tomcat::gui

@@ -6,7 +6,7 @@
 #include <GL/gl3w.h>
 #include <glm/glm.hpp>
 
-namespace tomop::gui {
+namespace tomcat::gui {
 
 class ShaderProgram {
 
@@ -35,6 +35,6 @@ class ShaderProgram {
 
 };
 
-} // tomop::gui
+} // tomcat::gui
 
 #endif // GUI_SHADERS_SHADER_PROGRAM_H

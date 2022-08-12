@@ -1,11 +1,11 @@
-#ifndef TOMOP_H
-#define TOMOP_H
+#ifndef TOMCAT_H
+#define TOMCAT_H
 
 #include "packets.hpp"
 #include "packets/reconstruction_packets.hpp"
 #include "packets/control_packets.hpp"
 
-namespace tomop {
+namespace tomcat {
 
     using Orientation = std::array<float, 9>;
     using SliceData = std::pair<std::array<int32_t, 2>, std::vector<float>>;
@@ -17,6 +17,6 @@ namespace tomop {
     using RawImageData = std::vector<RawDtype>;
     using ImageData = std::vector<float>;
 
-} // tomop
+} // tomcat
 
-#endif // TOMOP_H
+#endif // TOMCAT_H

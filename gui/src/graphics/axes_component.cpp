@@ -5,7 +5,7 @@
 #include "graphics/axes_component.hpp"
 #include "scenes/scene_camera3d.hpp"
 
-namespace tomop::gui {
+namespace tomcat::gui {
 
 AxesComponent::AxesComponent(Scene &scene) : scene_(scene) {
     glGenVertexArrays(1, &axes_vao_handle_);
@@ -61,4 +61,4 @@ void AxesComponent::draw(glm::mat4 world_to_screen) {
     glDrawElements(GL_LINES, axes_index_count_, GL_UNSIGNED_INT, nullptr);
 }
 
-} // tomop::gui
+} // tomcat::gui

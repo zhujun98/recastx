@@ -9,7 +9,7 @@
 #include "slicerecon/utils.hpp"
 
 
-namespace tomop::slicerecon::test {
+namespace tomcat::slicerecon::test {
 
 using ::testing::ElementsAreArray;
 using ::testing::Pointwise;
@@ -207,4 +207,4 @@ TEST(TestUtils, TestComputeReciprocal) {
         -0.25,       1.,         0.42857143}));
 }
 
-} // tomop::slicerecon::test
+} // tomcat::slicerecon::test

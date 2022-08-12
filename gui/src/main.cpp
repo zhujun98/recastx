@@ -11,7 +11,7 @@
 
 
 int main(int argc, char** argv) {
-    using namespace tomop::gui;
+    using namespace tomcat::gui;
     namespace po = boost::program_options;
 
     po::options_description desc("Options");

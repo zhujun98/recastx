@@ -6,10 +6,10 @@
 
 #include <zmq.hpp>
 
-#include "tomop/tomop.hpp"
+#include "tomcat/tomcat.hpp"
 #include "reconstructor.hpp"
 
-namespace tomop::slicerecon {
+namespace tomcat::slicerecon {
 
 class Broker {
     zmq::context_t context_;
@@ -30,9 +30,9 @@ class Broker {
 
     ~Broker();
 
-    void send(const tomop::Packet& packet);
+    void send(const tomcat::Packet& packet);
 
     void start();
 };
 
-} // tomop::slicerecon
+} // tomcat::slicerecon

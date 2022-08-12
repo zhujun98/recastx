@@ -14,7 +14,7 @@
 #include "packet_publisher.hpp"
 #include "ticker.hpp"
 
-namespace tomop::gui {
+namespace tomcat::gui {
 
 class MainWindow : public RenderTarget,
                    public InputHandler,
@@ -46,6 +46,6 @@ class MainWindow : public RenderTarget,
     bool handleKey(int key, bool down, int mods) override;
 };
 
-}  // tomop::gui
+}  // tomcat::gui
 
 #endif // GUI_WINDOW_H

@@ -82,7 +82,7 @@ target_link_libraries(${TARGET_NAME}
         Eigen3::Eigen
         Boost::program_options
         spdlog::spdlog
-        tomopackets
+        tomcat
 )
 if (NOT APPLE)
     target_link_libraries(${TARGET_NAME} PRIVATE X11)

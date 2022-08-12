@@ -4,7 +4,7 @@
 
 #include "scenes/scene_camera3d.hpp"
 
-namespace tomop::gui {
+namespace tomcat::gui {
 
 // class Rotator
 
@@ -207,4 +207,4 @@ void SceneCamera3d::tick(float time_elapsed) {
     if (dragging_) drag_machine_->tick(time_elapsed);
 }
 
-} // tomop::gui
+} // tomcat::gui

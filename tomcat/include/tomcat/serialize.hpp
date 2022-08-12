@@ -4,7 +4,7 @@
 #include <iostream>
 #include <memory>
 
-namespace tomop {
+namespace tomcat {
 
 struct scale {
     std::size_t size = 0;
@@ -94,4 +94,4 @@ struct memory_buffer : public memory_span {
     std::unique_ptr<char[]> buffer;
 };
 
-} // namespace tomop
+} // namespace tomcat

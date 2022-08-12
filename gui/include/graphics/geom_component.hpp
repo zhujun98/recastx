@@ -16,7 +16,7 @@
 #include "object_component.hpp"
 #include "util.hpp"
 
-namespace tomop::gui {
+namespace tomcat::gui {
 
 class Projection {
 
@@ -117,4 +117,4 @@ class GeomComponent : public ObjectComponent {
     [[nodiscard]] int priority() const override { return 0; }
 };
 
-} // tomop::gui
+} // tomcat::gui

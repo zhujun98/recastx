@@ -1,7 +1,7 @@
 #include "slicerecon/filter.hpp"
 #include <iostream>
 
-namespace tomop::slicerecon {
+namespace tomcat::slicerecon {
 
 Filter::Filter(const std::string& filter_name, 
                bool gaussian_pass,
@@ -102,4 +102,4 @@ std::vector<float> Filter::gaussian(int n, float sigma) {
     return result;
 }
 
-} // tomop::slicerecon
+} // tomcat::slicerecon

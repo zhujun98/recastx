@@ -13,7 +13,7 @@
 #include "input_handler.hpp"
 #include "ticker.hpp"
 
-namespace tomop::gui {
+namespace tomcat::gui {
 
 
 class SceneCamera : public InputHandler, public Ticker {
@@ -70,6 +70,6 @@ class SceneCamera : public InputHandler, public Ticker {
     void toggle_interaction() { interaction_disabled_ = ! interaction_disabled_; }
 };
 
-} // tomop::gui
+} // tomcat::gui
 
 #endif // GUI_SCENES_SCENE_CAMERA_H

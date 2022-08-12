@@ -13,7 +13,7 @@
 #include "textures.hpp"
 #include "util.hpp"
 
-namespace tomop::gui {
+namespace tomcat::gui {
 
 class ReconComponent : public ObjectComponent {
 
@@ -153,4 +153,4 @@ public:
         glm::mat4 inv_matrix, glm::mat4 orientation, glm::vec2 point);
 };
 
-} // tomop::gui
+} // tomcat::gui

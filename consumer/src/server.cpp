@@ -4,10 +4,9 @@
 
 #include <zmq.hpp>
 
-#include "tomop/tomop.hpp"
 #include "server.hpp"
 
-namespace tomovis {
+namespace tomcat::consumer {
 
 using namespace std::string_literals;
 
@@ -29,23 +28,8 @@ void Server::parse_packet(PacketDesc desc) {
             break;
         }
 
-        case PacketDesc::partial_slice_data: {
-            std::cout << "Received: partial slice data" << std::endl;
-            break;
-        }
-
         case PacketDesc::volume_data: {
             std::cout << "Received: volume data" << std::endl;
-            break;
-        }
-
-        case PacketDesc::partial_volume_data: {
-            std::cout << "Received: partial volume data" << std::endl;
-            break;
-        }
-
-        case PacketDesc::group_request_slices: {
-            std::cout << "Received: group request slices" << std::endl;
             break;
         }
 
@@ -64,8 +48,8 @@ void Server::start() {
             zmq::message_t request;
 
             rep_socket_.recv(request, zmq::recv_flags::none);
-            auto desc = ((tomop::PacketDesc*)request.data())[0];
-            auto buffer = tomop::memory_buffer(request.size(), (char*)request.data());
+            auto desc = ((tomcat::PacketDesc*)request.data())[0];
+            auto buffer = tomcat::memory_buffer(request.size(), (char*)request.data());
 
             // packets_->push({desc, std::move(modules_[desc]->read_packet(
             //     desc, buffer, rep_socket_, scenes_))});
@@ -92,4 +76,4 @@ void Server::start() {
     }
 }
 
-} // namespace tomovis
+} // tomcat::consumer

@@ -3,7 +3,7 @@
 #include "slicerecon/solver.hpp"
 #include "slicerecon/utils.hpp"
 
-namespace tomop::slicerecon {
+namespace tomcat::slicerecon {
 
 // class Solver
 
@@ -409,4 +409,4 @@ std::vector<float> ConeBeamSolver::fdk_weights() {
     return result;
 }
 
-} // tomop::slicerecon
+} // tomcat::slicerecon

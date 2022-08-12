@@ -1,10 +1,9 @@
 #include <queue>
 #include <memory>
 
-#include "tomop/tomop.hpp"
+#include "tomcat/tomcat.hpp"
 
 
-namespace tomovis {
-    using PacketQueue = std::queue<std::pair<tomop::PacketDesc, 
-                                   std::unique_ptr<tomop::Packet>>>;;
+namespace tomcat::consumer {
+    using PacketQueue = std::queue<std::pair<PacketDesc, std::unique_ptr<Packet>>>;;
 }

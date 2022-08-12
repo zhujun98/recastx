@@ -10,6 +10,7 @@ namespace fs = std::experimental::filesystem;
 #include "server.hpp"
 
 int main(int argc, char** argv) {
+    using namespace tomcat::consumer;
     namespace po = boost::program_options;
 
     po::options_description desc("Options");
@@ -28,7 +29,7 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    tomovis::Server server(opts["port"].as<int>());
+    Server server(opts["port"].as<int>());
 
     server.start();
 

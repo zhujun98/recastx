@@ -18,9 +18,9 @@
 #include "astra/ParallelVecProjectionGeometry3D.h"
 #include "astra/VolumeGeometry3D.h"
 
-#include "tomop/tomop.hpp"
+#include "tomcat/tomcat.hpp"
 
-namespace tomop::slicerecon {
+namespace tomcat::slicerecon {
 
 class Solver {
 
@@ -182,4 +182,4 @@ public:
     std::vector<float> fdk_weights();
 };
 
-} // tomop::slicerecon
+} // tomcat::slicerecon

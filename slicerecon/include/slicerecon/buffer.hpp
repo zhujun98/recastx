@@ -8,7 +8,7 @@
 
 #include <spdlog/spdlog.h>
 
-namespace tomop::slicerecon {
+namespace tomcat::slicerecon {
 
 template<typename T>
 class DoubleBufferInterface {
@@ -294,6 +294,6 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
     size_t occupied() const { return buffer_.size() - unoccupied_.size(); }
 };
 
-} // tomop::slicerecon
+} // tomcat::slicerecon
 
 #endif // SLICERECON_BUFFER_H

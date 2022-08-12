@@ -4,7 +4,7 @@
 
 #include "../packets.hpp"
 
-namespace tomop {
+namespace tomcat {
 
 struct SliceDataPacket : public PacketBase<SliceDataPacket> {
     static constexpr auto desc = PacketDesc::slice_data;
@@ -47,4 +47,4 @@ struct RemoveSlicePacket : public PacketBase<RemoveSlicePacket> {
                              (int32_t, slice_id));
 };
 
-} // namespace tomop
+} // namespace tomcat
