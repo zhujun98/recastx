@@ -37,10 +37,10 @@ class ReconTest : public testing::Test {
     std::array<float, 3> volume_max_point_ {1.0f, 1.0f, 1.0f};
     std::array<float, 2> detector_size_ {1.0f, 1.0f};
 
-    recon::Reconstructor recon_ {rows_, cols_, threads_};
+    Reconstructor recon_ {rows_, cols_, threads_};
 
     void SetUp() override {
-        angles_ = recon::utils::defaultAngles(group_size_);
+        angles_ = utils::defaultAngles(group_size_);
         buildRecon();
         recon_.startProcessing();
     }
@@ -49,7 +49,7 @@ class ReconTest : public testing::Test {
         recon_.initialize(num_darks_, num_flats_, group_size_, buffer_size_, 
                           preview_size_, slice_size_);
         recon_.initFilter(filter_name_, gaussian_pass_);
-        recon_.setSolver(std::make_unique<recon::ParallelBeamSolver>(
+        recon_.setSolver(std::make_unique<ParallelBeamSolver>(
             rows_, cols_, angles_, 
             volume_min_point_, volume_max_point_, preview_size_, slice_size_, 
             false, detector_size_
@@ -193,7 +193,7 @@ TEST(TestUtils, TestComputeReciprocal) {
     std::vector<float> reciprocal(pixels);
     std::vector<float> dark_avg(pixels);
 
-    recon::utils::computeReciprocal(darks, flats, pixels, reciprocal, dark_avg);
+    utils::computeReciprocal(darks, flats, pixels, reciprocal, dark_avg);
 
     EXPECT_THAT(dark_avg, ElementsAreArray({
         2.33333333, 4.,        3.33333333,
