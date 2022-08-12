@@ -72,7 +72,7 @@ set(SOURCE_NAMES
     "src/scenes/scene_camera3d.cpp"
 )
 
-set(TARGET_NAME "tomcat-live-gui")
+set(TARGET_NAME tomcat-live-gui)
 add_executable(${TARGET_NAME} ${SOURCE_NAMES})
 target_link_libraries(${TARGET_NAME}
     PRIVATE

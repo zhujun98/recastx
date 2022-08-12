@@ -20,7 +20,7 @@
 
 #include "tomcat/tomcat.hpp"
 
-namespace tomcat::slicerecon {
+namespace tomcat::recon {
 
 class Solver {
 
@@ -182,4 +182,4 @@ public:
     std::vector<float> fdk_weights();
 };
 
-} // tomcat::slicerecon
+} // tomcat::recon

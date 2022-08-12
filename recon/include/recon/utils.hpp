@@ -20,7 +20,7 @@
 
 #include "tomcat/tomcat.hpp"
 
-namespace tomcat::slicerecon::utils {
+namespace tomcat::recon::utils {
 
 std::unique_ptr<astra::CParallelVecProjectionGeometry3D>
 parallel_beam_to_vec(astra::CParallelProjectionGeometry3D* parallel_geom);
@@ -105,4 +105,4 @@ inline std::vector<float> defaultAngles(int n) {
 
 
 
-} // tomcat::slicerecon::utils
+} // tomcat::recon::utils

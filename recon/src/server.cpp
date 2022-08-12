@@ -7,10 +7,10 @@
 #include <spdlog/spdlog.h>
 #include <boost/program_options.hpp>
 
-#include "slicerecon/reconstructor.hpp"
-#include "slicerecon/data_receiver.hpp"
-#include "slicerecon/broker.hpp"
-#include "slicerecon/utils.hpp"
+#include "recon/reconstructor.hpp"
+#include "recon/data_receiver.hpp"
+#include "recon/broker.hpp"
+#include "recon/utils.hpp"
 
 
 using namespace std::string_literals;
@@ -36,7 +36,7 @@ std::array<float, 3> makeVolumeMinmaxPoint(const po::variable_value& point, floa
 
 int main(int argc, char** argv)
 {
-    using namespace tomcat::slicerecon;
+    using namespace tomcat::recon;
 
     po::options_description general_desc("General options");
     general_desc.add_options()

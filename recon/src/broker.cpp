@@ -1,9 +1,9 @@
 #include <spdlog/spdlog.h>
 
-#include "slicerecon/broker.hpp"
+#include "recon/broker.hpp"
 
 
-namespace tomcat::slicerecon {
+namespace tomcat::recon {
 
 Broker::Broker(const std::string& endpoint,
                const std::string& subscribe_endpoint,
@@ -108,4 +108,4 @@ void Broker::start() {
     req_thread_.detach();
 }
 
-} // tomcat::slicerecon
+} // tomcat::recon

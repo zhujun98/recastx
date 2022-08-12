@@ -1,4 +1,4 @@
-project(tomcat-live-slicerecon LANGUAGES CXX)
+project(tomcat-live-recon LANGUAGES CXX)
 
 # Caveat: sequence
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -28,16 +28,17 @@ set(SOURCES
     "src/broker.cpp"
 )
 
-add_library(slicerecon ${SOURCES})
+set(RECON_LIB tomcat-live-recon)
+add_library(${RECON_LIB} ${SOURCES})
 
-target_include_directories(slicerecon
+target_include_directories(${RECON_LIB}
     PRIVATE
         ${ASTRA_INCLUDE_DIR}
         ${TBB_INCLUDE_DIRS}
     PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include)
 
-target_link_libraries(slicerecon
+target_link_libraries(${RECON_LIB}
     PUBLIC
         tomcat
         spdlog::spdlog
@@ -50,11 +51,11 @@ target_link_libraries(slicerecon
         ${FFTW_FLOAT_LIB}
 )
 
-target_compile_options(slicerecon
+target_compile_options(${RECON_LIB}
     PUBLIC
         -Wall -Wextra -Wfatal-errors -fPIC -static)
 
-target_compile_definitions(slicerecon PUBLIC VERBOSITY=${VERBOSITY})
+target_compile_definitions(${RECON_LIB} PUBLIC VERBOSITY=${VERBOSITY})
 
 if (BUILD_TEST)
     add_subdirectory(tests)
@@ -62,6 +63,6 @@ endif()
 
 set(EXEC_NAME "tomcat-live-server")
 add_executable(${EXEC_NAME} "src/server.cpp")
-target_link_libraries(${EXEC_NAME} PUBLIC slicerecon Boost::program_options)
+target_link_libraries(${EXEC_NAME} PUBLIC ${RECON_LIB} Boost::program_options)
 
 install(TARGETS ${EXEC_NAME} RUNTIME DESTINATION bin)

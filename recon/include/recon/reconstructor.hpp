@@ -21,7 +21,7 @@ extern "C" {
 #include "solver.hpp"
 
 
-namespace tomcat::slicerecon {
+namespace tomcat::recon {
 
 class Reconstructor {
 
@@ -116,4 +116,4 @@ class Reconstructor {
 
 };
 
-} // tomcat::slicerecon
+} // tomcat::recon

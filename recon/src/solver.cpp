@@ -1,9 +1,9 @@
 #include <spdlog/spdlog.h>
 
-#include "slicerecon/solver.hpp"
-#include "slicerecon/utils.hpp"
+#include "recon/solver.hpp"
+#include "recon/utils.hpp"
 
-namespace tomcat::slicerecon {
+namespace tomcat::recon {
 
 // class Solver
 
@@ -30,7 +30,7 @@ Solver::Solver(int rows,
         volume_min_point[0], volume_min_point[1], mid_z - half_slab_height, 
         volume_max_point[0], volume_max_point[1], mid_z + half_slab_height);
 
-    spdlog::info("Slice volume: {}", slicerecon::utils::info(*vol_geom_));
+    spdlog::info("Slice volume: {}", utils::info(*vol_geom_));
 
     // Volume data
     vol_handle_ = astraCUDA3d::allocateGPUMemory(slice_size, slice_size, 1, astraCUDA3d::INIT_ZERO);
@@ -42,7 +42,7 @@ Solver::Solver(int rows,
         volume_min_point[0], volume_min_point[1], volume_min_point[2],
         volume_max_point[0], volume_max_point[1], volume_max_point[2]);
 
-    spdlog::info("Small preview volume: {}", slicerecon::utils::info(*vol_geom_small_));
+    spdlog::info("Small preview volume: {}", utils::info(*vol_geom_small_));
 
     vol_handle_small_ = astraCUDA3d::allocateGPUMemory(
         preview_size, preview_size, preview_size, astraCUDA3d::INIT_ZERO);
@@ -100,12 +100,12 @@ ParallelBeamSolver::ParallelBeamSolver(int rows,
         auto proj_geom = astra::CParallelProjectionGeometry3D(
             projections_, rows, cols, detector_size[1], detector_size[0], angles.data());
 
-        proj_geom_ = slicerecon::utils::proj_to_vec(&proj_geom);
+        proj_geom_ = utils::proj_to_vec(&proj_geom);
 
-        proj_geom_small_ = slicerecon::utils::proj_to_vec(&proj_geom);
+        proj_geom_small_ = utils::proj_to_vec(&proj_geom);
 
     } else {
-        auto par_projs = slicerecon::utils::list_to_par_projections(angles);
+        auto par_projs = utils::list_to_par_projections(angles);
 
         proj_geom_ = std::make_unique<astra::CParallelVecProjectionGeometry3D>(
             projections_, rows, cols, par_projs.data());
@@ -293,14 +293,14 @@ ConeBeamSolver::ConeBeamSolver(int rows,
             detector_size[1], detector_size[0],
             angles.data(), source_origin, origin_det);
 
-        proj_geom_ = slicerecon::utils::proj_to_vec(&proj_geom);
-        proj_geom_small_ = slicerecon::utils::proj_to_vec(&proj_geom);
+        proj_geom_ = utils::proj_to_vec(&proj_geom);
+        proj_geom_small_ = utils::proj_to_vec(&proj_geom);
     } else {
-        auto cone_projs = slicerecon::utils::list_to_cone_projections(rows, cols, angles);
+        auto cone_projs = utils::list_to_cone_projections(rows, cols, angles);
         proj_geom_ = std::make_unique<astra::CConeVecProjectionGeometry3D>(
             projections_, rows, cols, cone_projs.data());
 
-        spdlog::info("{}", slicerecon::utils::info(*proj_geom_));
+        spdlog::info("{}", utils::info(*proj_geom_));
 
         proj_geom_small_ = std::make_unique<astra::CConeVecProjectionGeometry3D>(
             projections_, rows, cols, cone_projs.data());
@@ -409,4 +409,4 @@ std::vector<float> ConeBeamSolver::fdk_weights() {
     return result;
 }
 
-} // tomcat::slicerecon
+} // tomcat::recon

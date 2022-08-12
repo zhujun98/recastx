@@ -9,7 +9,7 @@
 #include "tomcat/tomcat.hpp"
 #include "reconstructor.hpp"
 
-namespace tomcat::slicerecon {
+namespace tomcat::recon {
 
 class Broker {
     zmq::context_t context_;
@@ -35,4 +35,4 @@ class Broker {
     void start();
 };
 
-} // tomcat::slicerecon
+} // tomcat::recon

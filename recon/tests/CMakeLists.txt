@@ -30,21 +30,21 @@ set(GMOCK_INCLUDE_DIRS "${gmock_SOURCE_DIR}/include")
 
 find_package(Threads REQUIRED)
 
-add_executable(test_slicerecon
+add_executable(test_recon
     main.cpp
     test_buffer.cpp
     test_reconstructor.cpp
     test_filter.cpp)
-target_include_directories(test_slicerecon
+target_include_directories(test_recon
     PRIVATE
         "../include"
         ${GTEST_INCLUDE_DIRS} 
         ${GMOCK_INCLUDE_DIRS})
-target_link_libraries(test_slicerecon
+target_link_libraries(test_recon
     PRIVATE
-        slicerecon
+        ${RECON_LIB}
         gtest
         pthread)
-target_compile_options(test_slicerecon
+target_compile_options(test_recon
     PRIVATE
         -std=c++17)        

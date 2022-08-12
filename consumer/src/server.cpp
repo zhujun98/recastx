@@ -48,7 +48,7 @@ void Server::start() {
             zmq::message_t request;
 
             rep_socket_.recv(request, zmq::recv_flags::none);
-            auto desc = ((tomcat::PacketDesc*)request.data())[0];
+            auto desc = ((PacketDesc*)request.data())[0];
             auto buffer = tomcat::memory_buffer(request.size(), (char*)request.data());
 
             // packets_->push({desc, std::move(modules_[desc]->read_packet(
