@@ -1,10 +1,10 @@
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 
-#include "slicerecon/data_receiver.hpp"
+#include "recon/data_receiver.hpp"
 
 
-namespace tomcat::slicerecon {
+namespace tomcat::recon {
 
 using namespace std::string_literals;
 
@@ -96,4 +96,4 @@ void DataReceiver::start() {
     thread_.detach();
 }
 
-} // tomcat::slicerecon
+} // tomcat::recon

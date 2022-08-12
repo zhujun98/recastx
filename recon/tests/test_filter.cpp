@@ -3,9 +3,9 @@
 
 #include <oneapi/tbb.h>
 
-#include "slicerecon/filter.hpp"
+#include "recon/filter.hpp"
 
-namespace tomcat::slicerecon::test {
+namespace tomcat::recon::test {
 
 using ::testing::Pointwise;
 using ::testing::FloatNear;
@@ -86,4 +86,4 @@ TEST_F(FilterTest, TestShepp) {
                            0.41235096f, -1.32173338f, 0.944262f, 1.10916587f, -1.14404545f}));
 }
 
-} // tomcat::slicerecon::test
+} // tomcat::recon::test

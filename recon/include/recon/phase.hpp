@@ -5,7 +5,7 @@ extern "C" {
 #include <fftw3.h>
 }
 
-namespace tomcat::slicerecon {
+namespace tomcat::recon {
 
 namespace details {
     std::vector<float> paganinFilter(
@@ -34,4 +34,4 @@ class Paganin {
 
 };
 
-} // tomcat::slicerecon
+} // tomcat::recon

@@ -1,7 +1,7 @@
-#include "slicerecon/phase.hpp"
+#include "recon/phase.hpp"
 
 
-namespace tomcat::slicerecon {
+namespace tomcat::recon {
 
 namespace details {
 
@@ -81,4 +81,4 @@ void Paganin::apply(float* data, int idx) {
     }
 }
 
-}; // tomcat::slicerecon
+}; // tomcat::recon

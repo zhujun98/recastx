@@ -5,11 +5,11 @@
 #include <Eigen/Eigen>
 #include <spdlog/spdlog.h>
 
-#include "slicerecon/reconstructor.hpp"
-#include "slicerecon/utils.hpp"
+#include "recon/reconstructor.hpp"
+#include "recon/utils.hpp"
 
 
-namespace tomcat::slicerecon {
+namespace tomcat::recon {
 
 Reconstructor::Reconstructor(int rows, int cols, int num_threads)
      : rows_(rows),
@@ -319,4 +319,4 @@ const std::vector<RawDtype>& Reconstructor::flats() const { return all_flats_; }
 const MemoryBuffer<float>& Reconstructor::buffer() const { return buffer_; }
 const TripleBuffer<float>& Reconstructor::sinoBuffer() const { return sino_buffer_; }
 
-} // tomcat::slicerecon
+} // tomcat::recon

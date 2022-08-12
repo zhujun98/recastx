@@ -5,7 +5,7 @@
 
 #include "reconstructor.hpp"
 
-namespace tomcat::slicerecon {
+namespace tomcat::recon {
 
 class DataReceiver {
 
@@ -27,4 +27,4 @@ public:
 };
 
 
-} // tomcat::slicerecon
+} // tomcat::recon

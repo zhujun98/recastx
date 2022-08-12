@@ -1,7 +1,7 @@
-#include "slicerecon/filter.hpp"
+#include "recon/filter.hpp"
 #include <iostream>
 
-namespace tomcat::slicerecon {
+namespace tomcat::recon {
 
 Filter::Filter(const std::string& filter_name, 
                bool gaussian_pass,
@@ -102,4 +102,4 @@ std::vector<float> Filter::gaussian(int n, float sigma) {
     return result;
 }
 
-} // tomcat::slicerecon
+} // tomcat::recon

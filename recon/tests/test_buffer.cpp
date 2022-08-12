@@ -2,9 +2,9 @@
 #include <gmock/gmock.h>
 
 #include "tomcat/tomcat.hpp"
-#include "slicerecon/buffer.hpp"
+#include "recon/buffer.hpp"
 
-namespace tomcat::slicerecon::test {
+namespace tomcat::recon::test {
 
 using ::testing::Pointwise;
 using ::testing::FloatNear;
@@ -98,4 +98,4 @@ TEST_F(MemoryBufferTest, TestSameDataReceivedRepeatedly) {
     }
 }
 
-} // tomcat::slicerecon::test
+} // tomcat::recon::test
