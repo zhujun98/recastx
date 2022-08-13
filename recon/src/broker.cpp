@@ -61,22 +61,12 @@ void Broker::start() {
                     auto packet = std::make_unique<SetSlicePacket>();
                     packet->deserialize(std::move(buffer));
                     recon_->setSlice(packet->slice_id, packet->orientation);
-
-#if (VERBOSITY >= 3)
-                    spdlog::info("Set slice {}", packet->slice_id);
-#endif
-
                     break;
                 }
                 case PacketDesc::remove_slice: {
                     auto packet = std::make_unique<RemoveSlicePacket>();
                     packet->deserialize(std::move(buffer));
                     recon_->removeSlice(packet->slice_id);
-
-#if (VERBOSITY >= 3)
-                    spdlog::info("Remove slice {}", packet->slice_id);
-#endif
-
                     break;
                 }
                 default: {
@@ -91,8 +81,6 @@ void Broker::start() {
 
     req_thread_ = std::thread([&] {
         while (true) {
-            zmq::message_t reply;
-
             send(recon_->previewData());
             spdlog::info("Volume preview data sent");
 

@@ -229,14 +229,30 @@ void Reconstructor::setSlice(int slice_id, const Orientation& orientation) {
     if (slices_.find(slice_id) == slices_.end()) {
         std::vector<float> slice_buffer(slice_size_ * slice_size_);
         slices_buffer_[slice_id] = std::move(slice_buffer);
+
+#if (VERBOSITY >= 3)
+        spdlog::info("Slice {} added", slice_id);
+#endif
+
     }
+
     slices_[slice_id] = orientation;
+
+#if (VERBOSITY >= 3)
+        spdlog::info("Slice {} updated", slice_id);
+#endif
+
 }
 
 void Reconstructor::removeSlice(int slice_id) {
     std::lock_guard lk(slice_mtx_);
     slices_.erase(slice_id);
     slices_buffer_.erase(slice_id);
+
+#if (VERBOSITY >= 3)
+        spdlog::info("Slice {} removed", slice_id);
+#endif
+
 }
 
 VolumeDataPacket Reconstructor::previewData() { 
@@ -250,7 +266,6 @@ std::vector<SliceDataPacket> Reconstructor::sliceData() {
     {
         std::lock_guard lk(slice_mtx_);
         for (auto& buffer : slices_buffer_) {
-            // FIXME: implement a move construct for SliceDataPacket
             ret.emplace_back(SliceDataPacket(
                 buffer.first, {slice_size_, slice_size_}, buffer.second));
         }
