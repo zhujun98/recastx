@@ -81,7 +81,10 @@ class TripleBuffer : public TrippleBufferInterface<std::vector<T>> {
     TripleBuffer() = default;
     ~TripleBuffer() = default;
 
-    TripleBuffer(TripleBuffer&& other) {
+    TripleBuffer(const TripleBuffer&) = delete;
+    TripleBuffer& operator=(const TripleBuffer&) = delete;
+
+    TripleBuffer(TripleBuffer&& other) noexcept {
         std::lock_guard lk(other.mtx_);
         back_ = std::move(other.back_);
         ready_ = std::move(other.ready_);
@@ -89,13 +92,12 @@ class TripleBuffer : public TrippleBufferInterface<std::vector<T>> {
         is_ready_ = other.is_ready_;
     }
 
-    TripleBuffer& operator=(TripleBuffer&& other) {
+    TripleBuffer& operator=(TripleBuffer&& other) noexcept {
         std::lock_guard lk(other.mtx_);
         back_ = std::move(other.back_);
         ready_ = std::move(other.ready_);
         front_ = std::move(other.front_);
         is_ready_ = other.is_ready_;
-
         return *this;
     }
 
@@ -167,6 +169,12 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
 
     MemoryBuffer() = default;
     ~MemoryBuffer() = default;
+
+    MemoryBuffer(const MemoryBuffer&) = delete;
+    MemoryBuffer& operator=(const MemoryBuffer&) = delete;
+
+    MemoryBuffer(MemoryBuffer&&) = delete;
+    MemoryBuffer& operator=(MemoryBuffer&&) = delete;
 
     void initialize(size_t capacity, size_t group_size, int chunk_size) {
         chunk_size_ = chunk_size;
