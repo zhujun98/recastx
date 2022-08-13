@@ -38,6 +38,7 @@ Broker::~Broker() {
 }
 
 void Broker::send(const Packet& packet) {
+    std::lock_guard<std::mutex> lck(send_mtx_);
     zmq::message_t reply;
     packet.send(req_socket_);
     req_socket_.recv(reply, zmq::recv_flags::none);
@@ -79,21 +80,30 @@ void Broker::start() {
         }
     });
 
-    req_thread_ = std::thread([&] {
+    req_thread1_ = std::thread([&] {
         while (true) {
-            send(recon_->previewData());
+            send(recon_->previewDataPacket());
             spdlog::info("Volume preview data sent");
 
-            for (auto& slice_data : recon_->sliceData()) {
-                int slice_id = slice_data.slice_id;
-                send(slice_data);
-                spdlog::info("Slice data {} sent", slice_id);
+            for (const auto& packet : recon_->sliceDataPackets()) {
+                send(packet);
+                spdlog::info("Slice data {} sent", packet.slice_id);
+            }
+        }
+    });
+
+    req_thread2_ = std::thread([&] {
+        while (true) {
+            for (const auto& packet : recon_->updatedSliceDataPackets()) {
+                send(packet);
+                spdlog::info("Slice data {} sent", packet.slice_id);
             }
         }
     });
 
     sub_thread_.detach();
-    req_thread_.detach();
+    req_thread1_.detach();
+    req_thread2_.detach();
 }
 
 } // tomcat::recon

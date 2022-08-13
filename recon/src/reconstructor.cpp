@@ -112,17 +112,27 @@ void Reconstructor::startReconstructing() {
         float total_duration = 0.f;
 #endif
  
+        using namespace std::chrono_literals;
         while (true) {
             {
                 std::unique_lock<std::mutex> lck(gpu_mutex_);
-                gpu_cv_.wait(lck, [&] { return sino_uploaded_; });
-
-                solver_->reconstructPreview(preview_buffer_.back(), gpu_buffer_index_);
+                if (gpu_cv_.wait_for(lck, 20ms, [&] { return sino_uploaded_; })) {
+                    solver_->reconstructPreview(preview_buffer_.back(), gpu_buffer_index_);
+                } else {    
+                    std::lock_guard lk(slice_mtx_);
+                    for (auto slice_id : updated_slices_) {
+                        solver_->reconstructSlice(slices_buffer_[slice_id], slices_[slice_id], gpu_buffer_index_);
+                    }
+                    updated_slices_.swap(reconstructed_slices_);
+                    slice_cv_.notify_one();
+                    continue;
+                }
 
                 std::lock_guard lk(slice_mtx_);
-                for (const auto& [sid, orientation] : slices_) {
-                    solver_->reconstructSlice(slices_buffer_[sid], orientation, gpu_buffer_index_);
+                for (const auto& [slice_id, orientation] : slices_) {
+                    solver_->reconstructSlice(slices_buffer_[slice_id], orientation, gpu_buffer_index_);
                 }
+                updated_slices_.clear();
                 sino_uploaded_ = false;
             }
             preview_buffer_.prepare();
@@ -237,6 +247,8 @@ void Reconstructor::setSlice(int slice_id, const Orientation& orientation) {
     }
 
     slices_[slice_id] = orientation;
+    updated_slices_.erase(slice_id);
+    updated_slices_.insert(slice_id);
 
 #if (VERBOSITY >= 3)
         spdlog::info("Slice {} updated", slice_id);
@@ -255,21 +267,34 @@ void Reconstructor::removeSlice(int slice_id) {
 
 }
 
-VolumeDataPacket Reconstructor::previewData() { 
+VolumeDataPacket Reconstructor::previewDataPacket() { 
     preview_buffer_.fetch();
     return VolumeDataPacket({preview_size_, preview_size_, preview_size_}, 
                             preview_buffer_.front());
 }
 
-std::vector<SliceDataPacket> Reconstructor::sliceData() {
+std::vector<SliceDataPacket> Reconstructor::sliceDataPackets() {
     std::vector<SliceDataPacket> ret;
     {
         std::lock_guard lk(slice_mtx_);
-        for (auto& buffer : slices_buffer_) {
-            ret.emplace_back(SliceDataPacket(
-                buffer.first, {slice_size_, slice_size_}, buffer.second));
+        for (const auto& [slice_id, data] : slices_buffer_) {
+            ret.emplace_back(SliceDataPacket(slice_id, {slice_size_, slice_size_}, data));
         }
     }    
+    return ret;
+}
+
+std::vector<SliceDataPacket> Reconstructor::updatedSliceDataPackets() {
+    std::vector<SliceDataPacket> ret;
+    {
+        std::unique_lock<std::mutex> lck(slice_mtx_);
+        slice_cv_.wait(lck, [&] { return !reconstructed_slices_.empty(); });
+        for (auto slice_id : reconstructed_slices_) {
+            ret.emplace_back(SliceDataPacket(
+                slice_id, {slice_size_, slice_size_}, slices_buffer_[slice_id]));
+        }
+        reconstructed_slices_.clear();
+    }
     return ret;
 }
 
