@@ -102,7 +102,6 @@ class ReconComponent : public ObjectComponent {
     float volume_max_ = 1.0f;
 
     bool show_ = true;
-    bool transparency_mode_ = false;
 
     void initSlices();
   

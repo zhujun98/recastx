@@ -147,7 +147,6 @@ void ReconComponent::update_histogram(const std::vector<float>& data) {
 
 void ReconComponent::describe() {
     ImGui::Checkbox("Show reconstruction", &show_);
-    ImGui::Checkbox("Transparent mode (experimental)", &transparency_mode_);
 
     auto window_size = ImGui::GetWindowSize();
     ImGui::PlotHistogram("Reconstruction histogram", histogram_.data(),
@@ -190,7 +189,6 @@ void ReconComponent::draw(glm::mat4 world_to_screen) {
     program_->setFloat("max_value", upper_value_);
     program_->setFloat("volume_min_value", volume_min_);
     program_->setFloat("volume_max_value", volume_max_);
-    program_->setBool("transparency_mode", (int)transparency_mode_);
 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_1D, cm_texture_id_);
