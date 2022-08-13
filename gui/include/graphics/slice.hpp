@@ -40,6 +40,7 @@ class Slice {
   public:
 
     explicit Slice(int slice_id);
+    ~Slice();
 
     [[nodiscard]] int id() const;
 
