@@ -4,6 +4,7 @@
 #include <condition_variable>
 #include <cstdint>
 #include <iostream>
+#include <set>
 #include <thread>
 #include <unordered_map>
 #include <vector>
@@ -34,6 +35,9 @@ class Reconstructor {
     int preview_size_ = 0;
     int slice_size_ = 0;
     std::unordered_map<int, Orientation> slices_;
+    std::set<int> updated_slices_;
+    std::set<int> reconstructed_slices_;
+    std::condition_variable slice_cv_;
     std::mutex slice_mtx_;
 
     std::vector<RawDtype> all_darks_;
@@ -101,9 +105,11 @@ class Reconstructor {
     void setSlice(int slice_id, const Orientation& orientation);
     void removeSlice(int slice_id);
 
-    VolumeDataPacket previewData();
+    VolumeDataPacket previewDataPacket();
 
-    std::vector<SliceDataPacket> sliceData();
+    std::vector<SliceDataPacket> sliceDataPackets();
+
+    std::vector<SliceDataPacket> updatedSliceDataPackets();
 
     size_t bufferSize() const;
 

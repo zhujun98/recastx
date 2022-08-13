@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <mutex>
 #include <string>
 #include <thread>
 
@@ -17,8 +18,11 @@ class Broker {
     zmq::socket_t req_socket_;
     zmq::socket_t sub_socket_;
 
-    std::thread req_thread_;
+    std::thread req_thread1_;
+    std::thread req_thread2_;
     std::thread sub_thread_;
+
+    std::mutex send_mtx_;
 
     std::shared_ptr<Reconstructor> recon_;
 
