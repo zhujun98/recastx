@@ -57,7 +57,7 @@ class Projection {
 
     int contributions = 0;
     int id;
-    Texture<uint32_t> data_texture;
+    Texture2d<uint32_t> data_texture;
     glm::mat4 detector_orientation;
     std::vector<float> data;
     std::array<int, 2> size;

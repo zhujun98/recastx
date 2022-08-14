@@ -118,7 +118,7 @@ void ReconComponent::setSliceData(std::vector<float>&& data,
 void ReconComponent::setVolumeData(std::vector<float>&& data,
                                    const std::array<int32_t, 3>& size) {
     volume_data_ = data;
-    volume_texture_.setData(size[0], size[1], size[2], volume_data_);
+    volume_texture_.setData(volume_data_, size[0], size[1], size[2]);
     updateHistogram();
 }
 
