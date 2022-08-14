@@ -13,6 +13,7 @@
 #include "graphics/recon_component.hpp"
 #include "graphics/primitives.hpp"
 #include "scenes/scene_camera3d.hpp"
+#include "util.hpp"
 
 namespace tomcat::gui {
 
@@ -96,7 +97,7 @@ void ReconComponent::requestSlices() {
     }
 }
 
-void ReconComponent::setSliceData(std::vector<float>& data,
+void ReconComponent::setSliceData(std::vector<float>&& data,
                                   const std::array<int32_t, 2>& size,
                                   int slice_idx) {
     Slice* slice;
@@ -109,28 +110,28 @@ void ReconComponent::setSliceData(std::vector<float>& data,
 
     if (slice == dragged_slice_) return;
 
-    slice->setData(data, size);
+    slice->setData(std::move(data), size);
 
     updateSliceImage(slice);
 }
 
-void ReconComponent::setVolumeData(std::vector<float>& data, 
+void ReconComponent::setVolumeData(std::vector<float>&& data,
                                    const std::array<int32_t, 3>& size) {
     volume_data_ = data;
-    volume_texture_.setData(size[0], size[1], size[2], data);
-    update_histogram(data);
+    volume_texture_.setData(size[0], size[1], size[2], volume_data_);
+    updateHistogram();
 }
 
-void ReconComponent::update_histogram(const std::vector<float>& data) {
+void ReconComponent::updateHistogram() {
     auto bins = 30;
-    auto min = *std::min_element(data.begin(), data.end());
-    auto max = *std::max_element(data.begin(), data.end());
+    auto min = *std::min_element(volume_data_.begin(), volume_data_.end());
+    auto max = *std::max_element(volume_data_.begin(), volume_data_.end());
     if (max == min) max = min + 1;
 
     histogram_.clear();
     histogram_.resize(bins);
 
-    for (auto x : data) {
+    for (auto x : volume_data_) {
         auto bin = (int)(((x - min) / (max - min)) * (bins - 1));
         if (bin < 0) {
             bin = 0;
@@ -147,7 +148,6 @@ void ReconComponent::update_histogram(const std::vector<float>& data) {
 
 void ReconComponent::describe() {
     ImGui::Checkbox("Show reconstruction", &show_);
-    ImGui::Checkbox("Transparent mode (experimental)", &transparency_mode_);
 
     auto window_size = ImGui::GetWindowSize();
     ImGui::PlotHistogram("Reconstruction histogram", histogram_.data(),
@@ -174,7 +174,7 @@ std::pair<float, float> ReconComponent::overall_min_and_max() {
             overall_max + (0.2f * (overall_max - overall_min))};
 }
 
-void ReconComponent::draw(glm::mat4 world_to_screen) {
+void ReconComponent::draw(const glm::mat4& world_to_screen) {
     if (!show_) return;
 
     glEnable(GL_DEPTH_TEST);
@@ -190,27 +190,11 @@ void ReconComponent::draw(glm::mat4 world_to_screen) {
     program_->setFloat("max_value", upper_value_);
     program_->setFloat("volume_min_value", volume_min_);
     program_->setFloat("volume_max_value", volume_max_);
-    program_->setBool("transparency_mode", (int)transparency_mode_);
 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_1D, cm_texture_id_);
 
-    auto full_transform = world_to_screen * volume_transform_;
-
-    auto draw_slice = [&](Slice& the_slice) {
-        the_slice.texture().bind();
-
-        program_->setMat4("world_to_screen_matrix", full_transform);
-        program_->setMat4("orientation_matrix",
-                          the_slice.orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0)));
-        program_->setBool("hovered", the_slice.hovered());
-        program_->setBool("has_data", !the_slice.empty());
-
-        glBindVertexArray(vao_handle_);
-        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-        the_slice.texture().unbind();
-    };
+    glm::mat4 full_transform = world_to_screen * volume_transform_;
 
     std::vector<Slice*> slices;
     for (auto& id_slice : slices_) {
@@ -227,9 +211,7 @@ void ReconComponent::draw(glm::mat4 world_to_screen) {
     });
 
     volume_texture_.bind();
-    for (auto& slice : slices) {
-        draw_slice(*slice);
-    }
+    for (auto slice : slices) drawSlice(slice, full_transform);
     volume_texture_.unbind();
 
     cube_program_->use();
@@ -324,8 +306,11 @@ bool ReconComponent::handleMouseMoved(double x, double y) {
 }
 
 void ReconComponent::initSlices() {
-    for (size_t i = 0; i < 3; ++i) slices_[i] = std::make_unique<Slice>(i);
+    for (int i = 0; i < 3; ++i) slices_[i] = std::make_unique<Slice>(i);
+    resetSlices();
+}
 
+void ReconComponent::resetSlices() {
     // slice along axis 0 = x
     slices_[0]->setOrientation(glm::vec3(0.0f, -1.0f, -1.0f),
                                glm::vec3(0.0f, 2.0f, 0.0f),
@@ -351,58 +336,6 @@ void ReconComponent::initVolume() {
     scene_.camera().set_look_at(center);
 }
 
-std::tuple<bool, float, glm::vec3> ReconComponent::intersectionPoint(
-        glm::mat4 inv_matrix,
-        glm::mat4 orientation,
-        glm::vec2 point) {
-    auto intersect_ray_plane = [](glm::vec3 origin,
-                                  glm::vec3 direction,
-                                  glm::vec3 base,
-                                  glm::vec3 normal,
-                                  float& distance) -> bool {
-        auto alpha = glm::dot(normal, direction);
-        if (glm::abs(alpha) > 0.001f) {
-            distance = glm::dot((base - origin), normal) / alpha;
-            if (distance >= 0.001f) return true;
-        }
-        return false;
-    };
-
-    // how do we want to do this
-    // end points of plane/line?
-    // first see where the end
-    // points of the square end up
-    // within the box.
-    // in world space:
-    auto o = orientation;
-    auto axis1 = glm::vec3(o[0][0], o[0][1], o[0][2]);
-    auto axis2 = glm::vec3(o[1][0], o[1][1], o[1][2]);
-    auto base = glm::vec3(o[2][0], o[2][1], o[2][2]);
-    base += 0.5f * (axis1 + axis2);
-    auto normal = glm::normalize(glm::cross(axis1, axis2));
-    float distance = -1.0f;
-
-    auto from = inv_matrix * glm::vec4(point.x, point.y, -1.0f, 1.0f);
-    from /= from[3];
-    auto to = inv_matrix * glm::vec4(point.x, point.y, 1.0f, 1.0f);
-    to /= to[3];
-    auto direction = glm::normalize(glm::vec3(to) - glm::vec3(from));
-
-    bool does_intersect = intersect_ray_plane(glm::vec3(from), direction, base, normal, distance);
-
-    // now check if the actual point is inside the plane
-    auto intersection = glm::vec3(from) + direction * distance;
-    intersection -= base;
-    auto along_1 = glm::dot(intersection, glm::normalize(axis1));
-    auto along_2 = glm::dot(intersection, glm::normalize(axis2));
-    if (glm::abs(along_1) > 0.5f * glm::length(axis1) ||
-        glm::abs(along_2) > 0.5f * glm::length(axis2)) {
-        does_intersect = false;
-    }
-
-    return std::make_tuple(does_intersect, distance, intersection);
-}
-
 void ReconComponent::updateSliceImage(Slice* slice) {
     auto[min_v, max_v] = slice->minMaxVals();
     auto nonzero = std::fabs(min_v) > 1e-6 && std::fabs(max_v) > 1e-6;
@@ -422,8 +355,7 @@ void ReconComponent::updateHoveringSlice(float x, float y) {
     for (auto& [sid, slice] : slices_) {
         if (slice->inactive()) continue;
         slice->setHovered(false);
-        auto maybe_point = intersectionPoint(
-            inv_matrix, slice->orientation4(), glm::vec2(x, y));
+        auto maybe_point = intersectionPoint(inv_matrix, slice->orientation4(), glm::vec2(x, y));
         if (std::get<0>(maybe_point)) {
             auto z = std::get<1>(maybe_point);
             if (z < best_z) {
@@ -458,19 +390,31 @@ void ReconComponent::maybeSwitchDragMachine(ReconComponent::DragType type) {
     }
 }
 
+void ReconComponent::drawSlice(Slice* slice, const glm::mat4& world_to_screen) {
+    slice->texture().bind();
+
+    program_->setMat4("world_to_screen_matrix", world_to_screen);
+    program_->setMat4("orientation_matrix",
+                      slice->orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0)));
+    program_->setBool("hovered", slice->hovered());
+    program_->setBool("has_data", !slice->empty());
+
+    glBindVertexArray(vao_handle_);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+    slice->texture().unbind();
+}
+
 // ReconComponent::DragMachine
 
-ReconComponent::DragMachine::DragMachine(ReconComponent& comp,
-                                         const glm::vec2& initial,
-                                         DragType type)
+ReconComponent::DragMachine::DragMachine(ReconComponent& comp, const glm::vec2& initial, DragType type)
     : comp_(comp), initial_(initial), type_(type) {}
 
 ReconComponent::DragMachine::~DragMachine() = default;
 
 // ReconComponent::SliceTranslator
 
-ReconComponent::SliceTranslator::SliceTranslator(ReconComponent &comp,
-                                                 const glm::vec2& initial)
+ReconComponent::SliceTranslator::SliceTranslator(ReconComponent &comp, const glm::vec2& initial)
     : DragMachine(comp, initial, DragType::translator) {}
 
 ReconComponent::SliceTranslator::~SliceTranslator() = default;
@@ -549,8 +493,7 @@ void ReconComponent::SliceTranslator::onDrag(glm::vec2 delta) {
 
 // ReconComponent::SliceRotator
 
-ReconComponent::SliceRotator::SliceRotator(ReconComponent& comp,
-                                           const glm::vec2& initial)
+ReconComponent::SliceRotator::SliceRotator(ReconComponent& comp, const glm::vec2& initial)
     : DragMachine(comp, initial, DragType::rotator) {
     // 1. need to identify the opposite axis
     // a) get the position within the slice
@@ -561,7 +504,7 @@ ReconComponent::SliceRotator::SliceRotator(ReconComponent& comp,
     assert(slice);
     auto o = slice->orientation4();
 
-    auto maybe_point = ReconComponent::intersectionPoint(inv_matrix, o, initial_);
+    auto maybe_point = intersectionPoint(inv_matrix, o, initial_);
     assert(std::get<0>(maybe_point));
 
     auto axis1 = glm::vec3(o[0][0], o[0][1], o[0][2]);

@@ -85,7 +85,7 @@ void GeomComponent::tick(float time_elapsed) {
     }
 }
 
-void GeomComponent::draw(glm::mat4 world_to_screen) {
+void GeomComponent::draw(const glm::mat4& world_to_screen) {
     if (!show_) {
         recorder_.capture();
         return;

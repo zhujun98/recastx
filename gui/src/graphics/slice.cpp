@@ -10,9 +10,11 @@ Slice::Slice(int slice_id) : id_(slice_id), size_{32, 32}, texture_(32, 32) {
     updateTexture();
 }
 
+Slice::~Slice() = default;
+
 int Slice::id() const { return id_; }
 
-void Slice::setData(const DataType& data, const SizeType& size) {
+void Slice::setData(DataType&& data, const SizeType& size) {
     data_ = data;
     size_ = size;
 

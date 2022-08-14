@@ -11,7 +11,6 @@
 #include "object_component.hpp"
 #include "slice.hpp"
 #include "textures.hpp"
-#include "util.hpp"
 
 namespace tomcat::gui {
 
@@ -102,9 +101,10 @@ class ReconComponent : public ObjectComponent {
     float volume_max_ = 1.0f;
 
     bool show_ = true;
-    bool transparency_mode_ = false;
 
     void initSlices();
+
+    void resetSlices();
   
     void initVolume();
   
@@ -114,22 +114,24 @@ class ReconComponent : public ObjectComponent {
 
     void maybeSwitchDragMachine(DragType type);
 
+    void drawSlice(Slice* slice, const glm::mat4& world_to_screen);
+
 public:
 
     explicit ReconComponent(Scene& scene);
     ~ReconComponent() override;
 
-    void draw(glm::mat4 world_to_screen) override;
+    void draw(const glm::mat4& world_to_screen) override;
     void describe() override;
 
-    void setSliceData(std::vector<float>& data,
+    void setSliceData(std::vector<float>&& data,
                       const std::array<int32_t, 2>& size,
                       int slice_idx);
 
-    void setVolumeData(std::vector<float>& data,
+    void setVolumeData(std::vector<float>&& data,
                        const std::array<int32_t, 3>& volume_size);
 
-    void update_histogram(const std::vector<float>& data);
+    void updateHistogram();
 
     void requestSlices();
 
@@ -148,9 +150,6 @@ public:
     std::pair<float, float> overall_min_and_max();
 
     auto generate_slice_idx() { return next_idx_++; }
-
-    static std::tuple<bool, float, glm::vec3> intersectionPoint(
-        glm::mat4 inv_matrix, glm::mat4 orientation, glm::vec2 point);
 };
 
 } // tomcat::gui
