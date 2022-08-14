@@ -113,6 +113,8 @@ class ReconComponent : public ObjectComponent {
 
     void maybeSwitchDragMachine(DragType type);
 
+    void drawSlice(Slice* slice, const glm::mat4& world_to_screen);
+
 public:
 
     explicit ReconComponent(Scene& scene);

@@ -193,22 +193,7 @@ void ReconComponent::draw(const glm::mat4& world_to_screen) {
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_1D, cm_texture_id_);
 
-    auto full_transform = world_to_screen * volume_transform_;
-
-    auto draw_slice = [&](Slice& the_slice) {
-        the_slice.texture().bind();
-
-        program_->setMat4("world_to_screen_matrix", full_transform);
-        program_->setMat4("orientation_matrix",
-                          the_slice.orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0)));
-        program_->setBool("hovered", the_slice.hovered());
-        program_->setBool("has_data", !the_slice.empty());
-
-        glBindVertexArray(vao_handle_);
-        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-        the_slice.texture().unbind();
-    };
+    glm::mat4 full_transform = world_to_screen * volume_transform_;
 
     std::vector<Slice*> slices;
     for (auto& id_slice : slices_) {
@@ -225,9 +210,7 @@ void ReconComponent::draw(const glm::mat4& world_to_screen) {
     });
 
     volume_texture_.bind();
-    for (auto& slice : slices) {
-        draw_slice(*slice);
-    }
+    for (auto slice : slices) drawSlice(slice, full_transform);
     volume_texture_.unbind();
 
     cube_program_->use();
@@ -454,6 +437,21 @@ void ReconComponent::maybeSwitchDragMachine(ReconComponent::DragType type) {
                 break;
         }
     }
+}
+
+void ReconComponent::drawSlice(Slice* slice, const glm::mat4& world_to_screen) {
+    slice->texture().bind();
+
+    program_->setMat4("world_to_screen_matrix", world_to_screen);
+    program_->setMat4("orientation_matrix",
+                      slice->orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0)));
+    program_->setBool("hovered", slice->hovered());
+    program_->setBool("has_data", !slice->empty());
+
+    glBindVertexArray(vao_handle_);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+    slice->texture().unbind();
 }
 
 // ReconComponent::DragMachine
