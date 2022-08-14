@@ -121,14 +121,14 @@ public:
     void draw(const glm::mat4& world_to_screen) override;
     void describe() override;
 
-    void setSliceData(std::vector<float>& data,
+    void setSliceData(std::vector<float>&& data,
                       const std::array<int32_t, 2>& size,
                       int slice_idx);
 
-    void setVolumeData(std::vector<float>& data,
+    void setVolumeData(std::vector<float>&& data,
                        const std::array<int32_t, 3>& volume_size);
 
-    void update_histogram(const std::vector<float>& data);
+    void updateHistogram();
 
     void requestSlices();
 

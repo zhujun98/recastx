@@ -14,7 +14,7 @@ Slice::~Slice() = default;
 
 int Slice::id() const { return id_; }
 
-void Slice::setData(const DataType& data, const SizeType& size) {
+void Slice::setData(DataType&& data, const SizeType& size) {
     data_ = data;
     size_ = size;
 

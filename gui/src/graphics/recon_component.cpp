@@ -96,7 +96,7 @@ void ReconComponent::requestSlices() {
     }
 }
 
-void ReconComponent::setSliceData(std::vector<float>& data,
+void ReconComponent::setSliceData(std::vector<float>&& data,
                                   const std::array<int32_t, 2>& size,
                                   int slice_idx) {
     Slice* slice;
@@ -109,28 +109,28 @@ void ReconComponent::setSliceData(std::vector<float>& data,
 
     if (slice == dragged_slice_) return;
 
-    slice->setData(data, size);
+    slice->setData(std::move(data), size);
 
     updateSliceImage(slice);
 }
 
-void ReconComponent::setVolumeData(std::vector<float>& data, 
+void ReconComponent::setVolumeData(std::vector<float>&& data,
                                    const std::array<int32_t, 3>& size) {
     volume_data_ = data;
-    volume_texture_.setData(size[0], size[1], size[2], data);
-    update_histogram(data);
+    volume_texture_.setData(size[0], size[1], size[2], volume_data_);
+    updateHistogram();
 }
 
-void ReconComponent::update_histogram(const std::vector<float>& data) {
+void ReconComponent::updateHistogram() {
     auto bins = 30;
-    auto min = *std::min_element(data.begin(), data.end());
-    auto max = *std::max_element(data.begin(), data.end());
+    auto min = *std::min_element(volume_data_.begin(), volume_data_.end());
+    auto max = *std::max_element(volume_data_.begin(), volume_data_.end());
     if (max == min) max = min + 1;
 
     histogram_.clear();
     histogram_.resize(bins);
 
-    for (auto x : data) {
+    for (auto x : volume_data_) {
         auto bin = (int)(((x - min) / (max - min)) * (bins - 1));
         if (bin < 0) {
             bin = 0;

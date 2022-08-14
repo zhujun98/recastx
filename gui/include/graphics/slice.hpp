@@ -44,7 +44,7 @@ class Slice {
 
     [[nodiscard]] int id() const;
 
-    void setData(const DataType& data, const SizeType& size);
+    void setData(DataType&& data, const SizeType& size);
 
     void updateTexture();
 
