@@ -11,7 +11,6 @@
 #include "object_component.hpp"
 #include "slice.hpp"
 #include "textures.hpp"
-#include "util.hpp"
 
 namespace tomcat::gui {
 
@@ -149,9 +148,6 @@ public:
     std::pair<float, float> overall_min_and_max();
 
     auto generate_slice_idx() { return next_idx_++; }
-
-    static std::tuple<bool, float, glm::vec3> intersectionPoint(
-        glm::mat4 inv_matrix, glm::mat4 orientation, glm::vec2 point);
 };
 
 } // tomcat::gui

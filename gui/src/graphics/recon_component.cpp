@@ -13,6 +13,7 @@
 #include "graphics/recon_component.hpp"
 #include "graphics/primitives.hpp"
 #include "scenes/scene_camera3d.hpp"
+#include "util.hpp"
 
 namespace tomcat::gui {
 
@@ -332,58 +333,6 @@ void ReconComponent::initVolume() {
     scene_.camera().set_look_at(center);
 }
 
-std::tuple<bool, float, glm::vec3> ReconComponent::intersectionPoint(
-        glm::mat4 inv_matrix,
-        glm::mat4 orientation,
-        glm::vec2 point) {
-    auto intersect_ray_plane = [](glm::vec3 origin,
-                                  glm::vec3 direction,
-                                  glm::vec3 base,
-                                  glm::vec3 normal,
-                                  float& distance) -> bool {
-        auto alpha = glm::dot(normal, direction);
-        if (glm::abs(alpha) > 0.001f) {
-            distance = glm::dot((base - origin), normal) / alpha;
-            if (distance >= 0.001f) return true;
-        }
-        return false;
-    };
-
-    // how do we want to do this
-    // end points of plane/line?
-    // first see where the end
-    // points of the square end up
-    // within the box.
-    // in world space:
-    auto o = orientation;
-    auto axis1 = glm::vec3(o[0][0], o[0][1], o[0][2]);
-    auto axis2 = glm::vec3(o[1][0], o[1][1], o[1][2]);
-    auto base = glm::vec3(o[2][0], o[2][1], o[2][2]);
-    base += 0.5f * (axis1 + axis2);
-    auto normal = glm::normalize(glm::cross(axis1, axis2));
-    float distance = -1.0f;
-
-    auto from = inv_matrix * glm::vec4(point.x, point.y, -1.0f, 1.0f);
-    from /= from[3];
-    auto to = inv_matrix * glm::vec4(point.x, point.y, 1.0f, 1.0f);
-    to /= to[3];
-    auto direction = glm::normalize(glm::vec3(to) - glm::vec3(from));
-
-    bool does_intersect = intersect_ray_plane(glm::vec3(from), direction, base, normal, distance);
-
-    // now check if the actual point is inside the plane
-    auto intersection = glm::vec3(from) + direction * distance;
-    intersection -= base;
-    auto along_1 = glm::dot(intersection, glm::normalize(axis1));
-    auto along_2 = glm::dot(intersection, glm::normalize(axis2));
-    if (glm::abs(along_1) > 0.5f * glm::length(axis1) ||
-        glm::abs(along_2) > 0.5f * glm::length(axis2)) {
-        does_intersect = false;
-    }
-
-    return std::make_tuple(does_intersect, distance, intersection);
-}
-
 void ReconComponent::updateSliceImage(Slice* slice) {
     auto[min_v, max_v] = slice->minMaxVals();
     auto nonzero = std::fabs(min_v) > 1e-6 && std::fabs(max_v) > 1e-6;
@@ -403,8 +352,7 @@ void ReconComponent::updateHoveringSlice(float x, float y) {
     for (auto& [sid, slice] : slices_) {
         if (slice->inactive()) continue;
         slice->setHovered(false);
-        auto maybe_point = intersectionPoint(
-            inv_matrix, slice->orientation4(), glm::vec2(x, y));
+        auto maybe_point = intersectionPoint(inv_matrix, slice->orientation4(), glm::vec2(x, y));
         if (std::get<0>(maybe_point)) {
             auto z = std::get<1>(maybe_point);
             if (z < best_z) {
@@ -456,17 +404,14 @@ void ReconComponent::drawSlice(Slice* slice, const glm::mat4& world_to_screen) {
 
 // ReconComponent::DragMachine
 
-ReconComponent::DragMachine::DragMachine(ReconComponent& comp,
-                                         const glm::vec2& initial,
-                                         DragType type)
+ReconComponent::DragMachine::DragMachine(ReconComponent& comp, const glm::vec2& initial, DragType type)
     : comp_(comp), initial_(initial), type_(type) {}
 
 ReconComponent::DragMachine::~DragMachine() = default;
 
 // ReconComponent::SliceTranslator
 
-ReconComponent::SliceTranslator::SliceTranslator(ReconComponent &comp,
-                                                 const glm::vec2& initial)
+ReconComponent::SliceTranslator::SliceTranslator(ReconComponent &comp, const glm::vec2& initial)
     : DragMachine(comp, initial, DragType::translator) {}
 
 ReconComponent::SliceTranslator::~SliceTranslator() = default;
@@ -545,8 +490,7 @@ void ReconComponent::SliceTranslator::onDrag(glm::vec2 delta) {
 
 // ReconComponent::SliceRotator
 
-ReconComponent::SliceRotator::SliceRotator(ReconComponent& comp,
-                                           const glm::vec2& initial)
+ReconComponent::SliceRotator::SliceRotator(ReconComponent& comp, const glm::vec2& initial)
     : DragMachine(comp, initial, DragType::rotator) {
     // 1. need to identify the opposite axis
     // a) get the position within the slice
@@ -557,7 +501,7 @@ ReconComponent::SliceRotator::SliceRotator(ReconComponent& comp,
     assert(slice);
     auto o = slice->orientation4();
 
-    auto maybe_point = ReconComponent::intersectionPoint(inv_matrix, o, initial_);
+    auto maybe_point = intersectionPoint(inv_matrix, o, initial_);
     assert(std::get<0>(maybe_point));
 
     auto axis1 = glm::vec3(o[0][0], o[0][1], o[0][2]);
