@@ -306,8 +306,11 @@ bool ReconComponent::handleMouseMoved(double x, double y) {
 }
 
 void ReconComponent::initSlices() {
-    for (size_t i = 0; i < 3; ++i) slices_[i] = std::make_unique<Slice>(i);
+    for (int i = 0; i < 3; ++i) slices_[i] = std::make_unique<Slice>(i);
+    resetSlices();
+}
 
+void ReconComponent::resetSlices() {
     // slice along axis 0 = x
     slices_[0]->setOrientation(glm::vec3(0.0f, -1.0f, -1.0f),
                                glm::vec3(0.0f, 2.0f, 0.0f),

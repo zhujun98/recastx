@@ -103,6 +103,8 @@ class ReconComponent : public ObjectComponent {
     bool show_ = true;
 
     void initSlices();
+
+    void resetSlices();
   
     void initVolume();
   
