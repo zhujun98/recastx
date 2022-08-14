@@ -173,7 +173,7 @@ std::pair<float, float> ReconComponent::overall_min_and_max() {
             overall_max + (0.2f * (overall_max - overall_min))};
 }
 
-void ReconComponent::draw(glm::mat4 world_to_screen) {
+void ReconComponent::draw(const glm::mat4& world_to_screen) {
     if (!show_) return;
 
     glEnable(GL_DEPTH_TEST);

@@ -46,7 +46,7 @@ void AxesComponent::describe() {
     ImGui::Checkbox("Show axes", &show_);
 }
 
-void AxesComponent::draw(glm::mat4 world_to_screen) {
+void AxesComponent::draw(const glm::mat4& world_to_screen) {
     if (!show_) return;
 
     // TODO draw axes on screen, should have access to camera here

@@ -41,7 +41,7 @@ class PartitioningComponent : public ObjectComponent {
     explicit PartitioningComponent(Scene& scene);
     ~PartitioningComponent() override;
 
-    void draw(glm::mat4 world_to_screen) override;
+    void draw(const glm::mat4& world_to_screen) override;
 
     [[nodiscard]] std::string identifier() const override { return "partitioning"; }
 

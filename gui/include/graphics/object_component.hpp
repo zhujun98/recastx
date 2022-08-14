@@ -13,7 +13,7 @@ class ObjectComponent : public InputHandler, public Ticker {
     ObjectComponent() = default;
     virtual ~ObjectComponent() = default;
 
-    virtual void draw(glm::mat4 /* world_to_screen */) {}
+    virtual void draw(const glm::mat4& /* world_to_screen */) {}
     virtual std::string identifier() const = 0;
     void tick(float /* time_elapsed */) override {}
     virtual void describe() {}

@@ -118,7 +118,7 @@ public:
     explicit ReconComponent(Scene& scene);
     ~ReconComponent() override;
 
-    void draw(glm::mat4 world_to_screen) override;
+    void draw(const glm::mat4& world_to_screen) override;
     void describe() override;
 
     void setSliceData(std::vector<float>& data,
