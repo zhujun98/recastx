@@ -1,13 +1,12 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "graphics/slice.hpp"
-#include "math_common.hpp"
 #include "util.hpp"
 
 namespace tomcat::gui {
 
-Slice::Slice(int slice_id) : id_(slice_id), size_{32, 32}, texture_(32, 32) {
-    updateTexture();
+Slice::Slice(int slice_id) : id_(slice_id), size_({8, 8}) {
+    setData(DataType(size_[0] * size_[1], 0), size_);
 }
 
 Slice::~Slice() = default;
@@ -19,13 +18,12 @@ void Slice::setData(DataType&& data, const SizeType& size) {
     size_ = size;
 
     updateMinMaxVal();
-}
-
-void Slice::updateTexture() {
-    if (data_.empty()) return;
 
     texture_.setData(data_, size_[0], size_[1]);
 }
+
+void Slice::bind() { texture_.bind(); }
+void Slice::unbind() { texture_.unbind(); }
 
 bool Slice::empty() const { return data_.empty(); }
 bool Slice::hovered() const { return hovered_; }
@@ -36,7 +34,7 @@ void Slice::setHovered(bool state) {
     hovered_ = state;
 }
 
-void Slice::setOrientation(glm::vec3 base, glm::vec3 x, glm::vec3 y) {
+void Slice::setOrientation(const glm::vec3& base, const glm::vec3& x, const glm::vec3& y) {
     float orientation[16] = {x.x,  y.x,  base.x, 0.0f,  // 1
                              x.y,  y.y,  base.y, 0.0f,  // 2
                              x.z,  y.z,  base.z, 0.0f,  // 3
@@ -61,11 +59,11 @@ Slice::Orient4Type& Slice::orientation4() {
     return orient_;
 }
 
-const std::array<float, 2>& Slice::minMaxVals() const { return minMaxVals_; }
+const std::array<float, 2>& Slice::minMaxVals() const { return min_max_vals_; }
 
 void Slice::updateMinMaxVal() {
-    minMaxVals_[0] = *std::min_element(data_.begin(), data_.end());
-    minMaxVals_[1] = *std::max_element(data_.begin(), data_.end());
+    min_max_vals_[0] = *std::min_element(data_.begin(), data_.end());
+    min_max_vals_[1] = *std::max_element(data_.begin(), data_.end());
 }
 
 } // tomcat::gui

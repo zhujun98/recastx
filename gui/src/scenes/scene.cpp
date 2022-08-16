@@ -22,12 +22,6 @@ void Scene::tick(float time_elapsed) {
 
 void Scene::describe() {
     camera_->describe();
-
-    for (auto& id_and_comp : components_) {
-        if (ImGui::CollapsingHeader(id_and_comp.first.c_str())) {
-            id_and_comp.second->describe();
-        }
-    }
 }
 
 bool Scene::handleMouseButton(int button, int action) {

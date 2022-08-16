@@ -49,7 +49,7 @@ class Scene : public InputHandler, public PacketPublisher, public Ticker {
     bool handleMouseMoved(double x, double y) override;
     bool handleKey(int key, bool down, int mods) override;
     void tick(float time_elapsed) override;
-    void describe();
+    virtual void describe();
 
     [[nodiscard]] SceneCamera& camera();
 };

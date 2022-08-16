@@ -15,6 +15,8 @@ class Scene3dSliceView : public Scene {
     Scene3dSliceView();
     ~Scene3dSliceView() override;
 
+    void describe() override;
+
     void draw(glm::mat4 window_matrix) override;
 };
 

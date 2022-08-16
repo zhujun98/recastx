@@ -22,7 +22,7 @@ class Projection {
 
   public:
 
-    Projection(int id_) : id(id_), data_texture(32, 32) {
+    Projection(int id_) : id(id_) {
         set_orientation(glm::vec3(-4.0f, -1.0f, -1.0f),
                         glm::vec3(0.0f, 0.0f, 2.0f),
                         glm::vec3(0.0f, 2.0f, 0.0f));
@@ -57,7 +57,7 @@ class Projection {
 
     int contributions = 0;
     int id;
-    Texture<uint32_t> data_texture;
+    Texture2d<uint32_t> data_texture;
     glm::mat4 detector_orientation;
     std::vector<float> data;
     std::array<int, 2> size;

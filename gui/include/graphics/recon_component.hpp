@@ -11,6 +11,7 @@
 #include "object_component.hpp"
 #include "slice.hpp"
 #include "textures.hpp"
+#include "volume.hpp"
 
 namespace tomcat::gui {
 
@@ -63,8 +64,7 @@ class ReconComponent : public ObjectComponent {
 
     std::map<int, std::unique_ptr<Slice>> slices_;
 
-    std::vector<float> volume_data_;
-    Texture3d<float> volume_texture_;
+    std::unique_ptr<Volume> volume_;
     GLuint cm_texture_id_;
 
     glm::mat4 volume_transform_;
@@ -94,27 +94,19 @@ class ReconComponent : public ObjectComponent {
     double prev_x_ = -1.1;
     double prev_y_ = -1.1;
 
-    float lower_value_ = -1.0f;
-    float upper_value_ = 1.0f;
-    bool value_not_set_ = true;
-    float volume_min_ = 0.0f;
-    float volume_max_ = 1.0f;
-
-    bool show_ = true;
-
     void initSlices();
 
     void resetSlices();
   
     void initVolume();
-  
-    void updateSliceImage(Slice* slice);
 
     void updateHoveringSlice(float x, float y);
 
     void maybeSwitchDragMachine(DragType type);
 
     void drawSlice(Slice* slice, const glm::mat4& world_to_screen);
+
+    std::array<float, 2> minMaxValsSlices();
 
 public:
 
@@ -131,8 +123,6 @@ public:
     void setVolumeData(std::vector<float>&& data,
                        const std::array<int32_t, 3>& volume_size);
 
-    void updateHistogram();
-
     void requestSlices();
 
     bool handleMouseButton(int button, int action) override;
@@ -146,8 +136,6 @@ public:
     auto& slices() { return slices_; }
 
     [[nodiscard]] std::string identifier() const override { return "reconstruction"; }
-
-    std::pair<float, float> overall_min_and_max();
 
     auto generate_slice_idx() { return next_idx_++; }
 };
