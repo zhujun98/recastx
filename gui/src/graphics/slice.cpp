@@ -1,13 +1,12 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "graphics/slice.hpp"
-#include "math_common.hpp"
 #include "util.hpp"
 
 namespace tomcat::gui {
 
-Slice::Slice(int slice_id) : id_(slice_id), size_{32, 32}, texture_(32, 32) {
-    updateTexture();
+Slice::Slice(int slice_id) : id_(slice_id), size_({8, 8}) {
+    setData(DataType(size_[0] * size_[1], 0), size_);
 }
 
 Slice::~Slice() = default;
@@ -19,13 +18,12 @@ void Slice::setData(DataType&& data, const SizeType& size) {
     size_ = size;
 
     updateMinMaxVal();
-}
-
-void Slice::updateTexture() {
-    if (data_.empty()) return;
 
     texture_.setData(data_, size_[0], size_[1]);
 }
+
+void Slice::bind() { texture_.bind(); }
+void Slice::unbind() { texture_.unbind(); }
 
 bool Slice::empty() const { return data_.empty(); }
 bool Slice::hovered() const { return hovered_; }

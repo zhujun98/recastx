@@ -22,7 +22,7 @@ class Projection {
 
   public:
 
-    Projection(int id_) : id(id_), data_texture(32, 32) {
+    Projection(int id_) : id(id_) {
         set_orientation(glm::vec3(-4.0f, -1.0f, -1.0f),
                         glm::vec3(0.0f, 0.0f, 2.0f),
                         glm::vec3(0.0f, 2.0f, 0.0f));

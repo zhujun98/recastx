@@ -57,6 +57,7 @@ set(SOURCE_NAMES
     "src/graphics/primitives.cpp"
     "src/graphics/shader_program.cpp"
     "src/graphics/slice.cpp"
+    "src/graphics/volume.cpp"
     "src/graphics/renderer.cpp"
     "src/graphics/render_target.cpp"
     "src/graphics/interface.cpp"

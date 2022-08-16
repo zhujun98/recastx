@@ -2,6 +2,7 @@
 #define GUI_GRAPHICS_TEXTURES_H
 
 #include <algorithm>
+#include <exception>
 #include <limits>
 #include <iostream>
 #include <vector>
@@ -54,11 +55,10 @@ class Texture {
 template <typename T = unsigned char>
 class Texture2d : public Texture {
 
-    GLuint texture_id_ = -1;
-    int x_;
-    int y_;
+    int x_ = 0;
+    int y_ = 0;
 
-    void fillTexture(const std::vector<T>& data) {
+    void genTexture(const std::vector<T>& data) {
         // In reference to the hack in the 3D fill_texture below, we
         // have found that 1x1 textures are supported in intel
         // integrated graphics.
@@ -69,7 +69,6 @@ class Texture2d : public Texture {
 
         glTexImage2D(GL_TEXTURE_2D, 0, format_type<T>(), x_, y_, 0, GL_RED,
                      data_type<T>(), data.data());
-
         glGenerateMipmap(GL_TEXTURE_2D);
 
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -77,20 +76,12 @@ class Texture2d : public Texture {
 
   public:
 
-    Texture2d(int x, int y) : x_(x), y_(y) {
+    Texture2d() : Texture() {
         glGenTextures(1, &texture_id_);
-        std::vector<T> data(x * y);
-        auto lim = std::numeric_limits<T>::max() - 2;
-        for (int i = 0; i < x * y; ++i) {
-            data[i] = lim * ((i + i / x) % 2);
-        }
-        fillTexture(data);
-    }
+    };
 
-    ~Texture2d() {
-        if (texture_id_ >= 0) {
-            glDeleteTextures(1, &texture_id_);
-        }
+    ~Texture2d() override {
+        if (texture_id_ >= 0) glDeleteTextures(1, &texture_id_);
     }
 
     Texture2d(Texture2d&& other) noexcept {
@@ -111,7 +102,7 @@ class Texture2d : public Texture {
         x_ = x;
         y_ = y;
         assert((int)data.size() == x * y);
-        fillTexture(data);
+        genTexture(data);
     }
 
     void bind() const override {
@@ -126,19 +117,18 @@ class Texture2d : public Texture {
 };
 
 template <typename T = unsigned char>
-class Texture3d : public Texture {
+class Texture3d  : public Texture {
 
-    GLuint texture_id_ = -1;
-    int x_;
-    int y_;
-    int z_;
+    int x_ = 0;
+    int y_ = 0;
+    int z_ = 0;
 
-    void fillTexture(const std::vector<T>& data) {
+    void genTexture(const std::vector<T>& data) {
         // This is a hack to prevent segfaults on laptops with integrated intel graphics.
         // For some reason, the i965_dri.so module crashes on textures smaller than 8x8x8 pixels.
         if (x_ < 8 || y_ < 8 || z_ < 8) {
-            std::cerr << "Showing a slice smaller than 8x8 pixels is not supported due to bugs in Intel GPU drivers\n" << std::endl;
-            return ;
+            throw std::runtime_error("Showing a slice smaller than 8x8 pixels is not supported "
+                                     "due to bugs in Intel GPU drivers");
         }
 
         glBindTexture(GL_TEXTURE_3D, texture_id_);
@@ -152,7 +142,6 @@ class Texture3d : public Texture {
 
         glTexImage3D(GL_TEXTURE_3D, 0, format_type<T>(), x_, y_, z_, 0, GL_RED,
                      data_type<T>(), data.data());
-
         glGenerateMipmap(GL_TEXTURE_3D);
 
         glBindTexture(GL_TEXTURE_3D, 0);
@@ -160,17 +149,13 @@ class Texture3d : public Texture {
 
   public:
 
-    Texture3d(int x, int y, int z) : x_(x), y_(y), z_(z) {
+    Texture3d() : Texture() {
         glGenTextures(1, &texture_id_);
-        std::vector<T> data(x * y * z);
-        auto lim = std::numeric_limits<T>::max() - 2;
-        for (int i = 0; i < x * y * z; ++i) {
-            data[i] = lim * ((i + i / x + i / (x * y)) % 2);
-        }
-        fillTexture(data);
-    }
+    };
 
-    ~Texture3d() { glDeleteTextures(1, &texture_id_); }
+    ~Texture3d() override {
+        if (texture_id_ >= 0) glDeleteTextures(1, &texture_id_);
+    }
 
     Texture3d(const Texture3d&) = delete;
     Texture3d& operator=(const Texture3d&) = delete;
@@ -196,7 +181,7 @@ class Texture3d : public Texture {
         y_ = y;
         z_ = z;
         assert((int)data.size() == x * y * z);
-        fillTexture(data);
+        genTexture(data);
     }
 
     void bind() const override {
