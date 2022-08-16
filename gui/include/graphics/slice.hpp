@@ -56,7 +56,7 @@ class Slice {
 
     void setHovered(bool state);
 
-    void setOrientation(glm::vec3 base, glm::vec3 x, glm::vec3 y);
+    void setOrientation(const glm::vec3& base, const glm::vec3& x, const glm::vec3& y);
     void setOrientation(const Slice::Orient4Type& orient);
 
     [[nodiscard]] Orient3Type orientation3() const;

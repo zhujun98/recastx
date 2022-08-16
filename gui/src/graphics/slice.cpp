@@ -34,7 +34,7 @@ void Slice::setHovered(bool state) {
     hovered_ = state;
 }
 
-void Slice::setOrientation(glm::vec3 base, glm::vec3 x, glm::vec3 y) {
+void Slice::setOrientation(const glm::vec3& base, const glm::vec3& x, const glm::vec3& y) {
     float orientation[16] = {x.x,  y.x,  base.x, 0.0f,  // 1
                              x.y,  y.y,  base.y, 0.0f,  // 2
                              x.z,  y.z,  base.z, 0.0f,  // 3
