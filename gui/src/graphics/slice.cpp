@@ -59,11 +59,11 @@ Slice::Orient4Type& Slice::orientation4() {
     return orient_;
 }
 
-const std::array<float, 2>& Slice::minMaxVals() const { return minMaxVals_; }
+const std::array<float, 2>& Slice::minMaxVals() const { return min_max_vals_; }
 
 void Slice::updateMinMaxVal() {
-    minMaxVals_[0] = *std::min_element(data_.begin(), data_.end());
-    minMaxVals_[1] = *std::max_element(data_.begin(), data_.end());
+    min_max_vals_[0] = *std::min_element(data_.begin(), data_.end());
+    min_max_vals_[1] = *std::max_element(data_.begin(), data_.end());
 }
 
 } // tomcat::gui

@@ -31,7 +31,7 @@ class Slice {
     bool hovered_ = false;
     bool inactive_ = false;
 
-    std::array<float, 2> minMaxVals_ {std::numeric_limits<float>::min(), std::numeric_limits<float>::max()};
+    std::array<float, 2> min_max_vals_;
 
     Orient4Type orient_;
 

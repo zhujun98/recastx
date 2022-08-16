@@ -2,7 +2,6 @@
 #define GUI_GRAPHICS_VOLUME_H
 
 #include <array>
-#include <limits>
 
 #include "textures.hpp"
 
@@ -22,7 +21,7 @@ class Volume {
 
     Texture3d<float> texture_;
 
-    std::array<float, 2> minMaxVals_ {std::numeric_limits<float>::min(), std::numeric_limits<float>::max()};
+    std::array<float, 2> min_max_vals_;
 
     void updateMinMaxVal();
 

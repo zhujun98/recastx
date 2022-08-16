@@ -21,10 +21,10 @@ void Volume::bind() { texture_.bind(); }
 void Volume::unbind() { texture_.unbind(); }
 
 void Volume::updateMinMaxVal() {
-    minMaxVals_[0] = *std::min_element(data_.begin(), data_.end());
-    minMaxVals_[1] = *std::max_element(data_.begin(), data_.end());
+    min_max_vals_[0] = *std::min_element(data_.begin(), data_.end());
+    min_max_vals_[1] = *std::max_element(data_.begin(), data_.end());
 }
 
-const std::array<float, 2>& Volume::minMaxVals() const { return minMaxVals_; }
+const std::array<float, 2>& Volume::minMaxVals() const { return min_max_vals_; }
 
 } // tomcat::gui
