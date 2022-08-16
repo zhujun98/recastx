@@ -94,12 +94,6 @@ class ReconComponent : public ObjectComponent {
     double prev_x_ = -1.1;
     double prev_y_ = -1.1;
 
-    float lower_value_ = -1.0f;
-    float upper_value_ = 1.0f;
-    bool value_not_set_ = true;
-
-    bool show_ = true;
-
     void initSlices();
 
     void resetSlices();

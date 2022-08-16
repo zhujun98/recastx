@@ -115,13 +115,9 @@ void ReconComponent::setVolumeData(std::vector<float>&& data, const std::array<i
     volume_->setData(std::move(data), size);
 }
 
-void ReconComponent::describe() {
-    ImGui::Checkbox("Show reconstruction", &show_);
-}
+void ReconComponent::describe() {}
 
 void ReconComponent::draw(const glm::mat4& world_to_screen) {
-    if (!show_) return;
-
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
 
@@ -183,8 +179,6 @@ void ReconComponent::draw(const glm::mat4& world_to_screen) {
 }
 
 bool ReconComponent::handleMouseButton(int button, int action) {
-    if (!show_) return false;
-
     if (action == GLFW_PRESS) {
         if (button == GLFW_MOUSE_BUTTON_LEFT) {
             if (hovered_slice_ != nullptr) {
@@ -225,8 +219,6 @@ bool ReconComponent::handleMouseButton(int button, int action) {
 }
 
 bool ReconComponent::handleMouseMoved(double x, double y) {
-    if (!show_) return false;
-
     // update slice that is being hovered over
     y = -y;
 

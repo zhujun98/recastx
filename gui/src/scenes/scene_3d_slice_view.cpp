@@ -1,5 +1,7 @@
 #include <algorithm>
 
+#include <imgui.h>
+
 #include "graphics/axes_component.hpp"
 #include "graphics/geom_component.hpp"
 #include "graphics/partitioning_component.hpp"
@@ -13,11 +15,16 @@ Scene3dSliceView::Scene3dSliceView() : Scene() {
     camera_ = std::make_unique<SceneCamera3d>();
     this->add_component(std::make_unique<AxesComponent>(*this));
     this->add_component(std::make_unique<ReconComponent>(*this));
-    this->add_component(std::make_unique<GeomComponent>(*this));
-    this->add_component(std::make_unique<PartitioningComponent>(*this));
 }
 
 Scene3dSliceView::~Scene3dSliceView() = default;
+
+void Scene3dSliceView::describe() {
+    Scene::describe();
+
+    get_component("axes").describe();
+    get_component("reconstruction").describe();
+}
 
 void Scene3dSliceView::draw(glm::mat4 window_matrix) {
     auto world_to_screen = window_matrix * camera_->matrix();
