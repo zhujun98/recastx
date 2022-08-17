@@ -46,7 +46,7 @@ class ReconstructionProtocol : public SceneModuleProtocol {
             case PacketDesc::slice_data: {
                 SliceDataPacket& packet = *(SliceDataPacket*)event_packet.get();
 
-                auto& recon_component = (ReconComponent&)window.scene().get_component("reconstruction");
+                auto& recon_component = (ReconComponent&)window.scene().component("reconstruction");
                 recon_component.setSliceData(std::move(packet.data), packet.slice_size, packet.slice_id);
                 spdlog::info("Set slice data {}", packet.slice_id);
                 break;
@@ -54,7 +54,7 @@ class ReconstructionProtocol : public SceneModuleProtocol {
             case PacketDesc::volume_data: {
                 VolumeDataPacket& packet = *(VolumeDataPacket*)event_packet.get();
 
-                auto& recon_component = (ReconComponent&)window.scene().get_component("reconstruction");
+                auto& recon_component = (ReconComponent&)window.scene().component("reconstruction");
                 recon_component.setVolumeData(std::move(packet.data), packet.volume_size);
                 spdlog::info("Set volume data");
                 break;

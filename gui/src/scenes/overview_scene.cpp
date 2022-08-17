@@ -13,8 +13,8 @@ namespace tomcat::gui {
 
 OverviewScene::OverviewScene() : Scene() {
     camera_ = std::make_unique<SceneCamera3d>();
-    this->add_component(std::make_unique<AxesComponent>(*this));
-    this->add_component(std::make_unique<ReconComponent>(*this));
+    this->addComponent(std::make_unique<AxesComponent>(*this));
+    this->addComponent(std::make_unique<ReconComponent>(*this));
 }
 
 OverviewScene::~OverviewScene() = default;
@@ -22,8 +22,8 @@ OverviewScene::~OverviewScene() = default;
 void OverviewScene::describe() {
     Scene::describe();
 
-    get_component("axes").describe();
-    get_component("reconstruction").describe();
+    component("axes").describe();
+    component("reconstruction").describe();
 }
 
 void OverviewScene::draw(glm::mat4 window_matrix) {

@@ -36,12 +36,10 @@ class Scene : public InputHandler, public PacketPublisher, public Ticker {
 
     virtual void draw(glm::mat4 window_matrix) = 0;
 
-    void add_component(std::unique_ptr<ObjectComponent> component) {
-        components_.insert(std::make_pair(component->identifier(), std::move(component)));
-    }
+    void addComponent(std::unique_ptr<ObjectComponent> component);
 
-    ObjectComponent& get_component(const std::string& identifier) {
-        return *components_[identifier].get();
+    ObjectComponent& component(const std::string& identifier) {
+        return *components_[identifier];
     }
 
     bool handleMouseButton(int button, int action) override;

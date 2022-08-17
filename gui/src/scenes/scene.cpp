@@ -13,6 +13,10 @@ Scene::~Scene() {
     glDeleteBuffers(1, &vbo_handle_);
 }
 
+void Scene::addComponent(std::unique_ptr<ObjectComponent> component) {
+    components_.insert(std::make_pair(component->identifier(), std::move(component)));
+}
+
 void Scene::tick(float time_elapsed) {
     camera_->tick(time_elapsed);
     for (auto& id_and_comp : components_) {
