@@ -6,27 +6,27 @@
 #include "graphics/geom_component.hpp"
 #include "graphics/partitioning_component.hpp"
 #include "graphics/recon_component.hpp"
-#include "scenes/scene_3d_slice_view.hpp"
+#include "scenes/overview_scene.hpp"
 #include "scenes/scene_camera3d.hpp"
 
 namespace tomcat::gui {
 
-Scene3dSliceView::Scene3dSliceView() : Scene() {
+OverviewScene::OverviewScene() : Scene() {
     camera_ = std::make_unique<SceneCamera3d>();
     this->add_component(std::make_unique<AxesComponent>(*this));
     this->add_component(std::make_unique<ReconComponent>(*this));
 }
 
-Scene3dSliceView::~Scene3dSliceView() = default;
+OverviewScene::~OverviewScene() = default;
 
-void Scene3dSliceView::describe() {
+void OverviewScene::describe() {
     Scene::describe();
 
     get_component("axes").describe();
     get_component("reconstruction").describe();
 }
 
-void Scene3dSliceView::draw(glm::mat4 window_matrix) {
+void OverviewScene::draw(glm::mat4 window_matrix) {
     auto world_to_screen = window_matrix * camera_->matrix();
     std::vector<ObjectComponent *> drawables;
     for (auto &component : components_) drawables.push_back(component.second.get());

@@ -6,14 +6,14 @@
 #include "tomcat/tomcat.hpp"
 
 #include "scenes/scene2d.hpp"
-#include "scenes/scene_3d_slice_view.hpp"
+#include "scenes/overview_scene.hpp"
 #include "window.hpp"
 
 
 namespace tomcat::gui {
 
 MainWindow::MainWindow() {
-    std::unique_ptr<Scene> scene = std::make_unique<Scene3dSliceView>();
+    std::unique_ptr<Scene> scene = std::make_unique<OverviewScene>();
     addScene("TOMCAT live 3D preview", std::move(scene));
 };
 

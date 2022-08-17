@@ -8,12 +8,12 @@
 
 namespace tomcat::gui {
 
-class Scene3dSliceView : public Scene {
+class OverviewScene : public Scene {
 
   public:
 
-    Scene3dSliceView();
-    ~Scene3dSliceView() override;
+    OverviewScene();
+    ~OverviewScene() override;
 
     void describe() override;
 
