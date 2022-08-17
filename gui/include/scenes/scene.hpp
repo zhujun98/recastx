@@ -34,6 +34,7 @@ class Scene : public InputHandler, public PacketPublisher, public Ticker {
     Scene();
     virtual ~Scene();
 
+    virtual void describe();
     virtual void draw(glm::mat4 window_matrix) = 0;
 
     void addComponent(std::unique_ptr<ObjectComponent> component);
@@ -47,7 +48,6 @@ class Scene : public InputHandler, public PacketPublisher, public Ticker {
     bool handleMouseMoved(double x, double y) override;
     bool handleKey(int key, bool down, int mods) override;
     void tick(float time_elapsed) override;
-    virtual void describe();
 
     [[nodiscard]] SceneCamera& camera();
 };
