@@ -13,31 +13,16 @@
 namespace tomcat::gui {
 
 Interface::Interface(GLFWwindow* glfw_window, MainWindow& main_window) : window_(main_window) {
-    // Setup ImGui binding
     ImGui::CreateContext();
-
-    // Load Fonts
-    // (there is a default font, this is only if you want to change it. see
-    // extra_fonts/README.txt for more details)
-    ImGuiIO& io = ImGui::GetIO();
 
     ImGui_ImplGlfw_InitForOpenGL(glfw_window, false);
     ImGui_ImplOpenGL3_Init();
 
-    std::string other_font = "../data/iosevka-medium.ttf";
-    std::ifstream infile(other_font);
-    if (infile.good()) {
-        io.Fonts->AddFontFromFileTTF(other_font.c_str(), 20.0f);
-    } else {
-        std::cout << "Can not find Iosevka font, resorting back to default\n";
-        io.Fonts->AddFontDefault();
-    }
-    io.MouseDrawCursor = false;
-
     ImGui::StyleColorsDark();
 
-    // prevent ini file
-    io.IniFilename = "";
+    ImGuiIO& io = ImGui::GetIO();
+    io.MouseDrawCursor = false;
+    io.IniFilename = ""; // prevent ini file
 }
 
 Interface::~Interface() { ImGui_ImplGlfw_Shutdown(); }
