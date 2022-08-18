@@ -2,12 +2,14 @@
 
 #include <boost/program_options.hpp>
 
-#include "graphics/interface.hpp"
-#include "graphics/renderer.hpp"
-#include "scenes/scene_camera.hpp"
-#include "input.hpp"
+#include <GL/gl3w.h>
+#include <GLFW/glfw3.h>
+#include <glm/gtx/transform.hpp>
+#include <imgui.h>
+
+#include "application.hpp"
 #include "server.hpp"
-#include "window.hpp"
+#include "graphics/scenes/scene3d.hpp"
 
 
 int main(int argc, char** argv) {
@@ -30,27 +32,17 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    Renderer renderer;
+    auto& app = Application::instance();
 
-    auto& input = Input::instance(renderer.window());
+    Scene3d scene;
 
-    MainWindow window;
-    Interface interface(renderer.window(), window);
-    Server server(window, opts["port"].as<int>());
+    Server server(opts["port"].as<int>());
 
-    input.registerHandler(interface);
-    input.registerHandler(window);
-
-    renderer.register_ticker(input);
-    renderer.register_ticker(window);
-    renderer.register_ticker(server);
-
-    renderer.register_target(interface);
-    renderer.register_target(window);
+    app.setScene(&scene);
+    app.setPublisher(&server);
 
     server.start();
-
-    renderer.spin();
+    app.start();
 
     return 0;
 }

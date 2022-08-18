@@ -1,5 +1,5 @@
-#ifndef GUI_GRAPHICS_VOLUME_H
-#define GUI_GRAPHICS_VOLUME_H
+#ifndef GUI_VOLUME_H
+#define GUI_VOLUME_H
 
 #include <array>
 
@@ -39,6 +39,6 @@ public:
 };
 
 
-} // tomcat::gui
+} // namespace tomcat::gui
 
-#endif // GUI_GRAPHICS_VOLUME_H
+#endif // GUI_VOLUME_H

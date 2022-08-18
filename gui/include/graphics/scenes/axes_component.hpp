@@ -1,15 +1,16 @@
-#pragma once
+#ifndef GUI_AXES_COMPONENT_H
+#define GUI_AXES_COMPONENT_H
 
 #include <memory>
 
-#include "shaders/shader_program.hpp"
-#include "object_component.hpp"
+#include "scene_component.hpp"
+#include "graphics/shader_program.hpp"
 
 namespace tomcat::gui {
 
 class Scene;
 
-class AxesComponent : public ObjectComponent {
+class AxesComponent : public SceneComponent {
 
     Scene& scene_;
 
@@ -25,7 +26,7 @@ class AxesComponent : public ObjectComponent {
 
     explicit AxesComponent(Scene& scene);
 
-    void draw(const glm::mat4& world_to_screen) override;
+    void render(const glm::mat4& world_to_screen) override;
 
     [[nodiscard]] std::string identifier() const override { return "axes"; }
 
@@ -33,3 +34,5 @@ class AxesComponent : public ObjectComponent {
 };
 
 }  // tomcat::gui
+
+#endif // GUI_AXES_COMPONENT_H

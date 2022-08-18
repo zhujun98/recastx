@@ -1,4 +1,5 @@
 #include "graphics/primitives.hpp"
+
 namespace tomcat::gui {
 
 const GLfloat* line() {
@@ -77,4 +78,4 @@ const GLfloat* alt_pyramid() {
 
 
 
-} // tomcat::gui
+} // namespace tomcat::gui

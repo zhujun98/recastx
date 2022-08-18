@@ -1,9 +1,9 @@
 #include <iostream>
 
-#include <imgui.h>
+#include "imgui.h"
 
-#include "graphics/axes_component.hpp"
-#include "scenes/scene_camera3d.hpp"
+#include "graphics/scenes/axes_component.hpp"
+#include "graphics/scenes/scene_camera3d.hpp"
 
 namespace tomcat::gui {
 
@@ -33,10 +33,10 @@ AxesComponent::AxesComponent(Scene &scene) : scene_(scene) {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
     auto vert =
-#include "../src/shaders/lines.vert"
+#include "../shaders/lines.vert"
       ;
     auto frag =
-#include "../src/shaders/lines.frag"
+#include "../shaders/lines.frag"
       ;
 
     axes_program_ = std::make_unique<ShaderProgram>(vert, frag);
@@ -46,7 +46,7 @@ void AxesComponent::describe() {
     ImGui::Checkbox("Show axes", &show_);
 }
 
-void AxesComponent::draw(const glm::mat4& world_to_screen) {
+void AxesComponent::render(const glm::mat4& world_to_screen) {
     if (!show_) return;
 
     // TODO draw axes on screen, should have access to camera here

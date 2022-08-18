@@ -141,4 +141,4 @@ class Path3 {
 
 std::ostream& operator<<(std::ostream& out, Path3 const& p);
 
-} // tomcat::gui
+} // namespace tomcat::gui

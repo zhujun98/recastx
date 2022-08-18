@@ -4,7 +4,7 @@ namespace tomcat::gui {
 
 class Ticker {
   public:
-      virtual void tick(float time_elapsed) = 0;
+      virtual void tick(double /* time_elapsed */);
 };
 
 } // tomcat::gui

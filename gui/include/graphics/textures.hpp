@@ -1,5 +1,5 @@
-#ifndef GUI_GRAPHICS_TEXTURES_H
-#define GUI_GRAPHICS_TEXTURES_H
+#ifndef GUI_TEXTURES_H
+#define GUI_TEXTURES_H
 
 #include <algorithm>
 #include <exception>
@@ -194,6 +194,6 @@ class Texture3d  : public Texture {
     }
 };
 
-}  // tomcat::gui
+}  // namespace tomcat::gui
 
-#endif // GUI_GRAPHICS_TEXTURES_H
+#endif // GUI_TEXTURES_H

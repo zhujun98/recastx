@@ -4,7 +4,7 @@
 
 #include <imgui.h>
 
-#include "scenes/scene_camera.hpp"
+#include "graphics/scenes/scene_camera.hpp"
 
 namespace tomcat::gui {
 
@@ -68,4 +68,4 @@ void SceneCamera::describe() {
     if (prev_cm != curr_cm_) setColormap(curr_cm_);
 }
 
-} // tomcat::gui
+} // namespace tomcat::gui

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef GUI_RECON_COMPONENT_H
+#define GUI_RECON_COMPONENT_H
 
 #include <cstddef>
 #include <iostream>
@@ -6,16 +7,16 @@
 #include <memory>
 #include <string>
 
-#include "scenes/scene.hpp"
-#include "shaders/shader_program.hpp"
-#include "object_component.hpp"
-#include "slice.hpp"
-#include "textures.hpp"
-#include "volume.hpp"
+#include "scene_component.hpp"
+#include "graphics/scenes/scene.hpp"
+#include "graphics/shader_program.hpp"
+#include "graphics/slice.hpp"
+#include "graphics/textures.hpp"
+#include "graphics/volume.hpp"
 
 namespace tomcat::gui {
 
-class ReconComponent : public ObjectComponent {
+class ReconComponent : public SceneComponent {
 
     enum class DragType : int { none, rotator, translator};
 
@@ -113,7 +114,7 @@ public:
     explicit ReconComponent(Scene& scene);
     ~ReconComponent() override;
 
-    void draw(const glm::mat4& world_to_screen) override;
+    void render(const glm::mat4& world_to_screen) override;
     void describe() override;
 
     void setSliceData(std::vector<float>&& data,
@@ -140,4 +141,6 @@ public:
     auto generate_slice_idx() { return next_idx_++; }
 };
 
-} // tomcat::gui
+} // namespace tomcat::gui
+
+#endif // GUI_RECON_COMPONENT_H
