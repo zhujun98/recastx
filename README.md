@@ -54,11 +54,11 @@ ssh -R 9970:localhost:9970 -R 9971:localhost:9971 x02da-gpu-1
 ```sh
 conda activate tomcat-live
 
-# Receiving data stream locally
-tomcat-live-server --gui-host x02da-gws-3 --rows 800 --cols 384 --projections 400 --threads 32
+# Receiving the data stream and running the GUI both locally
+tomcat-live-server --threads 32 --rows 800 --cols 384 --group-size 400
 
-# Receiving data stream from another node (e.g. a DAQ node)
-tomcat-live-server --data-host xbl-daq-36 --data-port 9667 --gui-host x02da-gws-3 --rows 800 --cols 384 --projections 400 --threads 32
+# Receiving the data stream from a DAQ node and running the GUI on a graphics work station
+tomcat-live-server --data-host xbl-daq-36 --gui-host x02da-gws-3 --threads 32 --rows 800 --cols 384 --group-size 400
 ```
 
 For more information, type
