@@ -27,4 +27,4 @@ void Volume::updateMinMaxVal() {
 
 const std::array<float, 2>& Volume::minMaxVals() const { return min_max_vals_; }
 
-} // tomcat::gui
+} // namespace tomcat::gui

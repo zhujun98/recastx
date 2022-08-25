@@ -2,17 +2,17 @@
 
 #include <spdlog/spdlog.h>
 
-#include <glm/gtc/constants.hpp>
-#include <glm/gtx/rotate_vector.hpp>
-#include <GL/gl3w.h>
-#include <GLFW/glfw3.h>
-#include <imgui.h>
+#include "glm/gtc/constants.hpp"
+#include "glm/gtx/rotate_vector.hpp"
+#include "GL/gl3w.h"
+#include "GLFW/glfw3.h"
+#include "imgui.h"
 
 #include "tomcat/tomcat.hpp"
 
-#include "graphics/recon_component.hpp"
+#include "graphics/scenes/recon_component.hpp"
+#include "graphics/scenes/scene_camera3d.hpp"
 #include "graphics/primitives.hpp"
-#include "scenes/scene_camera3d.hpp"
 #include "util.hpp"
 
 namespace tomcat::gui {
@@ -52,19 +52,19 @@ ReconComponent::ReconComponent(Scene& scene) : scene_(scene) {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
     auto simple_vert =
-#include "../src/shaders/simple_3d.vert"
+#include "../shaders/simple_3d.vert"
     ;
     auto simple_frag =
-#include "../src/shaders/simple_3d.frag"
+#include "../shaders/simple_3d.frag"
     ;
 
     program_ = std::make_unique<ShaderProgram>(simple_vert, simple_frag);
 
     auto cube_vert =
-#include "../src/shaders/wireframe_cube.vert"
+#include "../shaders/wireframe_cube.vert"
     ;
     auto cube_frag =
-#include "../src/shaders/wireframe_cube.frag"
+#include "../shaders/wireframe_cube.frag"
     ;
     cube_program_ = std::make_unique<ShaderProgram>(cube_vert, cube_frag);
 
@@ -117,7 +117,7 @@ void ReconComponent::setVolumeData(std::vector<float>&& data, const std::array<i
 
 void ReconComponent::describe() {}
 
-void ReconComponent::draw(const glm::mat4& world_to_screen) {
+void ReconComponent::render(const glm::mat4& world_to_screen) {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
 
@@ -272,7 +272,7 @@ void ReconComponent::initVolume() {
     volume_transform_ = glm::translate(center) *
                         glm::scale(glm::vec3(max_pt - min_pt)) *
                         glm::scale(glm::vec3(0.5f));
-    scene_.camera().set_look_at(center);
+    scene_.camera().lookAt(center);
 }
 
 void ReconComponent::updateHoveringSlice(float x, float y) {

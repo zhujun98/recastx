@@ -1,5 +1,5 @@
-#ifndef GUI_SCENES_SCENE_CAMERA_H
-#define GUI_SCENES_SCENE_CAMERA_H
+#ifndef GUI_SCENE_CAMERA_H
+#define GUI_SCENE_CAMERA_H
 
 #include <array>
 #include <map>
@@ -7,8 +7,8 @@
 #include <utility>
 #include <string>
 
-#include <GL/gl3w.h>
-#include <glm/glm.hpp>
+#include "GL/gl3w.h"
+#include "glm/glm.hpp"
 
 #include "input_handler.hpp"
 #include "ticker.hpp"
@@ -55,21 +55,16 @@ class SceneCamera : public InputHandler, public Ticker {
 
     virtual glm::mat4 matrix() = 0;
 
-    virtual void set_look_at(glm::vec3 /* center */) {}
-    void tick(float) override {}
+    virtual void lookAt(glm::vec3 /* center */) = 0;
 
     [[nodiscard]] GLuint colormapTextureId() const { return cm_texture_id_; }
     void setColormap(const std::string& name);
-
-    virtual glm::vec3& position() = 0;
-    virtual glm::vec3& look_at() = 0;
-    virtual void reset_view() {};
 
     virtual void describe();
 
     void toggle_interaction() { interaction_disabled_ = ! interaction_disabled_; }
 };
 
-} // tomcat::gui
+} // namespace tomcat::gui
 
-#endif // GUI_SCENES_SCENE_CAMERA_H
+#endif // GUI_SCENE_CAMERA_H

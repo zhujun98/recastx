@@ -2,9 +2,7 @@
 #include <iostream>
 #include <sstream>
 
-#include <glm/glm.hpp>
-
-#include "shaders/shader_program.hpp"
+#include "graphics/shader_program.hpp"
 
 namespace tomcat::gui {
 
@@ -49,7 +47,7 @@ ShaderProgram::~ShaderProgram() {
 
 void ShaderProgram::use() const { glUseProgram(program_); }
 
-void ShaderProgram::setMat4(const std::string& name, glm::mat4 value) {
+void ShaderProgram::setMat4(const std::string& name, glm::mat4 value){
     glUniformMatrix4fv(glGetUniformLocation(program_, name.c_str()), 1, GL_FALSE, &value[0][0]);
 }
 
@@ -116,4 +114,4 @@ void ShaderProgram::compileShaderProgram(const char* vcode, const char* fcode) {
     glDeleteShader(fragment);
 }
 
-} // tomcat::gui
+} // namespace tomcat::gui

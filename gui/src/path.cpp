@@ -430,4 +430,4 @@ Eigen::RowVector3f Path3::unit_binormal(float param) const {
     return unit_tangent(param).cross(unit_normal(param));
 }
 
-} // tomcat::gui
+} // namespace tomcat::gui

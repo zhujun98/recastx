@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <cstdint>
-#include <iostream>
 #include <limits>
 #include <vector>
 
@@ -66,4 +65,4 @@ std::tuple<bool, float, glm::vec3> intersectionPoint(const glm::mat4& inv_matrix
     return std::make_tuple(does_intersect, distance, intersection);
 }
 
-} // tomcat::gui
+} // namespace tomcat::gui

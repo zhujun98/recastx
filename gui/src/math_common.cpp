@@ -13,4 +13,4 @@ glm::mat4 create_orientation_matrix(glm::vec3 base, glm::vec3 x, glm::vec3 y) {
     return glm::transpose(glm::make_mat4(orientation_matrix));
 }
 
-} // tomcat::gui
+} // namespace tomcat::gui

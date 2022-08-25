@@ -1,5 +1,5 @@
-#ifndef GUI_GRAPHICS_SLICE_H
-#define GUI_GRAPHICS_SLICE_H
+#ifndef GUI_SLICE_H
+#define GUI_SLICE_H
 
 #include <array>
 #include <cstddef>
@@ -65,6 +65,6 @@ class Slice {
     [[nodiscard]] const std::array<float, 2>& minMaxVals() const;
 };
 
-} // tomcat::gui
+} // namespace tomcat::gui
 
-#endif // GUI_GRAPHICS_SLICE_H
+#endif // GUI_SLICE_H

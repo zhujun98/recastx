@@ -1,44 +1,49 @@
+#ifndef GUI_SERVER_H
+#define GUI_SERVER_H
+
 #include <cstring>
 #include <map>
 #include <memory>
 #include <queue>
 #include <thread>
 
-#include "zmq.hpp"
-#include "tomcat/tomcat.hpp"
+#include <zmq.hpp>
 
-#include "modules/scene_module.hpp"
-#include "packet_publisher.hpp"
-#include "ticker.hpp"
+#include "tomcat/tomcat.hpp"
 
 namespace tomcat::gui {
 
-class SceneModuleProtocol;
+class Server {
 
-class Server : public Ticker, public PacketPublisher {
+public:
 
-    std::map<PacketDesc, std::shared_ptr<SceneModuleProtocol>> modules_;
+    using DataType = std::pair<PacketDesc, std::unique_ptr<Packet>>;
 
-    MainWindow& window_;
+private:
+
     std::thread thread_;
+    bool running_ = false;
 
-    std::queue<std::pair<PacketDesc, std::unique_ptr<Packet>>> packets_;
+    inline static std::queue<DataType> packets_;
 
     zmq::context_t context_;
     zmq::socket_t rep_socket_;
     zmq::socket_t pub_socket_;
 
-    void send(Packet& packet) override;
+    void ack();
 
-    void registerModule(const std::shared_ptr<SceneModuleProtocol>& module);
-  
   public:
 
-    Server(MainWindow& window, int port);
+    explicit Server(int port);
+    ~Server();
+
+    void send(Packet& packet);
 
     void start();
 
-    void tick(float) override;
+    std::queue<DataType>& packets();
 };
 
-}  // tomcat::gui
+}  // namespace tomcat::gui
+
+#endif //GUI_SERVER_H

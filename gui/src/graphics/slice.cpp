@@ -66,4 +66,4 @@ void Slice::updateMinMaxVal() {
     min_max_vals_[1] = *std::max_element(data_.begin(), data_.end());
 }
 
-} // tomcat::gui
+} // namespace tomcat::gui

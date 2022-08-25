@@ -1,16 +1,16 @@
-#ifndef GUI_SHADERS_SHADER_PROGRAM_H
-#define GUI_SHADERS_SHADER_PROGRAM_H
+#ifndef GUI_SHADER_PROGRAM_H
+#define GUI_SHADER_PROGRAM_H
 
 #include <string>
 
-#include <GL/gl3w.h>
-#include <glm/glm.hpp>
+#include "GL/gl3w.h"
+#include "glm/glm.hpp"
 
 namespace tomcat::gui {
 
 class ShaderProgram {
 
-    GLuint program_;
+    GLuint program_ = 0;
 
     void checkCompileErrors(GLuint shader, const std::string& type);
 
@@ -35,6 +35,6 @@ class ShaderProgram {
 
 };
 
-} // tomcat::gui
+} // namespace tomcat::gui
 
-#endif // GUI_SHADERS_SHADER_PROGRAM_H
+#endif // GUI_SHADER_PROGRAM_H
