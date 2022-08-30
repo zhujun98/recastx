@@ -16,7 +16,7 @@ class Slice {
   public:
 
     using DataType = std::vector<float>;
-    using SizeType = std::array<int32_t, 2>;
+    using SizeType = std::array<size_t, 2>;
     using Orient3Type = std::array<float, 9>; // for SlicePacket
     using Orient4Type = glm::mat4;
 
@@ -62,6 +62,7 @@ class Slice {
     [[nodiscard]] Orient3Type orientation3() const;
     Orient4Type& orientation4();
 
+    [[nodiscard]] const DataType& data() const;
     [[nodiscard]] const std::array<float, 2>& minMaxVals() const;
 };
 

@@ -1,4 +1,6 @@
 #include <glm/gtc/type_ptr.hpp>
+#include <xtensor/xadapt.hpp>
+#include <xtensor/xmath.hpp>
 
 #include "graphics/slice.hpp"
 #include "util.hpp"
@@ -61,9 +63,10 @@ Slice::Orient4Type& Slice::orientation4() {
 
 const std::array<float, 2>& Slice::minMaxVals() const { return min_max_vals_; }
 
+const Slice::DataType& Slice::data() const { return data_; }
+
 void Slice::updateMinMaxVal() {
-    min_max_vals_[0] = *std::min_element(data_.begin(), data_.end());
-    min_max_vals_[1] = *std::max_element(data_.begin(), data_.end());
+    min_max_vals_ = xt::minmax(xt::adapt(data_, {data_.size()}))();
 }
 
 } // namespace tomcat::gui

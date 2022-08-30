@@ -12,7 +12,7 @@ class Volume {
   public:
 
     using DataType = std::vector<float>;
-    using SizeType = std::array<int32_t, 3>;
+    using SizeType = std::array<size_t, 3>;
 
   private:
 

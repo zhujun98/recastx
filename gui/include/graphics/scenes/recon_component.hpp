@@ -1,6 +1,5 @@
 #ifndef GUI_RECON_COMPONENT_H
 #define GUI_RECON_COMPONENT_H
-
 #include <cstddef>
 #include <iostream>
 #include <map>
@@ -90,7 +89,11 @@ class ReconComponent : public SceneComponent {
     Slice* dragged_slice_ = nullptr;
     Slice* hovered_slice_ = nullptr;
 
-    std::vector<float> histogram_;
+    bool auto_level_ = true;
+    float min_val_ = 0.f;
+    float max_val_ = 0.f;
+    float min_val_curr_ = 0.f;
+    float max_val_curr_ = 0.f;
 
     double prev_x_ = -1.1;
     double prev_y_ = -1.1;
@@ -118,11 +121,11 @@ public:
     void describe() override;
 
     void setSliceData(std::vector<float>&& data,
-                      const std::array<int32_t, 2>& size,
+                      const std::array<uint32_t, 2>& size,
                       int slice_idx);
 
     void setVolumeData(std::vector<float>&& data,
-                       const std::array<int32_t, 3>& volume_size);
+                       const std::array<uint32_t, 3>& volume_size);
 
     void requestSlices();
 

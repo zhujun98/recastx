@@ -23,7 +23,7 @@ void Scene::addComponent(std::unique_ptr<SceneComponent> component) {
 
 void Scene::describe() {
     ImGui::SetNextWindowSizeConstraints(ImVec2(280, 500), ImVec2(FLT_MAX, FLT_MAX));
-    ImGui::Begin("Scene controls");
+    ImGui::Begin("Image tool (3D)");
     // 2/3 of the space for widget and 1/3 for labels
     ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.65f);
 

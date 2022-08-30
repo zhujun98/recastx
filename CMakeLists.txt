@@ -37,6 +37,8 @@ find_package(Boost 1.61 COMPONENTS program_options REQUIRED)
 
 find_package(spdlog REQUIRED)
 
+find_package(xtensor 0.24.3 REQUIRED)
+
 add_subdirectory(tomcat)
 
 if (BUILD_GUI)

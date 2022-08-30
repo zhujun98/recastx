@@ -7,6 +7,8 @@
 #include "GL/gl3w.h"
 #include "GLFW/glfw3.h"
 #include "imgui.h"
+#include "implot.h"
+#include "xtensor/xhistogram.hpp"
 
 #include "tomcat/tomcat.hpp"
 
@@ -96,7 +98,7 @@ void ReconComponent::requestSlices() {
 }
 
 void ReconComponent::setSliceData(std::vector<float>&& data,
-                                  const std::array<int32_t, 2>& size,
+                                  const std::array<uint32_t, 2>& size,
                                   int slice_idx) {
     Slice* slice;
     if (slices_.find(slice_idx) != slices_.end()) {
@@ -108,14 +110,41 @@ void ReconComponent::setSliceData(std::vector<float>&& data,
 
     if (slice == dragged_slice_) return;
 
-    slice->setData(std::move(data), size);
+    // FIXME: replace uint32_t with size_t in Packet
+    slice->setData(std::move(data), {size[0], size[1]});
+    std::tie(min_val_, max_val_) = minMaxValsSlices();
+    if (auto_level_) {
+        min_val_curr_ = min_val_;
+        max_val_curr_ = max_val_;
+    }
 }
 
-void ReconComponent::setVolumeData(std::vector<float>&& data, const std::array<int32_t, 3>& size) {
-    volume_->setData(std::move(data), size);
+void ReconComponent::setVolumeData(std::vector<float>&& data, const std::array<uint32_t, 3>& size) {
+    // FIXME: replace uint32_t with size_t in Packet
+    volume_->setData(std::move(data), {size[0], size[1], size[2]});
 }
 
-void ReconComponent::describe() {}
+void ReconComponent::describe() {
+    ImGui::Checkbox("Auto Level", &auto_level_);
+
+    float step_size = (max_val_ - min_val_) / 100.f;
+    ImGui::DragFloatRange2("Min / Max", &min_val_curr_, &max_val_curr_,
+                           step_size, min_val_, max_val_);
+
+    for (auto &[slice_id, slice]: slices_) {
+        const auto &data = slice->data();
+        // FIXME: faster way to build the title?
+        if (ImPlot::BeginPlot(("Slice " + std::to_string(slice_id)).c_str(),
+                              ImVec2(0, 120),
+                              ImPlotFlags_NoLegend)) {
+            ImPlot::SetupAxes("Pixel value", "Density",
+                              ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+            ImPlot::PlotHistogram("Histogram", data.data(), static_cast<int>(data.size()),
+                                  100, false, true);
+            ImPlot::EndPlot();
+        }
+    }
+}
 
 void ReconComponent::render(const glm::mat4& world_to_screen) {
     glEnable(GL_DEPTH_TEST);
@@ -127,9 +156,8 @@ void ReconComponent::render(const glm::mat4& world_to_screen) {
     program_->setInt("colormap_sampler", 1);
     program_->setInt("volume_data_sampler", 3);
 
-    auto [slices_min, slices_max] = minMaxValsSlices();
-    program_->setFloat("min_value", slices_min);
-    program_->setFloat("max_value", slices_max);
+    program_->setFloat("min_value", min_val_curr_);
+    program_->setFloat("max_value", max_val_curr_);
     auto [volume_min, volume_max] = volume_->minMaxVals();
     program_->setFloat("volume_min_value", volume_min);
     program_->setFloat("volume_max_value", volume_max);

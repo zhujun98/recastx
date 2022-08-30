@@ -22,7 +22,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -G
 execute_process(COMMAND ${CMAKE_COMMAND} --build .
         WORKING_DIRECTORY ${GL3W_BUILD_DIR})
 
-# imgui# imgui
+# imgui
 set(IMGUI_DIR "${PROJECT_SOURCE_DIR}/../ext/imgui")
 set(IMGUI_SOURCE_FILES
         ${IMGUI_DIR}/imgui.cpp
@@ -32,6 +32,12 @@ set(IMGUI_SOURCE_FILES
         ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
         ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
         )
+
+#implot
+set(IMPLOT_DIR "${PROJECT_SOURCE_DIR}/../ext/implot")
+set(IMPLOT_SOURCE_FILES
+        ${IMPLOT_DIR}/implot.cpp
+        ${IMPLOT_DIR}/implot_items.cpp)
 
 # build
 set(SOURCE_NAMES
@@ -54,6 +60,7 @@ set(SOURCE_NAMES
         "src/graphics/scenes/scene_camera.cpp"
         "src/graphics/scenes/scene_camera3d.cpp"
         ${IMGUI_SOURCE_FILES}
+        ${IMPLOT_SOURCE_FILES}
         ${GL3W_BUILD_DIR}/src/gl3w.c
         )
 set(TARGET_NAME tomcat-live-gui)
@@ -62,6 +69,7 @@ target_include_directories(${TARGET_NAME}
         PRIVATE include
                 ${IMGUI_DIR}
                 ${IMGUI_DIR}/backends
+                ${IMPLOT_DIR}
                 ${GL3W_BUILD_DIR}/include
         )
 target_link_libraries(${TARGET_NAME}
@@ -71,6 +79,7 @@ target_link_libraries(${TARGET_NAME}
                 glm
                 pthread
                 Eigen3::Eigen
+                xtensor
                 Boost::program_options
                 spdlog::spdlog
                 tomcat
