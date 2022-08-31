@@ -12,4 +12,4 @@ const GLuint* cube_wireframe_idxs();
 const GLfloat* pyramid();
 const GLfloat* alt_pyramid();
 
-} // tomcat::gui
+} // namespace tomcat::gui

@@ -48,6 +48,7 @@ set(SOURCE_NAMES
         "src/server.cpp"
         "src/ticker.cpp"
         "src/util.cpp"
+        "src/graphics/aesthetics.cpp"
         "src/graphics/graph_node.cpp"
         "src/graphics/primitives.cpp"
         "src/graphics/shader_program.cpp"

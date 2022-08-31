@@ -14,6 +14,7 @@
 
 #include "graphics/scenes/recon_component.hpp"
 #include "graphics/scenes/scene_camera3d.hpp"
+#include "graphics/aesthetics.hpp"
 #include "graphics/primitives.hpp"
 #include "util.hpp"
 
@@ -127,6 +128,8 @@ void ReconComponent::setVolumeData(std::vector<float>&& data, const std::array<u
 void ReconComponent::describe() {
     ImGui::Checkbox("Auto Level", &auto_level_);
 
+    auto selector = ColormapSelector("Colormap##ReconComponent");
+
     float step_size = (max_val_ - min_val_) / 100.f;
     ImGui::DragFloatRange2("Min / Max", &min_val_curr_, &max_val_curr_,
                            step_size, min_val_, max_val_);
@@ -134,12 +137,10 @@ void ReconComponent::describe() {
     for (auto &[slice_id, slice]: slices_) {
         const auto &data = slice->data();
         // FIXME: faster way to build the title?
-        if (ImPlot::BeginPlot(("Slice " + std::to_string(slice_id)).c_str(),
-                              ImVec2(0, 120),
-                              ImPlotFlags_NoLegend)) {
+        if (ImPlot::BeginPlot(("Slice " + std::to_string(slice_id)).c_str(), ImVec2(0, 120))) {
             ImPlot::SetupAxes("Pixel value", "Density",
                               ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
-            ImPlot::PlotHistogram("Histogram", data.data(), static_cast<int>(data.size()),
+            ImPlot::PlotHistogram("##Histogram", data.data(), static_cast<int>(data.size()),
                                   100, false, true);
             ImPlot::EndPlot();
         }
