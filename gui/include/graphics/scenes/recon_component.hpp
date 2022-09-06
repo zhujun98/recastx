@@ -92,8 +92,8 @@ class ReconComponent : public SceneComponent {
     Slice* hovered_slice_ = nullptr;
 
     bool auto_levels_ = true;
-    float min_val_ = 0.f;
-    float max_val_ = 1.f;
+    float min_val_;
+    float max_val_;
 
     double prev_x_ = -1.1;
     double prev_y_ = -1.1;
@@ -110,7 +110,7 @@ class ReconComponent : public SceneComponent {
 
     void drawSlice(Slice* slice, const glm::mat4& world_to_screen);
 
-    std::array<float, 2> minMaxValsSlices();
+    void maybeUpdateMinMaxValues();
 
 public:
 

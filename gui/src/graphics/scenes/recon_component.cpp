@@ -70,8 +70,8 @@ ReconComponent::ReconComponent(Scene& scene) : scene_(scene) {
     wireframe_shader_ = std::make_unique<ShaderProgram>(wireframe_vert, wireframe_frag);
 
     initSlices();
-
     initVolume();
+    maybeUpdateMinMaxValues();
 }
 
 ReconComponent::~ReconComponent() {
@@ -109,14 +109,13 @@ void ReconComponent::setSliceData(std::vector<float>&& data,
 
     // FIXME: replace uint32_t with size_t in Packet
     slice->setData(std::move(data), {size[0], size[1]});
-    if (auto_levels_) {
-        std::tie(min_val_, max_val_) = minMaxValsSlices();
-    }
+    maybeUpdateMinMaxValues();
 }
 
 void ReconComponent::setVolumeData(std::vector<float>&& data, const std::array<uint32_t, 3>& size) {
     // FIXME: replace uint32_t with size_t in Packet
     volume_->setData(std::move(data), {size[0], size[1], size[2]});
+    maybeUpdateMinMaxValues();
 }
 
 void ReconComponent::describe() {
@@ -156,9 +155,6 @@ void ReconComponent::render(const glm::mat4& world_to_screen) {
 
     solid_shader_->setFloat("min_value", min_val_);
     solid_shader_->setFloat("max_value", max_val_);
-    auto [volume_min, volume_max] = volume_->minMaxVals();
-    solid_shader_->setFloat("volume_min_value", volume_min);
-    solid_shader_->setFloat("volume_max_value", volume_max);
 
     cm_.bind();
 
@@ -358,9 +354,12 @@ void ReconComponent::drawSlice(Slice* slice, const glm::mat4& world_to_screen) {
     slice->unbind();
 }
 
-std::array<float, 2> ReconComponent::minMaxValsSlices() {
+void ReconComponent::maybeUpdateMinMaxValues() {
+    if (!auto_levels_) return;
+
     auto overall_min = std::numeric_limits<float>::max();
     auto overall_max = std::numeric_limits<float>::min();
+
     for (auto&& [slice_idx, slice] : slices_) {
         (void)slice_idx;
 
@@ -369,8 +368,9 @@ std::array<float, 2> ReconComponent::minMaxValsSlices() {
         overall_max = max_v > overall_max ? max_v : overall_max;
     }
 
-    return {overall_min - (0.2f * (overall_max - overall_min)),
-            overall_max + (0.2f * (overall_max - overall_min))};
+    auto [min_v, max_v] = volume_->minMaxVals();
+    min_val_ = min_v < overall_min ? min_v : overall_min;
+    max_val_ = max_v > overall_max ? max_v : overall_max;
 }
 
 // ReconComponent::DragMachine
