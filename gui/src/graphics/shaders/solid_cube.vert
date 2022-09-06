@@ -1,5 +1,5 @@
 R"glsl(
-#version 150
+#version 330
 
 in vec3 in_position;
 

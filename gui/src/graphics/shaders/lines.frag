@@ -1,4 +1,5 @@
-R"glsl(#version 150
+R"glsl(
+#version 330
 
 in vec3 color;
 out vec4 fragColor;

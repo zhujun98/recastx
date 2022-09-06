@@ -1,5 +1,5 @@
 R"glsl(
-#version 150
+#version 330
 
 in vec2 tex_coord;
 in vec3 volume_coord;

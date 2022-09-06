@@ -1,5 +1,5 @@
 R"glsl(
-#version 150
+#version 330
 
 uniform vec4 line_color;
 out vec4 fragColor;
