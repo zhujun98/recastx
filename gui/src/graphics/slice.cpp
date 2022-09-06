@@ -3,13 +3,10 @@
 #include <xtensor/xmath.hpp>
 
 #include "graphics/slice.hpp"
-#include "util.hpp"
 
 namespace tomcat::gui {
 
-Slice::Slice(int slice_id) : id_(slice_id), size_({8, 8}) {
-    setData(DataType(size_[0] * size_[1], 0), size_);
-}
+Slice::Slice(int slice_id) : id_(slice_id) {}
 
 Slice::~Slice() = default;
 

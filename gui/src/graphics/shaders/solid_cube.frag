@@ -9,7 +9,7 @@ uniform sampler1D colormap_sampler;
 uniform sampler3D volume_data_sampler;
 
 uniform int hovered;
-uniform int has_data;
+uniform int empty;
 uniform float min_value;
 uniform float max_value;
 uniform float volume_min_value;
@@ -20,7 +20,7 @@ out vec4 fragColor;
 void main() {
     float value = 0.0f;
 
-    if (has_data != 1) {
+    if (empty == 1) {
        value = (texture(volume_data_sampler, volume_coord).x - volume_min_value)
                  / (volume_max_value - volume_min_value);
     } else {
@@ -30,7 +30,7 @@ void main() {
 
     fragColor = vec4(texture(colormap_sampler, value).xyz, 1.0f);
 
-    if (has_data != 1) {
+    if (empty == 1) {
         fragColor.a = 0.75f;
     }
 

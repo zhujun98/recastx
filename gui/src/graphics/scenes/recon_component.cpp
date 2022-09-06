@@ -351,7 +351,7 @@ void ReconComponent::drawSlice(Slice* slice, const glm::mat4& world_to_screen) {
     solid_shader_->setMat4("orientation_matrix",
                       slice->orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0)));
     solid_shader_->setBool("hovered", slice->hovered());
-    solid_shader_->setBool("has_data", !slice->empty());
+    solid_shader_->setBool("empty", slice->empty());
 
     glBindVertexArray(vao_handle_);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
