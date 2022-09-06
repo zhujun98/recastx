@@ -2,6 +2,7 @@
 #define GUI_RECON_COMPONENT_H
 #include <cstddef>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <memory>
 #include <string>
@@ -93,8 +94,6 @@ class ReconComponent : public SceneComponent {
     bool auto_levels_ = true;
     float min_val_ = 0.f;
     float max_val_ = 1.f;
-    float min_val_curr_ = 0.f;
-    float max_val_curr_ = 1.f;
 
     double prev_x_ = -1.1;
     double prev_y_ = -1.1;

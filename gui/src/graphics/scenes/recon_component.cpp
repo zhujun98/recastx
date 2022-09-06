@@ -109,10 +109,8 @@ void ReconComponent::setSliceData(std::vector<float>&& data,
 
     // FIXME: replace uint32_t with size_t in Packet
     slice->setData(std::move(data), {size[0], size[1]});
-    std::tie(min_val_, max_val_) = minMaxValsSlices();
     if (auto_levels_) {
-        min_val_curr_ = min_val_;
-        max_val_curr_ = max_val_;
+        std::tie(min_val_, max_val_) = minMaxValsSlices();
     }
 }
 
@@ -129,9 +127,10 @@ void ReconComponent::describe() {
     auto selector = ColormapSelector("Colormap##ReconComponent");
 
     float step_size = (max_val_ - min_val_) / 100.f;
-    ImGui::DragFloatRange2("Min / Max", &min_val_curr_, &max_val_curr_,
-                           step_size, min_val_, max_val_);
-
+    if (step_size < 0.01f) step_size = 0.01f; // avoid a tiny step size
+    ImGui::DragFloatRange2("Min / Max", &min_val_, &max_val_, step_size,
+                           std::numeric_limits<float>::lowest(), // min() does not work
+                           std::numeric_limits<float>::max());
     for (auto &[slice_id, slice]: slices_) {
         const auto &data = slice->data();
         // FIXME: faster way to build the title?
@@ -155,8 +154,8 @@ void ReconComponent::render(const glm::mat4& world_to_screen) {
     solid_shader_->setInt("colormap_sampler", 1);
     solid_shader_->setInt("volume_data_sampler", 3);
 
-    solid_shader_->setFloat("min_value", min_val_curr_);
-    solid_shader_->setFloat("max_value", max_val_curr_);
+    solid_shader_->setFloat("min_value", min_val_);
+    solid_shader_->setFloat("max_value", max_val_);
     auto [volume_min, volume_max] = volume_->minMaxVals();
     solid_shader_->setFloat("volume_min_value", volume_min);
     solid_shader_->setFloat("volume_max_value", volume_max);
