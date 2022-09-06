@@ -26,7 +26,7 @@ class Slice {
     SizeType size_;
     DataType data_;
 
-    Texture2d<float> texture_;
+    SliceTexture<float> texture_;
 
     bool hovered_ = false;
     bool inactive_ = false;

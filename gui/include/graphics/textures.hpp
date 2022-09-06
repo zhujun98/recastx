@@ -52,7 +52,7 @@ class Texture {
 };
 
 template <typename T = unsigned char>
-class Texture2d : public Texture {
+class SliceTexture : public Texture {
 
     int x_ = 0;
     int y_ = 0;
@@ -75,22 +75,22 @@ class Texture2d : public Texture {
 
   public:
 
-    Texture2d() : Texture() {
+    SliceTexture() : Texture() {
         glGenTextures(1, &texture_id_);
     };
 
-    ~Texture2d() override {
+    ~SliceTexture() override {
         if (texture_id_ >= 0) glDeleteTextures(1, &texture_id_);
     }
 
-    Texture2d(Texture2d&& other) noexcept {
+    SliceTexture(SliceTexture&& other) noexcept {
         x_ = other.x_;
         y_ = other.y_;
         texture_id_ = other.texture_id_;
         other.texture_id_ = -1;
     }
 
-    Texture2d& operator=(Texture2d&& other) noexcept {
+    SliceTexture& operator=(SliceTexture&& other) noexcept {
         x_ = other.x_;
         y_ = other.y_;
         texture_id_ = other.texture_id_;
@@ -116,7 +116,7 @@ class Texture2d : public Texture {
 };
 
 template <typename T = unsigned char>
-class Texture3d  : public Texture {
+class VolumeTexture  : public Texture {
 
     int x_ = 0;
     int y_ = 0;
@@ -148,18 +148,18 @@ class Texture3d  : public Texture {
 
   public:
 
-    Texture3d() : Texture() {
+    VolumeTexture() : Texture() {
         glGenTextures(1, &texture_id_);
     };
 
-    ~Texture3d() override {
+    ~VolumeTexture() override {
         if (texture_id_ >= 0) glDeleteTextures(1, &texture_id_);
     }
 
-    Texture3d(const Texture3d&) = delete;
-    Texture3d& operator=(const Texture3d&) = delete;
+    VolumeTexture(const VolumeTexture&) = delete;
+    VolumeTexture& operator=(const VolumeTexture&) = delete;
 
-    Texture3d(Texture3d&& other) noexcept {
+    VolumeTexture(VolumeTexture&& other) noexcept {
         x_ = other.x_;
         y_ = other.y_;
         z_ = other.z_;
@@ -167,7 +167,7 @@ class Texture3d  : public Texture {
         other.texture_id_ = -1;
     }
 
-    Texture3d& operator=(Texture3d&& other) noexcept {
+    VolumeTexture& operator=(VolumeTexture&& other) noexcept {
         x_ = other.x_;
         y_ = other.y_;
         z_ = other.z_;

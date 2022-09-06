@@ -130,6 +130,7 @@ void ReconComponent::describe() {
     ImGui::DragFloatRange2("Min / Max", &min_val_, &max_val_, step_size,
                            std::numeric_limits<float>::lowest(), // min() does not work
                            std::numeric_limits<float>::max());
+
     for (auto &[slice_id, slice]: slices_) {
         const auto &data = slice->data();
         // FIXME: faster way to build the title?

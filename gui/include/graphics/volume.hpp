@@ -19,7 +19,7 @@ class Volume {
     SizeType size_;
     DataType data_;
 
-    Texture3d<float> texture_;
+    VolumeTexture<float> texture_;
 
     std::array<float, 2> min_max_vals_;
 
