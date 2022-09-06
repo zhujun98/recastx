@@ -12,6 +12,8 @@
 #include <implot.h>
 #include <implot_internal.h>
 
+#include "textures.hpp"
+
 namespace tomcat::gui {
 
 class ColormapSelector {
@@ -56,8 +58,8 @@ public:
 
 private:
 
-    std::string curr_cm_;
-    GLuint cm_texture_id_;
+    ColormapTexture<> texture_;
+    std::string name_;
 
 public:
 
@@ -68,8 +70,8 @@ public:
 
     void describe();
 
-    void bind() const;
-    void unbind() const;
+    void bind();
+    void unbind();
 };
 
 } // namespace tomcat::gui

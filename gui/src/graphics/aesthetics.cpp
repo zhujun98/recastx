@@ -37,27 +37,26 @@ ColormapSelector::~ColormapSelector() {
 
 // class ColormapOld
 
-ColormapOld::ColormapOld() : curr_cm_("hot") {
-    glGenTextures(1, &cm_texture_id_);
-    setColormap(curr_cm_);
+ColormapOld::ColormapOld() : name_("hot") {
+    setColormap(name_);
 }
 
 ColormapOld::~ColormapOld() = default;
 
 void ColormapOld::setColormap(const std::string& name) {
+    name_ = name;
+
     constexpr int samples = 100;
 
     auto& gradient = ColormapOld::gradients().at(name);
 
-    curr_cm_ = name;
     auto interpolate =
             [](double z, std::vector<std::pair<double, double>>& xys) -> double {
                 for (int i = 1; i < (int)xys.size(); ++i) {
                     if (z > xys[i].first)
                         continue;
 
-                    auto val =
-                            xys[i - 1].second +
+                    auto val = xys[i - 1].second +
                             ((z - xys[i - 1].first) / (xys[i].first - xys[i - 1].first)) *
                             (xys[i].second - xys[i - 1].second);
 
@@ -67,44 +66,33 @@ void ColormapOld::setColormap(const std::string& name) {
                 return 0.0f;
             };
 
-    unsigned char image[samples * 3];
+    std::vector<unsigned char> data(samples * 3);
     for (int j = 0; j < samples; ++j) {
         for (int i = 0; i < 3; ++i) {
             double intensity = (double)j / samples;
-            image[j * 3 + i] = (unsigned char)(255 * interpolate(intensity, gradient[i]));
+            data[j * 3 + i] = static_cast<unsigned char>(255 * interpolate(intensity, gradient[i]));
         }
     }
 
-    glBindTexture(GL_TEXTURE_1D, cm_texture_id_);
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, samples, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-    glGenerateMipmap(GL_TEXTURE_1D);
-    glBindTexture(GL_TEXTURE_1D, 0);
+    texture_.setData(data, samples);
 }
 
 void ColormapOld::describe() {
-    const std::string prev_cm = curr_cm_;
-    if (ImGui::BeginCombo("Colormap", curr_cm_.c_str())) {
+    const std::string prev_cm = name_;
+    if (ImGui::BeginCombo("Colormap", name_.c_str())) {
         for (auto& gradient : ColormapOld::gradients()) {
-            bool is_selected = (curr_cm_ == gradient.first);
+            bool is_selected = (name_ == gradient.first);
             if (ImGui::Selectable(gradient.first.c_str(), is_selected))
-                curr_cm_ = gradient.first;
+                name_ = gradient.first;
             if (is_selected) ImGui::SetItemDefaultFocus();
         }
         ImGui::EndCombo();
     }
 
-    if (prev_cm != curr_cm_) setColormap(curr_cm_);
+    if (prev_cm != name_) setColormap(name_);
 }
 
-void ColormapOld::bind() const {
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_1D, cm_texture_id_);
-}
-
-void ColormapOld::unbind() const {
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_1D, 0);
-}
+void ColormapOld::bind() { texture_.bind(); }
+void ColormapOld::unbind() { texture_.unbind(); }
 
 } // namespace tomcat::gui

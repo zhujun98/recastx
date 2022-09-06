@@ -52,6 +52,58 @@ class Texture {
 };
 
 template <typename T = unsigned char>
+class ColormapTexture : public Texture {
+
+    int x_ = 0;
+
+    void genTexture(const std::vector<T>& data) {
+        glBindTexture(GL_TEXTURE_1D, texture_id_);
+
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, x_, 0, GL_RGB, GL_UNSIGNED_BYTE, data.data());
+        glGenerateMipmap(GL_TEXTURE_1D);
+
+        glBindTexture(GL_TEXTURE_1D, 0);
+    }
+
+public:
+
+    ColormapTexture() : Texture() {
+        glGenTextures(1, &texture_id_);
+    };
+
+    ~ColormapTexture() override {
+        if (texture_id_ >= 0) glDeleteTextures(1, &texture_id_);
+    }
+
+    ColormapTexture(ColormapTexture&& other) noexcept {
+        texture_id_ = other.texture_id_;
+        other.texture_id_ = -1;
+    }
+
+    ColormapTexture& operator=(ColormapTexture&& other) noexcept {
+        texture_id_ = other.texture_id_;
+        other.texture_id_ = -1;
+    }
+
+    void setData(const std::vector<T>& data, int x) {
+        x_ = x;
+        assert((int)data.size() == x);
+        genTexture(data);
+    }
+
+    void bind() const override {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_1D, texture_id_);
+    }
+
+    void unbind() const override {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_1D, 0);
+    }
+};
+
+template <typename T = unsigned char>
 class SliceTexture : public Texture {
 
     int x_ = 0;
@@ -105,12 +157,12 @@ class SliceTexture : public Texture {
     }
 
     void bind() const override {
-        glActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture_id_);
     }
 
     void unbind() const override {
-        glActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 };
@@ -184,12 +236,12 @@ class VolumeTexture  : public Texture {
     }
 
     void bind() const override {
-        glActiveTexture(GL_TEXTURE3);
+        glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_3D, texture_id_);
     }
 
     void unbind() const override {
-        glActiveTexture(GL_TEXTURE3);
+        glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_3D, 0);
     }
 };

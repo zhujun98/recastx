@@ -149,11 +149,9 @@ void ReconComponent::render(const glm::mat4& world_to_screen) {
     glEnable(GL_BLEND);
 
     solid_shader_->use();
-
-    solid_shader_->setInt("texture_sampler", 0);
-    solid_shader_->setInt("colormap_sampler", 1);
-    solid_shader_->setInt("volume_data_sampler", 3);
-
+    solid_shader_->setInt("colormap_sampler", 0);
+    solid_shader_->setInt("texture_sampler", 1);
+    solid_shader_->setInt("volume_data_sampler", 2);
     solid_shader_->setFloat("min_value", min_val_);
     solid_shader_->setFloat("max_value", max_val_);
 
@@ -177,6 +175,8 @@ void ReconComponent::render(const glm::mat4& world_to_screen) {
     volume_->bind();
     for (auto slice : slices) drawSlice(slice, full_transform);
     volume_->unbind();
+
+    cm_.unbind();
 
     wireframe_shader_->use();
     wireframe_shader_->setMat4("transform_matrix", full_transform);
