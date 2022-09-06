@@ -8,7 +8,6 @@
 #include "GLFW/glfw3.h"
 #include "imgui.h"
 #include "implot.h"
-#include "xtensor/xhistogram.hpp"
 
 #include "tomcat/tomcat.hpp"
 
@@ -54,28 +53,25 @@ ReconComponent::ReconComponent(Scene& scene) : scene_(scene) {
                  GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
-    auto simple_vert =
-#include "../shaders/simple_3d.vert"
-    ;
-    auto simple_frag =
-#include "../shaders/simple_3d.frag"
-    ;
+    auto solid_vert =
+#include "../shaders/solid_cube.vert"
+        ;
+    auto solid_frag =
+#include "../shaders/solid_cube.frag"
+        ;
+    solid_shader_ = std::make_unique<ShaderProgram>(solid_vert, solid_frag);
 
-    program_ = std::make_unique<ShaderProgram>(simple_vert, simple_frag);
-
-    auto cube_vert =
+    auto wireframe_vert =
 #include "../shaders/wireframe_cube.vert"
-    ;
-    auto cube_frag =
+        ;
+    auto wireframe_frag =
 #include "../shaders/wireframe_cube.frag"
-    ;
-    cube_program_ = std::make_unique<ShaderProgram>(cube_vert, cube_frag);
+        ;
+    wireframe_shader_ = std::make_unique<ShaderProgram>(wireframe_vert, wireframe_frag);
 
     initSlices();
 
     initVolume();
-
-    cm_texture_id_ = scene_.camera().colormapTextureId();
 }
 
 ReconComponent::~ReconComponent() {
@@ -114,7 +110,7 @@ void ReconComponent::setSliceData(std::vector<float>&& data,
     // FIXME: replace uint32_t with size_t in Packet
     slice->setData(std::move(data), {size[0], size[1]});
     std::tie(min_val_, max_val_) = minMaxValsSlices();
-    if (auto_level_) {
+    if (auto_levels_) {
         min_val_curr_ = min_val_;
         max_val_curr_ = max_val_;
     }
@@ -126,7 +122,9 @@ void ReconComponent::setVolumeData(std::vector<float>&& data, const std::array<u
 }
 
 void ReconComponent::describe() {
-    ImGui::Checkbox("Auto Level", &auto_level_);
+    cm_.describe();
+
+    ImGui::Checkbox("Auto Levels", &auto_levels_);
 
     auto selector = ColormapSelector("Colormap##ReconComponent");
 
@@ -151,20 +149,19 @@ void ReconComponent::render(const glm::mat4& world_to_screen) {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
 
-    program_->use();
+    solid_shader_->use();
 
-    program_->setInt("texture_sampler", 0);
-    program_->setInt("colormap_sampler", 1);
-    program_->setInt("volume_data_sampler", 3);
+    solid_shader_->setInt("texture_sampler", 0);
+    solid_shader_->setInt("colormap_sampler", 1);
+    solid_shader_->setInt("volume_data_sampler", 3);
 
-    program_->setFloat("min_value", min_val_curr_);
-    program_->setFloat("max_value", max_val_curr_);
+    solid_shader_->setFloat("min_value", min_val_curr_);
+    solid_shader_->setFloat("max_value", max_val_curr_);
     auto [volume_min, volume_max] = volume_->minMaxVals();
-    program_->setFloat("volume_min_value", volume_min);
-    program_->setFloat("volume_max_value", volume_max);
+    solid_shader_->setFloat("volume_min_value", volume_min);
+    solid_shader_->setFloat("volume_max_value", volume_max);
 
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_1D, cm_texture_id_);
+    cm_.bind();
 
     glm::mat4 full_transform = world_to_screen * volume_transform_;
 
@@ -180,27 +177,28 @@ void ReconComponent::render(const glm::mat4& world_to_screen) {
         return rhs->transparent();
     });
 
+    // FIXME: why do we need to bind and unbind 3D texture?
     volume_->bind();
     for (auto slice : slices) drawSlice(slice, full_transform);
     volume_->unbind();
 
-    cube_program_->use();
-    cube_program_->setMat4("transform_matrix", full_transform);
-    cube_program_->setVec4("line_color", glm::vec4(0.5f, 0.5f, 0.5f, 0.3f));
+    wireframe_shader_->use();
+    wireframe_shader_->setMat4("transform_matrix", full_transform);
+    wireframe_shader_->setVec4("line_color", glm::vec4(1.f, 1.f, 1.f, 0.2f));
 
     glBindVertexArray(cube_vao_handle_);
-    glLineWidth(3.0f);
+    glLineWidth(3.f);
     glDrawElements(GL_LINES, cube_index_count_, GL_UNSIGNED_INT, nullptr);
 
     glDisable(GL_DEPTH_TEST);
 
     if (drag_machine_ != nullptr && drag_machine_->type() == DragType::rotator) {
         auto& rotator = *(SliceRotator*)drag_machine_.get();
-        cube_program_->setMat4("transform_matrix",
-                               full_transform * glm::translate(rotator.rot_base) * glm::scale(rotator.rot_end - rotator.rot_base));
-        cube_program_->setVec4("line_color", glm::vec4(1.0f, 1.0f, 0.5f, 0.5f));
+        wireframe_shader_->setMat4("transform_matrix",
+                                   full_transform * glm::translate(rotator.rot_base) * glm::scale(rotator.rot_end - rotator.rot_base));
+        wireframe_shader_->setVec4("line_color", glm::vec4(1.f, 1.f, 1.f, 1.f));
         glBindVertexArray(line_vao_handle_);
-        glLineWidth(5.0f);
+        glLineWidth(10.f);
         glDrawArrays(GL_LINES, 0, 2);
     }
 
@@ -349,11 +347,11 @@ void ReconComponent::maybeSwitchDragMachine(ReconComponent::DragType type) {
 void ReconComponent::drawSlice(Slice* slice, const glm::mat4& world_to_screen) {
     slice->bind();
 
-    program_->setMat4("world_to_screen_matrix", world_to_screen);
-    program_->setMat4("orientation_matrix",
+    solid_shader_->setMat4("world_to_screen_matrix", world_to_screen);
+    solid_shader_->setMat4("orientation_matrix",
                       slice->orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0)));
-    program_->setBool("hovered", slice->hovered());
-    program_->setBool("has_data", !slice->empty());
+    solid_shader_->setBool("hovered", slice->hovered());
+    solid_shader_->setBool("has_data", !slice->empty());
 
     glBindVertexArray(vao_handle_);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);

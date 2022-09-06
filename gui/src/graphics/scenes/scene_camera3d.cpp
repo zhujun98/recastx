@@ -152,7 +152,6 @@ bool SceneCamera3d::handleKey(int key, int action, int /* mods */) {
 }
 
 void SceneCamera3d::describe() {
-    SceneCamera::describe();
     ImGui::Checkbox("Instant Camera", &instant_);
 
     if (ImGui::Button("X-Y")) {

@@ -8,6 +8,7 @@
 
 #include "scene_component.hpp"
 #include "graphics/scenes/scene.hpp"
+#include "graphics/aesthetics.hpp"
 #include "graphics/shader_program.hpp"
 #include "graphics/slice.hpp"
 #include "graphics/textures.hpp"
@@ -63,15 +64,15 @@ class ReconComponent : public SceneComponent {
     };
 
     std::map<int, std::unique_ptr<Slice>> slices_;
-
     std::unique_ptr<Volume> volume_;
-    GLuint cm_texture_id_;
+
+    ColormapOld cm_;
 
     glm::mat4 volume_transform_;
 
     GLuint vao_handle_;
     GLuint vbo_handle_;
-    std::unique_ptr<ShaderProgram> program_;
+    std::unique_ptr<ShaderProgram> solid_shader_;
 
     GLuint line_vao_handle_;
     GLuint line_vbo_handle_;
@@ -80,7 +81,7 @@ class ReconComponent : public SceneComponent {
     GLuint cube_vbo_handle_;
     GLuint cube_index_handle_;
     int cube_index_count_;
-    std::unique_ptr<ShaderProgram> cube_program_;
+    std::unique_ptr<ShaderProgram> wireframe_shader_;
 
     Scene& scene_;
     int next_idx_ = 3;
@@ -89,11 +90,11 @@ class ReconComponent : public SceneComponent {
     Slice* dragged_slice_ = nullptr;
     Slice* hovered_slice_ = nullptr;
 
-    bool auto_level_ = true;
+    bool auto_levels_ = true;
     float min_val_ = 0.f;
-    float max_val_ = 0.f;
+    float max_val_ = 1.f;
     float min_val_curr_ = 0.f;
-    float max_val_curr_ = 0.f;
+    float max_val_curr_ = 1.f;
 
     double prev_x_ = -1.1;
     double prev_y_ = -1.1;

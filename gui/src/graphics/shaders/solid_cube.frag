@@ -1,4 +1,4 @@
-R"(
+R"glsl(
 #version 150
 
 in vec2 tex_coord;
@@ -38,4 +38,4 @@ void main() {
         fragColor += vec4(0.3f);
     }
 }
-)"
+)glsl"

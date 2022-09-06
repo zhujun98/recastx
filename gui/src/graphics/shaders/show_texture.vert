@@ -1,4 +1,4 @@
-R"(
+R"glsl(
 #version 150
 
 in vec3 in_position;
@@ -12,4 +12,4 @@ void main() {
     vec3 world_position = (orientation_matrix * vec4(tex_coord, 1.0f, 1.0f)).xyz;
     gl_Position = world_to_screen_matrix * vec4(world_position, 1.0f);
 }
-)"
+)glsl"
