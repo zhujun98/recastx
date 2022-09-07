@@ -1,20 +1,21 @@
 R"glsl(
 #version 330
 
-in vec3 in_position;
+in vec3 position;
 
-out vec2 tex_coord;
-out vec3 volume_coord;
+out vec2 sliceCoord;
+out vec3 volumeCoord;
 
-uniform mat4 world_to_screen_matrix;
-uniform mat4 orientation_matrix;
+uniform mat4 worldToScreenMatrix;
+uniform mat4 orientationMatrix;
 
 void main() {
-    tex_coord = vec2(in_position.x, in_position.y);
+    sliceCoord = vec2(position.x, position.y);
 
-    vec3 world_position = (orientation_matrix * vec4(in_position, 1.0f)).xyz;
-    volume_coord = 0.5f * (world_position + vec3(1.0f));
+    vec3 worldPosition = (orientationMatrix * vec4(position, 1.0f)).xyz;
 
-    gl_Position = world_to_screen_matrix * vec4(world_position, 1.0f);
+    volumeCoord = 0.5f * (worldPosition + vec3(1.0f));
+
+    gl_Position = worldToScreenMatrix * vec4(worldPosition, 1.0f);
 }
 )glsl"

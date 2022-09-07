@@ -67,7 +67,7 @@ class ReconComponent : public SceneComponent {
     std::map<int, std::unique_ptr<Slice>> slices_;
     std::unique_ptr<Volume> volume_;
 
-    ColormapOld cm_;
+    Colormap cm_;
 
     glm::mat4 volume_transform_;
 

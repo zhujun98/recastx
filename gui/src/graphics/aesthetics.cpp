@@ -2,97 +2,58 @@
 
 namespace tomcat::gui {
 
-const std::set<ImPlotColormap> ColormapSelector::options_ {
-    static_cast<ImPlotColormap>(ImPlotColormap_::ImPlotColormap_Spectral),
-    static_cast<ImPlotColormap>(ImPlotColormap_::ImPlotColormap_Viridis),
-    static_cast<ImPlotColormap>(ImPlotColormap_::ImPlotColormap_Greys),
-    static_cast<ImPlotColormap>(ImPlotColormap_::ImPlotColormap_Plasma),
-    static_cast<ImPlotColormap>(ImPlotColormap_::ImPlotColormap_Hot),
-    static_cast<ImPlotColormap>(ImPlotColormap_::ImPlotColormap_Cool),
-    static_cast<ImPlotColormap>(ImPlotColormap_::ImPlotColormap_Pink),
-    static_cast<ImPlotColormap>(ImPlotColormap_::ImPlotColormap_Jet)
+const std::set<ImPlotColormap> Colormap::options_ {
+    static_cast<ImPlotColormap>(ImPlotColormap_::ImPlotColormap_Viridis), // 4
+    static_cast<ImPlotColormap>(ImPlotColormap_::ImPlotColormap_Plasma), // 5
+    static_cast<ImPlotColormap>(ImPlotColormap_::ImPlotColormap_Hot), // 6
+    static_cast<ImPlotColormap>(ImPlotColormap_::ImPlotColormap_Cool), // 7
+    static_cast<ImPlotColormap>(ImPlotColormap_::ImPlotColormap_Pink), // 8
+    static_cast<ImPlotColormap>(ImPlotColormap_::ImPlotColormap_Jet), // 9
+    static_cast<ImPlotColormap>(ImPlotColormap_::ImPlotColormap_Spectral), //14
+    static_cast<ImPlotColormap>(ImPlotColormap_::ImPlotColormap_Greys), // 15
+
 };
 
-ImPlotColormap ColormapSelector::map_ = static_cast<ImPlotColormap>(
-        ImPlotColormap_::ImPlotColormap_Spectral);
+Colormap::Colormap() :
+        map_(static_cast<ImPlotColormap>(ImPlotColormap_::ImPlotColormap_Viridis)) {
+    updateTexture();
+}
 
-ColormapSelector::ColormapSelector(const char* label) {
+void Colormap::describe() {
     ImPlotContext& gp = *(ImPlot::GetCurrentContext());
-    if (ImGui::BeginCombo(label, gp.ColormapData.GetName(ColormapSelector::map_))) {
+    auto& cmd = gp.ColormapData;
+    auto prev_map_ = map_;
+    if (ImGui::BeginCombo("Colormap##ReconComponent", cmd.GetName(map_))) {
         for (auto idx : options_) {
-            const char* name = gp.ColormapData.GetName(idx);
-            if (ImGui::Selectable(name, ColormapSelector::map_ == idx)) {
-                ColormapSelector::map_ = idx;
-            }
+            const char* name = cmd.GetName(idx);
+            if (ImGui::Selectable(name, map_ == idx)) map_ = idx;
         }
         ImGui::EndCombo();
     }
 
-    ImPlot::PushColormap(ColormapSelector::map_);
+    if (prev_map_ != map_) updateTexture();
 }
 
-ColormapSelector::~ColormapSelector() {
-    ImPlot::PopColormap();
-}
+Colormap::~Colormap() = default;
 
-// class ColormapOld
+void Colormap::bind() { texture_.bind(); }
 
-ColormapOld::ColormapOld() : name_("hot") {
-    setColormap(name_);
-}
+void Colormap::unbind() { texture_.unbind(); }
 
-ColormapOld::~ColormapOld() = default;
+void Colormap::updateTexture() {
+    ImPlotContext& gp = *(ImPlot::GetCurrentContext());
+    auto& cmd = gp.ColormapData;
 
-void ColormapOld::setColormap(const std::string& name) {
-    name_ = name;
-
-    constexpr int samples = 100;
-
-    auto& gradient = ColormapOld::gradients().at(name);
-
-    auto interpolate =
-            [](double z, std::vector<std::pair<double, double>>& xys) -> double {
-                for (int i = 1; i < (int)xys.size(); ++i) {
-                    if (z > xys[i].first)
-                        continue;
-
-                    auto val = xys[i - 1].second +
-                            ((z - xys[i - 1].first) / (xys[i].first - xys[i - 1].first)) *
-                            (xys[i].second - xys[i - 1].second);
-
-                    return val;
-                }
-
-                return 0.0f;
-            };
-
-    std::vector<unsigned char> data(samples * 3);
-    for (int j = 0; j < samples; ++j) {
-        for (int i = 0; i < 3; ++i) {
-            double intensity = (double)j / samples;
-            data[j * 3 + i] = static_cast<unsigned char>(255 * interpolate(intensity, gradient[i]));
-        }
+    int samples = cmd.TableSizes[map_];
+    std::vector<unsigned char> data;
+    int offset = cmd.TableOffsets[map_];
+    for (int i = offset; i < offset + samples; ++i) {
+        ImVec4 rgb = ImGui::ColorConvertU32ToFloat4(cmd.Tables[i]);
+        data.push_back(static_cast<unsigned char>(255 * rgb.x));
+        data.push_back(static_cast<unsigned char>(255 * rgb.y));
+        data.push_back(static_cast<unsigned char>(255 * rgb.z));
     }
-
     texture_.setData(data, samples);
 }
-
-void ColormapOld::describe() {
-    const std::string prev_cm = name_;
-    if (ImGui::BeginCombo("Colormap", name_.c_str())) {
-        for (auto& gradient : ColormapOld::gradients()) {
-            bool is_selected = (name_ == gradient.first);
-            if (ImGui::Selectable(gradient.first.c_str(), is_selected))
-                name_ = gradient.first;
-            if (is_selected) ImGui::SetItemDefaultFocus();
-        }
-        ImGui::EndCombo();
-    }
-
-    if (prev_cm != name_) setColormap(name_);
-}
-
-void ColormapOld::bind() { texture_.bind(); }
-void ColormapOld::unbind() { texture_.unbind(); }
 
 } // namespace tomcat::gui

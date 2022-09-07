@@ -123,8 +123,6 @@ void ReconComponent::describe() {
 
     ImGui::Checkbox("Auto Levels", &auto_levels_);
 
-    auto selector = ColormapSelector("Colormap##ReconComponent");
-
     float step_size = (max_val_ - min_val_) / 100.f;
     if (step_size < 0.01f) step_size = 0.01f; // avoid a tiny step size
     ImGui::DragFloatRange2("Min / Max", &min_val_, &max_val_, step_size,
@@ -149,11 +147,11 @@ void ReconComponent::render(const glm::mat4& world_to_screen) {
     glEnable(GL_BLEND);
 
     solid_shader_->use();
-    solid_shader_->setInt("colormap_sampler", 0);
-    solid_shader_->setInt("texture_sampler", 1);
-    solid_shader_->setInt("volume_data_sampler", 2);
-    solid_shader_->setFloat("min_value", min_val_);
-    solid_shader_->setFloat("max_value", max_val_);
+    solid_shader_->setInt("colormap", 0);
+    solid_shader_->setInt("sliceData", 1);
+    solid_shader_->setInt("volumeData", 2);
+    solid_shader_->setFloat("minValue", min_val_);
+    solid_shader_->setFloat("maxValue", max_val_);
 
     cm_.bind();
 
@@ -341,10 +339,13 @@ void ReconComponent::maybeSwitchDragMachine(ReconComponent::DragType type) {
 }
 
 void ReconComponent::drawSlice(Slice* slice, const glm::mat4& world_to_screen) {
+    // FIXME: bind an empty slice will result in warning:
+    //        UNSUPPORTED (log once): POSSIBLE ISSUE: unit 1 GLD_TEXTURE_INDEX_2D is
+    //        unloadable and bound to sampler type (Float) - using zero texture because texture unloadable
     slice->bind();
 
-    solid_shader_->setMat4("world_to_screen_matrix", world_to_screen);
-    solid_shader_->setMat4("orientation_matrix",
+    solid_shader_->setMat4("worldToScreenMatrix", world_to_screen);
+    solid_shader_->setMat4("orientationMatrix",
                       slice->orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0)));
     solid_shader_->setBool("hovered", slice->hovered());
     solid_shader_->setBool("empty", slice->empty());

@@ -12,37 +12,44 @@
 
 namespace tomcat::gui {
 
-template <typename T>
-inline GLenum data_type();
+namespace detail {
+
+template<typename T>
+inline GLint InternalFormat();
 
 template <>
-inline GLenum data_type<uint8_t>() { return GL_UNSIGNED_BYTE; }
+inline GLint InternalFormat<float>() { return GL_R32F; }
 
 template <>
-inline GLenum data_type<uint32_t>() { return GL_UNSIGNED_INT; }
+inline GLint InternalFormat<unsigned char>() { return GL_RGB32F; }
+
+template<typename T>
+inline GLenum DataFormat();
 
 template <>
-inline GLenum data_type<float>() { return GL_FLOAT; }
-
-template <typename T>
-inline GLint format_type();
+inline GLenum DataFormat<float>() { return GL_RED; }
 
 template <>
-inline GLint format_type<uint8_t>() { return GL_RED; }
+inline GLenum DataFormat<unsigned char>() { return GL_RGB; }
+
+template<typename T>
+inline GLenum DataType();
 
 template <>
-inline GLint format_type<uint32_t>() { return GL_RED; }
+inline GLenum DataType<float>() { return GL_FLOAT; }
 
 template <>
-inline GLint format_type<float>() { return GL_R32F; }
+inline GLenum DataType<unsigned char>() { return GL_UNSIGNED_BYTE; }
+
+} // namespace detail
 
 class Texture {
 
-  protected:
+protected:
 
     GLuint texture_id_ = -1;
 
-  public:
+public:
 
     Texture() = default;
     virtual ~Texture() = default;
@@ -59,8 +66,12 @@ class ColormapTexture : public Texture {
     void genTexture(const std::vector<T>& data) {
         glBindTexture(GL_TEXTURE_1D, texture_id_);
 
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, x_, 0, GL_RGB, GL_UNSIGNED_BYTE, data.data());
+
+        glTexImage1D(GL_TEXTURE_1D, 0, detail::InternalFormat<T>(), x_, 0,
+                     detail::DataFormat<T>(), detail::DataType<T>(), data.data());
         glGenerateMipmap(GL_TEXTURE_1D);
 
         glBindTexture(GL_TEXTURE_1D, 0);
@@ -118,14 +129,14 @@ class SliceTexture : public Texture {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, format_type<T>(), x_, y_, 0, GL_RED,
-                     data_type<T>(), data.data());
+        glTexImage2D(GL_TEXTURE_2D, 0, detail::InternalFormat<T>(), x_, y_, 0,
+                     detail::DataFormat<T>(), detail::DataType<T>(), data.data());
         glGenerateMipmap(GL_TEXTURE_2D);
 
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
-  public:
+public:
 
     SliceTexture() : Texture() {
         glGenTextures(1, &texture_id_);
@@ -186,19 +197,18 @@ class VolumeTexture  : public Texture {
 
         glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
         glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-        glTexImage3D(GL_TEXTURE_3D, 0, format_type<T>(), x_, y_, z_, 0, GL_RED,
-                     data_type<T>(), data.data());
+        glTexImage3D(GL_TEXTURE_3D, 0, detail::InternalFormat<T>(), x_, y_, z_, 0,
+                     detail::DataFormat<T>(), detail::DataType<T>(), data.data());
         glGenerateMipmap(GL_TEXTURE_3D);
 
         glBindTexture(GL_TEXTURE_3D, 0);
     }
 
-  public:
+public:
 
     VolumeTexture() : Texture() {
         glGenTextures(1, &texture_id_);
