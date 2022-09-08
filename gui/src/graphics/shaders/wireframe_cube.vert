@@ -1,10 +1,10 @@
 R"glsl(
 #version 330
 
-in vec3 in_position;
-uniform mat4 transform_matrix;
+in vec3 position;
+uniform mat4 transformMatrix;
 
 void main() {
-    gl_Position = transform_matrix * vec4(in_position.x, in_position.y, in_position.z, 1.0f);
+    gl_Position = transformMatrix * vec4(position.x, position.y, position.z, 1.0f);
 }
 )glsl"

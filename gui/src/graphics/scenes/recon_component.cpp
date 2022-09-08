@@ -177,8 +177,8 @@ void ReconComponent::render(const glm::mat4& world_to_screen) {
     cm_.unbind();
 
     wireframe_shader_->use();
-    wireframe_shader_->setMat4("transform_matrix", full_transform);
-    wireframe_shader_->setVec4("line_color", glm::vec4(1.f, 1.f, 1.f, 0.2f));
+    wireframe_shader_->setMat4("transformMatrix", full_transform);
+    wireframe_shader_->setVec4("lineColor", glm::vec4(1.f, 1.f, 1.f, 0.2f));
 
     glBindVertexArray(cube_vao_handle_);
     glLineWidth(3.f);
