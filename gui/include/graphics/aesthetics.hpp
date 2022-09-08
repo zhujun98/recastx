@@ -1,11 +1,8 @@
 #ifndef GUI_AESTHETICS_H
 #define GUI_AESTHETICS_H
 
-#include <array>
 #include <map>
 #include <set>
-#include <string>
-#include <vector>
 
 #include "GL/gl3w.h"
 
@@ -28,7 +25,7 @@ class Colormap {
 
 public:
 
-    explicit Colormap();
+    Colormap();
 
     ~Colormap();
 

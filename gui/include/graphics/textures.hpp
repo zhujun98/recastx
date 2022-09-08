@@ -88,11 +88,13 @@ public:
     }
 
     ColormapTexture(ColormapTexture&& other) noexcept {
+        x_ = other.x_;
         texture_id_ = other.texture_id_;
         other.texture_id_ = -1;
     }
 
     ColormapTexture& operator=(ColormapTexture&& other) noexcept {
+        x_ = other.x_;
         texture_id_ = other.texture_id_;
         other.texture_id_ = -1;
     }
