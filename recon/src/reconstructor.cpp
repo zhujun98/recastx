@@ -211,22 +211,27 @@ void Reconstructor::pushProjection(ProjectionType k,
         }
         case ProjectionType::dark: {
             reciprocal_computed_ = false;
+            ++received_darks_;
             if (received_darks_ == num_darks_) {
+                spdlog::info("Received {} darks in total.", received_darks_);
+            } else if (received_darks_ > num_darks_) {
                 spdlog::warn("Received more darks than expected. New dark ignored!");
                 return;
             }
-            memcpy(&all_darks_[received_darks_ * pixels_], data, sizeof(RawDtype) * pixels_);
-            ++received_darks_;
+            spdlog::info("Received: {}", received_darks_);
+            memcpy(&all_darks_[(received_darks_ - 1) * pixels_], data, sizeof(RawDtype) * pixels_);
             break;
         }
         case ProjectionType::flat: {
             reciprocal_computed_ = false;
+            ++received_flats_;
             if (received_flats_ == num_flats_) {
+                spdlog::info("Received {} flats in total.", received_flats_);
+            } else if (received_flats_ > num_flats_) {
                 spdlog::warn("Received more flats than expected. New flat ignored!");
                 return;
             }
-            memcpy(&all_flats_[received_flats_ * pixels_], data, sizeof(RawDtype) * pixels_);
-            ++received_flats_;
+            memcpy(&all_flats_[(received_flats_ - 1) * pixels_], data, sizeof(RawDtype) * pixels_);
             break;
         }
         default:
@@ -251,7 +256,7 @@ void Reconstructor::setSlice(int slice_id, const Orientation& orientation) {
     updated_slices_.insert(slice_id);
 
 #if (VERBOSITY >= 3)
-        spdlog::info("Slice {} updated", slice_id);
+    spdlog::info("Slice {} updated", slice_id);
 #endif
 
 }
