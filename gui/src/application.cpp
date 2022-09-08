@@ -3,6 +3,7 @@
 #include "imgui.h"
 #include "backends/imgui_impl_opengl3.h"
 #include "backends/imgui_impl_glfw.h"
+#include "implot.h"
 
 #include "application.hpp"
 #include "graphics/scenes/scene3d.hpp"
@@ -91,6 +92,7 @@ void Application::start() {
 
 void Application::initImgui() {
     ImGui::CreateContext();
+    ImPlot::CreateContext();
 
     ImGui::StyleColorsDark();
 

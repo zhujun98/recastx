@@ -1,14 +1,15 @@
 #ifndef GUI_RECON_COMPONENT_H
 #define GUI_RECON_COMPONENT_H
-
 #include <cstddef>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <memory>
 #include <string>
 
 #include "scene_component.hpp"
 #include "graphics/scenes/scene.hpp"
+#include "graphics/aesthetics.hpp"
 #include "graphics/shader_program.hpp"
 #include "graphics/slice.hpp"
 #include "graphics/textures.hpp"
@@ -64,15 +65,15 @@ class ReconComponent : public SceneComponent {
     };
 
     std::map<int, std::unique_ptr<Slice>> slices_;
-
     std::unique_ptr<Volume> volume_;
-    GLuint cm_texture_id_;
+
+    Colormap cm_;
 
     glm::mat4 volume_transform_;
 
     GLuint vao_handle_;
     GLuint vbo_handle_;
-    std::unique_ptr<ShaderProgram> program_;
+    std::unique_ptr<ShaderProgram> solid_shader_;
 
     GLuint line_vao_handle_;
     GLuint line_vbo_handle_;
@@ -81,7 +82,7 @@ class ReconComponent : public SceneComponent {
     GLuint cube_vbo_handle_;
     GLuint cube_index_handle_;
     int cube_index_count_;
-    std::unique_ptr<ShaderProgram> cube_program_;
+    std::unique_ptr<ShaderProgram> wireframe_shader_;
 
     Scene& scene_;
     int next_idx_ = 3;
@@ -90,7 +91,9 @@ class ReconComponent : public SceneComponent {
     Slice* dragged_slice_ = nullptr;
     Slice* hovered_slice_ = nullptr;
 
-    std::vector<float> histogram_;
+    bool auto_levels_ = true;
+    float min_val_;
+    float max_val_;
 
     double prev_x_ = -1.1;
     double prev_y_ = -1.1;
@@ -107,7 +110,7 @@ class ReconComponent : public SceneComponent {
 
     void drawSlice(Slice* slice, const glm::mat4& world_to_screen);
 
-    std::array<float, 2> minMaxValsSlices();
+    void maybeUpdateMinMaxValues();
 
 public:
 
@@ -118,11 +121,11 @@ public:
     void describe() override;
 
     void setSliceData(std::vector<float>&& data,
-                      const std::array<int32_t, 2>& size,
+                      const std::array<uint32_t, 2>& size,
                       int slice_idx);
 
     void setVolumeData(std::vector<float>&& data,
-                       const std::array<int32_t, 3>& volume_size);
+                       const std::array<uint32_t, 3>& volume_size);
 
     void requestSlices();
 

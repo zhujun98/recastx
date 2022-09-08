@@ -7,11 +7,13 @@
 #include "GL/gl3w.h"
 #include "GLFW/glfw3.h"
 #include "imgui.h"
+#include "implot.h"
 
 #include "tomcat/tomcat.hpp"
 
 #include "graphics/scenes/recon_component.hpp"
 #include "graphics/scenes/scene_camera3d.hpp"
+#include "graphics/aesthetics.hpp"
 #include "graphics/primitives.hpp"
 #include "util.hpp"
 
@@ -51,28 +53,25 @@ ReconComponent::ReconComponent(Scene& scene) : scene_(scene) {
                  GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
-    auto simple_vert =
-#include "../shaders/simple_3d.vert"
-    ;
-    auto simple_frag =
-#include "../shaders/simple_3d.frag"
-    ;
+    auto solid_vert =
+#include "../shaders/solid_cube.vert"
+        ;
+    auto solid_frag =
+#include "../shaders/solid_cube.frag"
+        ;
+    solid_shader_ = std::make_unique<ShaderProgram>(solid_vert, solid_frag);
 
-    program_ = std::make_unique<ShaderProgram>(simple_vert, simple_frag);
-
-    auto cube_vert =
+    auto wireframe_vert =
 #include "../shaders/wireframe_cube.vert"
-    ;
-    auto cube_frag =
+        ;
+    auto wireframe_frag =
 #include "../shaders/wireframe_cube.frag"
-    ;
-    cube_program_ = std::make_unique<ShaderProgram>(cube_vert, cube_frag);
+        ;
+    wireframe_shader_ = std::make_unique<ShaderProgram>(wireframe_vert, wireframe_frag);
 
     initSlices();
-
     initVolume();
-
-    cm_texture_id_ = scene_.camera().colormapTextureId();
+    maybeUpdateMinMaxValues();
 }
 
 ReconComponent::~ReconComponent() {
@@ -96,7 +95,7 @@ void ReconComponent::requestSlices() {
 }
 
 void ReconComponent::setSliceData(std::vector<float>&& data,
-                                  const std::array<int32_t, 2>& size,
+                                  const std::array<uint32_t, 2>& size,
                                   int slice_idx) {
     Slice* slice;
     if (slices_.find(slice_idx) != slices_.end()) {
@@ -108,34 +107,53 @@ void ReconComponent::setSliceData(std::vector<float>&& data,
 
     if (slice == dragged_slice_) return;
 
-    slice->setData(std::move(data), size);
+    // FIXME: replace uint32_t with size_t in Packet
+    slice->setData(std::move(data), {size[0], size[1]});
+    maybeUpdateMinMaxValues();
 }
 
-void ReconComponent::setVolumeData(std::vector<float>&& data, const std::array<int32_t, 3>& size) {
-    volume_->setData(std::move(data), size);
+void ReconComponent::setVolumeData(std::vector<float>&& data, const std::array<uint32_t, 3>& size) {
+    // FIXME: replace uint32_t with size_t in Packet
+    volume_->setData(std::move(data), {size[0], size[1], size[2]});
+    maybeUpdateMinMaxValues();
 }
 
-void ReconComponent::describe() {}
+void ReconComponent::describe() {
+    cm_.describe();
+
+    ImGui::Checkbox("Auto Levels", &auto_levels_);
+
+    float step_size = (max_val_ - min_val_) / 100.f;
+    if (step_size < 0.01f) step_size = 0.01f; // avoid a tiny step size
+    ImGui::DragFloatRange2("Min / Max", &min_val_, &max_val_, step_size,
+                           std::numeric_limits<float>::lowest(), // min() does not work
+                           std::numeric_limits<float>::max());
+
+    for (auto &[slice_id, slice]: slices_) {
+        const auto &data = slice->data();
+        // FIXME: faster way to build the title?
+        if (ImPlot::BeginPlot(("Slice " + std::to_string(slice_id)).c_str(), ImVec2(0, 120))) {
+            ImPlot::SetupAxes("Pixel value", "Density",
+                              ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+            ImPlot::PlotHistogram("##Histogram", data.data(), static_cast<int>(data.size()),
+                                  100, false, true);
+            ImPlot::EndPlot();
+        }
+    }
+}
 
 void ReconComponent::render(const glm::mat4& world_to_screen) {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
 
-    program_->use();
+    solid_shader_->use();
+    solid_shader_->setInt("colormap", 0);
+    solid_shader_->setInt("sliceData", 1);
+    solid_shader_->setInt("volumeData", 2);
+    solid_shader_->setFloat("minValue", min_val_);
+    solid_shader_->setFloat("maxValue", max_val_);
 
-    program_->setInt("texture_sampler", 0);
-    program_->setInt("colormap_sampler", 1);
-    program_->setInt("volume_data_sampler", 3);
-
-    auto [slices_min, slices_max] = minMaxValsSlices();
-    program_->setFloat("min_value", slices_min);
-    program_->setFloat("max_value", slices_max);
-    auto [volume_min, volume_max] = volume_->minMaxVals();
-    program_->setFloat("volume_min_value", volume_min);
-    program_->setFloat("volume_max_value", volume_max);
-
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_1D, cm_texture_id_);
+    cm_.bind();
 
     glm::mat4 full_transform = world_to_screen * volume_transform_;
 
@@ -151,27 +169,30 @@ void ReconComponent::render(const glm::mat4& world_to_screen) {
         return rhs->transparent();
     });
 
+    // FIXME: why do we need to bind and unbind 3D texture?
     volume_->bind();
     for (auto slice : slices) drawSlice(slice, full_transform);
     volume_->unbind();
 
-    cube_program_->use();
-    cube_program_->setMat4("transform_matrix", full_transform);
-    cube_program_->setVec4("line_color", glm::vec4(0.5f, 0.5f, 0.5f, 0.3f));
+    cm_.unbind();
+
+    wireframe_shader_->use();
+    wireframe_shader_->setMat4("transform_matrix", full_transform);
+    wireframe_shader_->setVec4("line_color", glm::vec4(1.f, 1.f, 1.f, 0.2f));
 
     glBindVertexArray(cube_vao_handle_);
-    glLineWidth(3.0f);
+    glLineWidth(3.f);
     glDrawElements(GL_LINES, cube_index_count_, GL_UNSIGNED_INT, nullptr);
 
     glDisable(GL_DEPTH_TEST);
 
     if (drag_machine_ != nullptr && drag_machine_->type() == DragType::rotator) {
         auto& rotator = *(SliceRotator*)drag_machine_.get();
-        cube_program_->setMat4("transform_matrix",
-                               full_transform * glm::translate(rotator.rot_base) * glm::scale(rotator.rot_end - rotator.rot_base));
-        cube_program_->setVec4("line_color", glm::vec4(1.0f, 1.0f, 0.5f, 0.5f));
+        wireframe_shader_->setMat4("transform_matrix",
+                                   full_transform * glm::translate(rotator.rot_base) * glm::scale(rotator.rot_end - rotator.rot_base));
+        wireframe_shader_->setVec4("line_color", glm::vec4(1.f, 1.f, 1.f, 1.f));
         glBindVertexArray(line_vao_handle_);
-        glLineWidth(5.0f);
+        glLineWidth(10.f);
         glDrawArrays(GL_LINES, 0, 2);
     }
 
@@ -318,13 +339,16 @@ void ReconComponent::maybeSwitchDragMachine(ReconComponent::DragType type) {
 }
 
 void ReconComponent::drawSlice(Slice* slice, const glm::mat4& world_to_screen) {
+    // FIXME: bind an empty slice will result in warning:
+    //        UNSUPPORTED (log once): POSSIBLE ISSUE: unit 1 GLD_TEXTURE_INDEX_2D is
+    //        unloadable and bound to sampler type (Float) - using zero texture because texture unloadable
     slice->bind();
 
-    program_->setMat4("world_to_screen_matrix", world_to_screen);
-    program_->setMat4("orientation_matrix",
+    solid_shader_->setMat4("worldToScreenMatrix", world_to_screen);
+    solid_shader_->setMat4("orientationMatrix",
                       slice->orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0)));
-    program_->setBool("hovered", slice->hovered());
-    program_->setBool("has_data", !slice->empty());
+    solid_shader_->setBool("hovered", slice->hovered());
+    solid_shader_->setBool("empty", slice->empty());
 
     glBindVertexArray(vao_handle_);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -332,9 +356,12 @@ void ReconComponent::drawSlice(Slice* slice, const glm::mat4& world_to_screen) {
     slice->unbind();
 }
 
-std::array<float, 2> ReconComponent::minMaxValsSlices() {
+void ReconComponent::maybeUpdateMinMaxValues() {
+    if (!auto_levels_) return;
+
     auto overall_min = std::numeric_limits<float>::max();
     auto overall_max = std::numeric_limits<float>::min();
+
     for (auto&& [slice_idx, slice] : slices_) {
         (void)slice_idx;
 
@@ -343,8 +370,9 @@ std::array<float, 2> ReconComponent::minMaxValsSlices() {
         overall_max = max_v > overall_max ? max_v : overall_max;
     }
 
-    return {overall_min - (0.2f * (overall_max - overall_min)),
-            overall_max + (0.2f * (overall_max - overall_min))};
+    auto [min_v, max_v] = volume_->minMaxVals();
+    min_val_ = min_v < overall_min ? min_v : overall_min;
+    max_val_ = max_v > overall_max ? max_v : overall_max;
 }
 
 // ReconComponent::DragMachine

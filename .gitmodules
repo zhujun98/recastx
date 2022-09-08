@@ -11,3 +11,6 @@
 [submodule "ext/gl3w"]
 	path = ext/gl3w
 	url = https://github.com/skaslev/gl3w.git
+[submodule "ext/implot"]
+	path = ext/implot
+	url = https://github.com/epezent/implot.git

@@ -12,14 +12,14 @@ class Volume {
   public:
 
     using DataType = std::vector<float>;
-    using SizeType = std::array<int32_t, 3>;
+    using SizeType = std::array<size_t, 3>;
 
   private:
 
     SizeType size_;
     DataType data_;
 
-    Texture3d<float> texture_;
+    VolumeTexture<float> texture_;
 
     std::array<float, 2> min_max_vals_;
 

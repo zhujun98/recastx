@@ -12,37 +12,44 @@
 
 namespace tomcat::gui {
 
-template <typename T>
-inline GLenum data_type();
+namespace detail {
+
+template<typename T>
+inline GLint InternalFormat();
 
 template <>
-inline GLenum data_type<uint8_t>() { return GL_UNSIGNED_BYTE; }
+inline GLint InternalFormat<float>() { return GL_R32F; }
 
 template <>
-inline GLenum data_type<uint32_t>() { return GL_UNSIGNED_INT; }
+inline GLint InternalFormat<unsigned char>() { return GL_RGB32F; }
+
+template<typename T>
+inline GLenum DataFormat();
 
 template <>
-inline GLenum data_type<float>() { return GL_FLOAT; }
-
-template <typename T>
-inline GLint format_type();
+inline GLenum DataFormat<float>() { return GL_RED; }
 
 template <>
-inline GLint format_type<uint8_t>() { return GL_RED; }
+inline GLenum DataFormat<unsigned char>() { return GL_RGB; }
+
+template<typename T>
+inline GLenum DataType();
 
 template <>
-inline GLint format_type<uint32_t>() { return GL_RED; }
+inline GLenum DataType<float>() { return GL_FLOAT; }
 
 template <>
-inline GLint format_type<float>() { return GL_R32F; }
+inline GLenum DataType<unsigned char>() { return GL_UNSIGNED_BYTE; }
+
+} // namespace detail
 
 class Texture {
 
-  protected:
+protected:
 
     GLuint texture_id_ = -1;
 
-  public:
+public:
 
     Texture() = default;
     virtual ~Texture() = default;
@@ -52,7 +59,63 @@ class Texture {
 };
 
 template <typename T = unsigned char>
-class Texture2d : public Texture {
+class ColormapTexture : public Texture {
+
+    int x_ = 0;
+
+    void genTexture(const std::vector<T>& data) {
+        glBindTexture(GL_TEXTURE_1D, texture_id_);
+
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+
+        glTexImage1D(GL_TEXTURE_1D, 0, detail::InternalFormat<T>(), x_, 0,
+                     detail::DataFormat<T>(), detail::DataType<T>(), data.data());
+        glGenerateMipmap(GL_TEXTURE_1D);
+
+        glBindTexture(GL_TEXTURE_1D, 0);
+    }
+
+public:
+
+    ColormapTexture() : Texture() {
+        glGenTextures(1, &texture_id_);
+    };
+
+    ~ColormapTexture() override {
+        if (texture_id_ >= 0) glDeleteTextures(1, &texture_id_);
+    }
+
+    ColormapTexture(ColormapTexture&& other) noexcept {
+        texture_id_ = other.texture_id_;
+        other.texture_id_ = -1;
+    }
+
+    ColormapTexture& operator=(ColormapTexture&& other) noexcept {
+        texture_id_ = other.texture_id_;
+        other.texture_id_ = -1;
+    }
+
+    void setData(const std::vector<T>& data, int x) {
+        x_ = x;
+        assert((int)data.size() == x);
+        genTexture(data);
+    }
+
+    void bind() const override {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_1D, texture_id_);
+    }
+
+    void unbind() const override {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_1D, 0);
+    }
+};
+
+template <typename T = unsigned char>
+class SliceTexture : public Texture {
 
     int x_ = 0;
     int y_ = 0;
@@ -66,31 +129,31 @@ class Texture2d : public Texture {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, format_type<T>(), x_, y_, 0, GL_RED,
-                     data_type<T>(), data.data());
+        glTexImage2D(GL_TEXTURE_2D, 0, detail::InternalFormat<T>(), x_, y_, 0,
+                     detail::DataFormat<T>(), detail::DataType<T>(), data.data());
         glGenerateMipmap(GL_TEXTURE_2D);
 
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
-  public:
+public:
 
-    Texture2d() : Texture() {
+    SliceTexture() : Texture() {
         glGenTextures(1, &texture_id_);
     };
 
-    ~Texture2d() override {
+    ~SliceTexture() override {
         if (texture_id_ >= 0) glDeleteTextures(1, &texture_id_);
     }
 
-    Texture2d(Texture2d&& other) noexcept {
+    SliceTexture(SliceTexture&& other) noexcept {
         x_ = other.x_;
         y_ = other.y_;
         texture_id_ = other.texture_id_;
         other.texture_id_ = -1;
     }
 
-    Texture2d& operator=(Texture2d&& other) noexcept {
+    SliceTexture& operator=(SliceTexture&& other) noexcept {
         x_ = other.x_;
         y_ = other.y_;
         texture_id_ = other.texture_id_;
@@ -105,18 +168,18 @@ class Texture2d : public Texture {
     }
 
     void bind() const override {
-        glActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture_id_);
     }
 
     void unbind() const override {
-        glActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 };
 
 template <typename T = unsigned char>
-class Texture3d  : public Texture {
+class VolumeTexture  : public Texture {
 
     int x_ = 0;
     int y_ = 0;
@@ -132,34 +195,33 @@ class Texture3d  : public Texture {
 
         glBindTexture(GL_TEXTURE_3D, texture_id_);
 
-        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
+        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-        glTexImage3D(GL_TEXTURE_3D, 0, format_type<T>(), x_, y_, z_, 0, GL_RED,
-                     data_type<T>(), data.data());
+        glTexImage3D(GL_TEXTURE_3D, 0, detail::InternalFormat<T>(), x_, y_, z_, 0,
+                     detail::DataFormat<T>(), detail::DataType<T>(), data.data());
         glGenerateMipmap(GL_TEXTURE_3D);
 
         glBindTexture(GL_TEXTURE_3D, 0);
     }
 
-  public:
+public:
 
-    Texture3d() : Texture() {
+    VolumeTexture() : Texture() {
         glGenTextures(1, &texture_id_);
     };
 
-    ~Texture3d() override {
+    ~VolumeTexture() override {
         if (texture_id_ >= 0) glDeleteTextures(1, &texture_id_);
     }
 
-    Texture3d(const Texture3d&) = delete;
-    Texture3d& operator=(const Texture3d&) = delete;
+    VolumeTexture(const VolumeTexture&) = delete;
+    VolumeTexture& operator=(const VolumeTexture&) = delete;
 
-    Texture3d(Texture3d&& other) noexcept {
+    VolumeTexture(VolumeTexture&& other) noexcept {
         x_ = other.x_;
         y_ = other.y_;
         z_ = other.z_;
@@ -167,7 +229,7 @@ class Texture3d  : public Texture {
         other.texture_id_ = -1;
     }
 
-    Texture3d& operator=(Texture3d&& other) noexcept {
+    VolumeTexture& operator=(VolumeTexture&& other) noexcept {
         x_ = other.x_;
         y_ = other.y_;
         z_ = other.z_;
@@ -184,12 +246,12 @@ class Texture3d  : public Texture {
     }
 
     void bind() const override {
-        glActiveTexture(GL_TEXTURE3);
+        glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_3D, texture_id_);
     }
 
     void unbind() const override {
-        glActiveTexture(GL_TEXTURE3);
+        glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_3D, 0);
     }
 };
