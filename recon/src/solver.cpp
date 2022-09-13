@@ -216,54 +216,6 @@ void ParallelBeamSolver::reconstructPreview(std::vector<float>& preview_buffer,
 #endif
 }
 
-bool ParallelBeamSolver::parameterChanged(std::string param, std::variant<float, std::string, bool> value) {
-
-    bool tilt_changed = false;
-    if (param == "tilt angle") {
-        tilt_changed = true;
-        tilt_rotate_ = std::get<float>(value);
-        // TODO rotate geometry vectors
-    } else if (param == "tilt translate") {
-        tilt_changed = true;
-        tilt_translate_ = std::get<float>(value);
-        // TODO translate geometry vectors
-    }
-
-    spdlog::info("Rotate to {}, translate to {}.", tilt_rotate_, tilt_translate_);
-
-    if (tilt_changed) {
-        // From the ASTRA geometry, get the vectors, modify, and reset them
-        int i = 0;
-        for (auto [rx, ry, rz, dx, dy, dz, pxx, pxy, pxz, pyx, pyy, pyz] :
-             original_vectors_) {
-            auto r = Eigen::Vector3f(rx, ry, rz);
-            auto d = Eigen::Vector3f(dx, dy, dz);
-            auto px = Eigen::Vector3f(pxx, pxy, pxz);
-            auto py = Eigen::Vector3f(pyx, pyy, pyz);
-
-            d += tilt_translate_ * px;
-
-            auto z = px.normalized();
-            auto w = py.normalized();
-            auto axis = z.cross(w);
-            auto rot = Eigen::AngleAxis<float>(tilt_rotate_ * M_PI / 180.0f, axis.normalized()).matrix();
-
-            px = rot * px;
-            py = rot * py;
-
-            vectors_[i] = {r[0],  r[1],  r[2],  d[0],  d[1],  d[2],
-                           px[0], px[1], px[2], py[0], py[1], py[2]};
-            ++i;
-        }
-
-        // TODO if either changed, trigger a new reconstruction. Do we need to
-        // do this from reconstructor (since we don't have access to listeners
-        // to notify?). Then the order of handling parameters matters.
-    }
-
-    return tilt_changed;
-}
-
 // class ConeBeamSolver
 
 ConeBeamSolver::ConeBeamSolver(int rows, 
