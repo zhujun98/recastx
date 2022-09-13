@@ -10,7 +10,7 @@ namespace tomcat {
     using Orientation = std::array<float, 9>;
     using SliceData = std::pair<std::array<int32_t, 2>, std::vector<float>>;
 
-    enum class ProjectionType : int32_t { dark = 0, flat = 1, projection = 2 };
+    enum class ProjectionType : int32_t { dark = 0, flat = 1, projection = 2, unknown = 99 };
 
     using RawDtype = uint16_t;
 
