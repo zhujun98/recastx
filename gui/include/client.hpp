@@ -13,7 +13,7 @@
 
 namespace tomcat::gui {
 
-class Server {
+class Client {
 
 public:
 
@@ -27,15 +27,13 @@ private:
     inline static std::queue<DataType> packets_;
 
     zmq::context_t context_;
-    zmq::socket_t rep_socket_;
-    zmq::socket_t pub_socket_;
-
-    void ack();
+    zmq::socket_t data_socket_;
+    zmq::socket_t cmd_socket_;
 
   public:
 
-    explicit Server(int port);
-    ~Server();
+    explicit Client(const std::string& hostname, int port);
+    ~Client();
 
     void send(Packet& packet);
 

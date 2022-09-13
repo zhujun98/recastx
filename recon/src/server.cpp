@@ -51,8 +51,6 @@ int main(int argc, char** argv)
          "ZMQ socket port of the data source server")
         ("data-socket", po::value<std::string>()->default_value("pull"),
          "ZMQ socket type of the data source server. Options: sub/pull")
-        ("gui-host", po::value<std::string>()->default_value("localhost"),
-         "hostname of the GUI server")
         ("gui-port", po::value<int>()->default_value(9970),
          "First ZMQ socket port of the GUI server. The second port has an increment of 1. "
          "The valid port range is [9970, 9979]")
@@ -135,7 +133,6 @@ int main(int argc, char** argv)
     auto data_hostname = opts["data-host"].as<std::string>();
     auto data_port = opts["data-port"].as<int>();
     auto data_socket_type = parseSocketType(opts["data-socket"].as<std::string>());
-    auto gui_hostname = opts["gui-host"].as<std::string>();
     auto gui_port = opts["gui-port"].as<int>();
 
     auto rows = opts["rows"].as<int>();
@@ -207,10 +204,7 @@ int main(int argc, char** argv)
         recon);
     data_receiver.start();
 
-    auto broker = Broker(
-        "tcp://"s + gui_hostname + ":"s + std::to_string(gui_port),
-        "tcp://"s + gui_hostname + ":"s + std::to_string(gui_port + 1),
-        recon);
+    auto broker = Broker(gui_port, recon);
     broker.start();
 
     while (true) {

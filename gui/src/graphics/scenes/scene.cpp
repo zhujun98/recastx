@@ -6,7 +6,7 @@
 #include "graphics/scenes/scene_camera.hpp"
 #include "graphics/shader_program.hpp"
 #include "graphics/scenes/recon_component.hpp"
-#include "server.hpp"
+#include "client.hpp"
 
 namespace tomcat::gui {
 
@@ -74,7 +74,7 @@ void Scene::tick(double time_elapsed) {
         id_and_comp.second->tick(time_elapsed);
     }
 
-    auto& packets = server_->packets();
+    auto& packets = client_->packets();
     while (!packets.empty()) {
         auto data = std::move(packets.front());
         packets.pop();
@@ -104,6 +104,6 @@ void Scene::tick(double time_elapsed) {
     }
 }
 
-void Scene::setPublisher(Server *server) { server_ = server; }
+void Scene::setPublisher(Client *client) { client_ = client; }
 
 }  // tomcat::gui

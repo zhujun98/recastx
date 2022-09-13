@@ -7,7 +7,7 @@
 
 #include "application.hpp"
 #include "graphics/scenes/scene3d.hpp"
-#include "server.hpp"
+#include "client.hpp"
 
 namespace tomcat::gui {
 
@@ -65,8 +65,8 @@ Application& Application::instance() {
 
 void Application::setScene(Scene3d* scene) { scene_ = scene; }
 
-void Application::setPublisher(Server* server) {
-    scene_->setPublisher(server);
+void Application::setPublisher(Client* client) {
+    scene_->setPublisher(client);
 }
 
 void Application::start() {

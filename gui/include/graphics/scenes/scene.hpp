@@ -11,7 +11,7 @@
 #include "scene_component.hpp"
 #include "graphics/graph_node.hpp"
 #include "ticker.hpp"
-#include "server.hpp"
+#include "client.hpp"
 
 namespace tomcat::gui {
 
@@ -25,7 +25,7 @@ class Scene : public GraphNode, public InputHandler, public Ticker {
     GLuint vbo_handle_;
     std::unique_ptr<ShaderProgram> program_;
     std::unique_ptr<SceneCamera> camera_;
-    Server* server_;
+    Client* client_;
 
     float pixel_size_ = 1.0;
 
@@ -52,11 +52,11 @@ class Scene : public GraphNode, public InputHandler, public Ticker {
 
     void tick(double time_elapsed) override;
 
-    void setPublisher(Server* server);
+    void setPublisher(Client* client);
 
     template <typename T>
     void send(T&& packet) {
-        server_->send(std::forward<T>(packet));
+        client_->send(std::forward<T>(packet));
     }
 
     [[nodiscard]] SceneCamera& camera();

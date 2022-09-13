@@ -47,7 +47,7 @@ set(SOURCE_NAMES
         "src/main.cpp"
         "src/math_common.cpp"
         "src/path.cpp"
-        "src/server.cpp"
+        "src/client.cpp"
         "src/ticker.cpp"
         "src/util.cpp"
         "src/graphics/aesthetics.cpp"

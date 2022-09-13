@@ -15,12 +15,12 @@ namespace tomcat::recon {
 class Broker {
     zmq::context_t context_;
 
-    zmq::socket_t req_socket_;
-    zmq::socket_t sub_socket_;
+    zmq::socket_t data_socket_;
+    zmq::socket_t cmd_socket_;
 
-    std::thread req_thread1_;
-    std::thread req_thread2_;
-    std::thread sub_thread_;
+    std::thread data_thread1_;
+    std::thread data_thread2_;
+    std::thread cmd_thread_;
 
     std::mutex send_mtx_;
 
@@ -28,9 +28,7 @@ class Broker {
 
   public:
 
-    Broker(const std::string& endpoint,
-           const std::string& subscribe_endpoint,
-           std::shared_ptr<Reconstructor> recon);
+    Broker(int gui_port, std::shared_ptr<Reconstructor> recon);
 
     ~Broker();
 
