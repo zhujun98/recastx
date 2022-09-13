@@ -77,12 +77,6 @@ public:
     virtual void reconstructPreview(std::vector<float>& preview_buffer, 
                                     int buffer_idx) = 0;
 
-    // returns true if we want to trigger a re-reconstruction
-    virtual bool
-    parameterChanged(std::string param, std::variant<float, std::string, bool> value) {
-        return false;
-    }
-
     void uploadSinograms(int buffer_idx, const std::vector<float>& sino, int begin, int end);
 };
 
@@ -129,8 +123,6 @@ public:
     void reconstructPreview(std::vector<float>& preview_buffer, 
                             int buffer_idx) override;
 
-    bool parameterChanged(std::string param, 
-                          std::variant<float, std::string, bool> value) override;
 };
 
 class ConeBeamSolver : public Solver {

@@ -45,6 +45,3 @@ target_link_libraries(test_recon
         ${RECON_LIB}
         gtest
         pthread)
-target_compile_options(test_recon
-    PRIVATE
-        -std=c++17)        
