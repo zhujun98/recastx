@@ -15,7 +15,7 @@ struct GLFWwindow;
 namespace tomcat::gui {
 
 class Scene3d;
-class Server;
+class Client;
 
 class Application {
 
@@ -59,7 +59,7 @@ public:
 
     void setScene(Scene3d* scene);
 
-    void setPublisher(Server* server);
+    void setPublisher(Client* client);
 
     void start();
 };

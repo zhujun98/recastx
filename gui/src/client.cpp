@@ -5,7 +5,7 @@
 #include <zmq.hpp>
 #include <spdlog/spdlog.h>
 
-#include "server.hpp"
+#include "client.hpp"
 #include "tomcat/tomcat.hpp"
 
 
@@ -13,27 +13,38 @@ namespace tomcat::gui {
 
 using namespace std::string_literals;
 
-Server::Server(int port)
-      : rep_socket_(context_, ZMQ_REP),
-        pub_socket_(context_, ZMQ_PUB) {
+Client::Client(const std::string& hostname, int port)
+      : context_(1),
+        data_socket_(context_, ZMQ_REQ),
+        cmd_socket_(context_, ZMQ_PAIR) {
+    
+    // Caveat: sequence
+    std::string cmd_endpoint = "tcp://"s + hostname + ":"s + std::to_string(port + 1);
+    cmd_socket_.connect(cmd_endpoint);
 
-    rep_socket_.bind("tcp://*:"s + std::to_string(port));
-    pub_socket_.bind("tcp://*:"s + std::to_string(port+1));
+    std::string data_endpoint = "tcp://"s + hostname + ":"s + std::to_string(port);
+    data_socket_.connect(data_endpoint);
+
+    spdlog::info("Connected to the reconstruction server: {}, {}", 
+                 data_endpoint, cmd_endpoint);
 }
 
-Server::~Server() = default;
+Client::~Client() {
+    data_socket_.set(zmq::sockopt::linger, 200);
+};
 
-void Server::start() {
-    std::cout << "Listening for incoming connections..\n";
+void Client::start() {
+    std::cout << "Listening for incoming connections ...\n";
 
     running_ = true;
     thread_ = std::thread([&]() {
         while (running_) {
-            zmq::message_t request;
+            data_socket_.send(zmq::str_buffer("Hello recon"), zmq::send_flags::none);
 
-            rep_socket_.recv(request, zmq::recv_flags::none);
-            auto desc = ((PacketDesc*)request.data())[0];
-            auto buffer = tomcat::memory_buffer(request.size(), (char*)request.data());
+            zmq::message_t reply;
+            data_socket_.recv(reply, zmq::recv_flags::none);
+            auto desc = ((PacketDesc*)reply.data())[0];
+            auto buffer = tomcat::memory_buffer(reply.size(), (char*)reply.data());
 
             switch (desc) {
                 case PacketDesc::slice_data: {
@@ -54,21 +65,19 @@ void Server::start() {
                     break;
                 }
             }
-
-            ack();
         }
     });
 }
 
-std::queue<Server::DataType>& Server::packets() { return packets_; }
+std::queue<Client::DataType>& Client::packets() { return packets_; }
 
-void Server::send(Packet& packet) {
+void Client::send(Packet& packet) {
     try {
         auto size = packet.size();
         zmq::message_t message(size);
         auto membuf = packet.serialize(size);
         memcpy(message.data(), membuf.buffer.get(), size);
-        pub_socket_.send(message, zmq::send_flags::none);
+        cmd_socket_.send(message, zmq::send_flags::none);
 
 #if (VERBOSITY >= 3)
         spdlog::info("Published packet: 0x{0:x}", 
@@ -78,13 +87,6 @@ void Server::send(Packet& packet) {
     } catch (const std::exception& e) {
         spdlog::error("Failed publishing packet: {}", e.what());
     }
-}
-
-void Server::ack() {
-    zmq::message_t reply(sizeof(int));
-    int success = 1;
-    memcpy(reply.data(), &success, sizeof(int));
-    rep_socket_.send(reply, zmq::send_flags::none);
 }
 
 } // namespace tomcat::gui

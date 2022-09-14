@@ -5,50 +5,41 @@
 
 namespace tomcat::recon {
 
-Broker::Broker(const std::string& endpoint,
-               const std::string& subscribe_endpoint,
-               std::shared_ptr<Reconstructor> recon)
+using namespace std::string_literals;
+
+Broker::Broker(int port, std::shared_ptr<Reconstructor> recon)
     : context_(1), 
-      req_socket_(context_, ZMQ_REQ),
-      sub_socket_(context_, ZMQ_SUB),
+      data_socket_(context_, ZMQ_REP),
+      cmd_socket_(context_, ZMQ_PAIR),
       recon_(recon) {
     using namespace std::chrono_literals;
 
-    req_socket_.set(zmq::sockopt::linger, 200);
-    req_socket_.connect(endpoint);
-    spdlog::info("Connected to GUI server (REQ-REP): {}", endpoint);
+    data_socket_.bind("tcp://*:"s + std::to_string(port));
+    cmd_socket_.bind("tcp://*:"s + std::to_string(port + 1));
 
-    sub_socket_.connect(subscribe_endpoint);
-    spdlog::info("Connected to GUI server (PUB-SUB): {}", subscribe_endpoint);
+    spdlog::info("Waiting for connections from the GUI client. Ports: {}, {}", 
+                 port, port + 1);
+}
 
-    std::vector<PacketDesc> descriptors = {
-        PacketDesc::set_slice,
-        PacketDesc::remove_slice
-    };
-    for (auto descriptor : descriptors) {
-        int32_t filter[] = {(std::underlying_type<PacketDesc>::type)descriptor};
-        sub_socket_.set(zmq::sockopt::subscribe, zmq::buffer(filter));
+Broker::~Broker() = default; 
+
+void Broker::send(const Packet& packet) {
+    
+    zmq::message_t msg;
+    data_socket_.recv(msg, zmq::recv_flags::none);
+    auto request = std::string(static_cast<char*>(msg.data()), msg.size());
+    if (request == "Hello recon") {
+        packet.send(data_socket_);
+    } else {
+        spdlog::warn("Unknown request received: {}", request);
     }
 }
 
-Broker::~Broker() {
-    req_socket_.close();
-    sub_socket_.close();
-    context_.close();
-}
-
-void Broker::send(const Packet& packet) {
-    std::lock_guard<std::mutex> lck(send_mtx_);
-    zmq::message_t reply;
-    packet.send(req_socket_);
-    req_socket_.recv(reply, zmq::recv_flags::none);
-}
-
 void Broker::start() {
-    sub_thread_ = std::thread([&] {
+    cmd_thread_ = std::thread([&] {
         while (true) {
             zmq::message_t update;
-            sub_socket_.recv(update, zmq::recv_flags::none);
+            cmd_socket_.recv(update, zmq::recv_flags::none);
             auto desc = ((PacketDesc*)update.data())[0];
             auto buffer = tomcat::memory_buffer(update.size(), (char*)update.data());
 
@@ -80,30 +71,38 @@ void Broker::start() {
         }
     });
 
-    req_thread1_ = std::thread([&] {
+    data_thread1_ = std::thread([&] {
         while (true) {
-            send(recon_->previewDataPacket());
+            auto preview_data = recon_->previewDataPacket();
+            auto slice_data = recon_->sliceDataPackets();
+
+            std::lock_guard<std::mutex> lck(send_mtx_);
+
+            send(std::move(preview_data));
             spdlog::info("Volume preview data sent");
-
-            for (const auto& packet : recon_->sliceDataPackets()) {
-                send(packet);
+            
+            for (const auto& packet : slice_data) {
+                send(std::move(packet));
                 spdlog::info("Slice data {} sent", packet.slice_id);
             }
         }
     });
 
-    req_thread2_ = std::thread([&] {
+    data_thread2_ = std::thread([&] {
         while (true) {
-            for (const auto& packet : recon_->updatedSliceDataPackets()) {
-                send(packet);
+            auto slice_data = recon_->updatedSliceDataPackets();
+
+            std::lock_guard<std::mutex> lck(send_mtx_);
+            for (const auto& packet : slice_data) {
+                send(std::move(packet));
                 spdlog::info("Slice data {} sent", packet.slice_id);
             }
         }
     });
 
-    sub_thread_.detach();
-    req_thread1_.detach();
-    req_thread2_.detach();
+    cmd_thread_.detach();
+    data_thread1_.detach();
+    data_thread2_.detach();
 }
 
 } // tomcat::recon

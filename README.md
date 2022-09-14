@@ -34,19 +34,19 @@ make -j12 && make install
 Log in (no ssh) onto the graphics workstation `x02da-gws-3` and open a terminal
 ```sh
 conda activate tomcat-live
-tomcat-live-gui
+tomcat-live-gui --recon-host x02da-gpu-1
 ```
 
 Or on the Ra cluster, you can only run the OpenGL GUI inside a [NoMachine](https://www.psi.ch/en/photon-science-data-services/remote-interactive-access
 ) client by
 ```sh
-vglrun tomcat-live-gui
+vglrun tomcat-live-gui --recon-host x02da-gpu-1
 ```
 **Note**: there is still a problem of linking the OpenGL GUI on Ra.
 
 Or on a local PC
 ```sh
-ssh -R 9970:localhost:9970 -R 9971:localhost:9971 x02da-gpu-1
+ssh -L 9970:localhost:9970 -L 9971:localhost:9971 x02da-gpu-1
 ```
 
 ### Step 2: Start the reconstruction server
@@ -57,8 +57,8 @@ conda activate tomcat-live
 # Receiving the data stream and running the GUI both locally
 tomcat-live-server --threads 32 --rows 800 --cols 384 --group-size 400
 
-# Receiving the data stream from a DAQ node and running the GUI on a graphics work station
-tomcat-live-server --data-host xbl-daq-36 --gui-host x02da-gws-3 --threads 32 --rows 800 --cols 384 --group-size 400
+# Receiving the data stream from a DAQ node
+tomcat-live-server --data-host xbl-daq-36 --threads 32 --rows 800 --cols 384 --group-size 400
 ```
 
 For more information, type
