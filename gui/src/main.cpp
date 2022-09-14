@@ -19,10 +19,11 @@ int main(int argc, char** argv) {
     po::options_description desc("Options");
     desc.add_options()
         ("help,h", "print help message")
-        ("hostname", po::value<std::string>()->default_value("localhost"),
+        ("recon-host", po::value<std::string>()->default_value("localhost"),
          "hostname of the reconstruction server")
-        ("port", po::value<int>()->default_value(9970),
-         "ZMQ socket port of the reconstruction server")
+        ("recon-port", po::value<int>()->default_value(9970),
+         "First ZMQ socket port of the GUI server. The second port has an increment of 1. "
+         "The valid port range is [9970, 9979]")
     ;
 
     po::variables_map opts;
@@ -38,7 +39,7 @@ int main(int argc, char** argv) {
 
     Scene3d scene;
 
-    Client client(opts["hostname"].as<std::string>(), opts["port"].as<int>());
+    Client client(opts["recon-host"].as<std::string>(), opts["recon-port"].as<int>());
 
     app.setScene(&scene);
     app.setPublisher(&client);
