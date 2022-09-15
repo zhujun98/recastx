@@ -34,11 +34,8 @@ Client::~Client() {
 };
 
 void Client::start() {
-    std::cout << "Listening for incoming connections ...\n";
-
-    running_ = true;
     thread_ = std::thread([&]() {
-        while (running_) {
+        while (true) {
             data_socket_.send(zmq::str_buffer("ready"), zmq::send_flags::none);
 
             zmq::message_t reply;
@@ -67,6 +64,8 @@ void Client::start() {
             }
         }
     });
+
+    thread_.detach();
 }
 
 std::queue<Client::DataType>& Client::packets() { return packets_; }

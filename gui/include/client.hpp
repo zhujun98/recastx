@@ -22,7 +22,6 @@ public:
 private:
 
     std::thread thread_;
-    bool running_ = false;
 
     inline static std::queue<DataType> packets_;
 
