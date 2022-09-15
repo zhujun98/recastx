@@ -1,10 +1,12 @@
 #ifndef SLICERECON_BUFFER_H
 #define SLICERECON_BUFFER_H
 
+#include <chrono>
 #include <condition_variable>
 #include <queue>
 #include <thread>
 #include <unordered_map>
+using namespace std::chrono_literals;
 
 #include <spdlog/spdlog.h>
 
@@ -54,7 +56,7 @@ class TrippleBufferInterface {
 
   public:
 
-    virtual void fetch() = 0;
+    virtual bool fetch(int timeout = -1) = 0;
     virtual void prepare() = 0;
 
     virtual T& front() = 0;
@@ -107,11 +109,19 @@ class TripleBuffer : public TrippleBufferInterface<std::vector<T>> {
         this->front_.resize(capacity);
     }
 
-    void fetch() override {
+    bool fetch(int timeout = -1) override {
         std::unique_lock lk(this->mtx_);
-        this->cv_.wait(lk, [this] { return this->is_ready_; });
+        if (timeout < 0) {
+            cv_.wait(lk, [this] { return this->is_ready_; });
+        } else {
+            if(!(cv_.wait_for(lk, timeout * 1ms, 
+                              [this] { return this->is_ready_; }))) {
+                return false;
+            }
+        }
         this->front_.swap(this->ready_); 
         this->is_ready_ = false;
+        return true;
     }
 
     void prepare() override {
@@ -270,12 +280,21 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
 
     }
 
-    void fetch() override {
+    bool fetch(int timeout = -1) override {
         std::unique_lock lk(mtx_);
-        cv_.wait(lk, [this] { return this->is_ready_; });
+        if (timeout < 0) {
+            cv_.wait(lk, [this] { return this->is_ready_; });
+        } else {
+            if (!(cv_.wait_for(lk, timeout * 1ms, 
+                               [this] { return this->is_ready_; }))) {
+                return false;
+            }
+        }
         this->front_.swap(buffer_[map_.at(group_indices_.front())]);
         pop();
         is_ready_ = false;
+        
+        return true;
     }
 
     void prepare() override {}

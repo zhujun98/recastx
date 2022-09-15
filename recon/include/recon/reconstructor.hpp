@@ -4,6 +4,7 @@
 #include <condition_variable>
 #include <cstdint>
 #include <iostream>
+#include <optional>
 #include <set>
 #include <thread>
 #include <unordered_map>
@@ -74,7 +75,7 @@ class Reconstructor {
 
     void processProjections(oneapi::tbb::task_arena& arena);
 
-  public:
+public:
 
     Reconstructor(int rows, int cols, int num_threads); 
 
@@ -105,7 +106,7 @@ class Reconstructor {
     void setSlice(int slice_id, const Orientation& orientation);
     void removeSlice(int slice_id);
 
-    VolumeDataPacket previewDataPacket();
+    std::optional<VolumeDataPacket> previewDataPacket();
 
     std::vector<SliceDataPacket> sliceDataPackets();
 
