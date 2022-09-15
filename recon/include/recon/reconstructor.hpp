@@ -37,7 +37,7 @@ class Reconstructor {
     int slice_size_ = 0;
     std::unordered_map<int, Orientation> slices_;
     std::set<int> updated_slices_;
-    std::set<int> reconstructed_slices_;
+    std::set<int> requested_slices_;
     std::condition_variable slice_cv_;
     std::mutex slice_mtx_;
 
@@ -106,11 +106,11 @@ public:
     void setSlice(int slice_id, const Orientation& orientation);
     void removeSlice(int slice_id);
 
-    std::optional<VolumeDataPacket> previewDataPacket();
+    std::optional<VolumeDataPacket> previewDataPacket(int timeout=-1);
 
     std::vector<SliceDataPacket> sliceDataPackets();
 
-    std::vector<SliceDataPacket> updatedSliceDataPackets();
+    std::optional<std::vector<SliceDataPacket>> requestedSliceDataPackets(int timeout=-1);
 
     size_t bufferSize() const;
 
