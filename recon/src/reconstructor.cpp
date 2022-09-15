@@ -116,14 +116,14 @@ void Reconstructor::startReconstructing() {
         while (true) {
             {
                 std::unique_lock<std::mutex> lck(gpu_mutex_);
-                if (gpu_cv_.wait_for(lck, 20ms, [&] { return sino_uploaded_; })) {
+                if (gpu_cv_.wait_for(lck, 10ms, [&] { return sino_uploaded_; })) {
                     solver_->reconstructPreview(preview_buffer_.back(), gpu_buffer_index_);
                 } else {    
                     std::lock_guard lk(slice_mtx_);
                     for (auto slice_id : updated_slices_) {
                         solver_->reconstructSlice(slices_buffer_[slice_id], slices_[slice_id], gpu_buffer_index_);
                     }
-                    updated_slices_.swap(reconstructed_slices_);
+                    updated_slices_.swap(requested_slices_);
                     slice_cv_.notify_one();
                     continue;
                 }
@@ -272,11 +272,12 @@ void Reconstructor::removeSlice(int slice_id) {
 
 }
 
-std::optional<VolumeDataPacket> Reconstructor::previewDataPacket() { 
-    if(preview_buffer_.fetch(10));
+std::optional<VolumeDataPacket> Reconstructor::previewDataPacket(int timeout) { 
+    if(preview_buffer_.fetch(timeout)) {
         return VolumeDataPacket({preview_size_, preview_size_, preview_size_}, 
                                 preview_buffer_.front());
-    return {};
+    }
+    return std::nullopt;
 }
 
 std::vector<SliceDataPacket> Reconstructor::sliceDataPackets() {
@@ -290,16 +291,24 @@ std::vector<SliceDataPacket> Reconstructor::sliceDataPackets() {
     return ret;
 }
 
-std::vector<SliceDataPacket> Reconstructor::updatedSliceDataPackets() {
+std::optional<std::vector<SliceDataPacket>> Reconstructor::requestedSliceDataPackets(int timeout) {
     std::vector<SliceDataPacket> ret;
     {
         std::unique_lock<std::mutex> lck(slice_mtx_);
-        slice_cv_.wait(lck, [&] { return !reconstructed_slices_.empty(); });
-        for (auto slice_id : reconstructed_slices_) {
+
+        if (timeout < 0) {
+            slice_cv_.wait(lck, [&] { return !requested_slices_.empty(); });
+        } else {
+            if (!(slice_cv_.wait_for(lck, timeout * 1ms, [&] { return !requested_slices_.empty(); }))) {
+                return std::nullopt;
+            }
+        }
+
+        for (auto slice_id : requested_slices_) {
             ret.emplace_back(SliceDataPacket(
                 slice_id, {slice_size_, slice_size_}, slices_buffer_[slice_id]));
         }
-        reconstructed_slices_.clear();
+        requested_slices_.clear();
     }
     return ret;
 }

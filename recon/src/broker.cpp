@@ -73,12 +73,14 @@ void Broker::start() {
 
     data_thread_ = std::thread([&] {
         while (true) {
-            auto preview_data = recon_->previewDataPacket();
+            // - Do not block because slice request needs to be responsive
+            // - If the number of the logical threads are more than the number of the physical threads, 
+            //   the preview_data could always have value.
+            auto preview_data = recon_->previewDataPacket(0);
             if (preview_data) {
                 auto slice_data = recon_->sliceDataPackets();
 
                 std::lock_guard<std::mutex> lck(send_mtx_);
-
                 send(std::move(preview_data.value()));
 
 #if (VERBOSITY >= 3)
@@ -94,16 +96,18 @@ void Broker::start() {
 
                 }
             } else {
-                auto slice_data = recon_->updatedSliceDataPackets();
+                auto slice_data = recon_->requestedSliceDataPackets(10);
 
-                std::lock_guard<std::mutex> lck(send_mtx_);
-                for (const auto& packet : slice_data) {
-                    send(std::move(packet));
+                if (slice_data) {
+                    std::lock_guard<std::mutex> lck(send_mtx_);
+                    for (const auto& packet : slice_data.value()) {
+                        send(std::move(packet));
 
 #if (VERBOSITY >= 3)
                     spdlog::info("Requested slice data {} sent", packet.slice_id);
 #endif
 
+                    }
                 }
             }
 
