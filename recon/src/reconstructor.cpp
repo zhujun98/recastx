@@ -123,7 +123,8 @@ void Reconstructor::startReconstructing() {
                     for (auto slice_id : updated_slices_) {
                         solver_->reconstructSlice(slices_buffer_[slice_id], slices_[slice_id], gpu_buffer_index_);
                     }
-                    updated_slices_.swap(requested_slices_);
+                    requested_slices_.clear(); // it could have not been consumed by the GUI.
+                    requested_slices_.swap(updated_slices_);
                     slice_cv_.notify_one();
                     continue;
                 }
