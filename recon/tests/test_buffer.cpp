@@ -39,6 +39,9 @@ TEST_F(TrippleBufferTest, TestNormal) {
     buffer_.fetch();
     EXPECT_THAT(buffer_.front(), Pointwise(FloatNear(1e-6), data1));
 
+    buffer_.fetch(0); // test timeout
+    buffer_.fetch(1); // test timeout
+
     buffer_.back() = data2;
     buffer_.prepare();
 
@@ -92,6 +95,8 @@ TEST_F(MemoryBufferTest, TestNormal) {
     EXPECT_THAT(buffer_.front(), Pointwise(FloatNear(1e-6), 
                                            {1., 2., 3., 4., 5., 6., 1., 2., 3., 1., 2., 3.}));
     ASSERT_EQ(buffer_.occupied(), 0);
+
+    buffer_.fetch(10);
 }
 
 TEST_F(MemoryBufferTest, TestBufferFull) {
