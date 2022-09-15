@@ -101,7 +101,7 @@ public:
 
     void setData(const std::vector<T>& data, int x) {
         x_ = x;
-        assert((int)data.size() == x);
+        assert((int)data.size() == 3 * x); // 3 channels: RGB
         genTexture(data);
     }
 
