@@ -39,7 +39,7 @@ void Client::start() {
     running_ = true;
     thread_ = std::thread([&]() {
         while (running_) {
-            data_socket_.send(zmq::str_buffer("Hello recon"), zmq::send_flags::none);
+            data_socket_.send(zmq::str_buffer("ready"), zmq::send_flags::none);
 
             zmq::message_t reply;
             data_socket_.recv(reply, zmq::recv_flags::none);
