@@ -6,11 +6,10 @@
 #include "graphics/scenes/scene_camera.hpp"
 #include "graphics/shader_program.hpp"
 #include "graphics/scenes/recon_component.hpp"
-#include "client.hpp"
 
 namespace tomcat::gui {
 
-Scene::Scene() = default;
+Scene::Scene(Client* client) : client_(client) {};
 
 Scene::~Scene() {
     glDeleteVertexArrays(1, &vao_handle_);
@@ -103,7 +102,5 @@ void Scene::tick(double time_elapsed) {
 
     }
 }
-
-void Scene::setPublisher(Client *client) { client_ = client; }
 
 }  // tomcat::gui

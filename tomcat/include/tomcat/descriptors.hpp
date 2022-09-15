@@ -12,6 +12,7 @@ enum class PacketDesc : int {
     volume_data = 0x203,
     set_slice = 0x205,
     remove_slice = 0x206,
+    remove_all_slices = 0x207,
 
     // GEOMETRY
     geometry_specification = 0x301,

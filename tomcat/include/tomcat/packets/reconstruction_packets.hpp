@@ -47,4 +47,10 @@ struct RemoveSlicePacket : public PacketBase<RemoveSlicePacket> {
                              (int32_t, slice_id));
 };
 
+struct RemoveAllSlicesPacket : public PacketBase<RemoveAllSlicesPacket> {
+    static constexpr auto desc = PacketDesc::remove_all_slices;
+    RemoveAllSlicesPacket() = default;
+    BOOST_HANA_DEFINE_STRUCT(RemoveAllSlicesPacket);
+};
+
 } // namespace tomcat

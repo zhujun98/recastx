@@ -61,6 +61,10 @@ void Broker::start() {
                     recon_->removeSlice(packet->slice_id);
                     break;
                 }
+                case PacketDesc::remove_all_slices: {
+                    recon_->removeAllSlices();
+                    break;
+                }
                 default: {
                     spdlog::warn("Unrecognized packet with descriptor 0x{0:x}", 
                                  std::underlying_type<PacketDesc>::type(desc));
@@ -110,7 +114,6 @@ void Broker::start() {
                     }
                 }
             }
-
         }
     });
 

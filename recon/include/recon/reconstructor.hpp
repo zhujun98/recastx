@@ -104,7 +104,10 @@ public:
                         const char* data); 
 
     void setSlice(int slice_id, const Orientation& orientation);
+    
     void removeSlice(int slice_id);
+    
+    void removeAllSlices();
 
     std::optional<VolumeDataPacket> previewDataPacket(int timeout=-1);
 

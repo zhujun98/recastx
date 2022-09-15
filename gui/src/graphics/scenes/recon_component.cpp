@@ -87,13 +87,6 @@ ReconComponent::~ReconComponent() {
     glDeleteBuffers(1, &line_vbo_handle_);
 }
 
-void ReconComponent::requestSlices() {
-    for (auto& slice : slices_) {
-        auto packet = SetSlicePacket(slice.first, slice.second->orientation3());
-        scene_.send(packet);
-    }
-}
-
 void ReconComponent::setSliceData(std::vector<float>&& data,
                                   const std::array<uint32_t, 2>& size,
                                   int slice_idx) {
@@ -116,6 +109,14 @@ void ReconComponent::setVolumeData(std::vector<float>&& data, const std::array<u
     // FIXME: replace uint32_t with size_t in Packet
     volume_->setData(std::move(data), {size[0], size[1], size[2]});
     maybeUpdateMinMaxValues();
+}
+
+void ReconComponent::init() {
+    scene_.send(RemoveAllSlicesPacket());
+
+    for (auto& slice : slices_) {
+        scene_.send(SetSlicePacket(slice.first, slice.second->orientation3()));
+    }
 }
 
 void ReconComponent::describe() {
@@ -265,6 +266,7 @@ bool ReconComponent::handleMouseMoved(double x, double y) {
 
 void ReconComponent::initSlices() {
     for (int i = 0; i < 3; ++i) slices_[i] = std::make_unique<Slice>(i);
+
     resetSlices();
 }
 

@@ -37,13 +37,11 @@ int main(int argc, char** argv) {
 
     auto& app = Application::instance();
 
-    Scene3d scene;
-
     Client client(opts["recon-host"].as<std::string>(), opts["recon-port"].as<int>());
-
+    Scene3d scene(&client);
     app.setScene(&scene);
-    app.setPublisher(&client);
 
+    scene.init();
     client.start();
     app.start();
 
