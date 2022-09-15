@@ -36,11 +36,11 @@ TEST_F(TrippleBufferTest, TestNormal) {
     buffer_.back() = data1;
     buffer_.prepare();
     EXPECT_THAT(buffer_.ready(), Pointwise(FloatNear(1e-6), data1));
-    buffer_.fetch();
+    ASSERT_TRUE(buffer_.fetch());
     EXPECT_THAT(buffer_.front(), Pointwise(FloatNear(1e-6), data1));
 
-    buffer_.fetch(0); // test timeout
-    buffer_.fetch(1); // test timeout
+    ASSERT_FALSE(buffer_.fetch(0)); // test timeout
+    ASSERT_FALSE(buffer_.fetch(1)); // test timeout
 
     buffer_.back() = data2;
     buffer_.prepare();
@@ -91,12 +91,12 @@ TEST_F(MemoryBufferTest, TestNormal) {
     buffer_.fill<RawDtype>(_produceRawData({1, 2, 3}).data(), 0, 2);
     buffer_.fill<RawDtype>(_produceRawData({1, 2, 3}).data(), 0, 3);
     EXPECT_EQ(&buffer_.ready(), &buffer_.back());
-    buffer_.fetch();
+    ASSERT_TRUE(buffer_.fetch());
     EXPECT_THAT(buffer_.front(), Pointwise(FloatNear(1e-6), 
                                            {1., 2., 3., 4., 5., 6., 1., 2., 3., 1., 2., 3.}));
     ASSERT_EQ(buffer_.occupied(), 0);
 
-    buffer_.fetch(10);
+    ASSERT_FALSE(buffer_.fetch(10));
 }
 
 TEST_F(MemoryBufferTest, TestBufferFull) {

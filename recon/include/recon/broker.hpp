@@ -18,8 +18,7 @@ class Broker {
     zmq::socket_t data_socket_;
     zmq::socket_t cmd_socket_;
 
-    std::thread data_thread1_;
-    std::thread data_thread2_;
+    std::thread data_thread_;
     std::thread cmd_thread_;
 
     std::mutex send_mtx_;

@@ -1,6 +1,7 @@
 #include <chrono>
 #include <complex>
 #include <numeric>
+using namespace std::chrono_literals;
 
 #include <Eigen/Eigen>
 #include <spdlog/spdlog.h>
@@ -112,7 +113,6 @@ void Reconstructor::startReconstructing() {
         float total_duration = 0.f;
 #endif
  
-        using namespace std::chrono_literals;
         while (true) {
             {
                 std::unique_lock<std::mutex> lck(gpu_mutex_);
@@ -272,10 +272,11 @@ void Reconstructor::removeSlice(int slice_id) {
 
 }
 
-VolumeDataPacket Reconstructor::previewDataPacket() { 
-    preview_buffer_.fetch();
-    return VolumeDataPacket({preview_size_, preview_size_, preview_size_}, 
-                            preview_buffer_.front());
+std::optional<VolumeDataPacket> Reconstructor::previewDataPacket() { 
+    if(preview_buffer_.fetch(10));
+        return VolumeDataPacket({preview_size_, preview_size_, preview_size_}, 
+                                preview_buffer_.front());
+    return {};
 }
 
 std::vector<SliceDataPacket> Reconstructor::sliceDataPackets() {

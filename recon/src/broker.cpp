@@ -71,38 +71,47 @@ void Broker::start() {
         }
     });
 
-    data_thread1_ = std::thread([&] {
+    data_thread_ = std::thread([&] {
         while (true) {
             auto preview_data = recon_->previewDataPacket();
-            auto slice_data = recon_->sliceDataPackets();
+            if (preview_data) {
+                auto slice_data = recon_->sliceDataPackets();
 
-            std::lock_guard<std::mutex> lck(send_mtx_);
+                std::lock_guard<std::mutex> lck(send_mtx_);
 
-            send(std::move(preview_data));
-            spdlog::info("Volume preview data sent");
-            
-            for (const auto& packet : slice_data) {
-                send(std::move(packet));
-                spdlog::info("Slice data {} sent", packet.slice_id);
+                send(std::move(preview_data.value()));
+
+#if (VERBOSITY >= 3)
+                spdlog::info("Updated volume preview data sent");
+#endif
+                
+                for (const auto& packet : slice_data) {
+                    send(std::move(packet));
+
+#if (VERBOSITY >= 3)
+                    spdlog::info("Updated slice data {} sent", packet.slice_id);
+#endif
+
+                }
+            } else {
+                auto slice_data = recon_->updatedSliceDataPackets();
+
+                std::lock_guard<std::mutex> lck(send_mtx_);
+                for (const auto& packet : slice_data) {
+                    send(std::move(packet));
+
+#if (VERBOSITY >= 3)
+                    spdlog::info("Requested slice data {} sent", packet.slice_id);
+#endif
+
+                }
             }
-        }
-    });
 
-    data_thread2_ = std::thread([&] {
-        while (true) {
-            auto slice_data = recon_->updatedSliceDataPackets();
-
-            std::lock_guard<std::mutex> lck(send_mtx_);
-            for (const auto& packet : slice_data) {
-                send(std::move(packet));
-                spdlog::info("Slice data {} sent", packet.slice_id);
-            }
         }
     });
 
     cmd_thread_.detach();
-    data_thread1_.detach();
-    data_thread2_.detach();
+    data_thread_.detach();
 }
 
 } // tomcat::recon
