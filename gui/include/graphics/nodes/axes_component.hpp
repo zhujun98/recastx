@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include "scene_component.hpp"
+#include "./scene_component.hpp"
 #include "graphics/shader_program.hpp"
 
 namespace tomcat::gui {
@@ -24,11 +24,11 @@ public:
 
     ~AxesComponent() override;
 
-    void render(const glm::mat4& world_to_screen) override;
+    void renderIm() override;
 
-    void describe() override;
+    void renderGl(const glm::mat4& world_to_screen) override;
 };
 
-}  // tomcat::gui
+}  // namespace tomcat::gui
 
 #endif // GUI_AXES_COMPONENT_H

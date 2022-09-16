@@ -1,13 +1,13 @@
 #ifndef GUI_STATUSBAR_COMPONENT_H
 #define GUI_STATUSBAR_COMPONENT_H
 
-#include "scene_component.hpp"
+#include "./scene_component.hpp"
 
 namespace tomcat::gui {
 
 class Scene;
 
-class StatusbarComponent : public SceneComponent {
+class StatusbarComponent : public DynamicSceneComponent {
 
     Scene& scene_;
 
@@ -17,6 +17,7 @@ public:
 
     ~StatusbarComponent();
 
+    void renderIm() override;
 };
 
 }

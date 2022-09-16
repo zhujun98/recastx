@@ -159,7 +159,7 @@ void Application::render() {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    scene_->describe();
+    scene_->renderIm();
 
     ImGui::Render();
 
@@ -168,7 +168,7 @@ void Application::render() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-    scene_->render(glm::scale(glm::vec3((float)height / (float)width, 1.0, 1.0)));
+    scene_->renderGl(glm::scale(glm::vec3((float)height / (float)width, 1.0, 1.0)));
 
     glfwSwapBuffers(glfw_window_);
 }

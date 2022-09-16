@@ -87,8 +87,31 @@ ReconComponent::~ReconComponent() {
     glDeleteBuffers(1, &line_vbo_handle_);
 }
 
+void ReconComponent::renderIm() {
+    cm_.renderIm();
 
-void ReconComponent::render(const glm::mat4& world_to_screen) {
+    ImGui::Checkbox("Auto Levels", &auto_levels_);
+
+    float step_size = (max_val_ - min_val_) / 100.f;
+    if (step_size < 0.01f) step_size = 0.01f; // avoid a tiny step size
+    ImGui::DragFloatRange2("Min / Max", &min_val_, &max_val_, step_size,
+                           std::numeric_limits<float>::lowest(), // min() does not work
+                           std::numeric_limits<float>::max());
+
+    for (auto &[slice_id, slice]: slices_) {
+        const auto &data = slice->data();
+        // FIXME: faster way to build the title?
+        if (ImPlot::BeginPlot(("Slice " + std::to_string(slice_id)).c_str(), ImVec2(0, 120))) {
+            ImPlot::SetupAxes("Pixel value", "Density",
+                              ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+            ImPlot::PlotHistogram("##Histogram", data.data(), static_cast<int>(data.size()),
+                                  100, false, true);
+            ImPlot::EndPlot();
+        }
+    }
+}
+
+void ReconComponent::renderGl(const glm::mat4& world_to_screen) {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
 
@@ -99,7 +122,7 @@ void ReconComponent::render(const glm::mat4& world_to_screen) {
     solid_shader_->setFloat("minValue", min_val_);
     solid_shader_->setFloat("maxValue", max_val_);
 
-    cm_.bind();
+    cm_.colormap().bind();
 
     glm::mat4 full_transform = world_to_screen * volume_transform_;
 
@@ -120,7 +143,7 @@ void ReconComponent::render(const glm::mat4& world_to_screen) {
     for (auto slice : slices) drawSlice(slice, full_transform);
     volume_->unbind();
 
-    cm_.unbind();
+    cm_.colormap().unbind();
 
     wireframe_shader_->use();
     wireframe_shader_->setMat4("transformMatrix", full_transform);
@@ -151,30 +174,6 @@ void ReconComponent::init() {
 
     for (auto& slice : slices_) {
         scene_.send(SetSlicePacket(slice.first, slice.second->orientation3()));
-    }
-}
-
-void ReconComponent::describe() {
-    cm_.describe();
-
-    ImGui::Checkbox("Auto Levels", &auto_levels_);
-
-    float step_size = (max_val_ - min_val_) / 100.f;
-    if (step_size < 0.01f) step_size = 0.01f; // avoid a tiny step size
-    ImGui::DragFloatRange2("Min / Max", &min_val_, &max_val_, step_size,
-                           std::numeric_limits<float>::lowest(), // min() does not work
-                           std::numeric_limits<float>::max());
-
-    for (auto &[slice_id, slice]: slices_) {
-        const auto &data = slice->data();
-        // FIXME: faster way to build the title?
-        if (ImPlot::BeginPlot(("Slice " + std::to_string(slice_id)).c_str(), ImVec2(0, 120))) {
-            ImPlot::SetupAxes("Pixel value", "Density",
-                              ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
-            ImPlot::PlotHistogram("##Histogram", data.data(), static_cast<int>(data.size()),
-                                  100, false, true);
-            ImPlot::EndPlot();
-        }
     }
 }
 

@@ -14,39 +14,19 @@ const std::set<ImPlotColormap> Colormap::options_ {
 
 };
 
-Colormap::Colormap() :
-        map_(static_cast<ImPlotColormap>(ImPlotColormap_::ImPlotColormap_Viridis)) {
-    updateTexture();
-}
-
-void Colormap::describe() {
-    ImPlotContext& gp = *(ImPlot::GetCurrentContext());
-    auto& cmd = gp.ColormapData;
-    auto prev_map_ = map_;
-    if (ImGui::BeginCombo("Colormap##ReconComponent", cmd.GetName(map_))) {
-        for (auto idx : options_) {
-            const char* name = cmd.GetName(idx);
-            if (ImGui::Selectable(name, map_ == idx)) map_ = idx;
-        }
-        ImGui::EndCombo();
-    }
-
-    if (prev_map_ != map_) updateTexture();
-}
+Colormap::Colormap() = default;
 
 Colormap::~Colormap() = default;
 
-void Colormap::bind() { texture_.bind(); }
+void Colormap::bind() const { texture_.bind(); }
 
-void Colormap::unbind() { texture_.unbind(); }
+void Colormap::unbind() const { texture_.unbind(); }
 
-void Colormap::updateTexture() {
-    ImPlotContext& gp = *(ImPlot::GetCurrentContext());
-    auto& cmd = gp.ColormapData;
-
-    int samples = cmd.TableSizes[map_];
+void Colormap::updateTexture(ImPlotColormap map) {
+    auto& cmd = Colormap::data();
+    int samples = cmd.TableSizes[map];
     std::vector<unsigned char> data;
-    int offset = cmd.TableOffsets[map_];
+    int offset = cmd.TableOffsets[map];
     for (int i = offset; i < offset + samples; ++i) {
         ImVec4 rgb = ImGui::ColorConvertU32ToFloat4(cmd.Tables[i]);
         data.push_back(static_cast<unsigned char>(255 * rgb.x));
@@ -54,6 +34,15 @@ void Colormap::updateTexture() {
         data.push_back(static_cast<unsigned char>(255 * rgb.z));
     }
     texture_.setData(data, samples);
+}
+
+const std::set<ImPlotColormap>& Colormap::options() {
+    return options_;
+}
+
+const ImPlotColormapData& Colormap::data() {
+    ImPlotContext& gp = *(ImPlot::GetCurrentContext());
+    return gp.ColormapData;
 }
 
 } // namespace tomcat::gui

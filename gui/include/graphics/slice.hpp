@@ -46,8 +46,9 @@ class Slice {
 
     void setData(DataType&& data, const SizeType& size);
 
-    void bind();
-    void unbind();
+    void bind() const;
+
+    void unbind() const;
 
     [[nodiscard]] bool empty() const;
     [[nodiscard]] bool hovered() const;

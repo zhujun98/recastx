@@ -8,7 +8,7 @@
 #include "glm/glm.hpp"
 #include "glm/gtx/rotate_vector.hpp"
 
-#include "scene_camera.hpp"
+#include "./scene_camera.hpp"
 #include "path.hpp"
 
 namespace tomcat::gui {
@@ -81,18 +81,23 @@ class SceneCamera3d : public SceneCamera {
   public:
 
     SceneCamera3d();
+
     ~SceneCamera3d() override;
 
     glm::mat4 matrix() override;
 
     auto& up() { return up_; }
+
     auto& right() { return right_; }
 
     void switch_if_necessary(drag_machine_kind kind);
 
     bool handleMouseButton(int button, int action) override;
+
     bool handleScroll(double offset) override;
+
     bool handleMouseMoved(double x, double y) override;
+
     bool handleKey(int key, int action, int mods) override;
 
     void tick(double time_elapsed) override;
@@ -100,7 +105,8 @@ class SceneCamera3d : public SceneCamera {
     void lookAt(glm::vec3 center) override;
 
     void rotate(float phi, float psi);
-    void describe() override;
+
+    void renderIm() override;
 };
 
 } // namespace tomcat::gui

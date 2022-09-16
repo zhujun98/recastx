@@ -13,23 +13,23 @@ Scene::~Scene() {
     glDeleteBuffers(1, &vbo_handle_);
 }
 
-void Scene::describe() {
+void Scene::renderIm() {
     ImGui::SetNextWindowSizeConstraints(ImVec2(280, 500), ImVec2(FLT_MAX, FLT_MAX));
     ImGui::Begin("Image tool (3D)");
     // 2/3 of the space for widget and 1/3 for labels
     ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.65f);
 
-    camera_->describe();
+    camera_->renderIm();
 
     for (auto &comp : components_) {
-        comp->describe();
+        comp->renderIm();
     }
 }
 
-void Scene::render(const glm::mat4& window_matrix) {
+void Scene::renderGl(const glm::mat4& window_matrix) {
     auto matrix = window_matrix * camera_->matrix();
     for (auto &comp : components_) {
-        comp->render(matrix);
+        comp->renderGl(matrix);
     }
 }
 

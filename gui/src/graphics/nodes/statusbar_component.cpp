@@ -1,1 +1,1 @@
-#include "graphics/scenes/statusbar_component.hpp"
+#include "graphics/nodes/statusbar_component.hpp"

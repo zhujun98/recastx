@@ -8,7 +8,7 @@
 #include "GL/gl3w.h"
 #include "glm/glm.hpp"
 
-#include "scene_component.hpp"
+#include "./scene_component.hpp"
 #include "graphics/graph_node.hpp"
 #include "ticker.hpp"
 #include "client.hpp"
@@ -18,7 +18,7 @@ namespace tomcat::gui {
 class ShaderProgram;
 class SceneCamera;
 
-class Scene : public GraphNode, public InputHandler, public Ticker {
+class Scene : public GraphGlNode, public InputHandler, public Ticker {
 
 protected:
 
@@ -40,9 +40,9 @@ protected:
 
     ~Scene() override;
 
-    virtual void describe();
+    void renderIm() override;
 
-    void render(const glm::mat4& window_matrix) override;
+    void renderGl(const glm::mat4& window_matrix) override;
 
     void init();
 
