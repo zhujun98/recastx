@@ -18,6 +18,7 @@ class SceneCamera : public InputHandler, public Ticker {
   public:
 
     SceneCamera();
+
     virtual ~SceneCamera();
 
     virtual glm::mat4 matrix() = 0;

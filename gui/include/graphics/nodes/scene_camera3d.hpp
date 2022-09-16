@@ -8,7 +8,7 @@
 #include "glm/glm.hpp"
 #include "glm/gtx/rotate_vector.hpp"
 
-#include "graphics/scenes/scene_camera.hpp"
+#include "scene_camera.hpp"
 #include "path.hpp"
 
 namespace tomcat::gui {
@@ -27,7 +27,6 @@ class CameraDragMachine : public Ticker {
 
     virtual void onDrag(glm::vec2 cur, glm::vec2 delta) = 0;
     virtual drag_machine_kind kind() = 0;
-    void tick(double) override {}
 
   protected:
     SceneCamera3d& camera_;

@@ -3,8 +3,8 @@
 
 #include <memory>
 
-#include "graphics/scenes/scene.hpp"
-#include "graphics/scenes/scene_camera3d.hpp"
+#include "graphics/nodes/scene.hpp"
+#include "graphics/nodes/scene_camera3d.hpp"
 
 namespace tomcat::gui {
 
@@ -13,13 +13,9 @@ class Scene3d : public Scene {
   public:
 
     explicit Scene3d(Client* client);
+
     ~Scene3d() override;
 
-    void init() override;
-
-    void describe() override;
-
-    void render(const glm::mat4& window_matrix) override;
 };
 
 }  // namespace tomcat::gui

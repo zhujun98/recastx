@@ -11,15 +11,15 @@
 
 #include "tomcat/tomcat.hpp"
 
-#include "graphics/scenes/recon_component.hpp"
-#include "graphics/scenes/scene_camera3d.hpp"
+#include "graphics/nodes/recon_component.hpp"
+#include "graphics/nodes/scene_camera3d.hpp"
 #include "graphics/aesthetics.hpp"
 #include "graphics/primitives.hpp"
 #include "util.hpp"
 
 namespace tomcat::gui {
 
-ReconComponent::ReconComponent(Scene& scene) : scene_(scene) {
+ReconComponent::ReconComponent(Scene& scene) : DynamicSceneComponent(scene) {
     glGenVertexArrays(1, &vao_handle_);
     glBindVertexArray(vao_handle_);
     glGenBuffers(1, &vbo_handle_);
@@ -87,61 +87,6 @@ ReconComponent::~ReconComponent() {
     glDeleteBuffers(1, &line_vbo_handle_);
 }
 
-void ReconComponent::setSliceData(std::vector<float>&& data,
-                                  const std::array<uint32_t, 2>& size,
-                                  int slice_idx) {
-    Slice* slice;
-    if (slices_.find(slice_idx) != slices_.end()) {
-        slice = slices_[slice_idx].get();
-    } else {
-        std::cout << "Updating inactive slice: " << slice_idx << "\n";
-        return;
-    }
-
-    if (slice == dragged_slice_) return;
-
-    // FIXME: replace uint32_t with size_t in Packet
-    slice->setData(std::move(data), {size[0], size[1]});
-    maybeUpdateMinMaxValues();
-}
-
-void ReconComponent::setVolumeData(std::vector<float>&& data, const std::array<uint32_t, 3>& size) {
-    // FIXME: replace uint32_t with size_t in Packet
-    volume_->setData(std::move(data), {size[0], size[1], size[2]});
-    maybeUpdateMinMaxValues();
-}
-
-void ReconComponent::init() {
-    scene_.send(RemoveAllSlicesPacket());
-
-    for (auto& slice : slices_) {
-        scene_.send(SetSlicePacket(slice.first, slice.second->orientation3()));
-    }
-}
-
-void ReconComponent::describe() {
-    cm_.describe();
-
-    ImGui::Checkbox("Auto Levels", &auto_levels_);
-
-    float step_size = (max_val_ - min_val_) / 100.f;
-    if (step_size < 0.01f) step_size = 0.01f; // avoid a tiny step size
-    ImGui::DragFloatRange2("Min / Max", &min_val_, &max_val_, step_size,
-                           std::numeric_limits<float>::lowest(), // min() does not work
-                           std::numeric_limits<float>::max());
-
-    for (auto &[slice_id, slice]: slices_) {
-        const auto &data = slice->data();
-        // FIXME: faster way to build the title?
-        if (ImPlot::BeginPlot(("Slice " + std::to_string(slice_id)).c_str(), ImVec2(0, 120))) {
-            ImPlot::SetupAxes("Pixel value", "Density",
-                              ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
-            ImPlot::PlotHistogram("##Histogram", data.data(), static_cast<int>(data.size()),
-                                  100, false, true);
-            ImPlot::EndPlot();
-        }
-    }
-}
 
 void ReconComponent::render(const glm::mat4& world_to_screen) {
     glEnable(GL_DEPTH_TEST);
@@ -198,6 +143,85 @@ void ReconComponent::render(const glm::mat4& world_to_screen) {
     }
 
     glDisable(GL_BLEND);
+}
+
+
+void ReconComponent::init() {
+    scene_.send(RemoveAllSlicesPacket());
+
+    for (auto& slice : slices_) {
+        scene_.send(SetSlicePacket(slice.first, slice.second->orientation3()));
+    }
+}
+
+void ReconComponent::describe() {
+    cm_.describe();
+
+    ImGui::Checkbox("Auto Levels", &auto_levels_);
+
+    float step_size = (max_val_ - min_val_) / 100.f;
+    if (step_size < 0.01f) step_size = 0.01f; // avoid a tiny step size
+    ImGui::DragFloatRange2("Min / Max", &min_val_, &max_val_, step_size,
+                           std::numeric_limits<float>::lowest(), // min() does not work
+                           std::numeric_limits<float>::max());
+
+    for (auto &[slice_id, slice]: slices_) {
+        const auto &data = slice->data();
+        // FIXME: faster way to build the title?
+        if (ImPlot::BeginPlot(("Slice " + std::to_string(slice_id)).c_str(), ImVec2(0, 120))) {
+            ImPlot::SetupAxes("Pixel value", "Density",
+                              ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+            ImPlot::PlotHistogram("##Histogram", data.data(), static_cast<int>(data.size()),
+                                  100, false, true);
+            ImPlot::EndPlot();
+        }
+    }
+}
+
+void ReconComponent::setSliceData(std::vector<float>&& data,
+                                  const std::array<uint32_t, 2>& size,
+                                  int slice_idx) {
+    Slice* slice;
+    if (slices_.find(slice_idx) != slices_.end()) {
+        slice = slices_[slice_idx].get();
+    } else {
+        std::cout << "Updating inactive slice: " << slice_idx << "\n";
+        return;
+    }
+
+    if (slice == dragged_slice_) return;
+
+    // FIXME: replace uint32_t with size_t in Packet
+    slice->setData(std::move(data), {size[0], size[1]});
+    maybeUpdateMinMaxValues();
+}
+
+void ReconComponent::setVolumeData(std::vector<float>&& data, const std::array<uint32_t, 3>& size) {
+    // FIXME: replace uint32_t with size_t in Packet
+    volume_->setData(std::move(data), {size[0], size[1], size[2]});
+    maybeUpdateMinMaxValues();
+}
+
+void ReconComponent::consume(const tomcat::PacketDataEvent &data) {
+    switch (data.first) {
+        case PacketDesc::slice_data: {
+            auto packet = dynamic_cast<SliceDataPacket*>(data.second.get());
+            setSliceData(std::move(packet->data), packet->slice_size, packet->slice_id);
+            spdlog::info("Set slice data {}", packet->slice_id);
+            break;
+        }
+        case PacketDesc::volume_data: {
+            auto packet = dynamic_cast<VolumeDataPacket*>(data.second.get());
+            setVolumeData(std::move(packet->data), packet->volume_size);
+            spdlog::info("Set volume data");
+            break;
+        }
+        default: {
+            spdlog::warn("Unknown package descriptor: 0x{0:x}",
+                         std::underlying_type<PacketDesc>::type(data.first));
+            break;
+        }
+    }
 }
 
 bool ReconComponent::handleMouseButton(int button, int action) {

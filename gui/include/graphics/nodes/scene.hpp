@@ -1,7 +1,7 @@
 #ifndef GUI_SCENE_H
 #define GUI_SCENE_H
 
-#include <map>
+#include <set>
 #include <memory>
 #include <vector>
 
@@ -19,7 +19,8 @@ class ShaderProgram;
 class SceneCamera;
 
 class Scene : public GraphNode, public InputHandler, public Ticker {
-  protected:
+
+protected:
 
     GLuint vao_handle_;
     GLuint vbo_handle_;
@@ -29,27 +30,30 @@ class Scene : public GraphNode, public InputHandler, public Ticker {
 
     float pixel_size_ = 1.0;
 
-    // FIXME: map of components
-    std::map<std::string, std::unique_ptr<SceneComponent>> components_;
+    std::set<std::shared_ptr<SceneComponent>> components_;
+    std::set<std::shared_ptr<StaticSceneComponent>> static_components_;
+    std::set<std::shared_ptr<DynamicSceneComponent>> dynamic_components_;
 
   public:
 
     explicit Scene(Client* client);
-    ~Scene() override;
 
-    virtual void init() = 0;
+    ~Scene() override;
 
     virtual void describe();
 
-    void addComponent(std::unique_ptr<SceneComponent> component);
+    void render(const glm::mat4& window_matrix) override;
 
-    SceneComponent& component(const std::string& identifier) {
-        return *components_[identifier];
-    }
+    void init();
+
+    void addComponent(const std::shared_ptr<SceneComponent>& component);
 
     bool handleMouseButton(int button, int action) override;
+
     bool handleScroll(double offset) override;
+
     bool handleMouseMoved(double x, double y) override;
+
     bool handleKey(int key, int action, int mods) override;
 
     void tick(double time_elapsed) override;

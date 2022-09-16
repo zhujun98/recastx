@@ -1,4 +1,4 @@
-#include "graphics/scenes/scene_camera.hpp"
+#include "graphics/nodes/scene_camera.hpp"
 
 namespace tomcat::gui {
 
