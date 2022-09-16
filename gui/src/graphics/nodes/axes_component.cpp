@@ -44,7 +44,7 @@ AxesComponent::AxesComponent(Scene &scene) : StaticSceneComponent(scene) {
 
 AxesComponent::~AxesComponent() = default;
 
-void AxesComponent::renderIm() {
+void AxesComponent::renderIm(int /*width*/, int /*height*/) {
     ImGui::Checkbox("Show axes", &show_);
 }
 

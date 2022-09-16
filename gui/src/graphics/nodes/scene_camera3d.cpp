@@ -151,7 +151,7 @@ bool SceneCamera3d::handleKey(int key, int action, int /* mods */) {
     return false;
 }
 
-void SceneCamera3d::renderIm() {
+void SceneCamera3d::renderIm(int /*width*/, int /*height*/) {
     ImGui::Checkbox("Instant Camera", &instant_);
 
     if (ImGui::Button("X-Y")) {

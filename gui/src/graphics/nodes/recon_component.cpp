@@ -87,8 +87,8 @@ ReconComponent::~ReconComponent() {
     glDeleteBuffers(1, &line_vbo_handle_);
 }
 
-void ReconComponent::renderIm() {
-    cm_.renderIm();
+void ReconComponent::renderIm(int width, int height) {
+    cm_.renderIm(width, height);
 
     ImGui::Checkbox("Auto Levels", &auto_levels_);
 
@@ -201,24 +201,22 @@ void ReconComponent::setVolumeData(std::vector<float>&& data, const std::array<u
     maybeUpdateMinMaxValues();
 }
 
-void ReconComponent::consume(const tomcat::PacketDataEvent &data) {
+bool ReconComponent::consume(const tomcat::PacketDataEvent &data) {
     switch (data.first) {
         case PacketDesc::slice_data: {
             auto packet = dynamic_cast<SliceDataPacket*>(data.second.get());
             setSliceData(std::move(packet->data), packet->slice_size, packet->slice_id);
             spdlog::info("Set slice data {}", packet->slice_id);
-            break;
+            return true;
         }
         case PacketDesc::volume_data: {
             auto packet = dynamic_cast<VolumeDataPacket*>(data.second.get());
             setVolumeData(std::move(packet->data), packet->volume_size);
             spdlog::info("Set volume data");
-            break;
+            return true;
         }
         default: {
-            spdlog::warn("Unknown package descriptor: 0x{0:x}",
-                         std::underlying_type<PacketDesc>::type(data.first));
-            break;
+            return false;
         }
     }
 }

@@ -9,15 +9,17 @@ class Scene;
 
 class StatusbarComponent : public DynamicSceneComponent {
 
-    Scene& scene_;
-
 public:
 
     explicit StatusbarComponent(Scene& scene);
 
-    ~StatusbarComponent();
+    ~StatusbarComponent() override;
 
-    void renderIm() override;
+    void renderIm(int width, int height) override;
+
+    void renderGl(const glm::mat4& world_to_screen) override;
+
+    bool consume(const PacketDataEvent& data) override;
 };
 
 }

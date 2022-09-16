@@ -117,7 +117,7 @@ public:
 
     ~ReconComponent() override;
 
-    void renderIm() override;
+    void renderIm(int width, int height) override;
 
     void renderGl(const glm::mat4& world_to_screen) override;
 
@@ -130,7 +130,7 @@ public:
     void setVolumeData(std::vector<float>&& data,
                        const std::array<uint32_t, 3>& volume_size);
 
-    void consume(const PacketDataEvent& data) override;
+    bool consume(const PacketDataEvent& data) override;
 
     bool handleMouseButton(int button, int action) override;
 

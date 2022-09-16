@@ -60,7 +60,7 @@ public:
 
     ~DynamicSceneComponent() override;
 
-    virtual void consume(const PacketDataEvent& data) = 0;
+    virtual bool consume(const PacketDataEvent& data) = 0;
 };
 
 } // tomcat::gui

@@ -40,7 +40,7 @@ protected:
 
     ~Scene() override;
 
-    void renderIm() override;
+    void renderIm(int width, int height) override;
 
     void renderGl(const glm::mat4& window_matrix) override;
 

@@ -106,7 +106,7 @@ class SceneCamera3d : public SceneCamera {
 
     void rotate(float phi, float psi);
 
-    void renderIm() override;
+    void renderIm(int width, int height) override;
 };
 
 } // namespace tomcat::gui

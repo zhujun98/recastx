@@ -23,7 +23,7 @@ public:
 
     void appendChildNode(GraphNode* node);
 
-    virtual void renderIm() = 0;
+    virtual void renderIm(int width, int height) = 0;
 
 };
 

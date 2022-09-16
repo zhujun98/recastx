@@ -24,7 +24,7 @@ public:
 
     ~AxesComponent() override;
 
-    void renderIm() override;
+    void renderIm(int width, int height) override;
 
     void renderGl(const glm::mat4& world_to_screen) override;
 };

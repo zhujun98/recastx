@@ -1,3 +1,5 @@
+#include <spdlog/spdlog.h>
+
 #include <imgui.h>
 
 #include "graphics/nodes/scene.hpp"
@@ -13,16 +15,16 @@ Scene::~Scene() {
     glDeleteBuffers(1, &vbo_handle_);
 }
 
-void Scene::renderIm() {
+void Scene::renderIm(int width, int height) {
     ImGui::SetNextWindowSizeConstraints(ImVec2(280, 500), ImVec2(FLT_MAX, FLT_MAX));
     ImGui::Begin("Image tool (3D)");
     // 2/3 of the space for widget and 1/3 for labels
     ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.65f);
 
-    camera_->renderIm();
+    camera_->renderIm(width, height);
 
     for (auto &comp : components_) {
-        comp->renderIm();
+        comp->renderIm(width, height);
     }
 }
 
@@ -96,8 +98,13 @@ void Scene::tick(double time_elapsed) {
         auto data = std::move(packets.front());
         packets.pop();
 
+        bool valid = false;
         for (auto& comp : dynamic_components_) {
-            comp->consume(data);
+            if (comp->consume(data)) valid = true;
+        }
+        if (!valid) {
+            spdlog::warn("Unknown package descriptor: 0x{0:x}",
+                         std::underlying_type<PacketDesc>::type(data.first));
         }
     }
 }

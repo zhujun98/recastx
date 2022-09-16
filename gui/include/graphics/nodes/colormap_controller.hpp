@@ -18,7 +18,7 @@ public:
 
     ~ColormapController() override;
 
-    void renderIm() override;
+    void renderIm(int width, int height) override;
 
     [[nodiscard]] const Colormap& colormap() const;
 };
