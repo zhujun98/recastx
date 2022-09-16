@@ -58,6 +58,7 @@ set(SOURCE_NAMES
         "src/graphics/nodes/scene_component.cpp"
         "src/graphics/nodes/recon_component.cpp"
         "src/graphics/nodes/axes_component.cpp"
+        "src/graphics/nodes/statusbar_component.cpp"
         "src/graphics/nodes/scene.cpp"
         "src/graphics/nodes/scene3d.cpp"
         "src/graphics/nodes/scene_camera.cpp"
