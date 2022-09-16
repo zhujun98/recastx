@@ -2,7 +2,7 @@
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 
-#include "graphics/scenes/scene_camera3d.hpp"
+#include "graphics/nodes/scene_camera3d.hpp"
 
 namespace tomcat::gui {
 

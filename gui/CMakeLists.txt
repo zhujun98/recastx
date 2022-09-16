@@ -48,7 +48,6 @@ set(SOURCE_NAMES
         "src/math_common.cpp"
         "src/path.cpp"
         "src/client.cpp"
-        "src/ticker.cpp"
         "src/util.cpp"
         "src/graphics/aesthetics.cpp"
         "src/graphics/graph_node.cpp"
@@ -56,12 +55,13 @@ set(SOURCE_NAMES
         "src/graphics/shader_program.cpp"
         "src/graphics/slice.cpp"
         "src/graphics/volume.cpp"
-        "src/graphics/scenes/recon_component.cpp"
-        "src/graphics/scenes/axes_component.cpp"
-        "src/graphics/scenes/scene.cpp"
-        "src/graphics/scenes/scene3d.cpp"
-        "src/graphics/scenes/scene_camera.cpp"
-        "src/graphics/scenes/scene_camera3d.cpp"
+        "src/graphics/nodes/scene_component.cpp"
+        "src/graphics/nodes/recon_component.cpp"
+        "src/graphics/nodes/axes_component.cpp"
+        "src/graphics/nodes/scene.cpp"
+        "src/graphics/nodes/scene3d.cpp"
+        "src/graphics/nodes/scene_camera.cpp"
+        "src/graphics/nodes/scene_camera3d.cpp"
         ${IMGUI_SOURCE_FILES}
         ${IMPLOT_SOURCE_FILES}
         ${GL3W_BUILD_DIR}/src/gl3w.c

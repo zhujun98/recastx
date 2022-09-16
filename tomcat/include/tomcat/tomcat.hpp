@@ -7,6 +7,8 @@
 
 namespace tomcat {
 
+    using PacketDataEvent = std::pair<PacketDesc, std::unique_ptr<Packet>>;
+
     using Orientation = std::array<float, 9>;
     using SliceData = std::pair<std::array<int32_t, 2>, std::vector<float>>;
 

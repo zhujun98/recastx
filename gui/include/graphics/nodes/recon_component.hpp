@@ -8,7 +8,7 @@
 #include <string>
 
 #include "scene_component.hpp"
-#include "graphics/scenes/scene.hpp"
+#include "graphics/nodes/scene.hpp"
 #include "graphics/aesthetics.hpp"
 #include "graphics/shader_program.hpp"
 #include "graphics/slice.hpp"
@@ -17,7 +17,7 @@
 
 namespace tomcat::gui {
 
-class ReconComponent : public SceneComponent {
+class ReconComponent : public DynamicSceneComponent {
 
     enum class DragType : int { none, rotator, translator};
 
@@ -84,7 +84,6 @@ class ReconComponent : public SceneComponent {
     int cube_index_count_;
     std::unique_ptr<ShaderProgram> wireframe_shader_;
 
-    Scene& scene_;
     int next_idx_ = 3;
 
     std::unique_ptr<DragMachine> drag_machine_;
@@ -115,6 +114,7 @@ class ReconComponent : public SceneComponent {
 public:
 
     explicit ReconComponent(Scene& scene);
+
     ~ReconComponent() override;
 
     void render(const glm::mat4& world_to_screen) override;
@@ -130,6 +130,8 @@ public:
     void setVolumeData(std::vector<float>&& data,
                        const std::array<uint32_t, 3>& volume_size);
 
+    void consume(const PacketDataEvent& data) override;
+
     bool handleMouseButton(int button, int action) override;
 
     bool handleMouseMoved(double x, double y) override;
@@ -139,8 +141,6 @@ public:
     auto& dragged_slice() { return dragged_slice_; }
     auto hovered_slice() { return hovered_slice_; }
     auto& slices() { return slices_; }
-
-    [[nodiscard]] std::string identifier() const override { return "reconstruction"; }
 
     auto generate_slice_idx() { return next_idx_++; }
 };

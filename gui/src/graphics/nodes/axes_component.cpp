@@ -2,12 +2,12 @@
 
 #include "imgui.h"
 
-#include "graphics/scenes/axes_component.hpp"
-#include "graphics/scenes/scene_camera3d.hpp"
+#include "graphics/nodes/axes_component.hpp"
+#include "graphics/nodes/scene_camera3d.hpp"
 
 namespace tomcat::gui {
 
-AxesComponent::AxesComponent(Scene &scene) : scene_(scene) {
+AxesComponent::AxesComponent(Scene &scene) : StaticSceneComponent(scene) {
     glGenVertexArrays(1, &axes_vao_handle_);
     glBindVertexArray(axes_vao_handle_);
 
@@ -41,6 +41,8 @@ AxesComponent::AxesComponent(Scene &scene) : scene_(scene) {
 
     axes_program_ = std::make_unique<ShaderProgram>(vert, frag);
 }
+
+AxesComponent::~AxesComponent() = default;
 
 void AxesComponent::describe() {
     ImGui::Checkbox("Show axes", &show_);

@@ -8,11 +8,7 @@
 
 namespace tomcat::gui {
 
-class Scene;
-
-class AxesComponent : public SceneComponent {
-
-    Scene& scene_;
+class AxesComponent : public StaticSceneComponent {
 
     GLuint axes_vao_handle_;
     GLuint axes_vbo_handle_;
@@ -26,9 +22,9 @@ public:
 
     explicit AxesComponent(Scene& scene);
 
-    void render(const glm::mat4& world_to_screen) override;
+    ~AxesComponent() override;
 
-    [[nodiscard]] std::string identifier() const override { return "axes"; }
+    void render(const glm::mat4& world_to_screen) override;
 
     void describe() override;
 };

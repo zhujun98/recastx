@@ -66,7 +66,7 @@ void Client::start() {
     thread_.detach();
 }
 
-std::queue<Client::DataType>& Client::packets() { return packets_; }
+std::queue<PacketDataEvent>& Client::packets() { return packets_; }
 
 void Client::send(const Packet& packet) {
     try {

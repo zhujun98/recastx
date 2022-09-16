@@ -16,6 +16,7 @@ class GraphNode {
   public:
 
     GraphNode();
+
     virtual ~GraphNode();
 
     [[nodiscard]] GraphNode *parent() const;

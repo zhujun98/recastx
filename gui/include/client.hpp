@@ -15,15 +15,9 @@ namespace tomcat::gui {
 
 class Client {
 
-public:
-
-    using DataType = std::pair<PacketDesc, std::unique_ptr<Packet>>;
-
-private:
-
     std::thread thread_;
 
-    inline static std::queue<DataType> packets_;
+    inline static std::queue<PacketDataEvent> packets_;
 
     zmq::context_t context_;
     zmq::socket_t data_socket_;
@@ -32,13 +26,14 @@ private:
   public:
 
     explicit Client(const std::string& hostname, int port);
+
     ~Client();
 
     void send(const Packet& packet);
 
     void start();
 
-    std::queue<DataType>& packets();
+    static std::queue<PacketDataEvent>& packets();
 };
 
 }  // namespace tomcat::gui
