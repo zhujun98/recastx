@@ -12,8 +12,10 @@ class Scene3d : public Scene {
 
   public:
 
-    Scene3d();
+    explicit Scene3d(Client* client);
     ~Scene3d() override;
+
+    void init() override;
 
     void describe() override;
 

@@ -16,6 +16,8 @@ class SceneComponent : public GraphNode, public InputHandler, public Ticker {
     SceneComponent() = default;
     ~SceneComponent() override = default;
 
+    virtual void init() {};
+
     virtual void describe() = 0;
 
     [[nodiscard]] virtual std::string identifier() const = 0;

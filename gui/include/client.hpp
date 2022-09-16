@@ -22,7 +22,6 @@ public:
 private:
 
     std::thread thread_;
-    bool running_ = false;
 
     inline static std::queue<DataType> packets_;
 
@@ -35,7 +34,7 @@ private:
     explicit Client(const std::string& hostname, int port);
     ~Client();
 
-    void send(Packet& packet);
+    void send(const Packet& packet);
 
     void start();
 

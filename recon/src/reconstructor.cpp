@@ -273,6 +273,17 @@ void Reconstructor::removeSlice(int slice_id) {
 
 }
 
+
+void Reconstructor::removeAllSlices() {
+    std::lock_guard lk(slice_mtx_);
+    slices_.clear();
+
+#if (VERBOSITY >= 3)
+    spdlog::info("All slices removed");
+#endif
+
+}
+
 std::optional<VolumeDataPacket> Reconstructor::previewDataPacket(int timeout) { 
     if(preview_buffer_.fetch(timeout)) {
         return VolumeDataPacket({preview_size_, preview_size_, preview_size_}, 

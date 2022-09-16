@@ -22,7 +22,7 @@ class AxesComponent : public SceneComponent {
 
     bool show_ = true;
 
-   public:
+public:
 
     explicit AxesComponent(Scene& scene);
 

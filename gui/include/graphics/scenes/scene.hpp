@@ -34,8 +34,10 @@ class Scene : public GraphNode, public InputHandler, public Ticker {
 
   public:
 
-    Scene();
+    explicit Scene(Client* client);
     ~Scene() override;
+
+    virtual void init() = 0;
 
     virtual void describe();
 
@@ -51,8 +53,6 @@ class Scene : public GraphNode, public InputHandler, public Ticker {
     bool handleKey(int key, int action, int mods) override;
 
     void tick(double time_elapsed) override;
-
-    void setPublisher(Client* client);
 
     template <typename T>
     void send(T&& packet) {

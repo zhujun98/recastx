@@ -28,7 +28,7 @@ void Broker::send(const Packet& packet) {
     zmq::message_t msg;
     data_socket_.recv(msg, zmq::recv_flags::none);
     auto request = std::string(static_cast<char*>(msg.data()), msg.size());
-    if (request == "Hello recon") {
+    if (request == "ready") {
         packet.send(data_socket_);
     } else {
         spdlog::warn("Unknown request received: {}", request);
@@ -59,6 +59,10 @@ void Broker::start() {
                     auto packet = std::make_unique<RemoveSlicePacket>();
                     packet->deserialize(std::move(buffer));
                     recon_->removeSlice(packet->slice_id);
+                    break;
+                }
+                case PacketDesc::remove_all_slices: {
+                    recon_->removeAllSlices();
                     break;
                 }
                 default: {
@@ -110,7 +114,6 @@ void Broker::start() {
                     }
                 }
             }
-
         }
     });
 

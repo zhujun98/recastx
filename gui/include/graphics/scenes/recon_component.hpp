@@ -118,6 +118,9 @@ public:
     ~ReconComponent() override;
 
     void render(const glm::mat4& world_to_screen) override;
+
+    void init() override;
+
     void describe() override;
 
     void setSliceData(std::vector<float>&& data,
@@ -126,8 +129,6 @@ public:
 
     void setVolumeData(std::vector<float>&& data,
                        const std::array<uint32_t, 3>& volume_size);
-
-    void requestSlices();
 
     bool handleMouseButton(int button, int action) override;
 
