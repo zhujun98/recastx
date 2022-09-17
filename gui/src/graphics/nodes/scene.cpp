@@ -52,13 +52,13 @@ void Scene::init() {
 }
 
 void Scene::addComponent(const std::shared_ptr<SceneComponent>& component) {
-    components_.insert(component);
+    components_.push_back(component);
 
     if (component->type() == SceneComponent::ComponentType::STATIC) {
-        static_components_.insert(std::dynamic_pointer_cast<StaticSceneComponent>(component));
+        static_components_.push_back(std::dynamic_pointer_cast<StaticSceneComponent>(component));
     }
     if (component->type() == SceneComponent::ComponentType::DYNAMIC) {
-        dynamic_components_.insert(std::dynamic_pointer_cast<DynamicSceneComponent>(component));
+        dynamic_components_.push_back(std::dynamic_pointer_cast<DynamicSceneComponent>(component));
     }
 }
 
