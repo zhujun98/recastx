@@ -35,6 +35,7 @@ Application::Application() {
 
     glfw_window_ = glfwCreateWindow(width_, height_, title_.c_str(), NULL, NULL);
     glfwMakeContextCurrent(glfw_window_);
+    glfwSetWindowSizeLimits(glfw_window_, min_width_, min_height_, GLFW_DONT_CARE, GLFW_DONT_CARE);
 
     if (gl3wInit()) {
         throw std::runtime_error("Failed to initialize OpenGL!");
