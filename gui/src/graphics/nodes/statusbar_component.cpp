@@ -1,6 +1,7 @@
 #include <imgui.h>
 
 #include "graphics/nodes/statusbar_component.hpp"
+#include "graphics/style.hpp"
 
 namespace tomcat::gui {
 
@@ -10,16 +11,14 @@ StatusbarComponent::StatusbarComponent(Scene& scene)
 StatusbarComponent::~StatusbarComponent() = default;
 
 void StatusbarComponent::renderIm(int width, int height) {
-    float margin_x = 5;
-    float margin_y = 5;
-    float bar_h = 40;
-    ImGui::SetNextWindowPos(ImVec2(margin_x, static_cast<float>(height) - bar_h - margin_y));
-    ImGui::SetNextWindowSize(ImVec2(static_cast<float>(width) - 2 * margin_x, bar_h));
+    float x0 = Style::IMGUI_WINDOW_MARGIN + Style::IMGUI_CONTROL_PANEL_WIDTH + Style::IMGUI_WINDOW_SPACING;
+    float w = static_cast<float>(width) - x0 - Style::IMGUI_WINDOW_MARGIN;
+    float h = Style::IMGUI_TOP_PANEL_HEIGHT;
+    float y0 = static_cast<float>(height) - h - Style::IMGUI_WINDOW_MARGIN;
+    ImGui::SetNextWindowPos(ImVec2(x0, y0));
+    ImGui::SetNextWindowSize(ImVec2(w, h));
 
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10);
     ImGui::Begin("Window Name", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration);
-
-    ImGui::PopStyleVar();
 
     ImGui::End();
 }
