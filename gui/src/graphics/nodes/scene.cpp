@@ -5,6 +5,7 @@
 #include "graphics/nodes/scene.hpp"
 #include "graphics/nodes/scene_camera.hpp"
 #include "graphics/shader_program.hpp"
+#include "graphics/style.hpp"
 
 namespace tomcat::gui {
 
@@ -16,16 +17,25 @@ Scene::~Scene() {
 }
 
 void Scene::renderIm(int width, int height) {
-    ImGui::SetNextWindowSizeConstraints(ImVec2(280, 500), ImVec2(FLT_MAX, FLT_MAX));
-    ImGui::Begin("Image tool (3D)");
+    float x0 = Style::IMGUI_WINDOW_MARGIN;
+    float y0 = Style::IMGUI_ICON_HEIGHT + Style::IMGUI_WINDOW_SPACING;
+    float w = Style::IMGUI_CONTROL_PANEL_WIDTH;
+    float h = static_cast<float>(height) - y0 - Style::IMGUI_WINDOW_MARGIN;
+    ImGui::SetNextWindowPos(ImVec2(x0, y0));
+    ImGui::SetNextWindowSize(ImVec2(w, h));
+
+    ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoResize);
     // 2/3 of the space for widget and 1/3 for labels
     ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.65f);
 
     camera_->renderIm(width, height);
 
     for (auto &comp : components_) {
+        ImGui::Separator();
         comp->renderIm(width, height);
     }
+
+    ImGui::End();
 }
 
 void Scene::renderGl(const glm::mat4& window_matrix) {
@@ -42,13 +52,13 @@ void Scene::init() {
 }
 
 void Scene::addComponent(const std::shared_ptr<SceneComponent>& component) {
-    components_.insert(component);
+    components_.push_back(component);
 
     if (component->type() == SceneComponent::ComponentType::STATIC) {
-        static_components_.insert(std::dynamic_pointer_cast<StaticSceneComponent>(component));
+        static_components_.push_back(std::dynamic_pointer_cast<StaticSceneComponent>(component));
     }
     if (component->type() == SceneComponent::ComponentType::DYNAMIC) {
-        dynamic_components_.insert(std::dynamic_pointer_cast<DynamicSceneComponent>(component));
+        dynamic_components_.push_back(std::dynamic_pointer_cast<DynamicSceneComponent>(component));
     }
 }
 

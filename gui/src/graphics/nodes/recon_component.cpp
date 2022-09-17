@@ -15,6 +15,7 @@
 #include "graphics/nodes/scene_camera3d.hpp"
 #include "graphics/aesthetics.hpp"
 #include "graphics/primitives.hpp"
+#include "graphics/style.hpp"
 #include "util.hpp"
 
 namespace tomcat::gui {
@@ -98,16 +99,33 @@ void ReconComponent::renderIm(int width, int height) {
                            std::numeric_limits<float>::lowest(), // min() does not work
                            std::numeric_limits<float>::max());
 
-    for (auto &[slice_id, slice]: slices_) {
-        const auto &data = slice->data();
-        // FIXME: faster way to build the title?
-        if (ImPlot::BeginPlot(("Slice " + std::to_string(slice_id)).c_str(), ImVec2(0, 120))) {
-            ImPlot::SetupAxes("Pixel value", "Density",
-                              ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
-            ImPlot::PlotHistogram("##Histogram", data.data(), static_cast<int>(data.size()),
-                                  100, false, true);
-            ImPlot::EndPlot();
+    ImGui::Checkbox("Show slice image histograms", &show_statistics_);
+    if (show_statistics_) {
+        float x0 = Style::IMGUI_WINDOW_MARGIN + Style::IMGUI_CONTROL_PANEL_WIDTH + Style::IMGUI_WINDOW_SPACING;;
+        float y0 = Style::IMGUI_WINDOW_MARGIN;
+        float w = static_cast<float>(width) - x0 - Style::IMGUI_WINDOW_MARGIN;
+        float h = Style::IMGUI_BOTTOM_PANEL_HEIGHT;
+        ImGui::SetNextWindowPos(ImVec2(x0, y0));
+        ImGui::SetNextWindowSize(ImVec2(w, h));
+
+        ImGui::Begin("Statistics##ReconComponent", NULL, ImGuiWindowFlags_NoDecoration);
+
+        ImPlot::BeginSubplots("##Histograms", 1, 3, ImVec2(-1.f, -1.f));
+        for (auto &[slice_id, slice]: slices_) {
+            const auto &data = slice->data();
+            // FIXME: faster way to build the title?
+            if (ImPlot::BeginPlot(("Slice " + std::to_string(slice_id)).c_str(),
+                                  ImVec2(-1.f, -1.f))) {
+                ImPlot::SetupAxes("Pixel value", "Density",
+                                  ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+                ImPlot::PlotHistogram("##Histogram", data.data(), static_cast<int>(data.size()),
+                                      100, false, true);
+                ImPlot::EndPlot();
+            }
         }
+        ImPlot::EndSubplots();
+
+        ImGui::End();
     }
 }
 

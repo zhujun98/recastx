@@ -1,7 +1,6 @@
 #ifndef GUI_SCENE_H
 #define GUI_SCENE_H
 
-#include <set>
 #include <memory>
 #include <vector>
 
@@ -30,9 +29,9 @@ protected:
 
     float pixel_size_ = 1.0;
 
-    std::set<std::shared_ptr<SceneComponent>> components_;
-    std::set<std::shared_ptr<StaticSceneComponent>> static_components_;
-    std::set<std::shared_ptr<DynamicSceneComponent>> dynamic_components_;
+    std::vector<std::shared_ptr<SceneComponent>> components_;
+    std::vector<std::shared_ptr<StaticSceneComponent>> static_components_;
+    std::vector<std::shared_ptr<DynamicSceneComponent>> dynamic_components_;
 
   public:
 

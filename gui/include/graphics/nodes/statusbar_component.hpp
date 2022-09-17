@@ -9,6 +9,8 @@ class Scene;
 
 class StatusbarComponent : public DynamicSceneComponent {
 
+    bool visible_ = true;
+
 public:
 
     explicit StatusbarComponent(Scene& scene);
