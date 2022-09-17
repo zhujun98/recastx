@@ -20,15 +20,18 @@ void Scene::renderIm(int width, int height) {
     float margin_y = 80;
     ImGui::SetNextWindowPos(ImVec2(margin_x, margin_y));
 
-    ImGui::Begin("Image tool (3D)");
+    ImGui::Begin("Control Panel");
     // 2/3 of the space for widget and 1/3 for labels
     ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.65f);
 
     camera_->renderIm(width, height);
 
     for (auto &comp : components_) {
+        ImGui::Separator();
         comp->renderIm(width, height);
     }
+
+    ImGui::End();
 }
 
 void Scene::renderGl(const glm::mat4& window_matrix) {

@@ -94,6 +94,8 @@ class ReconComponent : public DynamicSceneComponent {
     float min_val_;
     float max_val_;
 
+    bool show_statistics_ = true;
+
     double prev_x_ = -1.1;
     double prev_y_ = -1.1;
 

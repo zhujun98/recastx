@@ -98,16 +98,23 @@ void ReconComponent::renderIm(int width, int height) {
                            std::numeric_limits<float>::lowest(), // min() does not work
                            std::numeric_limits<float>::max());
 
-    for (auto &[slice_id, slice]: slices_) {
-        const auto &data = slice->data();
-        // FIXME: faster way to build the title?
-        if (ImPlot::BeginPlot(("Slice " + std::to_string(slice_id)).c_str(), ImVec2(0, 120))) {
-            ImPlot::SetupAxes("Pixel value", "Density",
-                              ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
-            ImPlot::PlotHistogram("##Histogram", data.data(), static_cast<int>(data.size()),
-                                  100, false, true);
-            ImPlot::EndPlot();
+    ImGui::Checkbox("Show slice image histograms", &show_statistics_);
+    if (show_statistics_) {
+        ImGui::Begin("Statistics##ReconComponent");
+
+        for (auto &[slice_id, slice]: slices_) {
+            const auto &data = slice->data();
+            // FIXME: faster way to build the title?
+            if (ImPlot::BeginPlot(("Slice " + std::to_string(slice_id)).c_str(), ImVec2(0, 120))) {
+                ImPlot::SetupAxes("Pixel value", "Density",
+                                  ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+                ImPlot::PlotHistogram("##Histogram", data.data(), static_cast<int>(data.size()),
+                                      100, false, true);
+                ImPlot::EndPlot();
+            }
         }
+
+        ImGui::End();
     }
 }
 
