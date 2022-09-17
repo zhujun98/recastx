@@ -18,7 +18,7 @@ void StatusbarComponent::renderIm(int width, int height) {
     ImGui::SetNextWindowPos(ImVec2(x0, y0));
     ImGui::SetNextWindowSize(ImVec2(w, h));
 
-    ImGui::Begin("Window Name", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration);
+    ImGui::Begin("Window Name", NULL, ImGuiWindowFlags_NoDecoration);
 
     ImGui::End();
 }

@@ -24,7 +24,7 @@ void Scene::renderIm(int width, int height) {
     ImGui::SetNextWindowPos(ImVec2(x0, y0));
     ImGui::SetNextWindowSize(ImVec2(w, h));
 
-    ImGui::Begin("Control Panel");
+    ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoResize);
     // 2/3 of the space for widget and 1/3 for labels
     ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.65f);
 

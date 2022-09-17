@@ -7,6 +7,7 @@
 
 #include "application.hpp"
 #include "graphics/nodes/scene3d.hpp"
+#include "graphics/style.hpp"
 
 namespace tomcat::gui {
 
@@ -90,7 +91,7 @@ void Application::initImgui() {
     ImGui::CreateContext();
     ImPlot::CreateContext();
 
-    ImGui::StyleColorsDark();
+    Style::init();
 
     // TODO: why false?
     ImGui_ImplGlfw_InitForOpenGL(glfw_window_, false);

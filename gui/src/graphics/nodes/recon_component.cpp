@@ -108,8 +108,7 @@ void ReconComponent::renderIm(int width, int height) {
         ImGui::SetNextWindowPos(ImVec2(x0, y0));
         ImGui::SetNextWindowSize(ImVec2(w, h));
 
-        ImGui::Begin("Statistics##ReconComponent", NULL,
-                     ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration);
+        ImGui::Begin("Statistics##ReconComponent", NULL, ImGuiWindowFlags_NoDecoration);
 
         ImPlot::BeginSubplots("##Histograms", 1, 3, ImVec2(-1.f, -1.f));
         for (auto &[slice_id, slice]: slices_) {
