@@ -16,7 +16,10 @@ Scene::~Scene() {
 }
 
 void Scene::renderIm(int width, int height) {
-    ImGui::SetNextWindowSizeConstraints(ImVec2(280, 500), ImVec2(FLT_MAX, FLT_MAX));
+    float margin_x = 5;
+    float margin_y = 80;
+    ImGui::SetNextWindowPos(ImVec2(margin_x, margin_y));
+
     ImGui::Begin("Image tool (3D)");
     // 2/3 of the space for widget and 1/3 for labels
     ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.65f);
