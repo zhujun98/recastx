@@ -99,7 +99,12 @@ void ReconComponent::renderIm(int width, int height) {
                            std::numeric_limits<float>::lowest(), // min() does not work
                            std::numeric_limits<float>::max());
 
-    ImGui::Checkbox("Show slice image histograms", &show_statistics_);
+    if(ImGui::Button("Reset slices")) {
+        initSlices();
+        init();
+    }
+
+    ImGui::Checkbox("Show slice histograms", &show_statistics_);
     if (show_statistics_) {
         float x0 = Style::IMGUI_WINDOW_MARGIN + Style::IMGUI_CONTROL_PANEL_WIDTH + Style::IMGUI_WINDOW_SPACING;;
         float y0 = Style::IMGUI_WINDOW_MARGIN;
