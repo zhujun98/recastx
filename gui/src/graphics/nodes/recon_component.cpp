@@ -87,8 +87,31 @@ ReconComponent::~ReconComponent() {
     glDeleteBuffers(1, &line_vbo_handle_);
 }
 
+void ReconComponent::renderIm(int width, int height) {
+    cm_.renderIm(width, height);
 
-void ReconComponent::render(const glm::mat4& world_to_screen) {
+    ImGui::Checkbox("Auto Levels", &auto_levels_);
+
+    float step_size = (max_val_ - min_val_) / 100.f;
+    if (step_size < 0.01f) step_size = 0.01f; // avoid a tiny step size
+    ImGui::DragFloatRange2("Min / Max", &min_val_, &max_val_, step_size,
+                           std::numeric_limits<float>::lowest(), // min() does not work
+                           std::numeric_limits<float>::max());
+
+    for (auto &[slice_id, slice]: slices_) {
+        const auto &data = slice->data();
+        // FIXME: faster way to build the title?
+        if (ImPlot::BeginPlot(("Slice " + std::to_string(slice_id)).c_str(), ImVec2(0, 120))) {
+            ImPlot::SetupAxes("Pixel value", "Density",
+                              ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+            ImPlot::PlotHistogram("##Histogram", data.data(), static_cast<int>(data.size()),
+                                  100, false, true);
+            ImPlot::EndPlot();
+        }
+    }
+}
+
+void ReconComponent::renderGl(const glm::mat4& world_to_screen) {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
 
@@ -99,7 +122,7 @@ void ReconComponent::render(const glm::mat4& world_to_screen) {
     solid_shader_->setFloat("minValue", min_val_);
     solid_shader_->setFloat("maxValue", max_val_);
 
-    cm_.bind();
+    cm_.colormap().bind();
 
     glm::mat4 full_transform = world_to_screen * volume_transform_;
 
@@ -120,7 +143,7 @@ void ReconComponent::render(const glm::mat4& world_to_screen) {
     for (auto slice : slices) drawSlice(slice, full_transform);
     volume_->unbind();
 
-    cm_.unbind();
+    cm_.colormap().unbind();
 
     wireframe_shader_->use();
     wireframe_shader_->setMat4("transformMatrix", full_transform);
@@ -154,30 +177,6 @@ void ReconComponent::init() {
     }
 }
 
-void ReconComponent::describe() {
-    cm_.describe();
-
-    ImGui::Checkbox("Auto Levels", &auto_levels_);
-
-    float step_size = (max_val_ - min_val_) / 100.f;
-    if (step_size < 0.01f) step_size = 0.01f; // avoid a tiny step size
-    ImGui::DragFloatRange2("Min / Max", &min_val_, &max_val_, step_size,
-                           std::numeric_limits<float>::lowest(), // min() does not work
-                           std::numeric_limits<float>::max());
-
-    for (auto &[slice_id, slice]: slices_) {
-        const auto &data = slice->data();
-        // FIXME: faster way to build the title?
-        if (ImPlot::BeginPlot(("Slice " + std::to_string(slice_id)).c_str(), ImVec2(0, 120))) {
-            ImPlot::SetupAxes("Pixel value", "Density",
-                              ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
-            ImPlot::PlotHistogram("##Histogram", data.data(), static_cast<int>(data.size()),
-                                  100, false, true);
-            ImPlot::EndPlot();
-        }
-    }
-}
-
 void ReconComponent::setSliceData(std::vector<float>&& data,
                                   const std::array<uint32_t, 2>& size,
                                   int slice_idx) {
@@ -202,24 +201,22 @@ void ReconComponent::setVolumeData(std::vector<float>&& data, const std::array<u
     maybeUpdateMinMaxValues();
 }
 
-void ReconComponent::consume(const tomcat::PacketDataEvent &data) {
+bool ReconComponent::consume(const tomcat::PacketDataEvent &data) {
     switch (data.first) {
         case PacketDesc::slice_data: {
             auto packet = dynamic_cast<SliceDataPacket*>(data.second.get());
             setSliceData(std::move(packet->data), packet->slice_size, packet->slice_id);
             spdlog::info("Set slice data {}", packet->slice_id);
-            break;
+            return true;
         }
         case PacketDesc::volume_data: {
             auto packet = dynamic_cast<VolumeDataPacket*>(data.second.get());
             setVolumeData(std::move(packet->data), packet->volume_size);
             spdlog::info("Set volume data");
-            break;
+            return true;
         }
         default: {
-            spdlog::warn("Unknown package descriptor: 0x{0:x}",
-                         std::underlying_type<PacketDesc>::type(data.first));
-            break;
+            return false;
         }
     }
 }

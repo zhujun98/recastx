@@ -24,8 +24,8 @@ void Volume::setData(DataType&& data, const SizeType& size) {
     texture_.setData(data_, size_[0], size_[1], size_[2]);
 }
 
-void Volume::bind() { texture_.bind(); }
-void Volume::unbind() { texture_.unbind(); }
+void Volume::bind() const { texture_.bind(); }
+void Volume::unbind() const { texture_.unbind(); }
 
 void Volume::updateMinMaxVal() {
     min_max_vals_ = xt::minmax(xt::adapt(data_, {data_.size()}))();

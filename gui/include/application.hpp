@@ -18,6 +18,9 @@ class Scene3d;
 
 class Application {
 
+    static constexpr int min_width_ = 640;
+    static constexpr int min_height_ = 480;
+
     inline static int width_ = 1440;
     inline static int height_ = 1080;
     inline static std::string title_ = "TOMCAT 3D Live Reconstruction";

@@ -44,11 +44,11 @@ AxesComponent::AxesComponent(Scene &scene) : StaticSceneComponent(scene) {
 
 AxesComponent::~AxesComponent() = default;
 
-void AxesComponent::describe() {
+void AxesComponent::renderIm(int /*width*/, int /*height*/) {
     ImGui::Checkbox("Show axes", &show_);
 }
 
-void AxesComponent::render(const glm::mat4& world_to_screen) {
+void AxesComponent::renderGl(const glm::mat4& world_to_screen) {
     if (!show_) return;
 
     // TODO draw axes on screen, should have access to camera here

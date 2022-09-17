@@ -14,7 +14,7 @@ namespace tomcat::gui {
 
 class Scene;
 
-class SceneComponent : public GraphNode, public InputHandler {
+class SceneComponent : public GraphGlNode, public InputHandler {
 
 public:
 
@@ -36,8 +36,6 @@ public:
     ~SceneComponent() override;
 
     virtual void init();
-
-    virtual void describe() = 0;
 
     [[nodiscard]] ComponentType type() const { return type_; }
 };
@@ -62,7 +60,7 @@ public:
 
     ~DynamicSceneComponent() override;
 
-    virtual void consume(const PacketDataEvent& data) = 0;
+    virtual bool consume(const PacketDataEvent& data) = 0;
 };
 
 } // tomcat::gui

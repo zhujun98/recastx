@@ -21,8 +21,8 @@ void Slice::setData(DataType&& data, const SizeType& size) {
     texture_.setData(data_, size_[0], size_[1]);
 }
 
-void Slice::bind() { texture_.bind(); }
-void Slice::unbind() { texture_.unbind(); }
+void Slice::bind() const { texture_.bind(); }
+void Slice::unbind() const { texture_.unbind(); }
 
 bool Slice::empty() const { return data_.empty(); }
 bool Slice::hovered() const { return hovered_; }

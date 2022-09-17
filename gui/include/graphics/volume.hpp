@@ -32,8 +32,9 @@ public:
 
     void setData(DataType&& data, const SizeType& size);
 
-    void bind();
-    void unbind();
+    void bind() const;
+
+    void unbind() const;
 
     [[nodiscard]] const std::array<float, 2>& minMaxVals() const;
 };

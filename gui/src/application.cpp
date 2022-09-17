@@ -35,6 +35,7 @@ Application::Application() {
 
     glfw_window_ = glfwCreateWindow(width_, height_, title_.c_str(), NULL, NULL);
     glfwMakeContextCurrent(glfw_window_);
+    glfwSetWindowSizeLimits(glfw_window_, min_width_, min_height_, GLFW_DONT_CARE, GLFW_DONT_CARE);
 
     if (gl3wInit()) {
         throw std::runtime_error("Failed to initialize OpenGL!");
@@ -151,24 +152,29 @@ void Application::charCallback(GLFWwindow* window, unsigned int c) {
 }
 
 void Application::render() {
-    int width, height;
-    glfwGetFramebufferSize(glfw_window_, &width, &height);
-    glViewport(0, 0, width, height);
+
+    int win_w, win_h;
+    glfwGetWindowSize(glfw_window_, &win_w, &win_h);
 
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    scene_->describe();
+    scene_->renderIm(win_w, win_h);
 
     ImGui::Render();
+
+    int display_w, display_h;
+    glfwGetFramebufferSize(glfw_window_, &display_w, &display_h);
+    glViewport(0, 0, display_w, display_h);
 
     glClearColor(bg_color_.x, bg_color_.y, bg_color_.z, bg_color_.w);
     // Why depth buffer bit?
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-    scene_->render(glm::scale(glm::vec3((float)height / (float)width, 1.0, 1.0)));
+    scene_->renderGl(glm::scale(
+            glm::vec3((float)display_h / (float)display_w, 1.0, 1.0)));
 
     glfwSwapBuffers(glfw_window_);
 }

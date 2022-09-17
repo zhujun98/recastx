@@ -7,9 +7,9 @@
 #include <memory>
 #include <string>
 
-#include "scene_component.hpp"
-#include "graphics/nodes/scene.hpp"
-#include "graphics/aesthetics.hpp"
+#include "./scene_component.hpp"
+#include "./colormap_controller.hpp"
+#include "./scene.hpp"
 #include "graphics/shader_program.hpp"
 #include "graphics/slice.hpp"
 #include "graphics/textures.hpp"
@@ -67,7 +67,7 @@ class ReconComponent : public DynamicSceneComponent {
     std::map<int, std::unique_ptr<Slice>> slices_;
     std::unique_ptr<Volume> volume_;
 
-    Colormap cm_;
+    ColormapController cm_;
 
     glm::mat4 volume_transform_;
 
@@ -117,11 +117,11 @@ public:
 
     ~ReconComponent() override;
 
-    void render(const glm::mat4& world_to_screen) override;
+    void renderIm(int width, int height) override;
+
+    void renderGl(const glm::mat4& world_to_screen) override;
 
     void init() override;
-
-    void describe() override;
 
     void setSliceData(std::vector<float>&& data,
                       const std::array<uint32_t, 2>& size,
@@ -130,7 +130,7 @@ public:
     void setVolumeData(std::vector<float>&& data,
                        const std::array<uint32_t, 3>& volume_size);
 
-    void consume(const PacketDataEvent& data) override;
+    bool consume(const PacketDataEvent& data) override;
 
     bool handleMouseButton(int button, int action) override;
 
