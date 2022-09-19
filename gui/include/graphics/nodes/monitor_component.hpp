@@ -7,15 +7,15 @@ namespace tomcat::gui {
 
 class Scene;
 
-class StatusbarComponent : public DynamicSceneComponent {
+class MonitorComponent : public DynamicSceneComponent {
 
     bool visible_ = true;
 
 public:
 
-    explicit StatusbarComponent(Scene& scene);
+    explicit MonitorComponent(Scene& scene);
 
-    ~StatusbarComponent() override;
+    ~MonitorComponent() override;
 
     void renderIm(int width, int height) override;
 

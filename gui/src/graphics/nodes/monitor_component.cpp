@@ -1,18 +1,18 @@
 #include <imgui.h>
 
-#include "graphics/nodes/statusbar_component.hpp"
+#include "graphics/nodes/monitor_component.hpp"
 #include "graphics/nodes/scene.hpp"
 #include "graphics/style.hpp"
 
 namespace tomcat::gui {
 
-StatusbarComponent::StatusbarComponent(Scene& scene)
+MonitorComponent::MonitorComponent(Scene& scene)
     : DynamicSceneComponent(scene) {}
 
-StatusbarComponent::~StatusbarComponent() = default;
+MonitorComponent::~MonitorComponent() = default;
 
-void StatusbarComponent::renderIm(int width, int height) {
-    ImGui::Checkbox("Show status bar", &visible_);
+void MonitorComponent::renderIm(int width, int height) {
+    ImGui::Checkbox("Show monitors", &visible_);
 
     if (visible_) {
         // bottom panel
@@ -51,9 +51,9 @@ void StatusbarComponent::renderIm(int width, int height) {
     }
 }
 
-void StatusbarComponent::renderGl(const glm::mat4 &world_to_screen) {}
+void MonitorComponent::renderGl(const glm::mat4 &world_to_screen) {}
 
-bool StatusbarComponent::consume(const tomcat::PacketDataEvent &data) {
+bool MonitorComponent::consume(const tomcat::PacketDataEvent &data) {
     return true;
 }
 
