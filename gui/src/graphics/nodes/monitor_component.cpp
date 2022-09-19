@@ -15,6 +15,8 @@ void MonitorComponent::renderIm(int width, int height) {
     ImGui::Checkbox("Show monitors", &visible_);
 
     if (visible_) {
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.06f, 0.06f, 0.06f, 0.02f));
+
         // bottom panel
         // ------------
         float x0 = Style::IMGUI_WINDOW_MARGIN
@@ -48,6 +50,8 @@ void MonitorComponent::renderIm(int width, int height) {
         ImGui::Begin("Right panel", NULL, ImGuiWindowFlags_NoDecoration);
 
         ImGui::End();
+
+        ImGui::PopStyleColor();
     }
 }
 
