@@ -19,7 +19,7 @@ Scene::~Scene() {
 void Scene::renderIm(int width, int height) {
     float x0 = Style::IMGUI_WINDOW_MARGIN;
     float y0 = Style::IMGUI_ICON_HEIGHT + Style::IMGUI_WINDOW_SPACING;
-    float w = Style::IMGUI_CONTROL_PANEL_WIDTH;
+    float w = Style::IMGUI_ICON_WIDTH;
     float h = static_cast<float>(height) - y0 - Style::IMGUI_WINDOW_MARGIN;
     ImGui::SetNextWindowPos(ImVec2(x0, y0));
     ImGui::SetNextWindowSize(ImVec2(w, h));
