@@ -106,10 +106,15 @@ void ReconComponent::renderIm(int width, int height) {
 
     ImGui::Checkbox("Show slice histograms", &show_statistics_);
     if (show_statistics_) {
-        float x0 = Style::IMGUI_WINDOW_MARGIN + Style::IMGUI_CONTROL_PANEL_WIDTH + Style::IMGUI_WINDOW_SPACING;;
+        float x0 = Style::IMGUI_WINDOW_MARGIN
+                + Style::IMGUI_CONTROL_PANEL_WIDTH
+                + Style::IMGUI_WINDOW_SPACING;;
         float y0 = Style::IMGUI_WINDOW_MARGIN;
-        float w = static_cast<float>(width) - x0 - Style::IMGUI_WINDOW_MARGIN;
-        float h = Style::IMGUI_BOTTOM_PANEL_HEIGHT;
+        float w = static_cast<float>(width) - x0
+                - Style::IMGUI_WINDOW_MARGIN
+                - Style::IMGUI_WINDOW_SPACING
+                - Style::IMGUI_ROTATING_AXIS_WIDTH;
+        float h = Style::IMGUI_TOP_PANEL_HEIGHT;
         ImGui::SetNextWindowPos(ImVec2(x0, y0));
         ImGui::SetNextWindowSize(ImVec2(w, h));
 

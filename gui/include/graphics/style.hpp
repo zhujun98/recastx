@@ -9,9 +9,12 @@ struct Style {
     static constexpr float IMGUI_WINDOW_MARGIN = 10.f;
     static constexpr float IMGUI_WINDOW_SPACING = 10.f;
     static constexpr float IMGUI_ICON_HEIGHT = 80.f;
+    static constexpr float IMGUI_ICON_WIDTH = 250.f;
     static constexpr float IMGUI_CONTROL_PANEL_WIDTH = 250.f;
-    static constexpr float IMGUI_TOP_PANEL_HEIGHT = 100.f;
+    static constexpr float IMGUI_TOP_PANEL_HEIGHT = 150.f;
     static constexpr float IMGUI_BOTTOM_PANEL_HEIGHT = 150.f;
+    static constexpr float IMGUI_ROTATING_AXIS_WIDTH = 100.f;
+    static constexpr float IMGUI_RIGHT_PANEL_WIDTH = 250.f;
 
     static void init() {
         ImGui::StyleColorsDark();
