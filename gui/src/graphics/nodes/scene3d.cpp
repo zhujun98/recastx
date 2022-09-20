@@ -13,8 +13,8 @@ namespace tomcat::gui {
 Scene3d::Scene3d(Client* client) : Scene(client) {
     camera_ = std::make_unique<SceneCamera3d>();
     this->addComponent(std::make_shared<AxesComponent>(*this));
-    this->addComponent(std::make_shared<ReconComponent>(*this));
     this->addComponent(std::make_shared<MonitorComponent>(*this));
+    this->addComponent(std::make_shared<ReconComponent>(*this));
 }
 
 Scene3d::~Scene3d() = default;
