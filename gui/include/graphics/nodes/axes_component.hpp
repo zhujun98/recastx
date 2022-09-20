@@ -10,13 +10,11 @@ namespace tomcat::gui {
 
 class AxesComponent : public StaticSceneComponent {
 
-    GLuint axes_vao_handle_;
-    GLuint axes_vbo_handle_;
-    GLuint axes_index_handle_;
-    int axes_index_count_;
-    std::unique_ptr<ShaderProgram> axes_program_;
+    GLuint vao_;
+    GLuint vbo_;
+    std::unique_ptr<ShaderProgram> shader_;
 
-    bool show_ = true;
+    bool visible_ = true;
 
 public:
 

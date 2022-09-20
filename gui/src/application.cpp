@@ -170,7 +170,6 @@ void Application::render() {
     glViewport(0, 0, display_w, display_h);
 
     glClearColor(bg_color_.x, bg_color_.y, bg_color_.z, bg_color_.w);
-    // Why depth buffer bit?
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
