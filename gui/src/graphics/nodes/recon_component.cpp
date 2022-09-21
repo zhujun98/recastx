@@ -25,7 +25,7 @@ ReconComponent::ReconComponent(Scene& scene) : DynamicSceneComponent(scene) {
     glBindVertexArray(vao_handle_);
     glGenBuffers(1, &vbo_handle_);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_handle_);
-    glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(GLfloat), square(),
+    glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(GLfloat), primitives::square,
                  GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
@@ -34,7 +34,7 @@ ReconComponent::ReconComponent(Scene& scene) : DynamicSceneComponent(scene) {
     glBindVertexArray(line_vao_handle_);
     glGenBuffers(1, &line_vbo_handle_);
     glBindBuffer(GL_ARRAY_BUFFER, line_vbo_handle_);
-    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(GLfloat), line(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(GLfloat), primitives::line, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
 
@@ -45,13 +45,13 @@ ReconComponent::ReconComponent(Scene& scene) : DynamicSceneComponent(scene) {
     glGenBuffers(1, &cube_index_handle_);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cube_index_handle_);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, cube_index_count_ * sizeof(GLuint),
-                 cube_wireframe_idxs(), GL_STATIC_DRAW);
+                 primitives::cube_wireframe_idxs, GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
     glGenBuffers(1, &cube_vbo_handle_);
     glBindBuffer(GL_ARRAY_BUFFER, cube_vbo_handle_);
-    glBufferData(GL_ARRAY_BUFFER, 24 * sizeof(float), cube_wireframe(),
-                 GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 24 * sizeof(float),
+                 primitives::cube_wireframe, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
     auto solid_vert =
@@ -195,7 +195,6 @@ void ReconComponent::renderGl(const glm::mat4& world_to_screen) {
 
     glDisable(GL_BLEND);
 }
-
 
 void ReconComponent::init() {
     scene_.send(RemoveAllSlicesPacket());

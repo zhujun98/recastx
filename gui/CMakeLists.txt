@@ -51,7 +51,6 @@ set(SOURCE_NAMES
         "src/util.cpp"
         "src/graphics/aesthetics.cpp"
         "src/graphics/graph_node.cpp"
-        "src/graphics/primitives.cpp"
         "src/graphics/shader_program.cpp"
         "src/graphics/slice.cpp"
         "src/graphics/volume.cpp"

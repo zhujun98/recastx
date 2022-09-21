@@ -2,14 +2,79 @@
 
 #include <GL/gl3w.h>
 
-namespace tomcat::gui {
+namespace tomcat::gui::primitives {
 
-const GLfloat* line();
-const GLfloat* square();
-const GLfloat* cube();
-const GLfloat* cube_wireframe();
-const GLuint* cube_wireframe_idxs();
-const GLfloat* pyramid();
-const GLfloat* alt_pyramid();
+inline constexpr GLfloat line[] = {
+        0.0f, 0.0f, 0.0f,
+        1.0f, 1.0f, 1.0f
+};
+
+inline constexpr GLfloat square[] = {
+        0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        1.0f, 1.0f, 0.0f,
+        1.0f, 0.0f, 0.0f};
+
+inline constexpr GLfloat cube[] = {
+        0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, 0.0f,
+
+        0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        1.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 0.0f,
+
+        1.0f, 0.0f, 0.0f,
+        1.0f, 1.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f,
+
+        0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 1.0f,
+        0.0f, 1.0f, 0.0f,
+        1.0f, 0.0f, 1.0f,
+
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+
+        1.0f, 0.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
+        1.0f, 0.0f, 0.0f,
+        1.0f, 1.0f, 0.0f,
+
+        1.0f, 0.0f, 0.0f,
+        1.0f, 1.0f, 1.0f,
+        1.0f, 0.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
+
+        1.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        1.0f, 1.0f, 1.0f,
+        0.0f, 1.0f, 0.0f,
+
+        0.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
+        0.0f, 1.0f, 1.0f,
+        1.0f, 0.0f, 1.0f
+};
+
+inline constexpr GLfloat cube_wireframe[] = {
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f, -1.0f,
+         1.0f, -1.0f,  1.0f
+};
+
+inline constexpr GLuint cube_wireframe_idxs[] = {
+        5, 4, 5, 0, 4, 7, 7, 0, 6, 5, 1, 0,
+        3, 4, 2, 7, 6, 3, 6, 1, 3, 2, 2, 1};
 
 } // namespace tomcat::gui

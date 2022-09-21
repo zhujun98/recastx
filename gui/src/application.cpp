@@ -154,14 +154,14 @@ void Application::charCallback(GLFWwindow* window, unsigned int c) {
 
 void Application::render() {
 
-    int win_w, win_h;
-    glfwGetWindowSize(glfw_window_, &win_w, &win_h);
+    int window_w, window_h;
+    glfwGetWindowSize(glfw_window_, &window_w, &window_h);
 
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    scene_->renderIm(win_w, win_h);
+    scene_->renderIm(window_w, window_h);
 
     ImGui::Render();
 
