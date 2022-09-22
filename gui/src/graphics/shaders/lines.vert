@@ -1,14 +1,15 @@
 R"glsl(
 #version 330
 
-in vec3 in_position;
+layout (location = 0) in vec3 aPos;
 
-uniform mat4 transform_matrix;
+out vec3 aColor;
 
-out vec3 color;
+uniform mat4 view;
+uniform mat4 projection;
 
 void main() {
-    gl_Position = transform_matrix * vec4(in_position.x, in_position.y, in_position.z, 1.0f);
-    color = in_position;
+    gl_Position = projection * view * vec4(aPos, 1.0f);
+    aColor = aPos;
 }
 )glsl"

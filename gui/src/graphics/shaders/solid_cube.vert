@@ -1,21 +1,22 @@
 R"glsl(
 #version 330
 
-in vec3 position;
+in vec3 aPos;
 
-out vec2 sliceCoord;
-out vec3 volumeCoord;
+out vec2 aSliceCoord;
+out vec3 aVolumeCoord;
 
-uniform mat4 worldToScreenMatrix;
+uniform mat4 view;
+uniform mat4 projection;
 uniform mat4 orientationMatrix;
 
 void main() {
-    sliceCoord = vec2(position.x, position.y);
+    aSliceCoord = vec2(aPos.xy);
 
-    vec3 worldPosition = (orientationMatrix * vec4(position, 1.0f)).xyz;
+    vec3 worldPosition = (orientationMatrix * vec4(aPos, 1.0f)).xyz;
 
-    volumeCoord = 0.5f * (worldPosition + vec3(1.0f));
+    aVolumeCoord = 0.5f * (worldPosition + vec3(1.0f));
 
-    gl_Position = worldToScreenMatrix * vec4(worldPosition, 1.0f);
+    gl_Position = projection * view * vec4(worldPosition, 1.0f);
 }
 )glsl"

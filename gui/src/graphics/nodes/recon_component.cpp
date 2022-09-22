@@ -174,8 +174,9 @@ void ReconComponent::renderGl(const glm::mat4& world_to_screen) {
     cm_.colormap().unbind();
 
     wireframe_shader_->use();
-    wireframe_shader_->setMat4("transformMatrix", full_transform);
-    wireframe_shader_->setVec4("lineColor", glm::vec4(1.f, 1.f, 1.f, 0.2f));
+    wireframe_shader_->setMat4("view", full_transform);
+    wireframe_shader_->setMat4("projection", glm::mat4(1.0f));
+    wireframe_shader_->setVec4("color", glm::vec4(1.f, 1.f, 1.f, 0.2f));
 
     glBindVertexArray(cube_vao_handle_);
     glLineWidth(3.f);
@@ -185,8 +186,8 @@ void ReconComponent::renderGl(const glm::mat4& world_to_screen) {
 
     if (drag_machine_ != nullptr && drag_machine_->type() == DragType::rotator) {
         auto& rotator = *(SliceRotator*)drag_machine_.get();
-        wireframe_shader_->setMat4("transform_matrix",
-                                   full_transform * glm::translate(rotator.rot_base) * glm::scale(rotator.rot_end - rotator.rot_base));
+        wireframe_shader_->setMat4(
+                "view", full_transform * glm::translate(rotator.rot_base) * glm::scale(rotator.rot_end - rotator.rot_base));
         wireframe_shader_->setVec4("line_color", glm::vec4(1.f, 1.f, 1.f, 1.f));
         glBindVertexArray(line_vao_handle_);
         glLineWidth(10.f);
@@ -394,7 +395,8 @@ void ReconComponent::drawSlice(Slice* slice, const glm::mat4& world_to_screen) {
     //        unloadable and bound to sampler type (Float) - using zero texture because texture unloadable
     slice->bind();
 
-    solid_shader_->setMat4("worldToScreenMatrix", world_to_screen);
+    solid_shader_->setMat4("view", world_to_screen);
+    solid_shader_->setMat4("projection", glm::mat4(1.0f));
     solid_shader_->setMat4("orientationMatrix",
                       slice->orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0)));
     solid_shader_->setBool("hovered", slice->hovered());

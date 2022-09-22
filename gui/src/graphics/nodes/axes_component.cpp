@@ -49,7 +49,8 @@ void AxesComponent::renderGl(const glm::mat4& world_to_screen) {
     // TODO draw axes on screen, should have access to camera here
     shader_->use();
 
-    shader_->setMat4("transform_matrix", world_to_screen);
+    shader_->setMat4("view", world_to_screen);
+    shader_->setMat4("projection", glm::mat4(1.f));
 
     glBindVertexArray(vao_);
     glLineWidth(3.0f);
