@@ -3,7 +3,7 @@
 #include "imgui.h"
 
 #include "graphics/nodes/axes_component.hpp"
-#include "graphics/nodes/scene_camera3d.hpp"
+#include "graphics/nodes/camera.hpp"
 
 namespace tomcat::gui {
 

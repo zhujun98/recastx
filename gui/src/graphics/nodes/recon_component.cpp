@@ -12,7 +12,7 @@
 #include "tomcat/tomcat.hpp"
 
 #include "graphics/nodes/recon_component.hpp"
-#include "graphics/nodes/scene_camera3d.hpp"
+#include "graphics/nodes/camera.hpp"
 #include "graphics/aesthetics.hpp"
 #include "graphics/primitives.hpp"
 #include "graphics/style.hpp"

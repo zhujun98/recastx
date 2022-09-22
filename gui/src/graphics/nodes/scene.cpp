@@ -3,7 +3,7 @@
 #include <imgui.h>
 
 #include "graphics/nodes/scene.hpp"
-#include "graphics/nodes/scene_camera.hpp"
+#include "graphics/nodes/camera.hpp"
 #include "graphics/shader_program.hpp"
 #include "graphics/style.hpp"
 
@@ -98,7 +98,7 @@ bool Scene::handleKey(int key, int action, int mods) {
     return false;
 }
 
-SceneCamera& Scene::camera() { return *camera_; }
+Camera& Scene::camera() { return *camera_; }
 
 void Scene::tick(double time_elapsed) {
     camera_->tick(time_elapsed);

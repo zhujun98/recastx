@@ -8,12 +8,14 @@
 #include "glm/glm.hpp"
 #include "glm/gtx/rotate_vector.hpp"
 
-#include "./scene_camera.hpp"
+#include "input_handler.hpp"
+#include "graphics/graph_node.hpp"
 #include "path.hpp"
+#include "ticker.hpp"
 
 namespace tomcat::gui {
 
-class SceneCamera3d;
+class Camera;
 
 enum class drag_machine_kind : int {
     none,
@@ -22,14 +24,14 @@ enum class drag_machine_kind : int {
 
 class CameraDragMachine : public Ticker {
   public:
-    explicit CameraDragMachine(SceneCamera3d& camera) : camera_(camera) {}
+    explicit CameraDragMachine(Camera& camera) : camera_(camera) {}
     virtual ~CameraDragMachine() = default;
 
     virtual void onDrag(glm::vec2 cur, glm::vec2 delta) = 0;
     virtual drag_machine_kind kind() = 0;
 
   protected:
-    SceneCamera3d& camera_;
+    Camera& camera_;
 };
 
 
@@ -45,7 +47,7 @@ class Rotator : public CameraDragMachine {
 
     using CameraDragMachine::CameraDragMachine;
 
-    Rotator(SceneCamera3d& camera, float x, float y, bool instant = true);
+    Rotator(Camera& camera, float x, float y, bool instant = true);
 
     void onDrag(glm::vec2 cur, glm::vec2 delta) override;
 
@@ -55,7 +57,7 @@ class Rotator : public CameraDragMachine {
 };
 
 
-class SceneCamera3d : public SceneCamera {
+class Camera : public GraphNode, public InputHandler, public Ticker {
 
     glm::vec3 position_;
 
@@ -80,11 +82,11 @@ class SceneCamera3d : public SceneCamera {
 
   public:
 
-    SceneCamera3d();
+    Camera();
 
-    ~SceneCamera3d() override;
+    ~Camera() override;
 
-    glm::mat4 matrix() override;
+    glm::mat4 matrix();
 
     auto& up() { return up_; }
 
@@ -102,7 +104,7 @@ class SceneCamera3d : public SceneCamera {
 
     void tick(double time_elapsed) override;
 
-    void lookAt(glm::vec3 center) override;
+    void lookAt(glm::vec3 center);
 
     void rotate(float phi, float psi);
 

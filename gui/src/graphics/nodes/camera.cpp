@@ -2,13 +2,13 @@
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 
-#include "graphics/nodes/scene_camera3d.hpp"
+#include "graphics/nodes/camera.hpp"
 
 namespace tomcat::gui {
 
 // class Rotator
 
-Rotator::Rotator(SceneCamera3d& camera, float x, float y, bool instant)
+Rotator::Rotator(Camera& camera, float x, float y, bool instant)
     : Rotator(camera) {
     x_ = x;
     y_ = y;
@@ -36,22 +36,22 @@ drag_machine_kind Rotator::kind() {
     return drag_machine_kind::rotator;
 }
 
-// class SceneCamera3d
+// class Camera
 
-SceneCamera3d::SceneCamera3d() {
+Camera::Camera() {
     setPerspectiveView();
 };
-SceneCamera3d::~SceneCamera3d() = default;
+Camera::~Camera() = default;
 
-void SceneCamera3d::lookAt(glm::vec3 center) { center_ = std::move(center); }
+void Camera::lookAt(glm::vec3 center) { center_ = std::move(center); }
 
-void SceneCamera3d::rotate(float phi, float psi) {
+void Camera::rotate(float phi, float psi) {
     auto rotate_up = glm::rotate(phi, up_);
     auto rotate_right = glm::rotate(psi, right_);
     rotation_ = rotate_up * rotate_right * rotation_;
 }
 
-glm::mat4 SceneCamera3d::matrix() {
+glm::mat4 Camera::matrix() {
     glm::mat4 camera_matrix = glm::lookAt(position_, center_, up_);
 
     camera_matrix = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 50.0f) *
@@ -60,7 +60,7 @@ glm::mat4 SceneCamera3d::matrix() {
     return camera_matrix;
 }
 
-void SceneCamera3d::switch_if_necessary(drag_machine_kind kind) {
+void Camera::switch_if_necessary(drag_machine_kind kind) {
     if (!drag_machine_ || drag_machine_->kind() != kind) {
         switch (kind) {
             case drag_machine_kind::rotator:
@@ -72,9 +72,7 @@ void SceneCamera3d::switch_if_necessary(drag_machine_kind kind) {
     }
 }
 
-bool SceneCamera3d::handleMouseButton(int /* button */, int action) {
-    if (interaction_disabled_) return false;
-
+bool Camera::handleMouseButton(int /* button */, int action) {
     dragging_ = action == GLFW_PRESS;
     if (!dragging_) {
         drag_machine_ = nullptr;
@@ -84,18 +82,12 @@ bool SceneCamera3d::handleMouseButton(int /* button */, int action) {
     return true;
 }
 
-bool SceneCamera3d::handleScroll(double offset) {
-    if (interaction_disabled_) {
-        return false;
-    }
-
+bool Camera::handleScroll(double offset) {
     position_ *= (1.0 - offset / 20.0);
     return true;
 }
 
-bool SceneCamera3d::handleMouseMoved(double x, double y) {
-    if (interaction_disabled_) return false;
-
+bool Camera::handleMouseMoved(double x, double y) {
     // update slices that is being hovered over
     y = -y;
 
@@ -117,9 +109,7 @@ bool SceneCamera3d::handleMouseMoved(double x, double y) {
     return false;
 }
 
-bool SceneCamera3d::handleKey(int key, int action, int /* mods */) {
-    if (interaction_disabled_) return false;
-
+bool Camera::handleKey(int key, int action, int /* mods */) {
     float offset = 0.05f;
     if (action == GLFW_PRESS) {
         switch (key) {
@@ -151,7 +141,7 @@ bool SceneCamera3d::handleKey(int key, int action, int /* mods */) {
     return false;
 }
 
-void SceneCamera3d::renderIm(int /*width*/, int /*height*/) {
+void Camera::renderIm(int /*width*/, int /*height*/) {
     ImGui::Checkbox("Instant Camera", &instant_);
 
     if (ImGui::Button("X-Y")) {
@@ -183,11 +173,11 @@ void SceneCamera3d::renderIm(int /*width*/, int /*height*/) {
     }
 }
 
-void SceneCamera3d::tick(double time_elapsed) {
+void Camera::tick(double time_elapsed) {
     if (dragging_) drag_machine_->tick(time_elapsed);
 }
 
-void SceneCamera3d::setPerspectiveView() {
+void Camera::setPerspectiveView() {
     rotation_ = glm::mat4(1.0f);
     position_ = center_;
     position_.z += 5.0;

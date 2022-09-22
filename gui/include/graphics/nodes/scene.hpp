@@ -15,7 +15,7 @@
 namespace tomcat::gui {
 
 class ShaderProgram;
-class SceneCamera;
+class Camera;
 
 class Scene : public GraphGlNode, public InputHandler, public Ticker {
 
@@ -24,7 +24,7 @@ protected:
     GLuint vao_handle_;
     GLuint vbo_handle_;
     std::unique_ptr<ShaderProgram> program_;
-    std::unique_ptr<SceneCamera> camera_;
+    std::unique_ptr<Camera> camera_;
     Client* client_;
 
     float pixel_size_ = 1.0;
@@ -62,7 +62,7 @@ protected:
         client_->send(std::forward<T>(packet));
     }
 
-    [[nodiscard]] SceneCamera& camera();
+    [[nodiscard]] Camera& camera();
 };
 
 }  // namespace tomcat::gui

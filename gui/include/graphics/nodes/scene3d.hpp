@@ -4,7 +4,7 @@
 #include <memory>
 
 #include "./scene.hpp"
-#include "./scene_camera3d.hpp"
+#include "./camera.hpp"
 
 namespace tomcat::gui {
 
