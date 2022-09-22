@@ -11,6 +11,8 @@ SceneComponent::~SceneComponent() = default;
 
 void SceneComponent::init() {}
 
+void SceneComponent::onWindowSizeChanged(int width, int height) {}
+
 // class StaticSceneComponent
 
 StaticSceneComponent::StaticSceneComponent(Scene &scene)

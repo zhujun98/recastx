@@ -10,7 +10,7 @@ namespace tomcat::gui {
 
 class Scene3d : public Scene {
 
-  public:
+public:
 
     explicit Scene3d(Client* client);
 

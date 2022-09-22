@@ -119,6 +119,8 @@ public:
 
     ~ReconComponent() override;
 
+    void onWindowSizeChanged(int width, int height) override;
+
     void renderIm() override;
 
     void renderGl() override;

@@ -88,6 +88,18 @@ ReconComponent::~ReconComponent() {
     glDeleteBuffers(1, &line_vbo_handle_);
 }
 
+void ReconComponent::onWindowSizeChanged(int width, int height) {
+    pos_ = {
+        Style::IMGUI_WINDOW_MARGIN + Style::IMGUI_CONTROL_PANEL_WIDTH + Style::IMGUI_WINDOW_SPACING,
+        Style::IMGUI_WINDOW_MARGIN
+    };
+    size_ = {
+        static_cast<float>(width) - pos_[0]
+            - Style::IMGUI_WINDOW_MARGIN - Style::IMGUI_WINDOW_SPACING - Style::IMGUI_ROTATING_AXIS_WIDTH,
+        Style::IMGUI_TOP_PANEL_HEIGHT
+    };
+}
+
 void ReconComponent::renderIm() {
     cm_.renderIm();
 
@@ -106,18 +118,8 @@ void ReconComponent::renderIm() {
 
     ImGui::Checkbox("Show slice histograms", &show_statistics_);
     if (show_statistics_) {
-        float x0 = Style::IMGUI_WINDOW_MARGIN
-                + Style::IMGUI_CONTROL_PANEL_WIDTH
-                + Style::IMGUI_WINDOW_SPACING;;
-        float y0 = Style::IMGUI_WINDOW_MARGIN;
-        float w = static_cast<float>(scene_.width())
-                - x0
-                - Style::IMGUI_WINDOW_MARGIN
-                - Style::IMGUI_WINDOW_SPACING
-                - Style::IMGUI_ROTATING_AXIS_WIDTH;
-        float h = Style::IMGUI_TOP_PANEL_HEIGHT;
-        ImGui::SetNextWindowPos(ImVec2(x0, y0));
-        ImGui::SetNextWindowSize(ImVec2(w, h));
+        ImGui::SetNextWindowPos(pos_);
+        ImGui::SetNextWindowSize(size_);
 
         ImGui::Begin("Statistics##ReconComponent", NULL, ImGuiWindowFlags_NoDecoration);
 

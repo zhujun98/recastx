@@ -11,14 +11,17 @@ namespace tomcat::gui {
 
 Scene::Scene(Client* client) : client_(client) {};
 
-Scene::~Scene() {
-    glDeleteVertexArrays(1, &vao_handle_);
-    glDeleteBuffers(1, &vbo_handle_);
-}
+Scene::~Scene() = default;
 
 void Scene::onWindowSizeChanged(int width, int height) {
     width_ = width;
     height_ = height;
+    pos_ = {Style::IMGUI_WINDOW_MARGIN, Style::IMGUI_ICON_HEIGHT + Style::IMGUI_WINDOW_SPACING};
+    size_ = {Style::IMGUI_ICON_WIDTH, static_cast<float>(height) - pos_[1] - Style::IMGUI_WINDOW_MARGIN};
+
+    for (auto& comp : components_) {
+        comp->onWindowSizeChanged(width, height);
+    }
 }
 
 void Scene::onFrameBufferSizeChanged(int width, int height) {
@@ -28,12 +31,8 @@ void Scene::onFrameBufferSizeChanged(int width, int height) {
 }
 
 void Scene::renderIm() {
-    float x0 = Style::IMGUI_WINDOW_MARGIN;
-    float y0 = Style::IMGUI_ICON_HEIGHT + Style::IMGUI_WINDOW_SPACING;
-    float w = Style::IMGUI_ICON_WIDTH;
-    float h = static_cast<float>(height_) - y0 - Style::IMGUI_WINDOW_MARGIN;
-    ImGui::SetNextWindowPos(ImVec2(x0, y0));
-    ImGui::SetNextWindowSize(ImVec2(w, h));
+    ImGui::SetNextWindowPos(pos_);
+    ImGui::SetNextWindowSize(size_);
 
     ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoResize);
     // 2/3 of the space for widget and 1/3 for labels

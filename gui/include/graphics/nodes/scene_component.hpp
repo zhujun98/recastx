@@ -3,7 +3,8 @@
 
 #include <string>
 
-#include "glm/glm.hpp"
+#include <imgui.h>
+#include <glm/glm.hpp>
 
 #include "graphics/graph_node.hpp"
 #include "input_handler.hpp"
@@ -29,6 +30,9 @@ protected:
 
     Scene& scene_;
 
+    ImVec2 pos_;
+    ImVec2 size_;
+
 public:
 
     SceneComponent(ComponentType type, Scene& scene);
@@ -36,6 +40,8 @@ public:
     ~SceneComponent() override;
 
     virtual void init();
+
+    virtual void onWindowSizeChanged(int width, int height);
 
     [[nodiscard]] ComponentType type() const { return type_; }
 };

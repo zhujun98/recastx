@@ -21,8 +21,6 @@ class Scene : public GraphGlNode, public InputHandler, public Ticker {
 
 protected:
 
-    GLuint vao_handle_;
-    GLuint vbo_handle_;
     std::unique_ptr<ShaderProgram> program_;
     std::unique_ptr<Camera> camera_;
     Client* client_;
@@ -33,6 +31,8 @@ protected:
 
     int width_ = 0;
     int height_ = 0;
+    ImVec2 pos_;
+    ImVec2 size_;
 
     glm::mat4 projection_;
 
@@ -45,9 +45,6 @@ protected:
     void onFrameBufferSizeChanged(int width, int height);
 
     void onWindowSizeChanged(int width, int height);
-
-    [[nodiscard]] int width() const { return width_; }
-    [[nodiscard]] int height() const { return height_; }
 
     void renderIm() override;
 
