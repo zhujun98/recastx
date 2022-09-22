@@ -88,8 +88,8 @@ ReconComponent::~ReconComponent() {
     glDeleteBuffers(1, &line_vbo_handle_);
 }
 
-void ReconComponent::renderIm(int width, int height) {
-    cm_.renderIm(width, height);
+void ReconComponent::renderIm() {
+    cm_.renderIm();
 
     ImGui::Checkbox("Auto Levels", &auto_levels_);
 
@@ -110,7 +110,8 @@ void ReconComponent::renderIm(int width, int height) {
                 + Style::IMGUI_CONTROL_PANEL_WIDTH
                 + Style::IMGUI_WINDOW_SPACING;;
         float y0 = Style::IMGUI_WINDOW_MARGIN;
-        float w = static_cast<float>(width) - x0
+        float w = static_cast<float>(scene_.width())
+                - x0
                 - Style::IMGUI_WINDOW_MARGIN
                 - Style::IMGUI_WINDOW_SPACING
                 - Style::IMGUI_ROTATING_AXIS_WIDTH;
@@ -139,7 +140,7 @@ void ReconComponent::renderIm(int width, int height) {
     }
 }
 
-void ReconComponent::renderGl(const glm::mat4& world_to_screen) {
+void ReconComponent::renderGl() {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
 
@@ -152,7 +153,7 @@ void ReconComponent::renderGl(const glm::mat4& world_to_screen) {
 
     cm_.colormap().bind();
 
-    glm::mat4 full_transform = world_to_screen * volume_transform_;
+    glm::mat4 view_matrix = scene_.camera().matrix() * volume_transform_;
 
     std::vector<Slice*> slices;
     for (auto& [slice_id, slice] : slices_) {
@@ -168,14 +169,14 @@ void ReconComponent::renderGl(const glm::mat4& world_to_screen) {
 
     // FIXME: why do we need to bind and unbind 3D texture?
     volume_->bind();
-    for (auto slice : slices) drawSlice(slice, full_transform);
+    for (auto slice : slices) drawSlice(slice, view_matrix);
     volume_->unbind();
 
     cm_.colormap().unbind();
 
     wireframe_shader_->use();
-    wireframe_shader_->setMat4("view", full_transform);
-    wireframe_shader_->setMat4("projection", glm::mat4(1.0f));
+    wireframe_shader_->setMat4("view", view_matrix);
+    wireframe_shader_->setMat4("projection", scene_.projection());
     wireframe_shader_->setVec4("color", glm::vec4(1.f, 1.f, 1.f, 0.2f));
 
     glBindVertexArray(cube_vao_handle_);
@@ -187,8 +188,8 @@ void ReconComponent::renderGl(const glm::mat4& world_to_screen) {
     if (drag_machine_ != nullptr && drag_machine_->type() == DragType::rotator) {
         auto& rotator = *(SliceRotator*)drag_machine_.get();
         wireframe_shader_->setMat4(
-                "view", full_transform * glm::translate(rotator.rot_base) * glm::scale(rotator.rot_end - rotator.rot_base));
-        wireframe_shader_->setVec4("line_color", glm::vec4(1.f, 1.f, 1.f, 1.f));
+                "view", view_matrix * glm::translate(rotator.rot_base) * glm::scale(rotator.rot_end - rotator.rot_base));
+        wireframe_shader_->setVec4("color", glm::vec4(1.f, 1.f, 1.f, 1.f));
         glBindVertexArray(line_vao_handle_);
         glLineWidth(10.f);
         glDrawArrays(GL_LINES, 0, 2);
@@ -348,7 +349,7 @@ void ReconComponent::initVolume() {
 }
 
 void ReconComponent::updateHoveringSlice(float x, float y) {
-    auto inv_matrix = glm::inverse(scene_.camera().matrix() * volume_transform_);
+    auto inv_matrix = glm::inverse(scene_.projection() * scene_.camera().matrix() * volume_transform_);
     int slice_id = -1;
     float best_z = std::numeric_limits<float>::max();
     for (auto& [sid, slice] : slices_) {
@@ -389,14 +390,14 @@ void ReconComponent::maybeSwitchDragMachine(ReconComponent::DragType type) {
     }
 }
 
-void ReconComponent::drawSlice(Slice* slice, const glm::mat4& world_to_screen) {
+void ReconComponent::drawSlice(Slice* slice, const glm::mat4& view_matrix) {
     // FIXME: bind an empty slice will result in warning:
     //        UNSUPPORTED (log once): POSSIBLE ISSUE: unit 1 GLD_TEXTURE_INDEX_2D is
     //        unloadable and bound to sampler type (Float) - using zero texture because texture unloadable
     slice->bind();
 
-    solid_shader_->setMat4("view", world_to_screen);
-    solid_shader_->setMat4("projection", glm::mat4(1.0f));
+    solid_shader_->setMat4("view", view_matrix);
+    solid_shader_->setMat4("projection", scene_.projection());
     solid_shader_->setMat4("orientationMatrix",
                       slice->orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0)));
     solid_shader_->setBool("hovered", slice->hovered());
@@ -494,9 +495,9 @@ void ReconComponent::SliceTranslator::onDrag(glm::vec2 delta) {
         glm::vec3(o[2][0], o[2][1], o[2][2]) + 0.5f * (axis1 + axis2);
     auto end_point_normal = base_point_normal + normal;
 
-    auto a = comp_.scene().camera().matrix() * comp_.volume_transform() *
+    auto a = comp_.scene().projection() * comp_.scene().camera().matrix() * comp_.volume_transform() *
              glm::vec4(base_point_normal, 1.0f);
-    auto b = comp_.scene().camera().matrix() * comp_.volume_transform() *
+    auto b = comp_.scene().projection() * comp_.scene().camera().matrix() * comp_.volume_transform() *
              glm::vec4(end_point_normal, 1.0f);
     auto normal_delta = b - a;
     float difference =
@@ -519,7 +520,7 @@ ReconComponent::SliceRotator::SliceRotator(ReconComponent& comp, const glm::vec2
     : DragMachine(comp, initial, DragType::rotator) {
     // 1. need to identify the opposite axis
     // a) get the position within the slice
-    auto tf = comp.scene().camera().matrix() * comp.volume_transform();
+    auto tf = comp.scene().projection() * comp.scene().camera().matrix() * comp.volume_transform();
     auto inv_matrix = glm::inverse(tf);
 
     auto slice = comp.hovered_slice();

@@ -108,7 +108,7 @@ class Camera : public GraphNode, public InputHandler, public Ticker {
 
     void rotate(float phi, float psi);
 
-    void renderIm(int width, int height) override;
+    void renderIm() override;
 };
 
 } // namespace tomcat::gui

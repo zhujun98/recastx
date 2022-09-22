@@ -16,11 +16,22 @@ Scene::~Scene() {
     glDeleteBuffers(1, &vbo_handle_);
 }
 
-void Scene::renderIm(int width, int height) {
+void Scene::onWindowSizeChanged(int width, int height) {
+    width_ = width;
+    height_ = height;
+}
+
+void Scene::onFrameBufferSizeChanged(int width, int height) {
+    projection_ = glm::perspective(
+            glm::radians(45.0f), (float)width / (float)height, 0.1f, 50.0f);
+    glViewport(0, 0, width, height);
+}
+
+void Scene::renderIm() {
     float x0 = Style::IMGUI_WINDOW_MARGIN;
     float y0 = Style::IMGUI_ICON_HEIGHT + Style::IMGUI_WINDOW_SPACING;
     float w = Style::IMGUI_ICON_WIDTH;
-    float h = static_cast<float>(height) - y0 - Style::IMGUI_WINDOW_MARGIN;
+    float h = static_cast<float>(height_) - y0 - Style::IMGUI_WINDOW_MARGIN;
     ImGui::SetNextWindowPos(ImVec2(x0, y0));
     ImGui::SetNextWindowSize(ImVec2(w, h));
 
@@ -28,20 +39,20 @@ void Scene::renderIm(int width, int height) {
     // 2/3 of the space for widget and 1/3 for labels
     ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.65f);
 
-    camera_->renderIm(width, height);
+    camera_->renderIm();
 
     for (auto &comp : components_) {
         ImGui::Separator();
-        comp->renderIm(width, height);
+        comp->renderIm();
     }
 
     ImGui::End();
 }
 
-void Scene::renderGl(const glm::mat4& window_matrix) {
-    auto matrix = window_matrix * camera_->matrix();
+void Scene::renderGl() {
+    auto matrix = projection_ * camera_->matrix();
     for (auto &comp : components_) {
-        comp->renderGl(matrix);
+        comp->renderGl();
     }
 }
 
@@ -97,8 +108,6 @@ bool Scene::handleKey(int key, int action, int mods) {
     if (camera_ && camera_->handleKey(key, action, mods)) return true;
     return false;
 }
-
-Camera& Scene::camera() { return *camera_; }
 
 void Scene::tick(double time_elapsed) {
     camera_->tick(time_elapsed);

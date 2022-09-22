@@ -39,18 +39,18 @@ AxesComponent::AxesComponent(Scene &scene) : StaticSceneComponent(scene) {
 
 AxesComponent::~AxesComponent() = default;
 
-void AxesComponent::renderIm(int /*width*/, int /*height*/) {
+void AxesComponent::renderIm() {
     ImGui::Checkbox("Show axes", &visible_);
 }
 
-void AxesComponent::renderGl(const glm::mat4& world_to_screen) {
+void AxesComponent::renderGl() {
     if (!visible_) return;
 
     // TODO draw axes on screen, should have access to camera here
     shader_->use();
 
-    shader_->setMat4("view", world_to_screen);
-    shader_->setMat4("projection", glm::mat4(1.f));
+    shader_->setMat4("view", scene_.camera().matrix());
+    shader_->setMat4("projection", scene_.projection());
 
     glBindVertexArray(vao_);
     glLineWidth(3.0f);

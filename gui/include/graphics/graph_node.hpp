@@ -23,7 +23,7 @@ public:
 
     void appendChildNode(GraphNode* node);
 
-    virtual void renderIm(int width, int height) = 0;
+    virtual void renderIm() = 0;
 
 };
 
@@ -32,7 +32,7 @@ class GraphGlNode : public GraphNode {
 
 public:
 
-    virtual void renderGl(const glm::mat4& window_matrix) = 0;
+    virtual void renderGl() = 0;
 
 };
 

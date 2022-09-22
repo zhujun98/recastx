@@ -54,8 +54,7 @@ void Camera::rotate(float phi, float psi) {
 glm::mat4 Camera::matrix() {
     glm::mat4 camera_matrix = glm::lookAt(position_, center_, up_);
 
-    camera_matrix = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 50.0f) *
-                    camera_matrix * rotation_;
+    camera_matrix *= rotation_;
 
     return camera_matrix;
 }
@@ -141,7 +140,7 @@ bool Camera::handleKey(int key, int action, int /* mods */) {
     return false;
 }
 
-void Camera::renderIm(int /*width*/, int /*height*/) {
+void Camera::renderIm() {
     ImGui::Checkbox("Instant Camera", &instant_);
 
     if (ImGui::Button("X-Y")) {

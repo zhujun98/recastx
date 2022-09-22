@@ -67,6 +67,12 @@ Application& Application::instance() {
 void Application::setScene(Scene3d* scene) { scene_ = scene; }
 
 void Application::start() {
+    scene_->onWindowSizeChanged(width_, height_);
+
+    int display_w, display_h;
+    glfwGetFramebufferSize(glfw_window_, &display_w, &display_h);
+    scene_->onFrameBufferSizeChanged(display_w, display_h);
+
     double prev_time = glfwGetTime();
     while (!glfwWindowShouldClose(glfw_window_)) {
         glfwPollEvents();
@@ -104,6 +110,14 @@ void Application::initImgui() {
 }
 
 void Application::registerCallbacks() {
+    glfwSetWindowSizeCallback(glfw_window_, [](GLFWwindow* /*window*/, int width, int height) {
+        instance().scene_->onWindowSizeChanged(width, height);
+    });
+
+    glfwSetFramebufferSizeCallback(glfw_window_, [](GLFWwindow* /*window*/, int width, int height) {
+        instance().scene_->onFrameBufferSizeChanged(width, height);
+    });
+
     glfwSetMouseButtonCallback(glfw_window_, mouseButtonCallback);
     glfwSetCursorPosCallback(glfw_window_, cursorPosCallback);
     glfwSetScrollCallback(glfw_window_, scrollCallback);
@@ -153,28 +167,19 @@ void Application::charCallback(GLFWwindow* window, unsigned int c) {
 }
 
 void Application::render() {
-
-    int window_w, window_h;
-    glfwGetWindowSize(glfw_window_, &window_w, &window_h);
-
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    scene_->renderIm(window_w, window_h);
+    scene_->renderIm();
 
     ImGui::Render();
-
-    int display_w, display_h;
-    glfwGetFramebufferSize(glfw_window_, &display_w, &display_h);
-    glViewport(0, 0, display_w, display_h);
 
     glClearColor(bg_color_.x, bg_color_.y, bg_color_.z, bg_color_.w);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-    scene_->renderGl(glm::scale(
-            glm::vec3((float)display_h / (float)display_w, 1.0, 1.0)));
+    scene_->renderGl();
 
     glfwSwapBuffers(glfw_window_);
 }

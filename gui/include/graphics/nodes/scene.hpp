@@ -27,11 +27,14 @@ protected:
     std::unique_ptr<Camera> camera_;
     Client* client_;
 
-    float pixel_size_ = 1.0;
-
     std::vector<std::shared_ptr<SceneComponent>> components_;
     std::vector<std::shared_ptr<StaticSceneComponent>> static_components_;
     std::vector<std::shared_ptr<DynamicSceneComponent>> dynamic_components_;
+
+    int width_ = 0;
+    int height_ = 0;
+
+    glm::mat4 projection_;
 
   public:
 
@@ -39,9 +42,16 @@ protected:
 
     ~Scene() override;
 
-    void renderIm(int width, int height) override;
+    void onFrameBufferSizeChanged(int width, int height);
 
-    void renderGl(const glm::mat4& window_matrix) override;
+    void onWindowSizeChanged(int width, int height);
+
+    [[nodiscard]] int width() const { return width_; }
+    [[nodiscard]] int height() const { return height_; }
+
+    void renderIm() override;
+
+    void renderGl() override;
 
     void init();
 
@@ -62,7 +72,9 @@ protected:
         client_->send(std::forward<T>(packet));
     }
 
-    [[nodiscard]] Camera& camera();
+    [[nodiscard]] Camera& camera() { return *camera_; }
+
+    [[nodiscard]] const glm::mat4& projection() const { return projection_; }
 };
 
 }  // namespace tomcat::gui
