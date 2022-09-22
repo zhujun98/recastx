@@ -49,7 +49,6 @@ void Scene::renderIm() {
 }
 
 void Scene::renderGl() {
-    auto matrix = projection_ * camera_->matrix();
     for (auto &comp : components_) {
         comp->renderGl();
     }

@@ -21,35 +21,33 @@
 namespace tomcat::gui {
 
 ReconComponent::ReconComponent(Scene& scene) : DynamicSceneComponent(scene) {
-    glGenVertexArrays(1, &vao_handle_);
-    glBindVertexArray(vao_handle_);
-    glGenBuffers(1, &vbo_handle_);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_handle_);
+    glGenVertexArrays(1, &vao_);
+    glBindVertexArray(vao_);
+    glGenBuffers(1, &vbo_);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_);
     glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(GLfloat), primitives::square,
                  GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
 
-    glGenVertexArrays(1, &line_vao_handle_);
-    glBindVertexArray(line_vao_handle_);
-    glGenBuffers(1, &line_vbo_handle_);
-    glBindBuffer(GL_ARRAY_BUFFER, line_vbo_handle_);
+    glGenVertexArrays(1, &line_vao_);
+    glBindVertexArray(line_vao_);
+    glGenBuffers(1, &line_vbo_);
+    glBindBuffer(GL_ARRAY_BUFFER, line_vbo_);
     glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(GLfloat), primitives::line, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
 
-    glGenVertexArrays(1, &cube_vao_handle_);
-    glBindVertexArray(cube_vao_handle_);
-
+    glGenVertexArrays(1, &cube_vao_);
+    glBindVertexArray(cube_vao_);
     cube_index_count_ = 24;
     glGenBuffers(1, &cube_index_handle_);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cube_index_handle_);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, cube_index_count_ * sizeof(GLuint),
                  primitives::cube_wireframe_idxs, GL_STATIC_DRAW);
-
     glEnableVertexAttribArray(0);
-    glGenBuffers(1, &cube_vbo_handle_);
-    glBindBuffer(GL_ARRAY_BUFFER, cube_vbo_handle_);
+    glGenBuffers(1, &cube_vbo_);
+    glBindBuffer(GL_ARRAY_BUFFER, cube_vbo_);
     glBufferData(GL_ARRAY_BUFFER, 24 * sizeof(float),
                  primitives::cube_wireframe, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
@@ -76,16 +74,15 @@ ReconComponent::ReconComponent(Scene& scene) : DynamicSceneComponent(scene) {
 }
 
 ReconComponent::~ReconComponent() {
-    glDeleteVertexArrays(1, &cube_vao_handle_);
-    glDeleteBuffers(1, &cube_vbo_handle_);
-    glDeleteVertexArrays(1, &vao_handle_);
-    glDeleteBuffers(1, &vbo_handle_);
-    // FIXME FULLY DELETE CUBE AND LINE
-    glDeleteVertexArrays(1, &cube_vao_handle_);
-    glDeleteBuffers(1, &cube_vbo_handle_);
+    glDeleteVertexArrays(1, &vao_);
+    glDeleteBuffers(1, &vbo_);
+
+    glDeleteVertexArrays(1, &cube_vao_);
+    glDeleteBuffers(1, &cube_vbo_);
     glDeleteBuffers(1, &cube_index_handle_);
-    glDeleteVertexArrays(1, &line_vao_handle_);
-    glDeleteBuffers(1, &line_vbo_handle_);
+
+    glDeleteVertexArrays(1, &line_vao_);
+    glDeleteBuffers(1, &line_vbo_);
 }
 
 void ReconComponent::onWindowSizeChanged(int width, int height) {
@@ -181,7 +178,7 @@ void ReconComponent::renderGl() {
     wireframe_shader_->setMat4("projection", scene_.projection());
     wireframe_shader_->setVec4("color", glm::vec4(1.f, 1.f, 1.f, 0.2f));
 
-    glBindVertexArray(cube_vao_handle_);
+    glBindVertexArray(cube_vao_);
     glLineWidth(3.f);
     glDrawElements(GL_LINES, cube_index_count_, GL_UNSIGNED_INT, nullptr);
 
@@ -192,7 +189,7 @@ void ReconComponent::renderGl() {
         wireframe_shader_->setMat4(
                 "view", view_matrix * glm::translate(rotator.rot_base) * glm::scale(rotator.rot_end - rotator.rot_base));
         wireframe_shader_->setVec4("color", glm::vec4(1.f, 1.f, 1.f, 1.f));
-        glBindVertexArray(line_vao_handle_);
+        glBindVertexArray(line_vao_);
         glLineWidth(10.f);
         glDrawArrays(GL_LINES, 0, 2);
     }
@@ -405,7 +402,7 @@ void ReconComponent::drawSlice(Slice* slice, const glm::mat4& view_matrix) {
     solid_shader_->setBool("hovered", slice->hovered());
     solid_shader_->setBool("empty", slice->empty());
 
-    glBindVertexArray(vao_handle_);
+    glBindVertexArray(vao_);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
     slice->unbind();

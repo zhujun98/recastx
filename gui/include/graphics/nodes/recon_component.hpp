@@ -71,15 +71,15 @@ class ReconComponent : public DynamicSceneComponent {
 
     glm::mat4 volume_transform_;
 
-    GLuint vao_handle_;
-    GLuint vbo_handle_;
+    GLuint vao_;
+    GLuint vbo_;
     std::unique_ptr<ShaderProgram> solid_shader_;
 
-    GLuint line_vao_handle_;
-    GLuint line_vbo_handle_;
+    GLuint line_vao_;
+    GLuint line_vbo_;
 
-    GLuint cube_vao_handle_;
-    GLuint cube_vbo_handle_;
+    GLuint cube_vao_;
+    GLuint cube_vbo_;
     GLuint cube_index_handle_;
     int cube_index_count_;
     std::unique_ptr<ShaderProgram> wireframe_shader_;
