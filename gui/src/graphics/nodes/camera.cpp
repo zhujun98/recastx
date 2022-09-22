@@ -40,10 +40,8 @@ drag_machine_kind Rotator::kind() {
 
 Camera::Camera() {
     setPerspectiveView();
-};
+}
 Camera::~Camera() = default;
-
-void Camera::lookAt(glm::vec3 center) { center_ = std::move(center); }
 
 void Camera::rotate(float phi, float psi) {
     auto rotate_up = glm::rotate(phi, up_);
@@ -52,7 +50,7 @@ void Camera::rotate(float phi, float psi) {
 }
 
 glm::mat4 Camera::matrix() {
-    glm::mat4 camera_matrix = glm::lookAt(position_, center_, up_);
+    glm::mat4 camera_matrix = glm::lookAt(pos_, center_, up_);
 
     camera_matrix *= rotation_;
 
@@ -82,7 +80,7 @@ bool Camera::handleMouseButton(int /* button */, int action) {
 }
 
 bool Camera::handleScroll(double offset) {
-    position_ *= (1.0 - offset / 20.0);
+    pos_ *= (1.0 - offset / 20.0);
     return true;
 }
 
@@ -113,22 +111,16 @@ bool Camera::handleKey(int key, int action, int /* mods */) {
     if (action == GLFW_PRESS) {
         switch (key) {
             case GLFW_KEY_H:
-                position_.x -= offset;
+                pos_.x -= offset;
                 return true;
             case GLFW_KEY_L:
-                position_.x += offset;
+                pos_.x += offset;
                 return true;
             case GLFW_KEY_K:
-                position_.y += offset;
+                pos_.y += offset;
                 return true;
             case GLFW_KEY_J:
-                position_.y -= offset;
-                return true;
-            case GLFW_KEY_EQUAL:
-                scale_ *= 1.1f;
-                return true;
-            case GLFW_KEY_MINUS:
-                scale_ /= 1.1f;
+                pos_.y -= offset;
                 return true;
             case GLFW_KEY_SPACE:
                 setPerspectiveView();
@@ -145,24 +137,24 @@ void Camera::renderIm() {
 
     if (ImGui::Button("X-Y")) {
         rotation_ = glm::mat4(1.0f);
-        position_ = center_;
-        position_.z += 5.0;
+        pos_ = center_;
+        pos_.z += 5.0;
         up_ = glm::vec3(0.0f, 1.0f, 0.0f);
         right_ = glm::vec3(1.0f, 0.0f, 0.0f);
     }
     ImGui::SameLine();
     if (ImGui::Button("Y-Z")) {
         rotation_ = glm::mat4(1.0f);
-        position_ = center_;
-        position_.x += 5.0;
+        pos_ = center_;
+        pos_.x += 5.0;
         up_ = glm::vec3(0.0f, 0.0f, 1.0f);
         right_ = glm::vec3(0.0f, 1.0f, 0.0f);
     }
     ImGui::SameLine();
     if (ImGui::Button("X-Z")) {
         rotation_ = glm::mat4(1.0f);
-        position_ = center_;
-        position_.y -= 5.0;
+        pos_ = center_;
+        pos_.y -= 5.0;
         up_ = glm::vec3(0.0f, 0.0f, 1.0f);
         right_ = glm::vec3(1.0f, 0.0f, 0.0f);
     }
@@ -178,10 +170,10 @@ void Camera::tick(double time_elapsed) {
 
 void Camera::setPerspectiveView() {
     rotation_ = glm::mat4(1.0f);
-    position_ = center_;
-    position_.z += 5.0;
-    position_.y += 2.5;
-    position_.x += 2.5;
+    pos_ = center_;
+    pos_.z += 5.0;
+    pos_.y += 2.5;
+    pos_.x += 2.5;
     up_ = glm::vec3(0.0f, 1.0f, 0.0f);
     right_ = glm::vec3(1.0f, 0.0f, 0.0f);
 }

@@ -59,10 +59,10 @@ class Rotator : public CameraDragMachine {
 
 class Camera : public GraphNode, public InputHandler, public Ticker {
 
-    glm::vec3 position_;
-
-    float angle_ = 0.0f;
-    float scale_ = 0.5f;
+    glm::vec3 pos_;
+    glm::vec3 center_ {0.f, 0.f, 0.f};
+    glm::vec3 up_;
+    glm::vec3 right_;
 
     double prev_x_ = -1.1;
     double prev_y_ = -1.1;
@@ -71,9 +71,6 @@ class Camera : public GraphNode, public InputHandler, public Ticker {
     bool dragging_ = false;
     bool instant_ = true;
 
-    glm::vec3 up_;
-    glm::vec3 right_;
-    glm::vec3 center_;
     glm::mat4 rotation_;
 
     std::unique_ptr<CameraDragMachine> drag_machine_;
@@ -88,10 +85,6 @@ class Camera : public GraphNode, public InputHandler, public Ticker {
 
     glm::mat4 matrix();
 
-    auto& up() { return up_; }
-
-    auto& right() { return right_; }
-
     void switch_if_necessary(drag_machine_kind kind);
 
     bool handleMouseButton(int button, int action) override;
@@ -103,8 +96,6 @@ class Camera : public GraphNode, public InputHandler, public Ticker {
     bool handleKey(int key, int action, int mods) override;
 
     void tick(double time_elapsed) override;
-
-    void lookAt(glm::vec3 center);
 
     void rotate(float phi, float psi);
 

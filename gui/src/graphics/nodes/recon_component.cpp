@@ -85,7 +85,7 @@ ReconComponent::~ReconComponent() {
     glDeleteBuffers(1, &line_vbo_);
 }
 
-void ReconComponent::onWindowSizeChanged(int width, int height) {
+void ReconComponent::onWindowSizeChanged(int width, int /*height*/) {
     pos_ = {
         Style::IMGUI_WINDOW_MARGIN + Style::IMGUI_CONTROL_PANEL_WIDTH + Style::IMGUI_WINDOW_SPACING,
         Style::IMGUI_WINDOW_MARGIN
@@ -152,7 +152,7 @@ void ReconComponent::renderGl() {
 
     cm_.colormap().bind();
 
-    glm::mat4 view_matrix = scene_.camera().matrix() * volume_transform_;
+    const glm::mat4& view_matrix = scene_.camera().matrix();
 
     std::vector<Slice*> slices;
     for (auto& [slice_id, slice] : slices_) {
@@ -338,17 +338,10 @@ void ReconComponent::resetSlices() {
 
 void ReconComponent::initVolume() {
     volume_ = std::make_unique<Volume>();
-
-    glm::vec3 min_pt(-1.0f), max_pt(1.0f);
-    auto center = 0.5f * (min_pt + max_pt);
-    volume_transform_ = glm::translate(center) *
-                        glm::scale(glm::vec3(max_pt - min_pt)) *
-                        glm::scale(glm::vec3(0.5f));
-    scene_.camera().lookAt(center);
 }
 
 void ReconComponent::updateHoveringSlice(float x, float y) {
-    auto inv_matrix = glm::inverse(scene_.projection() * scene_.camera().matrix() * volume_transform_);
+    auto inv_matrix = glm::inverse(scene_.projection() * scene_.camera().matrix());
     int slice_id = -1;
     float best_z = std::numeric_limits<float>::max();
     for (auto& [sid, slice] : slices_) {
@@ -494,9 +487,9 @@ void ReconComponent::SliceTranslator::onDrag(glm::vec2 delta) {
         glm::vec3(o[2][0], o[2][1], o[2][2]) + 0.5f * (axis1 + axis2);
     auto end_point_normal = base_point_normal + normal;
 
-    auto a = comp_.scene().projection() * comp_.scene().camera().matrix() * comp_.volume_transform() *
+    auto a = comp_.scene().projection() * comp_.scene().camera().matrix() *
              glm::vec4(base_point_normal, 1.0f);
-    auto b = comp_.scene().projection() * comp_.scene().camera().matrix() * comp_.volume_transform() *
+    auto b = comp_.scene().projection() * comp_.scene().camera().matrix() *
              glm::vec4(end_point_normal, 1.0f);
     auto normal_delta = b - a;
     float difference =
@@ -519,7 +512,7 @@ ReconComponent::SliceRotator::SliceRotator(ReconComponent& comp, const glm::vec2
     : DragMachine(comp, initial, DragType::rotator) {
     // 1. need to identify the opposite axis
     // a) get the position within the slice
-    auto tf = comp.scene().projection() * comp.scene().camera().matrix() * comp.volume_transform();
+    auto tf = comp.scene().projection() * comp.scene().camera().matrix();
     auto inv_matrix = glm::inverse(tf);
 
     auto slice = comp.hovered_slice();

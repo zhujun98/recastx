@@ -69,8 +69,6 @@ class ReconComponent : public DynamicSceneComponent {
 
     ColormapController cm_;
 
-    glm::mat4 volume_transform_;
-
     GLuint vao_;
     GLuint vbo_;
     std::unique_ptr<ShaderProgram> solid_shader_;
@@ -140,7 +138,6 @@ public:
 
     bool handleMouseMoved(double x, double y) override;
 
-    glm::mat4 volume_transform() { return volume_transform_; }
     auto& scene() { return scene_; }
     auto& dragged_slice() { return dragged_slice_; }
     auto hovered_slice() { return hovered_slice_; }

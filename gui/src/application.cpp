@@ -47,7 +47,6 @@ Application::Application() {
 
     initImgui();
     registerCallbacks();
-
 }
 
 Application::~Application() {
@@ -125,7 +124,7 @@ void Application::registerCallbacks() {
     glfwSetCharCallback(glfw_window_, charCallback);
 }
 
-void Application::mouseButtonCallback(GLFWwindow* window, int button, int action, int) {
+void Application::mouseButtonCallback(GLFWwindow* /*window*/, int button, int action, int) {
     ImGui_ImplGlfw_MouseButtonCallback(nullptr, button, action, 0);
     auto io = ImGui::GetIO();
     if (!io.WantCaptureMouse) {
@@ -133,7 +132,7 @@ void Application::mouseButtonCallback(GLFWwindow* window, int button, int action
     }
 }
 
-void Application::scrollCallback(GLFWwindow* window, double /*xoffset*/, double yoffset) {
+void Application::scrollCallback(GLFWwindow* /*window*/, double /*xoffset*/, double yoffset) {
     ImGui_ImplGlfw_ScrollCallback(nullptr, 0.0, yoffset);
     auto io = ImGui::GetIO();
     if (!io.WantCaptureMouse) {
@@ -150,7 +149,7 @@ void Application::cursorPosCallback(GLFWwindow* window, double xpos, double ypos
     }
 }
 
-void Application::keyCallback(GLFWwindow* window, int key, int, int action, int mods) {
+void Application::keyCallback(GLFWwindow* /*window*/, int key, int, int action, int mods) {
     ImGui_ImplGlfw_KeyCallback(nullptr, key, 0, action, 0);
     auto io = ImGui::GetIO();
     if (!io.WantCaptureKeyboard) {
@@ -158,7 +157,7 @@ void Application::keyCallback(GLFWwindow* window, int key, int, int action, int 
     }
 }
 
-void Application::charCallback(GLFWwindow* window, unsigned int c) {
+void Application::charCallback(GLFWwindow* /*window*/, unsigned int c) {
     ImGui_ImplGlfw_CharCallback(nullptr, c);
     auto io = ImGui::GetIO();
     if (io.WantCaptureKeyboard) {
