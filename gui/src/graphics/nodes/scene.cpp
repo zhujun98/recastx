@@ -3,7 +3,7 @@
 #include <imgui.h>
 
 #include "graphics/nodes/scene.hpp"
-#include "graphics/nodes/scene_camera.hpp"
+#include "graphics/nodes/camera.hpp"
 #include "graphics/shader_program.hpp"
 #include "graphics/style.hpp"
 
@@ -11,37 +11,46 @@ namespace tomcat::gui {
 
 Scene::Scene(Client* client) : client_(client) {};
 
-Scene::~Scene() {
-    glDeleteVertexArrays(1, &vao_handle_);
-    glDeleteBuffers(1, &vbo_handle_);
+Scene::~Scene() = default;
+
+void Scene::onWindowSizeChanged(int width, int height) {
+    width_ = width;
+    height_ = height;
+    pos_ = {Style::IMGUI_WINDOW_MARGIN, Style::IMGUI_ICON_HEIGHT + Style::IMGUI_WINDOW_SPACING};
+    size_ = {Style::IMGUI_ICON_WIDTH, static_cast<float>(height) - pos_[1] - Style::IMGUI_WINDOW_MARGIN};
+
+    for (auto& comp : components_) {
+        comp->onWindowSizeChanged(width, height);
+    }
 }
 
-void Scene::renderIm(int width, int height) {
-    float x0 = Style::IMGUI_WINDOW_MARGIN;
-    float y0 = Style::IMGUI_ICON_HEIGHT + Style::IMGUI_WINDOW_SPACING;
-    float w = Style::IMGUI_ICON_WIDTH;
-    float h = static_cast<float>(height) - y0 - Style::IMGUI_WINDOW_MARGIN;
-    ImGui::SetNextWindowPos(ImVec2(x0, y0));
-    ImGui::SetNextWindowSize(ImVec2(w, h));
+void Scene::onFrameBufferSizeChanged(int width, int height) {
+    projection_ = glm::perspective(
+            glm::radians(45.f), (float)width / (float)height, 0.1f, 50.0f);
+    glViewport(0, 0, width, height);
+}
+
+void Scene::renderIm() {
+    ImGui::SetNextWindowPos(pos_);
+    ImGui::SetNextWindowSize(size_);
 
     ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoResize);
     // 2/3 of the space for widget and 1/3 for labels
     ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.65f);
 
-    camera_->renderIm(width, height);
+    camera_->renderIm();
 
     for (auto &comp : components_) {
         ImGui::Separator();
-        comp->renderIm(width, height);
+        comp->renderIm();
     }
 
     ImGui::End();
 }
 
-void Scene::renderGl(const glm::mat4& window_matrix) {
-    auto matrix = window_matrix * camera_->matrix();
+void Scene::renderGl() {
     for (auto &comp : components_) {
-        comp->renderGl(matrix);
+        comp->renderGl();
     }
 }
 
@@ -71,7 +80,7 @@ bool Scene::handleMouseButton(int button, int action) {
     return false;
 }
 
-bool Scene::handleScroll(double offset) {
+bool Scene::handleScroll(float offset) {
     for (auto& comp : components_) {
         if (comp->handleScroll(offset)) return true;
     }
@@ -80,7 +89,7 @@ bool Scene::handleScroll(double offset) {
     return false;
 }
 
-bool Scene::handleMouseMoved(double x, double y) {
+bool Scene::handleMouseMoved(float x, float y) {
     for (auto& comp : components_) {
         if (comp->handleMouseMoved(x, y)) return true;
     }
@@ -98,11 +107,7 @@ bool Scene::handleKey(int key, int action, int mods) {
     return false;
 }
 
-SceneCamera& Scene::camera() { return *camera_; }
-
 void Scene::tick(double time_elapsed) {
-    camera_->tick(time_elapsed);
-
     auto& packets = Client::packets();
     while (!packets.empty()) {
         auto data = std::move(packets.front());

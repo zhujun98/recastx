@@ -15,23 +15,26 @@
 namespace tomcat::gui {
 
 class ShaderProgram;
-class SceneCamera;
+class Camera;
 
 class Scene : public GraphGlNode, public InputHandler, public Ticker {
 
 protected:
 
-    GLuint vao_handle_;
-    GLuint vbo_handle_;
     std::unique_ptr<ShaderProgram> program_;
-    std::unique_ptr<SceneCamera> camera_;
+    std::unique_ptr<Camera> camera_;
     Client* client_;
-
-    float pixel_size_ = 1.0;
 
     std::vector<std::shared_ptr<SceneComponent>> components_;
     std::vector<std::shared_ptr<StaticSceneComponent>> static_components_;
     std::vector<std::shared_ptr<DynamicSceneComponent>> dynamic_components_;
+
+    int width_ = 0;
+    int height_ = 0;
+    ImVec2 pos_;
+    ImVec2 size_;
+
+    glm::mat4 projection_;
 
   public:
 
@@ -39,9 +42,13 @@ protected:
 
     ~Scene() override;
 
-    void renderIm(int width, int height) override;
+    void onFrameBufferSizeChanged(int width, int height);
 
-    void renderGl(const glm::mat4& window_matrix) override;
+    void onWindowSizeChanged(int width, int height);
+
+    void renderIm() override;
+
+    void renderGl() override;
 
     void init();
 
@@ -49,9 +56,9 @@ protected:
 
     bool handleMouseButton(int button, int action) override;
 
-    bool handleScroll(double offset) override;
+    bool handleScroll(float offset) override;
 
-    bool handleMouseMoved(double x, double y) override;
+    bool handleMouseMoved(float x, float y) override;
 
     bool handleKey(int key, int action, int mods) override;
 
@@ -62,7 +69,9 @@ protected:
         client_->send(std::forward<T>(packet));
     }
 
-    [[nodiscard]] SceneCamera& camera();
+    [[nodiscard]] Camera& camera() { return *camera_; }
+
+    [[nodiscard]] const glm::mat4& projection() const { return projection_; }
 };
 
 }  // namespace tomcat::gui

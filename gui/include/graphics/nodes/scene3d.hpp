@@ -4,13 +4,13 @@
 #include <memory>
 
 #include "./scene.hpp"
-#include "./scene_camera3d.hpp"
+#include "./camera.hpp"
 
 namespace tomcat::gui {
 
 class Scene3d : public Scene {
 
-  public:
+public:
 
     explicit Scene3d(Client* client);
 

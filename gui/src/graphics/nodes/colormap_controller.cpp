@@ -8,7 +8,7 @@ ColormapController::ColormapController() : curr_(*Colormap::options().begin()) {
 
 ColormapController::~ColormapController() = default;
 
-void ColormapController::renderIm(int /*width*/, int /*height*/) {
+void ColormapController::renderIm() {
     auto& cmd = Colormap::data();
     auto prev_map_ = curr_;
     if (ImGui::BeginCombo("Colormap##ReconComponent", cmd.GetName(curr_))) {

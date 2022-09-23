@@ -23,7 +23,7 @@ class Application {
 
     inline static int width_ = 1440;
     inline static int height_ = 1080;
-    inline static std::string title_ = "TOMCAT 3D Live Reconstruction";
+    inline static const std::string title_ = "TOMCAT 3D Live Reconstruction";
 
     inline static auto bg_color_ = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
 
@@ -51,7 +51,7 @@ class Application {
 
     void render();
 
-    static std::array<double, 2> normalizeCursorPos(GLFWwindow* window, double xpos, double ypos);
+    static std::array<float, 2> normalizeCursorPos(GLFWwindow* window, double xpos, double ypos);
 
 public:
 

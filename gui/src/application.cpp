@@ -47,7 +47,6 @@ Application::Application() {
 
     initImgui();
     registerCallbacks();
-
 }
 
 Application::~Application() {
@@ -67,6 +66,12 @@ Application& Application::instance() {
 void Application::setScene(Scene3d* scene) { scene_ = scene; }
 
 void Application::start() {
+    scene_->onWindowSizeChanged(width_, height_);
+
+    int display_w, display_h;
+    glfwGetFramebufferSize(glfw_window_, &display_w, &display_h);
+    scene_->onFrameBufferSizeChanged(display_w, display_h);
+
     double prev_time = glfwGetTime();
     while (!glfwWindowShouldClose(glfw_window_)) {
         glfwPollEvents();
@@ -104,6 +109,14 @@ void Application::initImgui() {
 }
 
 void Application::registerCallbacks() {
+    glfwSetWindowSizeCallback(glfw_window_, [](GLFWwindow* /*window*/, int width, int height) {
+        instance().scene_->onWindowSizeChanged(width, height);
+    });
+
+    glfwSetFramebufferSizeCallback(glfw_window_, [](GLFWwindow* /*window*/, int width, int height) {
+        instance().scene_->onFrameBufferSizeChanged(width, height);
+    });
+
     glfwSetMouseButtonCallback(glfw_window_, mouseButtonCallback);
     glfwSetCursorPosCallback(glfw_window_, cursorPosCallback);
     glfwSetScrollCallback(glfw_window_, scrollCallback);
@@ -111,7 +124,7 @@ void Application::registerCallbacks() {
     glfwSetCharCallback(glfw_window_, charCallback);
 }
 
-void Application::mouseButtonCallback(GLFWwindow* window, int button, int action, int) {
+void Application::mouseButtonCallback(GLFWwindow* /*window*/, int button, int action, int) {
     ImGui_ImplGlfw_MouseButtonCallback(nullptr, button, action, 0);
     auto io = ImGui::GetIO();
     if (!io.WantCaptureMouse) {
@@ -119,11 +132,11 @@ void Application::mouseButtonCallback(GLFWwindow* window, int button, int action
     }
 }
 
-void Application::scrollCallback(GLFWwindow* window, double /*xoffset*/, double yoffset) {
+void Application::scrollCallback(GLFWwindow* /*window*/, double /*xoffset*/, double yoffset) {
     ImGui_ImplGlfw_ScrollCallback(nullptr, 0.0, yoffset);
     auto io = ImGui::GetIO();
     if (!io.WantCaptureMouse) {
-        instance().scene_->handleScroll(yoffset);
+        instance().scene_->handleScroll(static_cast<float>(yoffset));
     }
 }
 
@@ -136,7 +149,7 @@ void Application::cursorPosCallback(GLFWwindow* window, double xpos, double ypos
     }
 }
 
-void Application::keyCallback(GLFWwindow* window, int key, int, int action, int mods) {
+void Application::keyCallback(GLFWwindow* /*window*/, int key, int, int action, int mods) {
     ImGui_ImplGlfw_KeyCallback(nullptr, key, 0, action, 0);
     auto io = ImGui::GetIO();
     if (!io.WantCaptureKeyboard) {
@@ -144,7 +157,7 @@ void Application::keyCallback(GLFWwindow* window, int key, int, int action, int 
     }
 }
 
-void Application::charCallback(GLFWwindow* window, unsigned int c) {
+void Application::charCallback(GLFWwindow* /*window*/, unsigned int c) {
     ImGui_ImplGlfw_CharCallback(nullptr, c);
     auto io = ImGui::GetIO();
     if (io.WantCaptureKeyboard) {
@@ -153,41 +166,31 @@ void Application::charCallback(GLFWwindow* window, unsigned int c) {
 }
 
 void Application::render() {
-
-    int win_w, win_h;
-    glfwGetWindowSize(glfw_window_, &win_w, &win_h);
-
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    scene_->renderIm(win_w, win_h);
+    scene_->renderIm();
 
     ImGui::Render();
 
-    int display_w, display_h;
-    glfwGetFramebufferSize(glfw_window_, &display_w, &display_h);
-    glViewport(0, 0, display_w, display_h);
-
     glClearColor(bg_color_.x, bg_color_.y, bg_color_.z, bg_color_.w);
-    // Why depth buffer bit?
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-    scene_->renderGl(glm::scale(
-            glm::vec3((float)display_h / (float)display_w, 1.0, 1.0)));
+    scene_->renderGl();
 
     glfwSwapBuffers(glfw_window_);
 }
 
-std::array<double, 2> Application::normalizeCursorPos(GLFWwindow* window, double xpos, double ypos) {
+std::array<float, 2> Application::normalizeCursorPos(GLFWwindow* window, double xpos, double ypos) {
     int w = 0;
     int h = 0;
     glfwGetWindowSize(window, &w, &h);
 
     xpos = (2.0 * (xpos / w) - 1.0) * (static_cast<double>(w) / h);
     ypos = 2.0 * (ypos / h) - 1.0;
-    return {xpos, ypos};
+    return {static_cast<float>(xpos), static_cast<float>(ypos)};
 }
 
 } // namespace tomcat::gui

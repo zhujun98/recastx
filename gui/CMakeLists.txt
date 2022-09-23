@@ -51,7 +51,6 @@ set(SOURCE_NAMES
         "src/util.cpp"
         "src/graphics/aesthetics.cpp"
         "src/graphics/graph_node.cpp"
-        "src/graphics/primitives.cpp"
         "src/graphics/shader_program.cpp"
         "src/graphics/slice.cpp"
         "src/graphics/volume.cpp"
@@ -59,11 +58,11 @@ set(SOURCE_NAMES
         "src/graphics/nodes/colormap_controller.cpp"
         "src/graphics/nodes/scene_component.cpp"
         "src/graphics/nodes/recon_component.cpp"
-        "src/graphics/nodes/monitor_component.cpp"
+        "src/graphics/nodes/monitor_bottom_component.cpp"
+        "src/graphics/nodes/monitor_right_component.cpp"
         "src/graphics/nodes/scene.cpp"
         "src/graphics/nodes/scene3d.cpp"
-        "src/graphics/nodes/scene_camera.cpp"
-        "src/graphics/nodes/scene_camera3d.cpp"
+        "src/graphics/nodes/camera.cpp"
         ${IMGUI_SOURCE_FILES}
         ${IMPLOT_SOURCE_FILES}
         ${GL3W_BUILD_DIR}/src/gl3w.c

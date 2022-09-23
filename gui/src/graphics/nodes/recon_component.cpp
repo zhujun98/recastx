@@ -12,7 +12,7 @@
 #include "tomcat/tomcat.hpp"
 
 #include "graphics/nodes/recon_component.hpp"
-#include "graphics/nodes/scene_camera3d.hpp"
+#include "graphics/nodes/camera.hpp"
 #include "graphics/aesthetics.hpp"
 #include "graphics/primitives.hpp"
 #include "graphics/style.hpp"
@@ -21,37 +21,35 @@
 namespace tomcat::gui {
 
 ReconComponent::ReconComponent(Scene& scene) : DynamicSceneComponent(scene) {
-    glGenVertexArrays(1, &vao_handle_);
-    glBindVertexArray(vao_handle_);
-    glGenBuffers(1, &vbo_handle_);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_handle_);
-    glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(GLfloat), square(),
+    glGenVertexArrays(1, &vao_);
+    glBindVertexArray(vao_);
+    glGenBuffers(1, &vbo_);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_);
+    glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(GLfloat), primitives::square,
                  GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
 
-    glGenVertexArrays(1, &line_vao_handle_);
-    glBindVertexArray(line_vao_handle_);
-    glGenBuffers(1, &line_vbo_handle_);
-    glBindBuffer(GL_ARRAY_BUFFER, line_vbo_handle_);
-    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(GLfloat), line(), GL_STATIC_DRAW);
+    glGenVertexArrays(1, &line_vao_);
+    glBindVertexArray(line_vao_);
+    glGenBuffers(1, &line_vbo_);
+    glBindBuffer(GL_ARRAY_BUFFER, line_vbo_);
+    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(GLfloat), primitives::line, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
 
-    glGenVertexArrays(1, &cube_vao_handle_);
-    glBindVertexArray(cube_vao_handle_);
-
+    glGenVertexArrays(1, &cube_vao_);
+    glBindVertexArray(cube_vao_);
     cube_index_count_ = 24;
     glGenBuffers(1, &cube_index_handle_);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cube_index_handle_);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, cube_index_count_ * sizeof(GLuint),
-                 cube_wireframe_idxs(), GL_STATIC_DRAW);
-
+                 primitives::cube_wireframe_idxs, GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
-    glGenBuffers(1, &cube_vbo_handle_);
-    glBindBuffer(GL_ARRAY_BUFFER, cube_vbo_handle_);
-    glBufferData(GL_ARRAY_BUFFER, 24 * sizeof(float), cube_wireframe(),
-                 GL_STATIC_DRAW);
+    glGenBuffers(1, &cube_vbo_);
+    glBindBuffer(GL_ARRAY_BUFFER, cube_vbo_);
+    glBufferData(GL_ARRAY_BUFFER, 24 * sizeof(float),
+                 primitives::cube_wireframe, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
     auto solid_vert =
@@ -76,20 +74,31 @@ ReconComponent::ReconComponent(Scene& scene) : DynamicSceneComponent(scene) {
 }
 
 ReconComponent::~ReconComponent() {
-    glDeleteVertexArrays(1, &cube_vao_handle_);
-    glDeleteBuffers(1, &cube_vbo_handle_);
-    glDeleteVertexArrays(1, &vao_handle_);
-    glDeleteBuffers(1, &vbo_handle_);
-    // FIXME FULLY DELETE CUBE AND LINE
-    glDeleteVertexArrays(1, &cube_vao_handle_);
-    glDeleteBuffers(1, &cube_vbo_handle_);
+    glDeleteVertexArrays(1, &vao_);
+    glDeleteBuffers(1, &vbo_);
+
+    glDeleteVertexArrays(1, &cube_vao_);
+    glDeleteBuffers(1, &cube_vbo_);
     glDeleteBuffers(1, &cube_index_handle_);
-    glDeleteVertexArrays(1, &line_vao_handle_);
-    glDeleteBuffers(1, &line_vbo_handle_);
+
+    glDeleteVertexArrays(1, &line_vao_);
+    glDeleteBuffers(1, &line_vbo_);
 }
 
-void ReconComponent::renderIm(int width, int height) {
-    cm_.renderIm(width, height);
+void ReconComponent::onWindowSizeChanged(int width, int /*height*/) {
+    pos_ = {
+        Style::IMGUI_WINDOW_MARGIN + Style::IMGUI_CONTROL_PANEL_WIDTH + Style::IMGUI_WINDOW_SPACING,
+        Style::IMGUI_WINDOW_MARGIN
+    };
+    size_ = {
+        static_cast<float>(width) - pos_[0]
+            - Style::IMGUI_WINDOW_MARGIN - Style::IMGUI_WINDOW_SPACING - Style::IMGUI_ROTATING_AXIS_WIDTH,
+        Style::IMGUI_TOP_PANEL_HEIGHT
+    };
+}
+
+void ReconComponent::renderIm() {
+    cm_.renderIm();
 
     ImGui::Checkbox("Auto Levels", &auto_levels_);
 
@@ -106,17 +115,8 @@ void ReconComponent::renderIm(int width, int height) {
 
     ImGui::Checkbox("Show slice histograms", &show_statistics_);
     if (show_statistics_) {
-        float x0 = Style::IMGUI_WINDOW_MARGIN
-                + Style::IMGUI_CONTROL_PANEL_WIDTH
-                + Style::IMGUI_WINDOW_SPACING;;
-        float y0 = Style::IMGUI_WINDOW_MARGIN;
-        float w = static_cast<float>(width) - x0
-                - Style::IMGUI_WINDOW_MARGIN
-                - Style::IMGUI_WINDOW_SPACING
-                - Style::IMGUI_ROTATING_AXIS_WIDTH;
-        float h = Style::IMGUI_TOP_PANEL_HEIGHT;
-        ImGui::SetNextWindowPos(ImVec2(x0, y0));
-        ImGui::SetNextWindowSize(ImVec2(w, h));
+        ImGui::SetNextWindowPos(pos_);
+        ImGui::SetNextWindowSize(size_);
 
         ImGui::Begin("Statistics##ReconComponent", NULL, ImGuiWindowFlags_NoDecoration);
 
@@ -139,7 +139,7 @@ void ReconComponent::renderIm(int width, int height) {
     }
 }
 
-void ReconComponent::renderGl(const glm::mat4& world_to_screen) {
+void ReconComponent::renderGl() {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
 
@@ -152,7 +152,7 @@ void ReconComponent::renderGl(const glm::mat4& world_to_screen) {
 
     cm_.colormap().bind();
 
-    glm::mat4 full_transform = world_to_screen * volume_transform_;
+    const glm::mat4& view_matrix = scene_.camera().matrix();
 
     std::vector<Slice*> slices;
     for (auto& [slice_id, slice] : slices_) {
@@ -168,16 +168,17 @@ void ReconComponent::renderGl(const glm::mat4& world_to_screen) {
 
     // FIXME: why do we need to bind and unbind 3D texture?
     volume_->bind();
-    for (auto slice : slices) drawSlice(slice, full_transform);
+    for (auto slice : slices) drawSlice(slice, view_matrix);
     volume_->unbind();
 
     cm_.colormap().unbind();
 
     wireframe_shader_->use();
-    wireframe_shader_->setMat4("transformMatrix", full_transform);
-    wireframe_shader_->setVec4("lineColor", glm::vec4(1.f, 1.f, 1.f, 0.2f));
+    wireframe_shader_->setMat4("view", view_matrix);
+    wireframe_shader_->setMat4("projection", scene_.projection());
+    wireframe_shader_->setVec4("color", glm::vec4(1.f, 1.f, 1.f, 0.2f));
 
-    glBindVertexArray(cube_vao_handle_);
+    glBindVertexArray(cube_vao_);
     glLineWidth(3.f);
     glDrawElements(GL_LINES, cube_index_count_, GL_UNSIGNED_INT, nullptr);
 
@@ -185,17 +186,16 @@ void ReconComponent::renderGl(const glm::mat4& world_to_screen) {
 
     if (drag_machine_ != nullptr && drag_machine_->type() == DragType::rotator) {
         auto& rotator = *(SliceRotator*)drag_machine_.get();
-        wireframe_shader_->setMat4("transform_matrix",
-                                   full_transform * glm::translate(rotator.rot_base) * glm::scale(rotator.rot_end - rotator.rot_base));
-        wireframe_shader_->setVec4("line_color", glm::vec4(1.f, 1.f, 1.f, 1.f));
-        glBindVertexArray(line_vao_handle_);
+        wireframe_shader_->setMat4(
+                "view", view_matrix * glm::translate(rotator.rot_base) * glm::scale(rotator.rot_end - rotator.rot_base));
+        wireframe_shader_->setVec4("color", glm::vec4(1.f, 1.f, 1.f, 1.f));
+        glBindVertexArray(line_vao_);
         glLineWidth(10.f);
         glDrawArrays(GL_LINES, 0, 2);
     }
 
     glDisable(GL_BLEND);
 }
-
 
 void ReconComponent::init() {
     scene_.send(RemoveAllSlicesPacket());
@@ -289,11 +289,11 @@ bool ReconComponent::handleMouseButton(int button, int action) {
     return false;
 }
 
-bool ReconComponent::handleMouseMoved(double x, double y) {
+bool ReconComponent::handleMouseMoved(float x, float y) {
     // update slice that is being hovered over
     y = -y;
 
-    if (prev_y_ < -1.0) {
+    if (prev_y_ < -1.0f) {
         prev_x_ = x;
         prev_y_ = y;
     }
@@ -338,17 +338,10 @@ void ReconComponent::resetSlices() {
 
 void ReconComponent::initVolume() {
     volume_ = std::make_unique<Volume>();
-
-    glm::vec3 min_pt(-1.0f), max_pt(1.0f);
-    auto center = 0.5f * (min_pt + max_pt);
-    volume_transform_ = glm::translate(center) *
-                        glm::scale(glm::vec3(max_pt - min_pt)) *
-                        glm::scale(glm::vec3(0.5f));
-    scene_.camera().lookAt(center);
 }
 
 void ReconComponent::updateHoveringSlice(float x, float y) {
-    auto inv_matrix = glm::inverse(scene_.camera().matrix() * volume_transform_);
+    auto inv_matrix = glm::inverse(scene_.projection() * scene_.camera().matrix());
     int slice_id = -1;
     float best_z = std::numeric_limits<float>::max();
     for (auto& [sid, slice] : slices_) {
@@ -389,19 +382,20 @@ void ReconComponent::maybeSwitchDragMachine(ReconComponent::DragType type) {
     }
 }
 
-void ReconComponent::drawSlice(Slice* slice, const glm::mat4& world_to_screen) {
+void ReconComponent::drawSlice(Slice* slice, const glm::mat4& view_matrix) {
     // FIXME: bind an empty slice will result in warning:
     //        UNSUPPORTED (log once): POSSIBLE ISSUE: unit 1 GLD_TEXTURE_INDEX_2D is
     //        unloadable and bound to sampler type (Float) - using zero texture because texture unloadable
     slice->bind();
 
-    solid_shader_->setMat4("worldToScreenMatrix", world_to_screen);
+    solid_shader_->setMat4("view", view_matrix);
+    solid_shader_->setMat4("projection", scene_.projection());
     solid_shader_->setMat4("orientationMatrix",
                       slice->orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0)));
     solid_shader_->setBool("hovered", slice->hovered());
     solid_shader_->setBool("empty", slice->empty());
 
-    glBindVertexArray(vao_handle_);
+    glBindVertexArray(vao_);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
     slice->unbind();
@@ -414,7 +408,7 @@ void ReconComponent::maybeUpdateMinMaxValues() {
     auto overall_max = std::numeric_limits<float>::min();
 
     for (auto&& [slice_idx, slice] : slices_) {
-        (void)slice_idx;
+        if (slice->empty()) continue;
 
         auto [min_v, max_v] = slice->minMaxVals();
         overall_min = min_v < overall_min ? min_v : overall_min;
@@ -493,9 +487,9 @@ void ReconComponent::SliceTranslator::onDrag(glm::vec2 delta) {
         glm::vec3(o[2][0], o[2][1], o[2][2]) + 0.5f * (axis1 + axis2);
     auto end_point_normal = base_point_normal + normal;
 
-    auto a = comp_.scene().camera().matrix() * comp_.volume_transform() *
+    auto a = comp_.scene().projection() * comp_.scene().camera().matrix() *
              glm::vec4(base_point_normal, 1.0f);
-    auto b = comp_.scene().camera().matrix() * comp_.volume_transform() *
+    auto b = comp_.scene().projection() * comp_.scene().camera().matrix() *
              glm::vec4(end_point_normal, 1.0f);
     auto normal_delta = b - a;
     float difference =
@@ -518,7 +512,7 @@ ReconComponent::SliceRotator::SliceRotator(ReconComponent& comp, const glm::vec2
     : DragMachine(comp, initial, DragType::rotator) {
     // 1. need to identify the opposite axis
     // a) get the position within the slice
-    auto tf = comp.scene().camera().matrix() * comp.volume_transform();
+    auto tf = comp.scene().projection() * comp.scene().camera().matrix();
     auto inv_matrix = glm::inverse(tf);
 
     auto slice = comp.hovered_slice();

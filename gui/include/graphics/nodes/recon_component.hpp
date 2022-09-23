@@ -69,17 +69,15 @@ class ReconComponent : public DynamicSceneComponent {
 
     ColormapController cm_;
 
-    glm::mat4 volume_transform_;
-
-    GLuint vao_handle_;
-    GLuint vbo_handle_;
+    GLuint vao_;
+    GLuint vbo_;
     std::unique_ptr<ShaderProgram> solid_shader_;
 
-    GLuint line_vao_handle_;
-    GLuint line_vbo_handle_;
+    GLuint line_vao_;
+    GLuint line_vbo_;
 
-    GLuint cube_vao_handle_;
-    GLuint cube_vbo_handle_;
+    GLuint cube_vao_;
+    GLuint cube_vbo_;
     GLuint cube_index_handle_;
     int cube_index_count_;
     std::unique_ptr<ShaderProgram> wireframe_shader_;
@@ -119,9 +117,11 @@ public:
 
     ~ReconComponent() override;
 
-    void renderIm(int width, int height) override;
+    void onWindowSizeChanged(int width, int height) override;
 
-    void renderGl(const glm::mat4& world_to_screen) override;
+    void renderIm() override;
+
+    void renderGl() override;
 
     void init() override;
 
@@ -136,9 +136,8 @@ public:
 
     bool handleMouseButton(int button, int action) override;
 
-    bool handleMouseMoved(double x, double y) override;
+    bool handleMouseMoved(float x, float y) override;
 
-    glm::mat4 volume_transform() { return volume_transform_; }
     auto& scene() { return scene_; }
     auto& dragged_slice() { return dragged_slice_; }
     auto hovered_slice() { return hovered_slice_; }
