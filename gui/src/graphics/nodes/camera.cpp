@@ -6,23 +6,16 @@
 
 namespace tomcat::gui {
 
-Camera::Camera() {
+Camera::Camera() : center_( {0.f, 0.f, 0.f}) {
     setPerspectiveView();
 }
 Camera::~Camera() = default;
 
-void Camera::rotate(float phi, float psi) {
-    auto rotate_up = glm::rotate(phi, up_);
-    auto rotate_right = glm::rotate(psi, right_);
-    rotation_ = rotate_up * rotate_right * rotation_;
-}
+const glm::mat4& Camera::matrix() {
+    if (view_) { return view_.value(); }
 
-glm::mat4 Camera::matrix() {
-    glm::mat4 camera_matrix = glm::lookAt(pos_, center_, up_);
-
-    camera_matrix *= rotation_;
-
-    return camera_matrix;
+    view_ = glm::lookAt(pos_, center_, up_) * rotation_;
+    return view_.value();
 }
 
 bool Camera::handleMouseButton(int /* button */, int action) {
@@ -30,16 +23,15 @@ bool Camera::handleMouseButton(int /* button */, int action) {
     return true;
 }
 
-bool Camera::handleScroll(double offset) {
-    pos_ *= (1.0 - offset / 20.0);
+bool Camera::handleScroll(float offset) {
+    // TODO: set min/max limits
+    pos_ -= offset * mouse_scroll_sensitivity_ * glm::normalize(pos_);
+    view_.reset();
     return true;
 }
 
-bool Camera::handleMouseMoved(double x, double y) {
-    // update slices that is being hovered over
-    y = -y;
-
-    if (prev_y_ < -1.0) {
+bool Camera::handleMouseMoved(float x, float y) {
+    if (prev_y_ < -1.0f) {
         prev_x_ = x;
         prev_y_ = y;
     }
@@ -49,10 +41,11 @@ bool Camera::handleMouseMoved(double x, double y) {
     prev_x_ = x;
     prev_y_ = y;
 
-    // TODO: fix for screen ratio
     if (dragging_) {
         if (!fixed_) {
-            rotate(mouse_sensitivity_ * x_offset, mouse_sensitivity_ * y_offset);
+            adjustPitch(y_offset * mouse_move_sensitivity_);
+            adjustYaw(x_offset * mouse_move_sensitivity_);
+            view_.reset();
         }
         return true;
     }
@@ -61,20 +54,24 @@ bool Camera::handleMouseMoved(double x, double y) {
 }
 
 bool Camera::handleKey(int key, int action, int /* mods */) {
-    float offset = 0.05f;
+    // TODO: Implement press and hold
     if (action == GLFW_PRESS) {
         switch (key) {
-            case GLFW_KEY_H:
-                pos_.x -= offset;
+            case GLFW_KEY_A:
+                adjustYaw(-key_sensitivity_);
+                view_.reset();
                 return true;
-            case GLFW_KEY_L:
-                pos_.x += offset;
+            case GLFW_KEY_D:
+                adjustYaw(key_sensitivity_);
+                view_.reset();
                 return true;
-            case GLFW_KEY_K:
-                pos_.y += offset;
+            case GLFW_KEY_W:
+                adjustPitch(key_sensitivity_);
+                view_.reset();
                 return true;
-            case GLFW_KEY_J:
-                pos_.y -= offset;
+            case GLFW_KEY_S:
+                adjustPitch(-key_sensitivity_);
+                view_.reset();
                 return true;
             case GLFW_KEY_SPACE:
                 setPerspectiveView();
@@ -92,25 +89,28 @@ void Camera::renderIm() {
     if (ImGui::Button("X-Y")) {
         rotation_ = glm::mat4(1.0f);
         pos_ = center_;
-        pos_.z += 5.0;
+        pos_.z -= 5.0;
         up_ = glm::vec3(0.0f, 1.0f, 0.0f);
         right_ = glm::vec3(1.0f, 0.0f, 0.0f);
+        view_.reset();
     }
     ImGui::SameLine();
     if (ImGui::Button("Y-Z")) {
         rotation_ = glm::mat4(1.0f);
         pos_ = center_;
-        pos_.x += 5.0;
+        pos_.x -= 5.0;
         up_ = glm::vec3(0.0f, 0.0f, 1.0f);
         right_ = glm::vec3(0.0f, 1.0f, 0.0f);
+        view_.reset();
     }
     ImGui::SameLine();
     if (ImGui::Button("X-Z")) {
         rotation_ = glm::mat4(1.0f);
         pos_ = center_;
-        pos_.y -= 5.0;
+        pos_.y += 5.0;
         up_ = glm::vec3(0.0f, 0.0f, 1.0f);
         right_ = glm::vec3(1.0f, 0.0f, 0.0f);
+        view_.reset();
     }
     ImGui::SameLine();
     if (ImGui::Button("Perspective")) {
@@ -121,11 +121,20 @@ void Camera::renderIm() {
 void Camera::setPerspectiveView() {
     rotation_ = glm::mat4(1.0f);
     pos_ = center_;
-    pos_.z += 5.0;
+    pos_.z -= 5.0;
     pos_.y += 2.5;
-    pos_.x += 2.5;
+    pos_.x -= 2.5;
     up_ = glm::vec3(0.0f, 1.0f, 0.0f);
     right_ = glm::vec3(1.0f, 0.0f, 0.0f);
+    view_.reset();
+}
+
+void Camera::adjustPitch(float offset) {
+    rotation_ = glm::rotate(offset, right_) * rotation_;
+}
+
+void Camera::adjustYaw(float offset) {
+    rotation_ = glm::rotate(offset, up_) * rotation_;
 }
 
 } // tomcat::gui

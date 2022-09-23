@@ -56,9 +56,9 @@ protected:
 
     bool handleMouseButton(int button, int action) override;
 
-    bool handleScroll(double offset) override;
+    bool handleScroll(float offset) override;
 
-    bool handleMouseMoved(double x, double y) override;
+    bool handleMouseMoved(float x, float y) override;
 
     bool handleKey(int key, int action, int mods) override;
 

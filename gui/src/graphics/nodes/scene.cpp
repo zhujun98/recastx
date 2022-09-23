@@ -26,7 +26,7 @@ void Scene::onWindowSizeChanged(int width, int height) {
 
 void Scene::onFrameBufferSizeChanged(int width, int height) {
     projection_ = glm::perspective(
-            glm::radians(45.0f), (float)width / (float)height, 0.1f, 50.0f);
+            glm::radians(45.f), (float)width / (float)height, 0.1f, 50.0f);
     glViewport(0, 0, width, height);
 }
 
@@ -80,7 +80,7 @@ bool Scene::handleMouseButton(int button, int action) {
     return false;
 }
 
-bool Scene::handleScroll(double offset) {
+bool Scene::handleScroll(float offset) {
     for (auto& comp : components_) {
         if (comp->handleScroll(offset)) return true;
     }
@@ -89,7 +89,7 @@ bool Scene::handleScroll(double offset) {
     return false;
 }
 
-bool Scene::handleMouseMoved(double x, double y) {
+bool Scene::handleMouseMoved(float x, float y) {
     for (auto& comp : components_) {
         if (comp->handleMouseMoved(x, y)) return true;
     }

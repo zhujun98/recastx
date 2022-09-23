@@ -51,7 +51,7 @@ class Application {
 
     void render();
 
-    static std::array<double, 2> normalizeCursorPos(GLFWwindow* window, double xpos, double ypos);
+    static std::array<float, 2> normalizeCursorPos(GLFWwindow* window, double xpos, double ypos);
 
 public:
 

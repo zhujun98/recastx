@@ -136,7 +136,7 @@ public:
 
     bool handleMouseButton(int button, int action) override;
 
-    bool handleMouseMoved(double x, double y) override;
+    bool handleMouseMoved(float x, float y) override;
 
     auto& scene() { return scene_; }
     auto& dragged_slice() { return dragged_slice_; }

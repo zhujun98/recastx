@@ -3,6 +3,7 @@
 
 #include <map>
 #include <memory>
+#include <optional>
 #include <vector>
 
 #include "glm/glm.hpp"
@@ -18,22 +19,28 @@ namespace tomcat::gui {
 class Camera : public GraphNode, public InputHandler {
 
     glm::vec3 pos_;
-    glm::vec3 center_ {0.f, 0.f, 0.f};
+    glm::vec3 center_;
     glm::vec3 up_;
     glm::vec3 right_;
 
-    float mouse_sensitivity_ = 3.0f;
+    glm::mat4 rotation_;
+    std::optional<glm::mat4> view_ {std::nullopt};
 
-    double prev_x_ = -1.1;
-    double prev_y_ = -1.1;
-    glm::vec2 delta_;
+    float mouse_scroll_sensitivity_ = 0.1f;
+    float mouse_move_sensitivity_ = 3.f;
+    float key_sensitivity_ = 0.2f;
+
+    float prev_x_ = -1.1f;
+    float prev_y_ = -1.1f;
 
     bool dragging_ = false;
     bool fixed_ = false;
 
-    glm::mat4 rotation_;
-
     void setPerspectiveView();
+
+    void adjustPitch(float offset);
+
+    void adjustYaw(float offset);
 
   public:
 
@@ -41,17 +48,15 @@ class Camera : public GraphNode, public InputHandler {
 
     ~Camera() override;
 
-    glm::mat4 matrix();
+    [[nodiscard]] const glm::mat4& matrix();
 
     bool handleMouseButton(int button, int action) override;
 
-    bool handleScroll(double offset) override;
+    bool handleScroll(float offset) override;
 
-    bool handleMouseMoved(double x, double y) override;
+    bool handleMouseMoved(float x, float y) override;
 
     bool handleKey(int key, int action, int mods) override;
-
-    void rotate(float phi, float psi);
 
     void renderIm() override;
 };

@@ -136,7 +136,7 @@ void Application::scrollCallback(GLFWwindow* /*window*/, double /*xoffset*/, dou
     ImGui_ImplGlfw_ScrollCallback(nullptr, 0.0, yoffset);
     auto io = ImGui::GetIO();
     if (!io.WantCaptureMouse) {
-        instance().scene_->handleScroll(yoffset);
+        instance().scene_->handleScroll(static_cast<float>(yoffset));
     }
 }
 
@@ -183,14 +183,14 @@ void Application::render() {
     glfwSwapBuffers(glfw_window_);
 }
 
-std::array<double, 2> Application::normalizeCursorPos(GLFWwindow* window, double xpos, double ypos) {
+std::array<float, 2> Application::normalizeCursorPos(GLFWwindow* window, double xpos, double ypos) {
     int w = 0;
     int h = 0;
     glfwGetWindowSize(window, &w, &h);
 
     xpos = (2.0 * (xpos / w) - 1.0) * (static_cast<double>(w) / h);
     ypos = 2.0 * (ypos / h) - 1.0;
-    return {xpos, ypos};
+    return {static_cast<float>(xpos), static_cast<float>(ypos)};
 }
 
 } // namespace tomcat::gui

@@ -289,11 +289,11 @@ bool ReconComponent::handleMouseButton(int button, int action) {
     return false;
 }
 
-bool ReconComponent::handleMouseMoved(double x, double y) {
+bool ReconComponent::handleMouseMoved(float x, float y) {
     // update slice that is being hovered over
     y = -y;
 
-    if (prev_y_ < -1.0) {
+    if (prev_y_ < -1.0f) {
         prev_x_ = x;
         prev_y_ = y;
     }
