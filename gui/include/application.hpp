@@ -21,11 +21,11 @@ class Application {
     static constexpr int min_width_ = 640;
     static constexpr int min_height_ = 480;
 
-    inline static int width_ = 1440;
-    inline static int height_ = 1080;
-    inline static const std::string title_ = "TOMCAT 3D Live Reconstruction";
+    int width_ = 1440;
+    int height_ = 1080;
+    const std::string title_ = "TOMCAT 3D Live Reconstruction";
 
-    inline static auto bg_color_ = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
+    ImVec4 bg_color_ = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
 
     GLFWwindow* glfw_window_ = nullptr;
 
