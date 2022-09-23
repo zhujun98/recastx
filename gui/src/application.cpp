@@ -170,15 +170,16 @@ void Application::render() {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
+    glClearColor(bg_color_.x, bg_color_.y, bg_color_.z, bg_color_.w);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    scene_->renderGl();
+
     scene_->renderIm();
 
     ImGui::Render();
 
-    glClearColor(bg_color_.x, bg_color_.y, bg_color_.z, bg_color_.w);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-    scene_->renderGl();
 
     glfwSwapBuffers(glfw_window_);
 }
