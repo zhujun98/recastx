@@ -6,38 +6,6 @@
 
 namespace tomcat::gui {
 
-// class Rotator
-
-Rotator::Rotator(Camera& camera, float x, float y, bool instant)
-    : Rotator(camera) {
-    x_ = x;
-    y_ = y;
-    cx_ = x;
-    cy_ = y;
-    instant_ = instant;
-}
-
-void Rotator::onDrag(glm::vec2 cur, glm::vec2 delta) {
-    if (instant_) {
-      camera_.rotate(3.0f * delta.x, -3.0f * delta.y);
-    } else {
-      cx_ = cur.x;
-      cy_ = cur.y;
-    }
-}
-
-void Rotator::tick(double time_elapsed) {
-    if (instant_) return;
-
-    camera_.rotate(10.0f * time_elapsed * (cx_ - x_), -10.0f * time_elapsed * (cy_ - y_));
-}
-
-drag_machine_kind Rotator::kind() {
-    return drag_machine_kind::rotator;
-}
-
-// class Camera
-
 Camera::Camera() {
     setPerspectiveView();
 }
@@ -57,25 +25,8 @@ glm::mat4 Camera::matrix() {
     return camera_matrix;
 }
 
-void Camera::switch_if_necessary(drag_machine_kind kind) {
-    if (!drag_machine_ || drag_machine_->kind() != kind) {
-        switch (kind) {
-            case drag_machine_kind::rotator:
-                drag_machine_ = std::make_unique<Rotator>(*this, prev_x_, prev_y_, instant_);
-                break;
-            default:
-                break;
-        }
-    }
-}
-
 bool Camera::handleMouseButton(int /* button */, int action) {
     dragging_ = action == GLFW_PRESS;
-    if (!dragging_) {
-        drag_machine_ = nullptr;
-    } else {
-        switch_if_necessary(drag_machine_kind::rotator);
-    }
     return true;
 }
 
@@ -93,13 +44,16 @@ bool Camera::handleMouseMoved(double x, double y) {
         prev_y_ = y;
     }
 
-    glm::vec2 delta(x - prev_x_, y - prev_y_);
+    float x_offset = x - prev_x_;
+    float y_offset = prev_y_ - y;
     prev_x_ = x;
     prev_y_ = y;
 
-    // TODO: fix for screen ratio ratio
+    // TODO: fix for screen ratio
     if (dragging_) {
-        drag_machine_->onDrag({x, y}, delta);
+        if (!fixed_) {
+            rotate(mouse_sensitivity_ * x_offset, mouse_sensitivity_ * y_offset);
+        }
         return true;
     }
 
@@ -133,7 +87,7 @@ bool Camera::handleKey(int key, int action, int /* mods */) {
 }
 
 void Camera::renderIm() {
-    ImGui::Checkbox("Instant Camera", &instant_);
+    ImGui::Checkbox("Fix camera", &fixed_);
 
     if (ImGui::Button("X-Y")) {
         rotation_ = glm::mat4(1.0f);
@@ -162,10 +116,6 @@ void Camera::renderIm() {
     if (ImGui::Button("Perspective")) {
         setPerspectiveView();
     }
-}
-
-void Camera::tick(double time_elapsed) {
-    if (dragging_) drag_machine_->tick(time_elapsed);
 }
 
 void Camera::setPerspectiveView() {

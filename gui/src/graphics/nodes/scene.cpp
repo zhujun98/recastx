@@ -108,8 +108,6 @@ bool Scene::handleKey(int key, int action, int mods) {
 }
 
 void Scene::tick(double time_elapsed) {
-    camera_->tick(time_elapsed);
-
     auto& packets = Client::packets();
     while (!packets.empty()) {
         auto data = std::move(packets.front());
