@@ -11,14 +11,13 @@ AxesComponent::AxesComponent(Scene &scene) : StaticSceneComponent(scene) {
     glGenVertexArrays(1, &vao_);
     glBindVertexArray(vao_);
 
-    // TODO: draw infinite lines
     static const GLfloat vertices[] = {
         0.0f, 0.0f, 0.0f,
-        2.0f, 0.0f, 0.0f, // x
+        1.0f, 0.0f, 0.0f, // x
         0.0f, 0.0f, 0.0f,
-        0.0f, 2.0f, 0.0f, // y
+        0.0f, 1.0f, 0.0f, // y
         0.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 2.0f, // z
+        0.0f, 0.0f, 1.0f, // z
     };
 
     glGenBuffers(1, &vbo_);
@@ -49,7 +48,9 @@ void AxesComponent::renderGl() {
     // TODO draw axes on screen, should have access to camera here
     shader_->use();
 
-    shader_->setMat4("view", scene_.camera().matrix());
+    auto& camera = scene_.camera();
+    shader_->setFloat("scale", camera.distance());
+    shader_->setMat4("view", camera.matrix());
     shader_->setMat4("projection", scene_.projection());
 
     glBindVertexArray(vao_);

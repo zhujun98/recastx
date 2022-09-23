@@ -6,7 +6,7 @@
 
 namespace tomcat::gui {
 
-Camera::Camera() : center_( {0.f, 0.f, 0.f}) {
+Camera::Camera() : target_( {0.f, 0.f, 0.f}) {
     setPerspectiveView();
 }
 Camera::~Camera() = default;
@@ -14,8 +14,12 @@ Camera::~Camera() = default;
 const glm::mat4& Camera::matrix() {
     if (view_) { return view_.value(); }
 
-    view_ = glm::lookAt(pos_, center_, up_) * rotation_;
+    view_ = glm::lookAt(pos_, target_, up_) * rotation_;
     return view_.value();
+}
+
+float Camera::distance() const {
+    return glm::length(pos_ - target_);
 }
 
 bool Camera::handleMouseButton(int /* button */, int action) {
@@ -88,7 +92,7 @@ void Camera::renderIm() {
 
     if (ImGui::Button("X-Y")) {
         rotation_ = glm::mat4(1.0f);
-        pos_ = center_;
+        pos_ = target_;
         pos_.z -= 5.0;
         up_ = glm::vec3(0.0f, 1.0f, 0.0f);
         right_ = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -97,7 +101,7 @@ void Camera::renderIm() {
     ImGui::SameLine();
     if (ImGui::Button("Y-Z")) {
         rotation_ = glm::mat4(1.0f);
-        pos_ = center_;
+        pos_ = target_;
         pos_.x -= 5.0;
         up_ = glm::vec3(0.0f, 0.0f, 1.0f);
         right_ = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -106,7 +110,7 @@ void Camera::renderIm() {
     ImGui::SameLine();
     if (ImGui::Button("X-Z")) {
         rotation_ = glm::mat4(1.0f);
-        pos_ = center_;
+        pos_ = target_;
         pos_.y += 5.0;
         up_ = glm::vec3(0.0f, 0.0f, 1.0f);
         right_ = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -120,7 +124,7 @@ void Camera::renderIm() {
 
 void Camera::setPerspectiveView() {
     rotation_ = glm::mat4(1.0f);
-    pos_ = center_;
+    pos_ = target_;
     pos_.z -= 5.0;
     pos_.y += 2.5;
     pos_.x -= 2.5;

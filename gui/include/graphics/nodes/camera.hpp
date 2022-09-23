@@ -19,7 +19,7 @@ namespace tomcat::gui {
 class Camera : public GraphNode, public InputHandler {
 
     glm::vec3 pos_;
-    glm::vec3 center_;
+    glm::vec3 target_;
     glm::vec3 up_;
     glm::vec3 right_;
 
@@ -49,6 +49,8 @@ class Camera : public GraphNode, public InputHandler {
     ~Camera() override;
 
     [[nodiscard]] const glm::mat4& matrix();
+
+    [[nodiscard]] float distance() const;
 
     bool handleMouseButton(int button, int action) override;
 
