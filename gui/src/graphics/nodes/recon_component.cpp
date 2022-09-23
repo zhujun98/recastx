@@ -53,10 +53,10 @@ ReconComponent::ReconComponent(Scene& scene) : DynamicSceneComponent(scene) {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
     auto solid_vert =
-#include "../shaders/solid_cube.vert"
+#include "../shaders/recon_cube.vert"
         ;
     auto solid_frag =
-#include "../shaders/solid_cube.frag"
+#include "../shaders/recon_cube.frag"
         ;
     solid_shader_ = std::make_unique<ShaderProgram>(solid_vert, solid_frag);
 
