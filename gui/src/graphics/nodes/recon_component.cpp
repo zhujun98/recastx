@@ -408,7 +408,7 @@ void ReconComponent::maybeUpdateMinMaxValues() {
     auto overall_max = std::numeric_limits<float>::min();
 
     for (auto&& [slice_idx, slice] : slices_) {
-        (void)slice_idx;
+        if (slice->empty()) continue;
 
         auto [min_v, max_v] = slice->minMaxVals();
         overall_min = min_v < overall_min ? min_v : overall_min;

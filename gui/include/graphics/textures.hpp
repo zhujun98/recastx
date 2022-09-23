@@ -61,7 +61,7 @@ public:
 template <typename T = unsigned char>
 class ColormapTexture : public Texture {
 
-    int x_ = 0;
+    int x_;
 
     void genTexture(const std::vector<T>& data) {
         glBindTexture(GL_TEXTURE_1D, texture_id_);
@@ -79,8 +79,11 @@ class ColormapTexture : public Texture {
 
 public:
 
-    ColormapTexture() : Texture() {
+    ColormapTexture() : Texture(), x_(1) {
         glGenTextures(1, &texture_id_);
+
+        std::vector<T> data(x_, 0);
+        genTexture(data);
     };
 
     ~ColormapTexture() override {
@@ -119,8 +122,8 @@ public:
 template <typename T = unsigned char>
 class SliceTexture : public Texture {
 
-    int x_ = 0;
-    int y_ = 0;
+    int x_;
+    int y_;
 
     void genTexture(const std::vector<T>& data) {
         // In reference to the hack in the 3D fill_texture below, we
@@ -140,8 +143,11 @@ class SliceTexture : public Texture {
 
 public:
 
-    SliceTexture() : Texture() {
+    SliceTexture() : Texture(), x_(1), y_(1) {
         glGenTextures(1, &texture_id_);
+
+        std::vector<T> data(x_ * y_, 0);
+        genTexture(data);
     };
 
     ~SliceTexture() override {
@@ -183,9 +189,9 @@ public:
 template <typename T = unsigned char>
 class VolumeTexture  : public Texture {
 
-    int x_ = 0;
-    int y_ = 0;
-    int z_ = 0;
+    int x_;
+    int y_;
+    int z_;
 
     void genTexture(const std::vector<T>& data) {
         // This is a hack to prevent segfaults on laptops with integrated intel graphics.
@@ -212,8 +218,11 @@ class VolumeTexture  : public Texture {
 
 public:
 
-    VolumeTexture() : Texture() {
+    VolumeTexture() : Texture(), x_(8), y_(8), z_(8) {
         glGenTextures(1, &texture_id_);
+
+        std::vector<T> data(x_ * y_ * z_, 0);
+        genTexture(data);
     };
 
     ~VolumeTexture() override {
