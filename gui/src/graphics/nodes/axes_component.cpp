@@ -12,26 +12,28 @@ AxesComponent::AxesComponent(Scene &scene) : StaticSceneComponent(scene) {
     glBindVertexArray(vao_);
 
     static const GLfloat vertices[] = {
-        0.0f, 0.0f, 0.0f,
-        1.0f, 0.0f, 0.0f, // x
-        0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, // y
-        0.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, // z
+        0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // x
+        0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, // y
+        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f  // z
     };
 
     glGenBuffers(1, &vbo_);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 
     auto vert =
-#include "../shaders/lines.vert"
-      ;
+#include "../shaders/axes.vert"
+    ;
     auto frag =
-#include "../shaders/lines.frag"
-      ;
+#include "../shaders/axes.frag"
+    ;
 
     shader_ = std::make_unique<ShaderProgram>(vert, frag);
 }
