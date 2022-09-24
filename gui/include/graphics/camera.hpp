@@ -6,8 +6,8 @@
 #include <optional>
 #include <vector>
 
-#include <glm/glm.hpp>
-#include <glm/gtx/rotate_vector.hpp>
+#include "glm/glm.hpp"
+#include "glm/gtx/rotate_vector.hpp"
 
 #include "graphics/graph_node.hpp"
 #include "input_handler.hpp"

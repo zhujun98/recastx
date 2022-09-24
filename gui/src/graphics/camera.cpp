@@ -1,8 +1,8 @@
-#include <GL/gl3w.h>
-#include <GLFW/glfw3.h>
-#include <imgui.h>
+#include "GL/gl3w.h"
+#include "GLFW/glfw3.h"
+#include "imgui.h"
 
-#include "graphics/items/camera.hpp"
+#include "graphics/camera.hpp"
 
 namespace tomcat::gui {
 

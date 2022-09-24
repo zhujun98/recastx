@@ -3,7 +3,7 @@
 #include <imgui.h>
 
 #include "graphics/scene.hpp"
-#include "graphics/items/camera.hpp"
+#include "graphics/camera.hpp"
 #include "graphics/shader_program.hpp"
 #include "graphics/style.hpp"
 

@@ -12,8 +12,8 @@
 #include "tomcat/tomcat.hpp"
 
 #include "graphics/items/recon_item.hpp"
-#include "graphics/items/camera.hpp"
 #include "graphics/aesthetics.hpp"
+#include "graphics/camera.hpp"
 #include "graphics/primitives.hpp"
 #include "graphics/style.hpp"
 #include "util.hpp"
