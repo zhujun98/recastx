@@ -16,6 +16,7 @@ public:
 
     ~Scene3d() override;
 
+    void onFrameBufferSizeChanged(int width, int height) override;
 };
 
 }  // namespace tomcat::gui

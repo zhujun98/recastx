@@ -4,11 +4,12 @@
 #include <memory>
 #include <vector>
 
-#include "GL/gl3w.h"
-#include "glm/glm.hpp"
+#include <GL/gl3w.h>
+#include <glm/glm.hpp>
 
-#include "./scene_component.hpp"
+#include "graphics/nodes/scene_component.hpp"
 #include "graphics/graph_node.hpp"
+#include "graphics/viewport.hpp"
 #include "ticker.hpp"
 #include "client.hpp"
 
@@ -25,16 +26,13 @@ protected:
     std::unique_ptr<Camera> camera_;
     Client* client_;
 
+    std::vector<std::unique_ptr<Viewport>> viewports_;
     std::vector<std::shared_ptr<SceneComponent>> components_;
     std::vector<std::shared_ptr<StaticSceneComponent>> static_components_;
     std::vector<std::shared_ptr<DynamicSceneComponent>> dynamic_components_;
 
-    int width_ = 0;
-    int height_ = 0;
     ImVec2 pos_;
     ImVec2 size_;
-
-    glm::mat4 projection_;
 
   public:
 
@@ -42,7 +40,7 @@ protected:
 
     ~Scene() override;
 
-    void onFrameBufferSizeChanged(int width, int height);
+    virtual void onFrameBufferSizeChanged(int width, int height) = 0;
 
     void onWindowSizeChanged(int width, int height);
 
@@ -71,7 +69,7 @@ protected:
 
     [[nodiscard]] Camera& camera() { return *camera_; }
 
-    [[nodiscard]] const glm::mat4& projection() const { return projection_; }
+    [[nodiscard]] const glm::mat4& projection() const { return viewports_[0]->projection(); }
 };
 
 }  // namespace tomcat::gui

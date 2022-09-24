@@ -12,6 +12,7 @@
 namespace tomcat::gui {
 
 Scene3d::Scene3d(Client* client) : Scene(client) {
+    viewports_.emplace_back(std::make_unique<Viewport>());
     camera_ = std::make_unique<Camera>();
     this->addComponent(std::make_shared<AxesComponent>(*this));
     this->addComponent(std::make_shared<MonitorBottomComponent>(*this));
@@ -20,5 +21,9 @@ Scene3d::Scene3d(Client* client) : Scene(client) {
 }
 
 Scene3d::~Scene3d() = default;
+
+void Scene3d::onFrameBufferSizeChanged(int width, int height) {
+    viewports_[0]->update(0, 0, width, height);
+}
 
 } // tomcat::gui

@@ -53,6 +53,7 @@ set(SOURCE_NAMES
         "src/graphics/graph_node.cpp"
         "src/graphics/shader_program.cpp"
         "src/graphics/slice.cpp"
+        "src/graphics/viewport.cpp"
         "src/graphics/volume.cpp"
         "src/graphics/nodes/axes_component.cpp"
         "src/graphics/nodes/colormap_controller.cpp"

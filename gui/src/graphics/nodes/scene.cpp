@@ -14,20 +14,12 @@ Scene::Scene(Client* client) : client_(client) {};
 Scene::~Scene() = default;
 
 void Scene::onWindowSizeChanged(int width, int height) {
-    width_ = width;
-    height_ = height;
     pos_ = {Style::IMGUI_WINDOW_MARGIN, Style::IMGUI_ICON_HEIGHT + Style::IMGUI_WINDOW_SPACING};
     size_ = {Style::IMGUI_ICON_WIDTH, static_cast<float>(height) - pos_[1] - Style::IMGUI_WINDOW_MARGIN};
 
     for (auto& comp : components_) {
         comp->onWindowSizeChanged(width, height);
     }
-}
-
-void Scene::onFrameBufferSizeChanged(int width, int height) {
-    projection_ = glm::perspective(
-            glm::radians(45.f), (float)width / (float)height, 0.1f, 50.0f);
-    glViewport(0, 0, width, height);
 }
 
 void Scene::renderIm() {
@@ -49,6 +41,7 @@ void Scene::renderIm() {
 }
 
 void Scene::renderGl() {
+    viewports_[0]->use();
     for (auto &comp : components_) {
         comp->renderGl();
     }
