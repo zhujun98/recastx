@@ -1,21 +1,21 @@
 #ifndef GUI_MONITOR_BOTTOM_COMPONENT_H
 #define GUI_MONITOR_BOTTOM_COMPONENT_H
 
-#include "./scene_component.hpp"
+#include "graphics/nodes/scene_component.hpp"
 
 namespace tomcat::gui {
 
 class Scene;
 
-class MonitorBottomComponent : public DynamicSceneComponent {
+class StatusbarComponent : public DynamicSceneComponent {
 
     bool visible_ = true;
 
 public:
 
-    explicit MonitorBottomComponent(Scene& scene);
+    explicit StatusbarComponent(Scene& scene);
 
-    ~MonitorBottomComponent() override;
+    ~StatusbarComponent() override;
 
     void onWindowSizeChanged(int width, int height) override;
 

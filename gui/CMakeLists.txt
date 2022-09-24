@@ -59,9 +59,9 @@ set(SOURCE_NAMES
         "src/graphics/nodes/colormap_controller.cpp"
         "src/graphics/nodes/scene_component.cpp"
         "src/graphics/nodes/recon_component.cpp"
-        "src/graphics/nodes/monitor_bottom_component.cpp"
         "src/graphics/nodes/scene.cpp"
         "src/graphics/nodes/scene3d.cpp"
+        "src/graphics/nodes/statusbar_component.cpp"
         "src/graphics/nodes/camera.cpp"
         ${IMGUI_SOURCE_FILES}
         ${IMPLOT_SOURCE_FILES}

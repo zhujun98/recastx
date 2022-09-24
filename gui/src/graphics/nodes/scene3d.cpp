@@ -3,7 +3,7 @@
 #include <spdlog/spdlog.h>
 
 #include "graphics/nodes/axes_component.hpp"
-#include "graphics/nodes/monitor_bottom_component.hpp"
+#include "graphics/nodes/statusbar_component.hpp"
 #include "graphics/nodes/recon_component.hpp"
 #include "graphics/nodes/scene3d.hpp"
 #include "graphics/nodes/camera.hpp"
@@ -14,7 +14,7 @@ Scene3d::Scene3d(Client* client) : Scene(client) {
     viewports_.emplace_back(std::make_unique<Viewport>());
     camera_ = std::make_unique<Camera>();
     this->addComponent(std::make_shared<AxesComponent>(*this));
-    this->addComponent(std::make_shared<MonitorBottomComponent>(*this));
+    this->addComponent(std::make_shared<StatusbarComponent>(*this));
     this->addComponent(std::make_shared<ReconComponent>(*this));
 }
 
