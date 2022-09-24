@@ -1,4 +1,4 @@
-#include "graphics/nodes/scene_component.hpp"
+#include "graphics/components/scene_component.hpp"
 
 namespace tomcat::gui {
 

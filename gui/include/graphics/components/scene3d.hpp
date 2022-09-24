@@ -3,8 +3,8 @@
 
 #include <memory>
 
-#include "./scene.hpp"
-#include "./camera.hpp"
+#include "graphics/components/camera.hpp"
+#include "graphics/components/scene.hpp"
 
 namespace tomcat::gui {
 

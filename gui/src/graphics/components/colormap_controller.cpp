@@ -1,4 +1,4 @@
-#include "graphics/nodes/colormap_controller.hpp"
+#include "graphics/components/colormap_controller.hpp"
 
 namespace tomcat::gui {
 

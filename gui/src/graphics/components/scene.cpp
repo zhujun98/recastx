@@ -2,8 +2,8 @@
 
 #include <imgui.h>
 
-#include "graphics/nodes/scene.hpp"
-#include "graphics/nodes/camera.hpp"
+#include "graphics/components/scene.hpp"
+#include "graphics/components/camera.hpp"
 #include "graphics/shader_program.hpp"
 #include "graphics/style.hpp"
 

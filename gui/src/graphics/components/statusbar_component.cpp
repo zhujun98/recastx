@@ -1,7 +1,7 @@
 #include <imgui.h>
 
-#include "graphics/nodes/statusbar_component.hpp"
-#include "graphics/nodes/scene.hpp"
+#include "graphics/components/statusbar_component.hpp"
+#include "graphics/components/scene.hpp"
 #include "graphics/style.hpp"
 
 namespace tomcat::gui {

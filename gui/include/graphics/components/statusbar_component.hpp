@@ -1,7 +1,7 @@
 #ifndef GUI_MONITOR_BOTTOM_COMPONENT_H
 #define GUI_MONITOR_BOTTOM_COMPONENT_H
 
-#include "graphics/nodes/scene_component.hpp"
+#include "graphics/components/scene_component.hpp"
 
 namespace tomcat::gui {
 

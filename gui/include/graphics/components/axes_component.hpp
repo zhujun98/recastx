@@ -3,8 +3,8 @@
 
 #include <memory>
 
-#include "./scene_component.hpp"
-#include "./scene.hpp"
+#include "graphics/components/scene_component.hpp"
+#include "graphics/components/scene.hpp"
 #include "graphics/shader_program.hpp"
 
 namespace tomcat::gui {

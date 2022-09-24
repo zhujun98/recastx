@@ -7,9 +7,9 @@
 #include <memory>
 #include <string>
 
-#include "./scene_component.hpp"
-#include "./colormap_controller.hpp"
-#include "./scene.hpp"
+#include "graphics/components/scene_component.hpp"
+#include "graphics/components/colormap_controller.hpp"
+#include "graphics/components/scene.hpp"
 #include "graphics/shader_program.hpp"
 #include "graphics/slice.hpp"
 #include "graphics/textures.hpp"

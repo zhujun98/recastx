@@ -7,7 +7,7 @@
 #include <GL/gl3w.h>
 #include <glm/glm.hpp>
 
-#include "graphics/nodes/scene_component.hpp"
+#include "graphics/components/scene_component.hpp"
 #include "graphics/graph_node.hpp"
 #include "graphics/viewport.hpp"
 #include "ticker.hpp"

@@ -2,8 +2,8 @@
 
 #include "imgui.h"
 
-#include "graphics/nodes/axes_component.hpp"
-#include "graphics/nodes/camera.hpp"
+#include "graphics/components/axes_component.hpp"
+#include "graphics/components/camera.hpp"
 
 namespace tomcat::gui {
 
