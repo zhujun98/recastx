@@ -60,7 +60,6 @@ set(SOURCE_NAMES
         "src/graphics/nodes/scene_component.cpp"
         "src/graphics/nodes/recon_component.cpp"
         "src/graphics/nodes/monitor_bottom_component.cpp"
-        "src/graphics/nodes/monitor_right_component.cpp"
         "src/graphics/nodes/scene.cpp"
         "src/graphics/nodes/scene3d.cpp"
         "src/graphics/nodes/camera.cpp"
