@@ -2,7 +2,7 @@
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 
-#include "graphics/components/camera.hpp"
+#include "graphics/items/camera.hpp"
 
 namespace tomcat::gui {
 

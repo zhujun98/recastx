@@ -2,8 +2,8 @@
 
 #include <imgui.h>
 
-#include "graphics/components/scene.hpp"
-#include "graphics/components/camera.hpp"
+#include "graphics/items/scene.hpp"
+#include "graphics/items/camera.hpp"
 #include "graphics/shader_program.hpp"
 #include "graphics/style.hpp"
 
@@ -53,14 +53,14 @@ void Scene::init() {
     }
 }
 
-void Scene::addComponent(const std::shared_ptr<SceneComponent>& component) {
+void Scene::addComponent(const std::shared_ptr<GraphicsItem>& component) {
     components_.push_back(component);
 
-    if (component->type() == SceneComponent::ComponentType::STATIC) {
-        static_components_.push_back(std::dynamic_pointer_cast<StaticSceneComponent>(component));
+    if (component->type() == GraphicsItem::ComponentType::STATIC) {
+        static_components_.push_back(std::dynamic_pointer_cast<StaticGraphicsItem>(component));
     }
-    if (component->type() == SceneComponent::ComponentType::DYNAMIC) {
-        dynamic_components_.push_back(std::dynamic_pointer_cast<DynamicSceneComponent>(component));
+    if (component->type() == GraphicsItem::ComponentType::DYNAMIC) {
+        dynamic_components_.push_back(std::dynamic_pointer_cast<DynamicGraphicsItem>(component));
     }
 }
 

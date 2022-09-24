@@ -1,12 +1,12 @@
-#include "GL/gl3w.h"
-#include "GLFW/glfw3.h"
-#include "imgui.h"
-#include "backends/imgui_impl_opengl3.h"
-#include "backends/imgui_impl_glfw.h"
-#include "implot.h"
+#include <GL/gl3w.h>
+#include <GLFW/glfw3.h>
+#include <imgui.h>
+#include <backends/imgui_impl_opengl3.h>
+#include <backends/imgui_impl_glfw.h>
+#include <implot.h>
 
 #include "application.hpp"
-#include "graphics/components/scene3d.hpp"
+#include "graphics/items/scene3d.hpp"
 #include "graphics/style.hpp"
 
 namespace tomcat::gui {

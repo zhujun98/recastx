@@ -1,5 +1,6 @@
-#ifndef GUI_RECON_COMPONENT_H
-#define GUI_RECON_COMPONENT_H
+#ifndef GUI_RECON_ITEM_H
+#define GUI_RECON_ITEM_H
+
 #include <cstddef>
 #include <iostream>
 #include <limits>
@@ -7,9 +8,9 @@
 #include <memory>
 #include <string>
 
-#include "graphics/components/scene_component.hpp"
-#include "graphics/components/colormap_controller.hpp"
-#include "graphics/components/scene.hpp"
+#include "graphics/items/graphics_item.hpp"
+#include "graphics/items/colormap_controller.hpp"
+#include "graphics/items/scene.hpp"
 #include "graphics/shader_program.hpp"
 #include "graphics/slice.hpp"
 #include "graphics/textures.hpp"
@@ -17,7 +18,7 @@
 
 namespace tomcat::gui {
 
-class ReconComponent : public DynamicSceneComponent {
+class ReconItem : public DynamicGraphicsItem {
 
     enum class DragType : int { none, rotator, translator};
 
@@ -25,14 +26,14 @@ class ReconComponent : public DynamicSceneComponent {
 
       protected:
 
-        ReconComponent& comp_;
+        ReconItem& comp_;
         glm::vec2 initial_;
 
         DragType type_;
 
       public:
 
-        DragMachine(ReconComponent& comp, const glm::vec2& initial, DragType type);
+        DragMachine(ReconItem& comp, const glm::vec2& initial, DragType type);
         virtual ~DragMachine();
 
         virtual void onDrag(glm::vec2 delta) = 0;
@@ -44,7 +45,7 @@ class ReconComponent : public DynamicSceneComponent {
 
       public:
 
-        SliceTranslator(ReconComponent& comp, const glm::vec2& initial);
+        SliceTranslator(ReconItem& comp, const glm::vec2& initial);
         ~SliceTranslator() override;
 
         void onDrag(glm::vec2 delta) override;
@@ -54,7 +55,7 @@ class ReconComponent : public DynamicSceneComponent {
 
       public:
 
-        SliceRotator(ReconComponent& comp, const glm::vec2& initial);
+        SliceRotator(ReconItem& comp, const glm::vec2& initial);
         ~SliceRotator() override;
 
         void onDrag(glm::vec2 delta) override;
@@ -113,9 +114,9 @@ class ReconComponent : public DynamicSceneComponent {
 
 public:
 
-    explicit ReconComponent(Scene& scene);
+    explicit ReconItem(Scene& scene);
 
-    ~ReconComponent() override;
+    ~ReconItem() override;
 
     void onWindowSizeChanged(int width, int height) override;
 
@@ -148,4 +149,4 @@ public:
 
 } // namespace tomcat::gui
 
-#endif // GUI_RECON_COMPONENT_H
+#endif // GUI_RECON_ITEM_H

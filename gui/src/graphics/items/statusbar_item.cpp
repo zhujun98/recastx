@@ -1,17 +1,17 @@
 #include <imgui.h>
 
-#include "graphics/components/statusbar_component.hpp"
-#include "graphics/components/scene.hpp"
+#include "graphics/items/statusbar_item.hpp"
+#include "graphics/items/scene.hpp"
 #include "graphics/style.hpp"
 
 namespace tomcat::gui {
 
-StatusbarComponent::StatusbarComponent(Scene& scene)
-    : DynamicSceneComponent(scene) {}
+StatusbarItem::StatusbarItem(Scene& scene)
+    : DynamicGraphicsItem(scene) {}
 
-StatusbarComponent::~StatusbarComponent() = default;
+StatusbarItem::~StatusbarItem() = default;
 
-void StatusbarComponent::onWindowSizeChanged(int width, int height) {
+void StatusbarItem::onWindowSizeChanged(int width, int height) {
     pos_ = {
         Style::IMGUI_WINDOW_MARGIN + Style::IMGUI_CONTROL_PANEL_WIDTH + Style::IMGUI_WINDOW_SPACING,
         static_cast<float>(height) - Style::IMGUI_BOTTOM_PANEL_HEIGHT - Style::IMGUI_WINDOW_MARGIN
@@ -22,7 +22,7 @@ void StatusbarComponent::onWindowSizeChanged(int width, int height) {
     };
 }
 
-void StatusbarComponent::renderIm() {
+void StatusbarItem::renderIm() {
     ImGui::Checkbox("Show status bar", &visible_);
 
     if (visible_) {
@@ -38,9 +38,9 @@ void StatusbarComponent::renderIm() {
     }
 }
 
-void StatusbarComponent::renderGl() {}
+void StatusbarItem::renderGl() {}
 
-bool StatusbarComponent::consume(const tomcat::PacketDataEvent &data) {
+bool StatusbarItem::consume(const tomcat::PacketDataEvent &data) {
     return true;
 }
 

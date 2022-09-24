@@ -55,14 +55,14 @@ set(SOURCE_NAMES
         "src/graphics/slice.cpp"
         "src/graphics/viewport.cpp"
         "src/graphics/volume.cpp"
-        "src/graphics/components/axes_component.cpp"
-        "src/graphics/components/colormap_controller.cpp"
-        "src/graphics/components/scene_component.cpp"
-        "src/graphics/components/recon_component.cpp"
-        "src/graphics/components/scene.cpp"
-        "src/graphics/components/scene3d.cpp"
-        "src/graphics/components/statusbar_component.cpp"
-        "src/graphics/components/camera.cpp"
+        "src/graphics/items/axes_item.cpp"
+        "src/graphics/items/colormap_controller.cpp"
+        "src/graphics/items/graphics_item.cpp"
+        "src/graphics/items/recon_item.cpp"
+        "src/graphics/items/scene.cpp"
+        "src/graphics/items/scene3d.cpp"
+        "src/graphics/items/statusbar_item.cpp"
+        "src/graphics/items/camera.cpp"
         ${IMGUI_SOURCE_FILES}
         ${IMPLOT_SOURCE_FILES}
         ${GL3W_BUILD_DIR}/src/gl3w.c

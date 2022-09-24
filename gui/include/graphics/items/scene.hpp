@@ -7,7 +7,7 @@
 #include <GL/gl3w.h>
 #include <glm/glm.hpp>
 
-#include "graphics/components/scene_component.hpp"
+#include "graphics/items/graphics_item.hpp"
 #include "graphics/graph_node.hpp"
 #include "graphics/viewport.hpp"
 #include "ticker.hpp"
@@ -27,9 +27,9 @@ protected:
     Client* client_;
 
     std::vector<std::unique_ptr<Viewport>> viewports_;
-    std::vector<std::shared_ptr<SceneComponent>> components_;
-    std::vector<std::shared_ptr<StaticSceneComponent>> static_components_;
-    std::vector<std::shared_ptr<DynamicSceneComponent>> dynamic_components_;
+    std::vector<std::shared_ptr<GraphicsItem>> components_;
+    std::vector<std::shared_ptr<StaticGraphicsItem>> static_components_;
+    std::vector<std::shared_ptr<DynamicGraphicsItem>> dynamic_components_;
 
     ImVec2 pos_;
     ImVec2 size_;
@@ -50,7 +50,7 @@ protected:
 
     void init();
 
-    void addComponent(const std::shared_ptr<SceneComponent>& component);
+    void addComponent(const std::shared_ptr<GraphicsItem>& component);
 
     bool handleMouseButton(int button, int action) override;
 

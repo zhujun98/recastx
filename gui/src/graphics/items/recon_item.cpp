@@ -11,8 +11,8 @@
 
 #include "tomcat/tomcat.hpp"
 
-#include "graphics/components/recon_component.hpp"
-#include "graphics/components/camera.hpp"
+#include "graphics/items/recon_item.hpp"
+#include "graphics/items/camera.hpp"
 #include "graphics/aesthetics.hpp"
 #include "graphics/primitives.hpp"
 #include "graphics/style.hpp"
@@ -20,7 +20,7 @@
 
 namespace tomcat::gui {
 
-ReconComponent::ReconComponent(Scene& scene) : DynamicSceneComponent(scene) {
+ReconItem::ReconItem(Scene& scene) : DynamicGraphicsItem(scene) {
     glGenVertexArrays(1, &vao_);
     glBindVertexArray(vao_);
     glGenBuffers(1, &vbo_);
@@ -73,7 +73,7 @@ ReconComponent::ReconComponent(Scene& scene) : DynamicSceneComponent(scene) {
     maybeUpdateMinMaxValues();
 }
 
-ReconComponent::~ReconComponent() {
+ReconItem::~ReconItem() {
     glDeleteVertexArrays(1, &vao_);
     glDeleteBuffers(1, &vbo_);
 
@@ -85,7 +85,7 @@ ReconComponent::~ReconComponent() {
     glDeleteBuffers(1, &line_vbo_);
 }
 
-void ReconComponent::onWindowSizeChanged(int width, int /*height*/) {
+void ReconItem::onWindowSizeChanged(int width, int /*height*/) {
     pos_ = {
         Style::IMGUI_WINDOW_MARGIN + Style::IMGUI_CONTROL_PANEL_WIDTH + Style::IMGUI_WINDOW_SPACING,
         Style::IMGUI_WINDOW_MARGIN
@@ -97,7 +97,7 @@ void ReconComponent::onWindowSizeChanged(int width, int /*height*/) {
     };
 }
 
-void ReconComponent::renderIm() {
+void ReconItem::renderIm() {
     cm_.renderIm();
 
     ImGui::Checkbox("Auto Levels", &auto_levels_);
@@ -118,7 +118,7 @@ void ReconComponent::renderIm() {
         ImGui::SetNextWindowPos(pos_);
         ImGui::SetNextWindowSize(size_);
 
-        ImGui::Begin("Statistics##ReconComponent", NULL, ImGuiWindowFlags_NoDecoration);
+        ImGui::Begin("Statistics##ReconItem", NULL, ImGuiWindowFlags_NoDecoration);
 
         ImPlot::BeginSubplots("##Histograms", 1, 3, ImVec2(-1.f, -1.f));
         for (auto &[slice_id, slice]: slices_) {
@@ -139,7 +139,7 @@ void ReconComponent::renderIm() {
     }
 }
 
-void ReconComponent::renderGl() {
+void ReconItem::renderGl() {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
 
@@ -197,7 +197,7 @@ void ReconComponent::renderGl() {
     glDisable(GL_BLEND);
 }
 
-void ReconComponent::init() {
+void ReconItem::init() {
     scene_.send(RemoveAllSlicesPacket());
 
     for (auto& slice : slices_) {
@@ -205,7 +205,7 @@ void ReconComponent::init() {
     }
 }
 
-void ReconComponent::setSliceData(std::vector<float>&& data,
+void ReconItem::setSliceData(std::vector<float>&& data,
                                   const std::array<uint32_t, 2>& size,
                                   int slice_idx) {
     Slice* slice;
@@ -223,13 +223,13 @@ void ReconComponent::setSliceData(std::vector<float>&& data,
     maybeUpdateMinMaxValues();
 }
 
-void ReconComponent::setVolumeData(std::vector<float>&& data, const std::array<uint32_t, 3>& size) {
+void ReconItem::setVolumeData(std::vector<float>&& data, const std::array<uint32_t, 3>& size) {
     // FIXME: replace uint32_t with size_t in Packet
     volume_->setData(std::move(data), {size[0], size[1], size[2]});
     maybeUpdateMinMaxValues();
 }
 
-bool ReconComponent::consume(const tomcat::PacketDataEvent &data) {
+bool ReconItem::consume(const tomcat::PacketDataEvent &data) {
     switch (data.first) {
         case PacketDesc::slice_data: {
             auto packet = dynamic_cast<SliceDataPacket*>(data.second.get());
@@ -249,7 +249,7 @@ bool ReconComponent::consume(const tomcat::PacketDataEvent &data) {
     }
 }
 
-bool ReconComponent::handleMouseButton(int button, int action) {
+bool ReconItem::handleMouseButton(int button, int action) {
     if (action == GLFW_PRESS) {
         if (button == GLFW_MOUSE_BUTTON_LEFT) {
             if (hovered_slice_ != nullptr) {
@@ -289,7 +289,7 @@ bool ReconComponent::handleMouseButton(int button, int action) {
     return false;
 }
 
-bool ReconComponent::handleMouseMoved(float x, float y) {
+bool ReconItem::handleMouseMoved(float x, float y) {
     // update slice that is being hovered over
     y = -y;
 
@@ -313,13 +313,13 @@ bool ReconComponent::handleMouseMoved(float x, float y) {
     return false;
 }
 
-void ReconComponent::initSlices() {
+void ReconItem::initSlices() {
     for (int i = 0; i < 3; ++i) slices_[i] = std::make_unique<Slice>(i);
 
     resetSlices();
 }
 
-void ReconComponent::resetSlices() {
+void ReconItem::resetSlices() {
     // slice along axis 0 = x
     slices_[0]->setOrientation(glm::vec3(0.0f, -1.0f, -1.0f),
                                glm::vec3(0.0f, 2.0f, 0.0f),
@@ -336,11 +336,11 @@ void ReconComponent::resetSlices() {
                                glm::vec3(0.0f, 2.0f, 0.0f));
 }
 
-void ReconComponent::initVolume() {
+void ReconItem::initVolume() {
     volume_ = std::make_unique<Volume>();
 }
 
-void ReconComponent::updateHoveringSlice(float x, float y) {
+void ReconItem::updateHoveringSlice(float x, float y) {
     auto inv_matrix = glm::inverse(scene_.projection() * scene_.camera().matrix());
     int slice_id = -1;
     float best_z = std::numeric_limits<float>::max();
@@ -365,7 +365,7 @@ void ReconComponent::updateHoveringSlice(float x, float y) {
     }
 }
 
-void ReconComponent::maybeSwitchDragMachine(ReconComponent::DragType type) {
+void ReconItem::maybeSwitchDragMachine(ReconItem::DragType type) {
     if (drag_machine_ == nullptr || drag_machine_->type() != type) {
         switch (type) {
             case DragType::translator:
@@ -382,7 +382,7 @@ void ReconComponent::maybeSwitchDragMachine(ReconComponent::DragType type) {
     }
 }
 
-void ReconComponent::drawSlice(Slice* slice, const glm::mat4& view_matrix) {
+void ReconItem::drawSlice(Slice* slice, const glm::mat4& view_matrix) {
     // FIXME: bind an empty slice will result in warning:
     //        UNSUPPORTED (log once): POSSIBLE ISSUE: unit 1 GLD_TEXTURE_INDEX_2D is
     //        unloadable and bound to sampler type (Float) - using zero texture because texture unloadable
@@ -401,7 +401,7 @@ void ReconComponent::drawSlice(Slice* slice, const glm::mat4& view_matrix) {
     slice->unbind();
 }
 
-void ReconComponent::maybeUpdateMinMaxValues() {
+void ReconItem::maybeUpdateMinMaxValues() {
     if (!auto_levels_) return;
 
     auto overall_min = std::numeric_limits<float>::max();
@@ -420,21 +420,21 @@ void ReconComponent::maybeUpdateMinMaxValues() {
     max_val_ = max_v > overall_max ? max_v : overall_max;
 }
 
-// ReconComponent::DragMachine
+// ReconItem::DragMachine
 
-ReconComponent::DragMachine::DragMachine(ReconComponent& comp, const glm::vec2& initial, DragType type)
+ReconItem::DragMachine::DragMachine(ReconItem& comp, const glm::vec2& initial, DragType type)
     : comp_(comp), initial_(initial), type_(type) {}
 
-ReconComponent::DragMachine::~DragMachine() = default;
+ReconItem::DragMachine::~DragMachine() = default;
 
-// ReconComponent::SliceTranslator
+// ReconItem::SliceTranslator
 
-ReconComponent::SliceTranslator::SliceTranslator(ReconComponent &comp, const glm::vec2& initial)
+ReconItem::SliceTranslator::SliceTranslator(ReconItem &comp, const glm::vec2& initial)
     : DragMachine(comp, initial, DragType::translator) {}
 
-ReconComponent::SliceTranslator::~SliceTranslator() = default;
+ReconItem::SliceTranslator::~SliceTranslator() = default;
 
-void ReconComponent::SliceTranslator::onDrag(glm::vec2 delta) {
+void ReconItem::SliceTranslator::onDrag(glm::vec2 delta) {
     // 1) what are we dragging, and does it have data?
     // if it does then we need to make a new slice
     // else we drag the current slice along the normal
@@ -506,9 +506,9 @@ void ReconComponent::SliceTranslator::onDrag(glm::vec2 delta) {
     o[2][2] += dx[2];
 }
 
-// ReconComponent::SliceRotator
+// ReconItem::SliceRotator
 
-ReconComponent::SliceRotator::SliceRotator(ReconComponent& comp, const glm::vec2& initial)
+ReconItem::SliceRotator::SliceRotator(ReconItem& comp, const glm::vec2& initial)
     : DragMachine(comp, initial, DragType::rotator) {
     // 1. need to identify the opposite axis
     // a) get the position within the slice
@@ -570,9 +570,9 @@ ReconComponent::SliceRotator::SliceRotator(ReconComponent& comp, const glm::vec2
     screen_direction = glm::normalize(from - to);
 }
 
-ReconComponent::SliceRotator::~SliceRotator() = default;
+ReconItem::SliceRotator::~SliceRotator() = default;
 
-void ReconComponent::SliceRotator::onDrag(glm::vec2 delta) {
+void ReconItem::SliceRotator::onDrag(glm::vec2 delta) {
     // 1) what are we dragging, and does it have data?
     // if it does then we need to make a new slice
     // else we drag the current slice along the normal

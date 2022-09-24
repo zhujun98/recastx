@@ -1,5 +1,5 @@
-#ifndef GUI_SCENE_COMPONENT_H
-#define GUI_SCENE_COMPONENT_H
+#ifndef GUI_SCENE_ITEM_H
+#define GUI_SCENE_ITEM_H
 
 #include <string>
 
@@ -15,7 +15,7 @@ namespace tomcat::gui {
 
 class Scene;
 
-class SceneComponent : public GraphGlNode, public InputHandler {
+class GraphicsItem : public GraphGlNode, public InputHandler {
 
 public:
 
@@ -35,9 +35,9 @@ protected:
 
 public:
 
-    SceneComponent(ComponentType type, Scene& scene);
+    GraphicsItem(ComponentType type, Scene& scene);
 
-    ~SceneComponent() override;
+    ~GraphicsItem() override;
 
     virtual void init();
 
@@ -47,28 +47,28 @@ public:
 };
 
 
-class StaticSceneComponent : public SceneComponent {
+class StaticGraphicsItem : public GraphicsItem {
 
 public:
 
-    explicit StaticSceneComponent(Scene& scene);
+    explicit StaticGraphicsItem(Scene& scene);
 
-    ~StaticSceneComponent() override;
+    ~StaticGraphicsItem() override;
 
 };
 
 
-class DynamicSceneComponent : public SceneComponent {
+class DynamicGraphicsItem : public GraphicsItem {
 
 public:
 
-    explicit DynamicSceneComponent(Scene& scene);
+    explicit DynamicGraphicsItem(Scene& scene);
 
-    ~DynamicSceneComponent() override;
+    ~DynamicGraphicsItem() override;
 
     virtual bool consume(const PacketDataEvent& data) = 0;
 };
 
 } // tomcat::gui
 
-#endif // GUI_SCENE_COMPONENT_H
+#endif // GUI_SCENE_ITEM_H

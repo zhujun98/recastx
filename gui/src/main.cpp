@@ -9,7 +9,7 @@
 
 #include "application.hpp"
 #include "client.hpp"
-#include "graphics/components/scene3d.hpp"
+#include "graphics/items/scene3d.hpp"
 
 int main(int argc, char** argv) {
     using namespace tomcat::gui;

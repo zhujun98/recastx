@@ -1,4 +1,4 @@
-#include "graphics/components/colormap_controller.hpp"
+#include "graphics/items/colormap_controller.hpp"
 
 namespace tomcat::gui {
 
@@ -11,7 +11,7 @@ ColormapController::~ColormapController() = default;
 void ColormapController::renderIm() {
     auto& cmd = Colormap::data();
     auto prev_map_ = curr_;
-    if (ImGui::BeginCombo("Colormap##ReconComponent", cmd.GetName(curr_))) {
+    if (ImGui::BeginCombo("Colormap##ReconItem", cmd.GetName(curr_))) {
         for (auto idx : Colormap::options()) {
             const char* name = cmd.GetName(idx);
             if (ImGui::Selectable(name, curr_ == idx)) curr_ = idx;

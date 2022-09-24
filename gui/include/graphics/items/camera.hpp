@@ -1,5 +1,5 @@
-#ifndef GUI_SCENE_CAMERA3D_H
-#define GUI_SCENE_CAMERA3D_H
+#ifndef GUI_CAMERA_H
+#define GUI_CAMERA_H
 
 #include <map>
 #include <memory>
@@ -65,4 +65,4 @@ class Camera : public GraphNode, public InputHandler {
 
 } // namespace tomcat::gui
 
-#endif // GUI_SCENE_CAMERA3D_H
+#endif // GUI_CAMERA_H

@@ -1,13 +1,13 @@
 #include <iostream>
 
-#include "imgui.h"
+#include <imgui.h>
 
-#include "graphics/components/axes_component.hpp"
-#include "graphics/components/camera.hpp"
+#include "graphics/items/axes_item.hpp"
+#include "graphics/items/camera.hpp"
 
 namespace tomcat::gui {
 
-AxesComponent::AxesComponent(Scene &scene) : StaticSceneComponent(scene) {
+AxesItem::AxesItem(Scene &scene) : StaticGraphicsItem(scene) {
     glGenVertexArrays(1, &vao_);
     glBindVertexArray(vao_);
 
@@ -38,13 +38,13 @@ AxesComponent::AxesComponent(Scene &scene) : StaticSceneComponent(scene) {
     shader_ = std::make_unique<ShaderProgram>(vert, frag);
 }
 
-AxesComponent::~AxesComponent() = default;
+AxesItem::~AxesItem() = default;
 
-void AxesComponent::renderIm() {
+void AxesItem::renderIm() {
     ImGui::Checkbox("Show axes", &visible_);
 }
 
-void AxesComponent::renderGl() {
+void AxesItem::renderGl() {
     if (!visible_) return;
 
     // TODO draw axes on screen, should have access to camera here
