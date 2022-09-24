@@ -9,7 +9,7 @@
 #include <string>
 
 #include "graphics/items/graphics_item.hpp"
-#include "graphics/items/colormap_controller.hpp"
+#include "graphics/widgets/colormap_widget.hpp"
 #include "graphics/scene.hpp"
 #include "graphics/shader_program.hpp"
 #include "graphics/slice.hpp"
@@ -68,7 +68,7 @@ class ReconItem : public DynamicGraphicsItem {
     std::map<int, std::unique_ptr<Slice>> slices_;
     std::unique_ptr<Volume> volume_;
 
-    ColormapController cm_;
+    ColormapWidget cm_;
 
     GLuint vao_;
     GLuint vbo_;

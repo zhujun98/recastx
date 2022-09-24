@@ -1,17 +1,17 @@
-#include "graphics/items/colormap_controller.hpp"
+#include "graphics/widgets/colormap_widget.hpp"
 
 namespace tomcat::gui {
 
-ColormapController::ColormapController() : curr_(*Colormap::options().begin()) {
+ColormapWidget::ColormapWidget() : curr_(*Colormap::options().begin()) {
     cm_.updateTexture(curr_);
 };
 
-ColormapController::~ColormapController() = default;
+ColormapWidget::~ColormapWidget() = default;
 
-void ColormapController::renderIm() {
+void ColormapWidget::renderIm() {
     auto& cmd = Colormap::data();
     auto prev_map_ = curr_;
-    if (ImGui::BeginCombo("Colormap##ReconItem", cmd.GetName(curr_))) {
+    if (ImGui::BeginCombo("Colormap##Widget", cmd.GetName(curr_))) {
         for (auto idx : Colormap::options()) {
             const char* name = cmd.GetName(idx);
             if (ImGui::Selectable(name, curr_ == idx)) curr_ = idx;
@@ -22,6 +22,6 @@ void ColormapController::renderIm() {
     if (prev_map_ != curr_) cm_.updateTexture(curr_);
 }
 
-const Colormap& ColormapController::colormap() const { return cm_; }
+const Colormap& ColormapWidget::colormap() const { return cm_; }
 
 } // namespace tomcat::gui

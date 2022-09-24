@@ -1,12 +1,12 @@
-#ifndef GUI_COLORMAP_CONTROLLER_H
-#define GUI_COLORMAP_CONTROLLER_H
+#ifndef GUI_COLORMAP_WIDGET_H
+#define GUI_COLORMAP_WIDGET_H
 
 #include "graphics/graph_node.hpp"
 #include "graphics/aesthetics.hpp"
 
 namespace tomcat::gui {
 
-class ColormapController : public GraphNode {
+class ColormapWidget : public GraphNode {
 
     ImPlotColormap curr_;
 
@@ -14,9 +14,9 @@ class ColormapController : public GraphNode {
 
 public:
 
-    ColormapController();
+    ColormapWidget();
 
-    ~ColormapController() override;
+    ~ColormapWidget() override;
 
     void renderIm() override;
 
@@ -25,4 +25,4 @@ public:
 
 } // namespace tomcat::gui
 
-#endif //GUI_COLORMAP_CONTROLLER_H
+#endif //GUI_COLORMAP_WIDGET_H
