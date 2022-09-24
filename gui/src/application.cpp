@@ -167,19 +167,16 @@ void Application::charCallback(GLFWwindow* /*window*/, unsigned int c) {
 }
 
 void Application::render() {
+    glClearColor(bg_color_.x, bg_color_.y, bg_color_.z, bg_color_.w);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    glClearColor(bg_color_.x, bg_color_.y, bg_color_.z, bg_color_.w);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    scene_->renderGl();
-
-    scene_->renderIm();
+    scene_->render();
 
     ImGui::Render();
-
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
     glfwSwapBuffers(glfw_window_);

@@ -7,7 +7,7 @@ namespace tomcat::gui {
 
 class Scene;
 
-class StatusbarItem : public DynamicGraphicsItem {
+class StatusbarItem : public GraphicsDataItem {
 
     bool visible_ = true;
 
@@ -21,7 +21,9 @@ public:
 
     void renderIm() override;
 
-    void renderGl() override;
+    void renderGl(const glm::mat4& view,
+                  const glm::mat4& projection,
+                  const RenderParams& params) override;
 
     bool consume(const PacketDataEvent& data) override;
 };

@@ -20,7 +20,7 @@
 
 namespace tomcat::gui {
 
-ReconItem::ReconItem(Scene& scene) : DynamicGraphicsItem(scene) {
+ReconItem::ReconItem(Scene& scene) : GraphicsDataItem(scene) {
     glGenVertexArrays(1, &vao_);
     glBindVertexArray(vao_);
     glGenBuffers(1, &vbo_);
@@ -98,10 +98,18 @@ void ReconItem::onWindowSizeChanged(int width, int /*height*/) {
 }
 
 void ReconItem::renderIm() {
-    cm_.renderIm();
+    auto& cmd = Colormap::data();
+    if (ImGui::BeginCombo("Colormap##Widget", cmd.GetName(cm_.get()))) {
+        for (auto idx : Colormap::options()) {
+            const char* name = cmd.GetName(idx);
+            if (ImGui::Selectable(name, cm_.get() == idx)) {
+                cm_.set(idx);
+            }
+        }
+        ImGui::EndCombo();
+    }
 
     ImGui::Checkbox("Auto Levels", &auto_levels_);
-
     float step_size = (max_val_ - min_val_) / 100.f;
     if (step_size < 0.01f) step_size = 0.01f; // avoid a tiny step size
     ImGui::DragFloatRange2("Min / Max", &min_val_, &max_val_, step_size,
@@ -139,7 +147,9 @@ void ReconItem::renderIm() {
     }
 }
 
-void ReconItem::renderGl() {
+void ReconItem::renderGl(const glm::mat4& view,
+                         const glm::mat4& projection,
+                         const RenderParams& /*params*/) {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
 
@@ -150,9 +160,9 @@ void ReconItem::renderGl() {
     solid_shader_->setFloat("minValue", min_val_);
     solid_shader_->setFloat("maxValue", max_val_);
 
-    cm_.colormap().bind();
+    cm_.bind();
 
-    const glm::mat4& view_matrix = scene_.camera().matrix();
+    matrix_ = projection * view;
 
     std::vector<Slice*> slices;
     for (auto& [slice_id, slice] : slices_) {
@@ -168,14 +178,14 @@ void ReconItem::renderGl() {
 
     // FIXME: why do we need to bind and unbind 3D texture?
     volume_->bind();
-    for (auto slice : slices) drawSlice(slice, view_matrix);
+    for (auto slice : slices) drawSlice(slice, view, projection);
     volume_->unbind();
 
-    cm_.colormap().unbind();
+    cm_.unbind();
 
     wireframe_shader_->use();
-    wireframe_shader_->setMat4("view", view_matrix);
-    wireframe_shader_->setMat4("projection", scene_.projection());
+    wireframe_shader_->setMat4("view", view);
+    wireframe_shader_->setMat4("projection", projection);
     wireframe_shader_->setVec4("color", glm::vec4(1.f, 1.f, 1.f, 0.2f));
 
     glBindVertexArray(cube_vao_);
@@ -187,7 +197,7 @@ void ReconItem::renderGl() {
     if (drag_machine_ != nullptr && drag_machine_->type() == DragType::rotator) {
         auto& rotator = *(SliceRotator*)drag_machine_.get();
         wireframe_shader_->setMat4(
-                "view", view_matrix * glm::translate(rotator.rot_base) * glm::scale(rotator.rot_end - rotator.rot_base));
+                "view", view * glm::translate(rotator.rot_base) * glm::scale(rotator.rot_end - rotator.rot_base));
         wireframe_shader_->setVec4("color", glm::vec4(1.f, 1.f, 1.f, 1.f));
         glBindVertexArray(line_vao_);
         glLineWidth(10.f);
@@ -206,8 +216,8 @@ void ReconItem::init() {
 }
 
 void ReconItem::setSliceData(std::vector<float>&& data,
-                                  const std::array<uint32_t, 2>& size,
-                                  int slice_idx) {
+                             const std::array<uint32_t, 2>& size,
+                             int slice_idx) {
     Slice* slice;
     if (slices_.find(slice_idx) != slices_.end()) {
         slice = slices_[slice_idx].get();
@@ -341,7 +351,7 @@ void ReconItem::initVolume() {
 }
 
 void ReconItem::updateHoveringSlice(float x, float y) {
-    auto inv_matrix = glm::inverse(scene_.projection() * scene_.camera().matrix());
+    auto inv_matrix = glm::inverse(matrix_);
     int slice_id = -1;
     float best_z = std::numeric_limits<float>::max();
     for (auto& [sid, slice] : slices_) {
@@ -382,14 +392,11 @@ void ReconItem::maybeSwitchDragMachine(ReconItem::DragType type) {
     }
 }
 
-void ReconItem::drawSlice(Slice* slice, const glm::mat4& view_matrix) {
-    // FIXME: bind an empty slice will result in warning:
-    //        UNSUPPORTED (log once): POSSIBLE ISSUE: unit 1 GLD_TEXTURE_INDEX_2D is
-    //        unloadable and bound to sampler type (Float) - using zero texture because texture unloadable
+void ReconItem::drawSlice(Slice* slice, const glm::mat4& view, const glm::mat4& projection) {
     slice->bind();
 
-    solid_shader_->setMat4("view", view_matrix);
-    solid_shader_->setMat4("projection", scene_.projection());
+    solid_shader_->setMat4("view", view);
+    solid_shader_->setMat4("projection", projection);
     solid_shader_->setMat4("orientationMatrix",
                       slice->orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0)));
     solid_shader_->setBool("hovered", slice->hovered());
@@ -487,10 +494,8 @@ void ReconItem::SliceTranslator::onDrag(glm::vec2 delta) {
         glm::vec3(o[2][0], o[2][1], o[2][2]) + 0.5f * (axis1 + axis2);
     auto end_point_normal = base_point_normal + normal;
 
-    auto a = comp_.scene().projection() * comp_.scene().camera().matrix() *
-             glm::vec4(base_point_normal, 1.0f);
-    auto b = comp_.scene().projection() * comp_.scene().camera().matrix() *
-             glm::vec4(end_point_normal, 1.0f);
+    auto a = comp_.matrix_ * glm::vec4(base_point_normal, 1.0f);
+    auto b = comp_.matrix_ * glm::vec4(end_point_normal, 1.0f);
     auto normal_delta = b - a;
     float difference =
         glm::dot(glm::vec2(normal_delta.x, normal_delta.y), delta);
@@ -512,7 +517,7 @@ ReconItem::SliceRotator::SliceRotator(ReconItem& comp, const glm::vec2& initial)
     : DragMachine(comp, initial, DragType::rotator) {
     // 1. need to identify the opposite axis
     // a) get the position within the slice
-    auto tf = comp.scene().projection() * comp.scene().camera().matrix();
+    auto tf = comp.matrix_;
     auto inv_matrix = glm::inverse(tf);
 
     auto slice = comp.hovered_slice();

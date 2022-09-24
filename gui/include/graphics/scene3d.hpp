@@ -3,12 +3,20 @@
 
 #include <memory>
 
-#include "camera.hpp"
 #include "graphics/scene.hpp"
+#include "graphics/camera.hpp"
 
 namespace tomcat::gui {
 
+class AxesItem;
+class ReconItem;
+class StatusbarItem;
+
 class Scene3d : public Scene {
+
+    std::unique_ptr<AxesItem> axes_item_;
+    std::unique_ptr<ReconItem> recon_item_;
+    std::unique_ptr<StatusbarItem> statusbar_item_;
 
 public:
 
@@ -17,6 +25,8 @@ public:
     ~Scene3d() override;
 
     void onFrameBufferSizeChanged(int width, int height) override;
+
+    void render() override;
 };
 
 }  // namespace tomcat::gui

@@ -62,7 +62,6 @@ set(SOURCE_NAMES
         "src/graphics/items/graphics_item.cpp"
         "src/graphics/items/recon_item.cpp"
         "src/graphics/items/statusbar_item.cpp"
-        "src/graphics/widgets/colormap_widget.cpp"
         ${IMGUI_SOURCE_FILES}
         ${IMPLOT_SOURCE_FILES}
         ${GL3W_BUILD_DIR}/src/gl3w.c

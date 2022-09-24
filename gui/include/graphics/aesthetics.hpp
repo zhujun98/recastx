@@ -17,6 +17,8 @@ class Colormap {
 
     static const std::set<ImPlotColormap> options_;
 
+    ImPlotColormap idx_;
+
     ColormapTexture<> texture_;
 
 public:
@@ -25,7 +27,7 @@ public:
 
     ~Colormap();
 
-    void updateTexture(ImPlotColormap map);
+    void updateTexture();
 
     void bind() const;
 
@@ -34,6 +36,10 @@ public:
     static const std::set<ImPlotColormap>& options();
 
     static const ImPlotColormapData& data();
+
+    [[nodiscard]] ImPlotColormap get() const { return idx_; }
+
+    void set(ImPlotColormap idx);
 };
 
 } // namespace tomcat::gui

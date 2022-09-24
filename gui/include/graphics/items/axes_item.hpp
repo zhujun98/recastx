@@ -10,7 +10,7 @@ namespace tomcat::gui {
 
 class Scene;
 
-class AxesItem : public StaticGraphicsItem {
+class AxesItem : public GraphicsItem {
 
     GLuint vao_;
     GLuint vbo_;
@@ -26,7 +26,9 @@ public:
 
     void renderIm() override;
 
-    void renderGl() override;
+    void renderGl(const glm::mat4& view,
+                  const glm::mat4& projection,
+                  const RenderParams& params) override;
 };
 
 }  // namespace tomcat::gui

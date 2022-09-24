@@ -8,7 +8,7 @@
 
 namespace tomcat::gui {
 
-AxesItem::AxesItem(Scene &scene) : StaticGraphicsItem(scene) {
+AxesItem::AxesItem(Scene &scene) : GraphicsItem(scene) {
     glGenVertexArrays(1, &vao_);
     glBindVertexArray(vao_);
 
@@ -45,16 +45,16 @@ void AxesItem::renderIm() {
     ImGui::Checkbox("Show axes", &visible_);
 }
 
-void AxesItem::renderGl() {
+void AxesItem::renderGl(const glm::mat4& view,
+                        const glm::mat4& projection,
+                        const RenderParams& params) {
     if (!visible_) return;
 
-    // TODO draw axes on screen, should have access to camera here
     shader_->use();
 
-    auto& camera = scene_.camera();
-    shader_->setFloat("scale", camera.distance());
-    shader_->setMat4("view", camera.matrix());
-    shader_->setMat4("projection", scene_.projection());
+    shader_->setFloat("scale", std::any_cast<float>(params.at("distance")));
+    shader_->setMat4("view", view);
+    shader_->setMat4("projection", projection);
 
     glBindVertexArray(vao_);
     glLineWidth(3.0f);

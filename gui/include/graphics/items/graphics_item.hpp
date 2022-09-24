@@ -2,6 +2,8 @@
 #define GUI_SCENE_ITEM_H
 
 #include <string>
+#include <unordered_map>
+#include <any>
 
 #include <imgui.h>
 #include <glm/glm.hpp>
@@ -13,20 +15,17 @@
 
 namespace tomcat::gui {
 
+class Camera;
+class Viewport;
 class Scene;
 
-class GraphicsItem : public GraphGlNode, public InputHandler {
+class GraphicsItem : public GraphNode, public InputHandler {
 
 public:
 
-    enum class ComponentType {
-        STATIC,
-        DYNAMIC
-    };
+    using RenderParams = std::unordered_map<std::string, std::any>;
 
 protected:
-
-    ComponentType type_;
 
     Scene& scene_;
 
@@ -35,36 +34,29 @@ protected:
 
 public:
 
-    GraphicsItem(ComponentType type, Scene& scene);
+    GraphicsItem(Scene& scene);
 
     ~GraphicsItem() override;
+
+    virtual void renderIm() = 0;
+
+    virtual void renderGl(const glm::mat4& view,
+                          const glm::mat4& projection,
+                          const RenderParams& params) = 0;
 
     virtual void init();
 
     virtual void onWindowSizeChanged(int width, int height);
-
-    [[nodiscard]] ComponentType type() const { return type_; }
 };
 
 
-class StaticGraphicsItem : public GraphicsItem {
+class GraphicsDataItem : public GraphicsItem {
 
 public:
 
-    explicit StaticGraphicsItem(Scene& scene);
+    explicit GraphicsDataItem(Scene& scene);
 
-    ~StaticGraphicsItem() override;
-
-};
-
-
-class DynamicGraphicsItem : public GraphicsItem {
-
-public:
-
-    explicit DynamicGraphicsItem(Scene& scene);
-
-    ~DynamicGraphicsItem() override;
+    ~GraphicsDataItem() override;
 
     virtual bool consume(const PacketDataEvent& data) = 0;
 };

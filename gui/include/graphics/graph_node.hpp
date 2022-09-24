@@ -22,18 +22,6 @@ public:
     [[nodiscard]] GraphNode *parent() const;
 
     void appendChildNode(GraphNode* node);
-
-    virtual void renderIm() = 0;
-
-};
-
-
-class GraphGlNode : public GraphNode {
-
-public:
-
-    virtual void renderGl() = 0;
-
 };
 
 } // namespace tomcat::gui

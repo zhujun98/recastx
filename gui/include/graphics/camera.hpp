@@ -16,7 +16,7 @@
 
 namespace tomcat::gui {
 
-class Camera : public GraphNode, public InputHandler {
+class Camera : public InputHandler {
 
     glm::vec3 pos_;
     glm::vec3 target_;
@@ -34,9 +34,6 @@ class Camera : public GraphNode, public InputHandler {
     float prev_y_ = -1.1f;
 
     bool dragging_ = false;
-    bool fixed_ = false;
-
-    void setPerspectiveView();
 
     void adjustPitch(float offset);
 
@@ -46,21 +43,21 @@ class Camera : public GraphNode, public InputHandler {
 
     Camera();
 
-    ~Camera() override;
+    virtual ~Camera();
 
     [[nodiscard]] const glm::mat4& matrix();
 
     [[nodiscard]] float distance() const;
 
     bool handleMouseButton(int button, int action) override;
-
     bool handleScroll(float offset) override;
-
     bool handleMouseMoved(float x, float y) override;
-
     bool handleKey(int key, int action, int mods) override;
 
-    void renderIm() override;
+    void setPerspectiveView();
+    void setFrontView();
+    void setTopView();
+    void setSideView();
 };
 
 } // namespace tomcat::gui

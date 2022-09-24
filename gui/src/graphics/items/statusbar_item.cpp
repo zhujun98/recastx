@@ -6,7 +6,7 @@
 namespace tomcat::gui {
 
 StatusbarItem::StatusbarItem(Scene& scene)
-    : DynamicGraphicsItem(scene) {}
+    : GraphicsDataItem(scene) {}
 
 StatusbarItem::~StatusbarItem() = default;
 
@@ -37,9 +37,11 @@ void StatusbarItem::renderIm() {
     }
 }
 
-void StatusbarItem::renderGl() {}
+void StatusbarItem::renderGl(const glm::mat4& /*view*/,
+                             const glm::mat4& /*projection*/,
+                             const RenderParams& /*params*/) {}
 
-bool StatusbarItem::consume(const tomcat::PacketDataEvent &data) {
+bool StatusbarItem::consume(const tomcat::PacketDataEvent& /*data*/) {
     return true;
 }
 

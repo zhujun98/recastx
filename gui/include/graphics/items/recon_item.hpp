@@ -9,7 +9,7 @@
 #include <string>
 
 #include "graphics/items/graphics_item.hpp"
-#include "graphics/widgets/colormap_widget.hpp"
+#include "graphics/aesthetics.hpp"
 #include "graphics/scene.hpp"
 #include "graphics/shader_program.hpp"
 #include "graphics/slice.hpp"
@@ -18,7 +18,7 @@
 
 namespace tomcat::gui {
 
-class ReconItem : public DynamicGraphicsItem {
+class ReconItem : public GraphicsDataItem {
 
     enum class DragType : int { none, rotator, translator};
 
@@ -65,10 +65,10 @@ class ReconItem : public DynamicGraphicsItem {
         glm::vec2 screen_direction;
     };
 
+    friend class SliceRotator;
+
     std::map<int, std::unique_ptr<Slice>> slices_;
     std::unique_ptr<Volume> volume_;
-
-    ColormapWidget cm_;
 
     GLuint vao_;
     GLuint vbo_;
@@ -89,9 +89,12 @@ class ReconItem : public DynamicGraphicsItem {
     Slice* dragged_slice_ = nullptr;
     Slice* hovered_slice_ = nullptr;
 
+    Colormap cm_;
     bool auto_levels_ = true;
     float min_val_;
     float max_val_;
+
+    glm::mat4 matrix_;
 
     bool show_statistics_ = true;
 
@@ -108,7 +111,7 @@ class ReconItem : public DynamicGraphicsItem {
 
     void maybeSwitchDragMachine(DragType type);
 
-    void drawSlice(Slice* slice, const glm::mat4& world_to_screen);
+    void drawSlice(Slice* slice, const glm::mat4& view, const glm::mat4& projection);
 
     void maybeUpdateMinMaxValues();
 
@@ -122,7 +125,9 @@ public:
 
     void renderIm() override;
 
-    void renderGl() override;
+    void renderGl(const glm::mat4& view,
+                  const glm::mat4& projection,
+                  const RenderParams& params) override;
 
     void init() override;
 

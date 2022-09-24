@@ -18,7 +18,7 @@ namespace tomcat::gui {
 class ShaderProgram;
 class Camera;
 
-class Scene : public GraphGlNode, public InputHandler, public Ticker {
+class Scene : public GraphNode, public InputHandler, public Ticker {
 
 protected:
 
@@ -27,12 +27,13 @@ protected:
     Client* client_;
 
     std::vector<std::unique_ptr<Viewport>> viewports_;
-    std::vector<std::shared_ptr<GraphicsItem>> components_;
-    std::vector<std::shared_ptr<StaticGraphicsItem>> static_components_;
-    std::vector<std::shared_ptr<DynamicGraphicsItem>> dynamic_components_;
+    std::vector<GraphicsItem*> items_;
+    std::vector<GraphicsDataItem*> data_items_;
 
     ImVec2 pos_;
     ImVec2 size_;
+
+    bool fixed_camera_ = false;
 
   public:
 
@@ -44,13 +45,11 @@ protected:
 
     void onWindowSizeChanged(int width, int height);
 
-    void renderIm() override;
-
-    void renderGl() override;
+    virtual void render() = 0;
 
     void init();
 
-    void addComponent(const std::shared_ptr<GraphicsItem>& component);
+    void addItem(GraphicsItem* item);
 
     bool handleMouseButton(int button, int action) override;
 
@@ -66,10 +65,6 @@ protected:
     void send(T&& packet) {
         client_->send(std::forward<T>(packet));
     }
-
-    [[nodiscard]] Camera& camera() { return *camera_; }
-
-    [[nodiscard]] const glm::mat4& projection() const { return viewports_[0]->projection(); }
 };
 
 }  // namespace tomcat::gui

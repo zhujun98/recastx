@@ -1,11 +1,13 @@
 #include "graphics/items/graphics_item.hpp"
+#include "graphics/scene.hpp"
 
 namespace tomcat::gui {
 
 // class GraphicsItem
 
-GraphicsItem::GraphicsItem(GraphicsItem::ComponentType type, Scene& scene)
-    : type_(type), scene_(scene) {}
+GraphicsItem::GraphicsItem(Scene& scene) : scene_(scene) {
+    scene_.addItem(this);
+}
 
 GraphicsItem::~GraphicsItem() = default;
 
@@ -13,18 +15,11 @@ void GraphicsItem::init() {}
 
 void GraphicsItem::onWindowSizeChanged(int width, int height) {}
 
-// class StaticGraphicsItem
+// class GraphicsDataItem
 
-StaticGraphicsItem::StaticGraphicsItem(Scene &scene)
-        : GraphicsItem(GraphicsItem::ComponentType::STATIC, scene) {}
+GraphicsDataItem::GraphicsDataItem(Scene &scene)
+    : GraphicsItem(scene) {}
 
-StaticGraphicsItem::~StaticGraphicsItem() = default;
-
-// class DynamicGraphicsItem
-
-DynamicGraphicsItem::DynamicGraphicsItem(Scene &scene)
-    : GraphicsItem(GraphicsItem::ComponentType::DYNAMIC, scene) {}
-
-DynamicGraphicsItem::~DynamicGraphicsItem() = default;
+GraphicsDataItem::~GraphicsDataItem() = default;
 
 } // namespace tomcat::gui
