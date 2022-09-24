@@ -2,11 +2,11 @@
 
 #include <spdlog/spdlog.h>
 
+#include "graphics/scene3d.hpp"
 #include "graphics/items/axes_item.hpp"
+#include "graphics/items/camera.hpp"
 #include "graphics/items/statusbar_item.hpp"
 #include "graphics/items/recon_item.hpp"
-#include "graphics/items/scene3d.hpp"
-#include "graphics/items/camera.hpp"
 
 namespace tomcat::gui {
 

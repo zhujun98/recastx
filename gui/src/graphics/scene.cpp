@@ -2,7 +2,7 @@
 
 #include <imgui.h>
 
-#include "graphics/items/scene.hpp"
+#include "graphics/scene.hpp"
 #include "graphics/items/camera.hpp"
 #include "graphics/shader_program.hpp"
 #include "graphics/style.hpp"

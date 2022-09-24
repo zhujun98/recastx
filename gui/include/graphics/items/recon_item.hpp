@@ -10,7 +10,7 @@
 
 #include "graphics/items/graphics_item.hpp"
 #include "graphics/items/colormap_controller.hpp"
-#include "graphics/items/scene.hpp"
+#include "graphics/scene.hpp"
 #include "graphics/shader_program.hpp"
 #include "graphics/slice.hpp"
 #include "graphics/textures.hpp"

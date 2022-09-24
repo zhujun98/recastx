@@ -50,6 +50,8 @@ set(SOURCE_NAMES
         "src/client.cpp"
         "src/util.cpp"
         "src/graphics/aesthetics.cpp"
+        "src/graphics/scene.cpp"
+        "src/graphics/scene3d.cpp"
         "src/graphics/graph_node.cpp"
         "src/graphics/shader_program.cpp"
         "src/graphics/slice.cpp"
@@ -59,8 +61,6 @@ set(SOURCE_NAMES
         "src/graphics/items/colormap_controller.cpp"
         "src/graphics/items/graphics_item.cpp"
         "src/graphics/items/recon_item.cpp"
-        "src/graphics/items/scene.cpp"
-        "src/graphics/items/scene3d.cpp"
         "src/graphics/items/statusbar_item.cpp"
         "src/graphics/items/camera.cpp"
         ${IMGUI_SOURCE_FILES}

@@ -4,10 +4,11 @@
 #include <memory>
 
 #include "graphics/items/graphics_item.hpp"
-#include "graphics/items/scene.hpp"
 #include "graphics/shader_program.hpp"
 
 namespace tomcat::gui {
+
+class Scene;
 
 class AxesItem : public StaticGraphicsItem {
 

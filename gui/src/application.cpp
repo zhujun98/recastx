@@ -6,7 +6,7 @@
 #include <implot.h>
 
 #include "application.hpp"
-#include "graphics/items/scene3d.hpp"
+#include "graphics/scene3d.hpp"
 #include "graphics/style.hpp"
 
 namespace tomcat::gui {
