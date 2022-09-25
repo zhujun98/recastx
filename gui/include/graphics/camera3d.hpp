@@ -1,22 +1,22 @@
-#ifndef GUI_SCENE_CAMERA3D_H
-#define GUI_SCENE_CAMERA3D_H
+#ifndef GUI_CAMERA_H
+#define GUI_CAMERA_H
 
 #include <map>
 #include <memory>
 #include <optional>
 #include <vector>
 
-#include "glm/glm.hpp"
-#include "glm/gtx/rotate_vector.hpp"
+#include <glm/glm.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 
-#include "input_handler.hpp"
 #include "graphics/graph_node.hpp"
+#include "input_handler.hpp"
 #include "path.hpp"
 #include "ticker.hpp"
 
 namespace tomcat::gui {
 
-class Camera : public GraphNode, public InputHandler {
+class Camera : public InputHandler {
 
     glm::vec3 pos_;
     glm::vec3 target_;
@@ -34,9 +34,6 @@ class Camera : public GraphNode, public InputHandler {
     float prev_y_ = -1.1f;
 
     bool dragging_ = false;
-    bool fixed_ = false;
-
-    void setPerspectiveView();
 
     void adjustPitch(float offset);
 
@@ -46,23 +43,25 @@ class Camera : public GraphNode, public InputHandler {
 
     Camera();
 
-    ~Camera() override;
+    virtual ~Camera();
 
     [[nodiscard]] const glm::mat4& matrix();
+
+    [[nodiscard]] const glm::mat4& rotationMatrix() { return rotation_; }
 
     [[nodiscard]] float distance() const;
 
     bool handleMouseButton(int button, int action) override;
-
     bool handleScroll(float offset) override;
-
     bool handleMouseMoved(float x, float y) override;
-
     bool handleKey(int key, int action, int mods) override;
 
-    void renderIm() override;
+    void setFrontView();
+    void setTopView();
+    void setSideView();
+    void setPerspectiveView();
 };
 
 } // namespace tomcat::gui
 
-#endif // GUI_SCENE_CAMERA3D_H
+#endif // GUI_CAMERA_H

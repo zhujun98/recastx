@@ -11,16 +11,18 @@
 
 #include "tomcat/tomcat.hpp"
 
-#include "graphics/nodes/recon_component.hpp"
-#include "graphics/nodes/camera.hpp"
+#include "graphics/items/recon_item.hpp"
 #include "graphics/aesthetics.hpp"
+#include "graphics/camera3d.hpp"
 #include "graphics/primitives.hpp"
 #include "graphics/style.hpp"
 #include "util.hpp"
 
 namespace tomcat::gui {
 
-ReconComponent::ReconComponent(Scene& scene) : DynamicSceneComponent(scene) {
+ReconItem::ReconItem(Scene& scene) : GraphicsDataItem(scene) {
+    scene.addItem(this);
+
     glGenVertexArrays(1, &vao_);
     glBindVertexArray(vao_);
     glGenBuffers(1, &vbo_);
@@ -53,10 +55,10 @@ ReconComponent::ReconComponent(Scene& scene) : DynamicSceneComponent(scene) {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
     auto solid_vert =
-#include "../shaders/solid_cube.vert"
+#include "../shaders/recon_cube.vert"
         ;
     auto solid_frag =
-#include "../shaders/solid_cube.frag"
+#include "../shaders/recon_cube.frag"
         ;
     solid_shader_ = std::make_unique<ShaderProgram>(solid_vert, solid_frag);
 
@@ -73,7 +75,7 @@ ReconComponent::ReconComponent(Scene& scene) : DynamicSceneComponent(scene) {
     maybeUpdateMinMaxValues();
 }
 
-ReconComponent::~ReconComponent() {
+ReconItem::~ReconItem() {
     glDeleteVertexArrays(1, &vao_);
     glDeleteBuffers(1, &vbo_);
 
@@ -85,23 +87,30 @@ ReconComponent::~ReconComponent() {
     glDeleteBuffers(1, &line_vbo_);
 }
 
-void ReconComponent::onWindowSizeChanged(int width, int /*height*/) {
-    pos_ = {
-        Style::IMGUI_WINDOW_MARGIN + Style::IMGUI_CONTROL_PANEL_WIDTH + Style::IMGUI_WINDOW_SPACING,
-        Style::IMGUI_WINDOW_MARGIN
-    };
+void ReconItem::onWindowSizeChanged(int width, int height) {
     size_ = {
-        static_cast<float>(width) - pos_[0]
-            - Style::IMGUI_WINDOW_MARGIN - Style::IMGUI_WINDOW_SPACING - Style::IMGUI_ROTATING_AXIS_WIDTH,
-        Style::IMGUI_TOP_PANEL_HEIGHT
+        Style::TOP_PANEL_WIDTH * static_cast<float>(width),
+        Style::TOP_PANEL_HEIGHT * static_cast<float>(height)
+    };
+    pos_ = {
+        Style::MARGIN + Style::ICON_WIDTH * (float)width + Style::SPACING,
+        Style::MARGIN
     };
 }
 
-void ReconComponent::renderIm() {
-    cm_.renderIm();
+void ReconItem::renderIm() {
+    auto& cmd = Colormap::data();
+    if (ImGui::BeginCombo("Colormap##Widget", cmd.GetName(cm_.get()))) {
+        for (auto idx : Colormap::options()) {
+            const char* name = cmd.GetName(idx);
+            if (ImGui::Selectable(name, cm_.get() == idx)) {
+                cm_.set(idx);
+            }
+        }
+        ImGui::EndCombo();
+    }
 
     ImGui::Checkbox("Auto Levels", &auto_levels_);
-
     float step_size = (max_val_ - min_val_) / 100.f;
     if (step_size < 0.01f) step_size = 0.01f; // avoid a tiny step size
     ImGui::DragFloatRange2("Min / Max", &min_val_, &max_val_, step_size,
@@ -118,7 +127,7 @@ void ReconComponent::renderIm() {
         ImGui::SetNextWindowPos(pos_);
         ImGui::SetNextWindowSize(size_);
 
-        ImGui::Begin("Statistics##ReconComponent", NULL, ImGuiWindowFlags_NoDecoration);
+        ImGui::Begin("Statistics##ReconItem", NULL, ImGuiWindowFlags_NoDecoration);
 
         ImPlot::BeginSubplots("##Histograms", 1, 3, ImVec2(-1.f, -1.f));
         for (auto &[slice_id, slice]: slices_) {
@@ -139,7 +148,9 @@ void ReconComponent::renderIm() {
     }
 }
 
-void ReconComponent::renderGl() {
+void ReconItem::renderGl(const glm::mat4& view,
+                         const glm::mat4& projection,
+                         const RenderParams& /*params*/) {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
 
@@ -150,9 +161,9 @@ void ReconComponent::renderGl() {
     solid_shader_->setFloat("minValue", min_val_);
     solid_shader_->setFloat("maxValue", max_val_);
 
-    cm_.colormap().bind();
+    cm_.bind();
 
-    const glm::mat4& view_matrix = scene_.camera().matrix();
+    matrix_ = projection * view;
 
     std::vector<Slice*> slices;
     for (auto& [slice_id, slice] : slices_) {
@@ -168,14 +179,14 @@ void ReconComponent::renderGl() {
 
     // FIXME: why do we need to bind and unbind 3D texture?
     volume_->bind();
-    for (auto slice : slices) drawSlice(slice, view_matrix);
+    for (auto slice : slices) drawSlice(slice, view, projection);
     volume_->unbind();
 
-    cm_.colormap().unbind();
+    cm_.unbind();
 
     wireframe_shader_->use();
-    wireframe_shader_->setMat4("view", view_matrix);
-    wireframe_shader_->setMat4("projection", scene_.projection());
+    wireframe_shader_->setMat4("view", view);
+    wireframe_shader_->setMat4("projection", projection);
     wireframe_shader_->setVec4("color", glm::vec4(1.f, 1.f, 1.f, 0.2f));
 
     glBindVertexArray(cube_vao_);
@@ -187,7 +198,7 @@ void ReconComponent::renderGl() {
     if (drag_machine_ != nullptr && drag_machine_->type() == DragType::rotator) {
         auto& rotator = *(SliceRotator*)drag_machine_.get();
         wireframe_shader_->setMat4(
-                "view", view_matrix * glm::translate(rotator.rot_base) * glm::scale(rotator.rot_end - rotator.rot_base));
+                "view", view * glm::translate(rotator.rot_base) * glm::scale(rotator.rot_end - rotator.rot_base));
         wireframe_shader_->setVec4("color", glm::vec4(1.f, 1.f, 1.f, 1.f));
         glBindVertexArray(line_vao_);
         glLineWidth(10.f);
@@ -197,7 +208,7 @@ void ReconComponent::renderGl() {
     glDisable(GL_BLEND);
 }
 
-void ReconComponent::init() {
+void ReconItem::init() {
     scene_.send(RemoveAllSlicesPacket());
 
     for (auto& slice : slices_) {
@@ -205,9 +216,9 @@ void ReconComponent::init() {
     }
 }
 
-void ReconComponent::setSliceData(std::vector<float>&& data,
-                                  const std::array<uint32_t, 2>& size,
-                                  int slice_idx) {
+void ReconItem::setSliceData(std::vector<float>&& data,
+                             const std::array<uint32_t, 2>& size,
+                             int slice_idx) {
     Slice* slice;
     if (slices_.find(slice_idx) != slices_.end()) {
         slice = slices_[slice_idx].get();
@@ -223,13 +234,13 @@ void ReconComponent::setSliceData(std::vector<float>&& data,
     maybeUpdateMinMaxValues();
 }
 
-void ReconComponent::setVolumeData(std::vector<float>&& data, const std::array<uint32_t, 3>& size) {
+void ReconItem::setVolumeData(std::vector<float>&& data, const std::array<uint32_t, 3>& size) {
     // FIXME: replace uint32_t with size_t in Packet
     volume_->setData(std::move(data), {size[0], size[1], size[2]});
     maybeUpdateMinMaxValues();
 }
 
-bool ReconComponent::consume(const tomcat::PacketDataEvent &data) {
+bool ReconItem::consume(const tomcat::PacketDataEvent &data) {
     switch (data.first) {
         case PacketDesc::slice_data: {
             auto packet = dynamic_cast<SliceDataPacket*>(data.second.get());
@@ -249,7 +260,7 @@ bool ReconComponent::consume(const tomcat::PacketDataEvent &data) {
     }
 }
 
-bool ReconComponent::handleMouseButton(int button, int action) {
+bool ReconItem::handleMouseButton(int button, int action) {
     if (action == GLFW_PRESS) {
         if (button == GLFW_MOUSE_BUTTON_LEFT) {
             if (hovered_slice_ != nullptr) {
@@ -289,7 +300,7 @@ bool ReconComponent::handleMouseButton(int button, int action) {
     return false;
 }
 
-bool ReconComponent::handleMouseMoved(float x, float y) {
+bool ReconItem::handleMouseMoved(float x, float y) {
     // update slice that is being hovered over
     y = -y;
 
@@ -313,13 +324,13 @@ bool ReconComponent::handleMouseMoved(float x, float y) {
     return false;
 }
 
-void ReconComponent::initSlices() {
+void ReconItem::initSlices() {
     for (int i = 0; i < 3; ++i) slices_[i] = std::make_unique<Slice>(i);
 
     resetSlices();
 }
 
-void ReconComponent::resetSlices() {
+void ReconItem::resetSlices() {
     // slice along axis 0 = x
     slices_[0]->setOrientation(glm::vec3(0.0f, -1.0f, -1.0f),
                                glm::vec3(0.0f, 2.0f, 0.0f),
@@ -336,12 +347,12 @@ void ReconComponent::resetSlices() {
                                glm::vec3(0.0f, 2.0f, 0.0f));
 }
 
-void ReconComponent::initVolume() {
+void ReconItem::initVolume() {
     volume_ = std::make_unique<Volume>();
 }
 
-void ReconComponent::updateHoveringSlice(float x, float y) {
-    auto inv_matrix = glm::inverse(scene_.projection() * scene_.camera().matrix());
+void ReconItem::updateHoveringSlice(float x, float y) {
+    auto inv_matrix = glm::inverse(matrix_);
     int slice_id = -1;
     float best_z = std::numeric_limits<float>::max();
     for (auto& [sid, slice] : slices_) {
@@ -365,7 +376,7 @@ void ReconComponent::updateHoveringSlice(float x, float y) {
     }
 }
 
-void ReconComponent::maybeSwitchDragMachine(ReconComponent::DragType type) {
+void ReconItem::maybeSwitchDragMachine(ReconItem::DragType type) {
     if (drag_machine_ == nullptr || drag_machine_->type() != type) {
         switch (type) {
             case DragType::translator:
@@ -382,14 +393,11 @@ void ReconComponent::maybeSwitchDragMachine(ReconComponent::DragType type) {
     }
 }
 
-void ReconComponent::drawSlice(Slice* slice, const glm::mat4& view_matrix) {
-    // FIXME: bind an empty slice will result in warning:
-    //        UNSUPPORTED (log once): POSSIBLE ISSUE: unit 1 GLD_TEXTURE_INDEX_2D is
-    //        unloadable and bound to sampler type (Float) - using zero texture because texture unloadable
+void ReconItem::drawSlice(Slice* slice, const glm::mat4& view, const glm::mat4& projection) {
     slice->bind();
 
-    solid_shader_->setMat4("view", view_matrix);
-    solid_shader_->setMat4("projection", scene_.projection());
+    solid_shader_->setMat4("view", view);
+    solid_shader_->setMat4("projection", projection);
     solid_shader_->setMat4("orientationMatrix",
                       slice->orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0)));
     solid_shader_->setBool("hovered", slice->hovered());
@@ -401,7 +409,7 @@ void ReconComponent::drawSlice(Slice* slice, const glm::mat4& view_matrix) {
     slice->unbind();
 }
 
-void ReconComponent::maybeUpdateMinMaxValues() {
+void ReconItem::maybeUpdateMinMaxValues() {
     if (!auto_levels_) return;
 
     auto overall_min = std::numeric_limits<float>::max();
@@ -420,25 +428,25 @@ void ReconComponent::maybeUpdateMinMaxValues() {
     max_val_ = max_v > overall_max ? max_v : overall_max;
 }
 
-// ReconComponent::DragMachine
+// ReconItem::DragMachine
 
-ReconComponent::DragMachine::DragMachine(ReconComponent& comp, const glm::vec2& initial, DragType type)
+ReconItem::DragMachine::DragMachine(ReconItem& comp, const glm::vec2& initial, DragType type)
     : comp_(comp), initial_(initial), type_(type) {}
 
-ReconComponent::DragMachine::~DragMachine() = default;
+ReconItem::DragMachine::~DragMachine() = default;
 
-// ReconComponent::SliceTranslator
+// ReconItem::SliceTranslator
 
-ReconComponent::SliceTranslator::SliceTranslator(ReconComponent &comp, const glm::vec2& initial)
+ReconItem::SliceTranslator::SliceTranslator(ReconItem &comp, const glm::vec2& initial)
     : DragMachine(comp, initial, DragType::translator) {}
 
-ReconComponent::SliceTranslator::~SliceTranslator() = default;
+ReconItem::SliceTranslator::~SliceTranslator() = default;
 
-void ReconComponent::SliceTranslator::onDrag(glm::vec2 delta) {
+void ReconItem::SliceTranslator::onDrag(glm::vec2 delta) {
     // 1) what are we dragging, and does it have data?
     // if it does then we need to make a new slice
     // else we drag the current slice along the normal
-    if (!comp_.dragged_slice()) {
+    if (comp_.draggedSlice() == nullptr) {
         std::unique_ptr<Slice> new_slice;
         int id = comp_.generate_slice_idx();
         int to_remove = -1;
@@ -451,9 +459,9 @@ void ReconComponent::SliceTranslator::onDrag(glm::vec2 delta) {
                     to_remove = the_slice->id();
                     // FIXME need to generate a new id and upon 'popping'
                     // send a UpdateSlice packet
-                    comp_.dragged_slice() = new_slice.get();
+                    comp_.setDraggedSlice(new_slice.get());
                 } else {
-                    comp_.dragged_slice() = the_slice.get();
+                    comp_.setDraggedSlice(the_slice.get());
                 }
                 break;
             }
@@ -467,13 +475,13 @@ void ReconComponent::SliceTranslator::onDrag(glm::vec2 delta) {
             auto packet = RemoveSlicePacket(to_remove);
             comp_.scene().send(packet);
         }
-        if (!comp_.dragged_slice()) {
+        if (comp_.draggedSlice() == nullptr) {
             std::cout << "WARNING: No dragged slice found." << std::endl;
             return;
         }
     }
 
-    auto slice = comp_.dragged_slice();
+    Slice* slice = comp_.draggedSlice();
     auto& o = slice->orientation4();
 
     auto axis1 = glm::vec3(o[0][0], o[0][1], o[0][2]);
@@ -487,10 +495,8 @@ void ReconComponent::SliceTranslator::onDrag(glm::vec2 delta) {
         glm::vec3(o[2][0], o[2][1], o[2][2]) + 0.5f * (axis1 + axis2);
     auto end_point_normal = base_point_normal + normal;
 
-    auto a = comp_.scene().projection() * comp_.scene().camera().matrix() *
-             glm::vec4(base_point_normal, 1.0f);
-    auto b = comp_.scene().projection() * comp_.scene().camera().matrix() *
-             glm::vec4(end_point_normal, 1.0f);
+    auto a = comp_.matrix_ * glm::vec4(base_point_normal, 1.0f);
+    auto b = comp_.matrix_ * glm::vec4(end_point_normal, 1.0f);
     auto normal_delta = b - a;
     float difference =
         glm::dot(glm::vec2(normal_delta.x, normal_delta.y), delta);
@@ -506,17 +512,17 @@ void ReconComponent::SliceTranslator::onDrag(glm::vec2 delta) {
     o[2][2] += dx[2];
 }
 
-// ReconComponent::SliceRotator
+// ReconItem::SliceRotator
 
-ReconComponent::SliceRotator::SliceRotator(ReconComponent& comp, const glm::vec2& initial)
+ReconItem::SliceRotator::SliceRotator(ReconItem& comp, const glm::vec2& initial)
     : DragMachine(comp, initial, DragType::rotator) {
     // 1. need to identify the opposite axis
     // a) get the position within the slice
-    auto tf = comp.scene().projection() * comp.scene().camera().matrix();
+    auto tf = comp.matrix_;
     auto inv_matrix = glm::inverse(tf);
 
-    auto slice = comp.hovered_slice();
-    assert(slice);
+    Slice* slice = comp.hoveredSlice();
+    assert(slice != nullptr);
     auto o = slice->orientation4();
 
     auto maybe_point = intersectionPoint(inv_matrix, o, initial_);
@@ -570,13 +576,13 @@ ReconComponent::SliceRotator::SliceRotator(ReconComponent& comp, const glm::vec2
     screen_direction = glm::normalize(from - to);
 }
 
-ReconComponent::SliceRotator::~SliceRotator() = default;
+ReconItem::SliceRotator::~SliceRotator() = default;
 
-void ReconComponent::SliceRotator::onDrag(glm::vec2 delta) {
+void ReconItem::SliceRotator::onDrag(glm::vec2 delta) {
     // 1) what are we dragging, and does it have data?
     // if it does then we need to make a new slice
     // else we drag the current slice along the normal
-    if (!comp_.dragged_slice()) {
+    if (comp_.draggedSlice() == nullptr) {
         std::unique_ptr<Slice> new_slice;
         int id = comp_.generate_slice_idx();
         int to_remove = -1;
@@ -589,9 +595,9 @@ void ReconComponent::SliceRotator::onDrag(glm::vec2 delta) {
                     to_remove = the_slice->id();
                     // FIXME need to generate a new id and upon 'popping'
                     // send a UpdateSlice packet
-                    comp_.dragged_slice() = new_slice.get();
+                    comp_.setDraggedSlice(new_slice.get());
                 } else {
-                    comp_.dragged_slice() = the_slice.get();
+                    comp_.setDraggedSlice(the_slice.get());
                 }
                 break;
             }
@@ -605,10 +611,10 @@ void ReconComponent::SliceRotator::onDrag(glm::vec2 delta) {
             auto packet = RemoveSlicePacket(to_remove);
             comp_.scene().send(packet);
         }
-        assert(comp_.dragged_slice());
+        assert(comp_.draggedSlice() != nullptr);
     }
 
-    auto slice = comp_.dragged_slice();
+    Slice* slice = comp_.draggedSlice();
     auto& o = slice->orientation4();
 
     auto axis1 = glm::vec3(o[0][0], o[0][1], o[0][2]);

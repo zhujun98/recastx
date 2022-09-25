@@ -1,12 +1,12 @@
-#include "GL/gl3w.h"
-#include "GLFW/glfw3.h"
-#include "imgui.h"
-#include "backends/imgui_impl_opengl3.h"
-#include "backends/imgui_impl_glfw.h"
-#include "implot.h"
+#include <GL/gl3w.h>
+#include <GLFW/glfw3.h>
+#include <imgui.h>
+#include <backends/imgui_impl_opengl3.h>
+#include <backends/imgui_impl_glfw.h>
+#include <implot.h>
 
 #include "application.hpp"
-#include "graphics/nodes/scene3d.hpp"
+#include "graphics/scene3d.hpp"
 #include "graphics/style.hpp"
 
 namespace tomcat::gui {
@@ -167,19 +167,16 @@ void Application::charCallback(GLFWwindow* /*window*/, unsigned int c) {
 }
 
 void Application::render() {
+    glClearColor(bg_color_.x, bg_color_.y, bg_color_.z, bg_color_.w);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    glClearColor(bg_color_.x, bg_color_.y, bg_color_.z, bg_color_.w);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    scene_->renderGl();
-
-    scene_->renderIm();
+    scene_->render();
 
     ImGui::Render();
-
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
     glfwSwapBuffers(glfw_window_);

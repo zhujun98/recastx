@@ -1,8 +1,7 @@
 #include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
-#include <imgui.h>
 
-#include "graphics/nodes/camera.hpp"
+#include "graphics/camera3d.hpp"
 
 namespace tomcat::gui {
 
@@ -12,9 +11,7 @@ Camera::Camera() : target_( {0.f, 0.f, 0.f}) {
 Camera::~Camera() = default;
 
 const glm::mat4& Camera::matrix() {
-    if (view_) { return view_.value(); }
-
-    view_ = glm::lookAt(pos_, target_, up_) * rotation_;
+    if (!view_) view_ = glm::lookAt(pos_, target_, up_) * rotation_;
     return view_.value();
 }
 
@@ -46,11 +43,9 @@ bool Camera::handleMouseMoved(float x, float y) {
     prev_y_ = y;
 
     if (dragging_) {
-        if (!fixed_) {
-            adjustPitch(y_offset * mouse_move_sensitivity_);
-            adjustYaw(x_offset * mouse_move_sensitivity_);
-            view_.reset();
-        }
+        adjustPitch(y_offset * mouse_move_sensitivity_);
+        adjustYaw(x_offset * mouse_move_sensitivity_);
+        view_.reset();
         return true;
     }
 
@@ -87,50 +82,29 @@ bool Camera::handleKey(int key, int action, int /* mods */) {
     return false;
 }
 
-void Camera::renderIm() {
-    ImGui::Checkbox("Fix camera", &fixed_);
-
-    if (ImGui::Button("X-Y")) {
-        rotation_ = glm::mat4(1.0f);
-        pos_ = target_;
-        pos_.z = 5.0;
-        up_ = glm::vec3(0.0f, 1.0f, 0.0f);
-        right_ = glm::vec3(1.0f, 0.0f, 0.0f);
-        view_.reset();
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("Y-Z")) {
-        rotation_ = glm::mat4(1.0f);
-        pos_ = target_;
-        pos_.x += 5.0;
-        up_ = glm::vec3(0.0f, 0.0f, 1.0f);
-        right_ = glm::vec3(0.0f, 1.0f, 0.0f);
-        view_.reset();
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("X-Z")) {
-        rotation_ = glm::mat4(1.0f);
-        pos_ = target_;
-        pos_.y -= 5.0;
-        up_ = glm::vec3(0.0f, 0.0f, 1.0f);
-        right_ = glm::vec3(1.0f, 0.0f, 0.0f);
-        view_.reset();
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("Perspective")) {
-        setPerspectiveView();
-    }
-}
-
-void Camera::setPerspectiveView() {
+void Camera::setFrontView() {
     rotation_ = glm::mat4(1.0f);
     pos_ = target_;
-    pos_.z += 5.0;
-    pos_.y += 2.5;
-    pos_.x += 2.5;
+    pos_.z = 5.0;
     up_ = glm::vec3(0.0f, 1.0f, 0.0f);
     right_ = glm::vec3(1.0f, 0.0f, 0.0f);
     view_.reset();
+}
+
+void Camera::setTopView() {
+    setFrontView();
+    adjustPitch(glm::radians(90.f));
+}
+
+void Camera::setSideView() {
+    setFrontView();
+    adjustYaw(glm::radians(90.f));
+}
+
+void Camera::setPerspectiveView() {
+    setFrontView();
+    adjustYaw(glm::radians(-45.f));
+    adjustPitch(glm::radians(-30.f));
 }
 
 void Camera::adjustPitch(float offset) {

@@ -7,8 +7,9 @@
 #include "GL/gl3w.h"
 #include "glm/glm.hpp"
 
-#include "./scene_component.hpp"
+#include "graphics/items/graphics_item.hpp"
 #include "graphics/graph_node.hpp"
+#include "graphics/viewport.hpp"
 #include "ticker.hpp"
 #include "client.hpp"
 
@@ -17,7 +18,7 @@ namespace tomcat::gui {
 class ShaderProgram;
 class Camera;
 
-class Scene : public GraphGlNode, public InputHandler, public Ticker {
+class Scene : public GraphNode, public InputHandler, public Ticker {
 
 protected:
 
@@ -25,16 +26,13 @@ protected:
     std::unique_ptr<Camera> camera_;
     Client* client_;
 
-    std::vector<std::shared_ptr<SceneComponent>> components_;
-    std::vector<std::shared_ptr<StaticSceneComponent>> static_components_;
-    std::vector<std::shared_ptr<DynamicSceneComponent>> dynamic_components_;
+    std::vector<GraphicsItem*> items_;
+    std::vector<GraphicsDataItem*> data_items_;
 
-    int width_ = 0;
-    int height_ = 0;
     ImVec2 pos_;
     ImVec2 size_;
 
-    glm::mat4 projection_;
+    bool fixed_camera_ = false;
 
   public:
 
@@ -42,17 +40,15 @@ protected:
 
     ~Scene() override;
 
-    void onFrameBufferSizeChanged(int width, int height);
+    virtual void onFrameBufferSizeChanged(int width, int height) = 0;
 
     void onWindowSizeChanged(int width, int height);
 
-    void renderIm() override;
-
-    void renderGl() override;
+    virtual void render() = 0;
 
     void init();
 
-    void addComponent(const std::shared_ptr<SceneComponent>& component);
+    void addItem(GraphicsItem* item);
 
     bool handleMouseButton(int button, int action) override;
 
@@ -65,13 +61,9 @@ protected:
     void tick(double time_elapsed) override;
 
     template <typename T>
-    void send(T&& packet) {
+    void send(T&& packet) const {
         client_->send(std::forward<T>(packet));
     }
-
-    [[nodiscard]] Camera& camera() { return *camera_; }
-
-    [[nodiscard]] const glm::mat4& projection() const { return projection_; }
 };
 
 }  // namespace tomcat::gui

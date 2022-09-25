@@ -8,8 +8,8 @@
 #include <imgui.h>
 
 #include "application.hpp"
+#include "graphics/scene3d.hpp"
 #include "client.hpp"
-#include "graphics/nodes/scene3d.hpp"
 
 int main(int argc, char** argv) {
     using namespace tomcat::gui;

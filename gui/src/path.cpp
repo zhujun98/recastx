@@ -4,7 +4,8 @@
 #include <numeric>
 #include <vector>
 
-#include "glm/glm.hpp"
+#include <glm/glm.hpp>
+
 #include "path.hpp"
 
 namespace tomcat::gui {
@@ -134,7 +135,7 @@ Eigen::RowVector3f Path3::operator()(float param) const {
 
     // Compute path points as
     //     path(s) = p[k] + s(p[k+1] - p[k]) + s(1-s)((1-s) a[k] + s b[k]),
-    // where p = nodes, s = param in [0, 1], and a, b as below.
+    // where p = items, s = param in [0, 1], and a, b as below.
     // See https://en.wikipedia.org/wiki/Spline_interpolation
     return nodes().row(piece) +
            s * (nodes().row(piece + 1) - nodes().row(piece)) +
@@ -152,7 +153,7 @@ operator()(Eigen::VectorXf const& params) const {
 }
 
 std::ostream& operator<<(std::ostream& out, Path3 const& p) {
-    out << "Path3, using nodes" << std::endl
+    out << "Path3, using items" << std::endl
         << p.nodes() << std::endl
         << "and " << p.bdry_conds();
     return out;
@@ -164,7 +165,7 @@ Eigen::MatrixXf Path3::system_matrix(bdry_cond bc_left,
                                      bdry_cond bc_right) const {
     // Return the matrix of the equation system for the tangents of the path
     // at
-    // the given nodes.
+    // the given items.
     Eigen::DenseIndex n_nodes = num_nodes();
     Eigen::MatrixXf sys_mat = Eigen::MatrixXf::Zero(n_nodes, n_nodes);
 
@@ -210,13 +211,13 @@ Eigen::VectorXf Path3::system_rhs(bdry_cond bc_left, bdry_cond bc_right,
                                   int dim) const {
     // Return the right-hand side of the equation system for the tangents of
     // the
-    // path at the given nodes.
+    // path at the given items.
     Eigen::Matrix<float, Eigen::Dynamic, 3> nds = nodes();
     Eigen::DenseIndex n_nodes = nds.rows();
     Eigen::VectorXf sys_rhs(n_nodes);
 
     // All equations except the first and last have 3.0 times the difference
-    // between the next and previous nodes
+    // between the next and previous items
     // as right-hand sides.
     for (Eigen::DenseIndex i = 1; i < n_nodes - 1; ++i) {
         sys_rhs(i) = 3.0 * (nds(i + 1, dim) - nds(i - 1, dim));

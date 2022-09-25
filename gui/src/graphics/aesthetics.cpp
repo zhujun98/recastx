@@ -14,7 +14,9 @@ const std::set<ImPlotColormap> Colormap::options_ {
 
 };
 
-Colormap::Colormap() = default;
+Colormap::Colormap() : idx_(*Colormap::options().begin()) {
+    updateTexture();
+}
 
 Colormap::~Colormap() = default;
 
@@ -22,11 +24,11 @@ void Colormap::bind() const { texture_.bind(); }
 
 void Colormap::unbind() const { texture_.unbind(); }
 
-void Colormap::updateTexture(ImPlotColormap map) {
+void Colormap::updateTexture() {
     auto& cmd = Colormap::data();
-    int samples = cmd.TableSizes[map];
+    int samples = cmd.TableSizes[idx_];
     std::vector<unsigned char> data;
-    int offset = cmd.TableOffsets[map];
+    int offset = cmd.TableOffsets[idx_];
     for (int i = offset; i < offset + samples; ++i) {
         ImVec4 rgb = ImGui::ColorConvertU32ToFloat4(cmd.Tables[i]);
         data.push_back(static_cast<unsigned char>(255 * rgb.x));
@@ -43,6 +45,13 @@ const std::set<ImPlotColormap>& Colormap::options() {
 const ImPlotColormapData& Colormap::data() {
     ImPlotContext& gp = *(ImPlot::GetCurrentContext());
     return gp.ColormapData;
+}
+
+void Colormap::set(ImPlotColormap idx) {
+    if (idx_ != idx) {
+        idx_ = idx;
+        updateTexture();
+    }
 }
 
 } // namespace tomcat::gui
