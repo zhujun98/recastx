@@ -1,5 +1,5 @@
-#ifndef GUI_VIEWPORT_HPP
-#define GUI_VIEWPORT_HPP
+#ifndef GUI_VIEWPORT_H
+#define GUI_VIEWPORT_H
 
 #include <optional>
 
@@ -38,4 +38,4 @@ public:
 
 } // namespace tomcat::gui
 
-#endif //GUI_VIEWPORT_HPP
+#endif //GUI_VIEWPORT_H

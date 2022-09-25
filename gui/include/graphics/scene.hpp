@@ -4,8 +4,8 @@
 #include <memory>
 #include <vector>
 
-#include "GL/gl3w.h"
-#include "glm/glm.hpp"
+#include <GL/gl3w.h>
+#include <glm/glm.hpp>
 
 #include "graphics/items/graphics_item.hpp"
 #include "graphics/graph_node.hpp"

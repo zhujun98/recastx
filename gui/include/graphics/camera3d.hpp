@@ -1,5 +1,5 @@
-#ifndef GUI_CAMERA_H
-#define GUI_CAMERA_H
+#ifndef GUI_CAMERA3D_H
+#define GUI_CAMERA3D_H
 
 #include <map>
 #include <memory>
@@ -64,4 +64,4 @@ class Camera : public InputHandler {
 
 } // namespace tomcat::gui
 
-#endif // GUI_CAMERA_H
+#endif // GUI_CAMERA3D_H
