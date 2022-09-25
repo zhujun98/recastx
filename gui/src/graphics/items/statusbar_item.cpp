@@ -35,6 +35,12 @@ void StatusbarItem::renderIm() {
         ImGui::SetNextWindowSize(size_);
 
         ImGui::Begin("Status bar", NULL, ImGuiWindowFlags_NoDecoration);
+
+        auto& io = ImGui::GetIO();
+        ImGui::Text("GUI FPS: %.1f", io.Framerate);
+        ImGui::Text("Tomogram (update) FPS: %.1f",
+                    std::any_cast<double>(scene_.getStatus("tomoUpdateFrameRate")));
+
         ImGui::End();
 
         ImGui::PopStyleColor();

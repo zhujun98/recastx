@@ -44,11 +44,11 @@ set(IMPLOT_SOURCE_FILES
 # build
 set(SOURCE_NAMES
         "src/application.cpp"
+        "src/client.cpp"
         "src/main.cpp"
         "src/math_common.cpp"
         "src/path.cpp"
-        "src/client.cpp"
-        "src/util.cpp"
+        "src/utils.cpp"
         "src/graphics/aesthetics.cpp"
         "src/graphics/camera3d.cpp"
         "src/graphics/scene.cpp"

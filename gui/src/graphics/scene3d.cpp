@@ -25,6 +25,12 @@ Scene3d::Scene3d(Client* client)
 
 Scene3d::~Scene3d() = default;
 
+void Scene3d::init() {
+    Scene::init();
+
+    scene_status_["tomoUpdateFrameRate"] = 0.;
+}
+
 void Scene3d::onFrameBufferSizeChanged(int width, int height) {
     viewport_->update(0, 0, width, height);
 

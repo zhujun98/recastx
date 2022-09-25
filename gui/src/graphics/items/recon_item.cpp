@@ -2,21 +2,19 @@
 
 #include <spdlog/spdlog.h>
 
-#include "glm/gtc/constants.hpp"
-#include "glm/gtx/rotate_vector.hpp"
-#include "GL/gl3w.h"
-#include "GLFW/glfw3.h"
-#include "imgui.h"
-#include "implot.h"
-
-#include "tomcat/tomcat.hpp"
+#include <glm/gtc/constants.hpp>
+#include <glm/gtx/rotate_vector.hpp>
+#include <GL/gl3w.h>
+#include <GLFW/glfw3.h>
+#include <imgui.h>
+#include <implot.h>
+#include <tomcat/tomcat.hpp>
 
 #include "graphics/items/recon_item.hpp"
 #include "graphics/aesthetics.hpp"
 #include "graphics/camera3d.hpp"
 #include "graphics/primitives.hpp"
 #include "graphics/style.hpp"
-#include "util.hpp"
 
 namespace tomcat::gui {
 
@@ -146,6 +144,8 @@ void ReconItem::renderIm() {
 
         ImGui::End();
     }
+
+    scene_.setStatus("tomoUpdateFrameRate", fps_counter_.frameRate());
 }
 
 void ReconItem::renderGl(const glm::mat4& view,
@@ -252,6 +252,7 @@ bool ReconItem::consume(const tomcat::PacketDataEvent &data) {
             auto packet = dynamic_cast<VolumeDataPacket*>(data.second.get());
             setVolumeData(std::move(packet->data), packet->volume_size);
             spdlog::info("Set volume data");
+            fps_counter_.update();
             return true;
         }
         default: {

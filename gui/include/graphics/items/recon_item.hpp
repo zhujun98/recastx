@@ -15,8 +15,11 @@
 #include "graphics/slice.hpp"
 #include "graphics/textures.hpp"
 #include "graphics/volume.hpp"
+#include "utils.hpp"
 
 namespace tomcat::gui {
+
+class FpsCounter;
 
 class ReconItem : public GraphicsDataItem {
 
@@ -100,6 +103,8 @@ class ReconItem : public GraphicsDataItem {
 
     double prev_x_ = -1.1;
     double prev_y_ = -1.1;
+
+    FpsCounter fps_counter_;
 
     void initSlices();
 
