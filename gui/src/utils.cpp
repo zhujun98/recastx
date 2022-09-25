@@ -2,8 +2,8 @@
 #include <cstdint>
 #include <limits>
 #include <vector>
-
-#include "util.hpp"
+#include <iostream>
+#include "utils.hpp"
 
 namespace tomcat::gui {
 
@@ -63,6 +63,27 @@ std::tuple<bool, float, glm::vec3> intersectionPoint(const glm::mat4& inv_matrix
     }
 
     return std::make_tuple(does_intersect, distance, intersection);
+}
+
+// class FpsCounter
+
+FpsCounter::FpsCounter() : prev_(glfwGetTime()), threshold_(1.) {}
+
+FpsCounter::~FpsCounter() = default;
+
+void FpsCounter::update() {
+    ++frames_;
+    double curr = glfwGetTime();
+    if (curr - prev_ > threshold_) {
+        fps_ = frames_ / (curr - prev_);
+        prev_ = curr;
+        frames_ = 0;
+    }
+}
+
+[[nodiscard]] double FpsCounter::frameRate() {
+    if (glfwGetTime() - prev_ > FpsCounter::reset_interval_) fps_ = 0.;
+    return fps_;
 }
 
 } // namespace tomcat::gui

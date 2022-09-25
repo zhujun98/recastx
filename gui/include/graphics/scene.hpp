@@ -1,11 +1,13 @@
 #ifndef GUI_SCENE_H
 #define GUI_SCENE_H
 
+#include <any>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
-#include "GL/gl3w.h"
-#include "glm/glm.hpp"
+#include <GL/gl3w.h>
+#include <glm/glm.hpp>
 
 #include "graphics/items/graphics_item.hpp"
 #include "graphics/graph_node.hpp"
@@ -19,6 +21,10 @@ class ShaderProgram;
 class Camera;
 
 class Scene : public GraphNode, public InputHandler, public Ticker {
+
+public:
+
+    using SceneStatus = std::unordered_map<std::string, std::any>;
 
 protected:
 
@@ -34,6 +40,8 @@ protected:
 
     bool fixed_camera_ = false;
 
+    SceneStatus scene_status_;
+
   public:
 
     explicit Scene(Client* client);
@@ -46,7 +54,7 @@ protected:
 
     virtual void render() = 0;
 
-    void init();
+    virtual void init();
 
     void addItem(GraphicsItem* item);
 
@@ -63,6 +71,14 @@ protected:
     template <typename T>
     void send(T&& packet) const {
         client_->send(std::forward<T>(packet));
+    }
+
+    void setStatus(const std::string& key, const std::any& value) {
+        scene_status_[key] = value;
+    };
+
+    const std::any& getStatus(const std::string& key) {
+        return scene_status_.at(key);
     }
 };
 
