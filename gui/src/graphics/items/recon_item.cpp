@@ -13,7 +13,7 @@
 
 #include "graphics/items/recon_item.hpp"
 #include "graphics/aesthetics.hpp"
-#include "graphics/camera.hpp"
+#include "graphics/camera3d.hpp"
 #include "graphics/primitives.hpp"
 #include "graphics/style.hpp"
 #include "util.hpp"
@@ -85,15 +85,14 @@ ReconItem::~ReconItem() {
     glDeleteBuffers(1, &line_vbo_);
 }
 
-void ReconItem::onWindowSizeChanged(int width, int /*height*/) {
-    pos_ = {
-        Style::IMGUI_WINDOW_MARGIN + Style::IMGUI_CONTROL_PANEL_WIDTH + Style::IMGUI_WINDOW_SPACING,
-        Style::IMGUI_WINDOW_MARGIN
-    };
+void ReconItem::onWindowSizeChanged(int width, int height) {
     size_ = {
-        static_cast<float>(width) - pos_[0]
-            - Style::IMGUI_WINDOW_MARGIN - Style::IMGUI_WINDOW_SPACING - Style::IMGUI_ROTATING_AXIS_WIDTH,
-        Style::IMGUI_TOP_PANEL_HEIGHT
+        Style::TOP_PANEL_WIDTH * static_cast<float>(width),
+        Style::TOP_PANEL_HEIGHT * static_cast<float>(height)
+    };
+    pos_ = {
+        Style::MARGIN + Style::ICON_WIDTH * (float)width + Style::SPACING,
+        Style::MARGIN
     };
 }
 
@@ -445,7 +444,7 @@ void ReconItem::SliceTranslator::onDrag(glm::vec2 delta) {
     // 1) what are we dragging, and does it have data?
     // if it does then we need to make a new slice
     // else we drag the current slice along the normal
-    if (!comp_.dragged_slice()) {
+    if (comp_.draggedSlice() == nullptr) {
         std::unique_ptr<Slice> new_slice;
         int id = comp_.generate_slice_idx();
         int to_remove = -1;
@@ -458,9 +457,9 @@ void ReconItem::SliceTranslator::onDrag(glm::vec2 delta) {
                     to_remove = the_slice->id();
                     // FIXME need to generate a new id and upon 'popping'
                     // send a UpdateSlice packet
-                    comp_.dragged_slice() = new_slice.get();
+                    comp_.setDraggedSlice(new_slice.get());
                 } else {
-                    comp_.dragged_slice() = the_slice.get();
+                    comp_.setDraggedSlice(the_slice.get());
                 }
                 break;
             }
@@ -474,13 +473,13 @@ void ReconItem::SliceTranslator::onDrag(glm::vec2 delta) {
             auto packet = RemoveSlicePacket(to_remove);
             comp_.scene().send(packet);
         }
-        if (!comp_.dragged_slice()) {
+        if (comp_.draggedSlice() == nullptr) {
             std::cout << "WARNING: No dragged slice found." << std::endl;
             return;
         }
     }
 
-    auto slice = comp_.dragged_slice();
+    Slice* slice = comp_.draggedSlice();
     auto& o = slice->orientation4();
 
     auto axis1 = glm::vec3(o[0][0], o[0][1], o[0][2]);
@@ -520,8 +519,8 @@ ReconItem::SliceRotator::SliceRotator(ReconItem& comp, const glm::vec2& initial)
     auto tf = comp.matrix_;
     auto inv_matrix = glm::inverse(tf);
 
-    auto slice = comp.hovered_slice();
-    assert(slice);
+    Slice* slice = comp.hoveredSlice();
+    assert(slice != nullptr);
     auto o = slice->orientation4();
 
     auto maybe_point = intersectionPoint(inv_matrix, o, initial_);
@@ -581,7 +580,7 @@ void ReconItem::SliceRotator::onDrag(glm::vec2 delta) {
     // 1) what are we dragging, and does it have data?
     // if it does then we need to make a new slice
     // else we drag the current slice along the normal
-    if (!comp_.dragged_slice()) {
+    if (comp_.draggedSlice() == nullptr) {
         std::unique_ptr<Slice> new_slice;
         int id = comp_.generate_slice_idx();
         int to_remove = -1;
@@ -594,9 +593,9 @@ void ReconItem::SliceRotator::onDrag(glm::vec2 delta) {
                     to_remove = the_slice->id();
                     // FIXME need to generate a new id and upon 'popping'
                     // send a UpdateSlice packet
-                    comp_.dragged_slice() = new_slice.get();
+                    comp_.setDraggedSlice(new_slice.get());
                 } else {
-                    comp_.dragged_slice() = the_slice.get();
+                    comp_.setDraggedSlice(the_slice.get());
                 }
                 break;
             }
@@ -610,10 +609,10 @@ void ReconItem::SliceRotator::onDrag(glm::vec2 delta) {
             auto packet = RemoveSlicePacket(to_remove);
             comp_.scene().send(packet);
         }
-        assert(comp_.dragged_slice());
+        assert(comp_.draggedSlice() != nullptr);
     }
 
-    auto slice = comp_.dragged_slice();
+    Slice* slice = comp_.draggedSlice();
     auto& o = slice->orientation4();
 
     auto axis1 = glm::vec3(o[0][0], o[0][1], o[0][2]);

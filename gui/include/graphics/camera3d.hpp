@@ -6,8 +6,8 @@
 #include <optional>
 #include <vector>
 
-#include "glm/glm.hpp"
-#include "glm/gtx/rotate_vector.hpp"
+#include <glm/glm.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 
 #include "graphics/graph_node.hpp"
 #include "input_handler.hpp"
@@ -46,6 +46,8 @@ class Camera : public InputHandler {
     virtual ~Camera();
 
     [[nodiscard]] const glm::mat4& matrix();
+
+    [[nodiscard]] const glm::mat4& rotationMatrix() { return rotation_; }
 
     [[nodiscard]] float distance() const;
 

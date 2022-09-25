@@ -4,19 +4,25 @@
 #include <memory>
 
 #include "graphics/scene.hpp"
-#include "graphics/camera.hpp"
+#include "graphics/camera3d.hpp"
 
 namespace tomcat::gui {
 
+class AxiscubeItem;
 class AxesItem;
 class ReconItem;
 class StatusbarItem;
 
 class Scene3d : public Scene {
 
+    std::unique_ptr<Viewport> viewport_;
+    std::unique_ptr<Viewport> viewport_axiscube_;
+
     std::unique_ptr<AxesItem> axes_item_;
     std::unique_ptr<ReconItem> recon_item_;
     std::unique_ptr<StatusbarItem> statusbar_item_;
+
+    std::unique_ptr<AxiscubeItem> axiscube_item_;
 
 public:
 

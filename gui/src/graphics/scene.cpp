@@ -3,7 +3,7 @@
 #include <imgui.h>
 
 #include "graphics/scene.hpp"
-#include "graphics/camera.hpp"
+#include "graphics/camera3d.hpp"
 #include "graphics/shader_program.hpp"
 #include "graphics/style.hpp"
 
@@ -14,8 +14,14 @@ Scene::Scene(Client* client) : client_(client) {};
 Scene::~Scene() = default;
 
 void Scene::onWindowSizeChanged(int width, int height) {
-    pos_ = {Style::IMGUI_WINDOW_MARGIN, Style::IMGUI_ICON_HEIGHT + Style::IMGUI_WINDOW_SPACING};
-    size_ = {Style::IMGUI_ICON_WIDTH, static_cast<float>(height) - pos_[1] - Style::IMGUI_WINDOW_MARGIN};
+    size_ = {
+        Style::LEFT_PANEL_WIDTH * (float)width,
+        Style::LEFT_PANEL_HEIGHT * (float)height
+    };
+    pos_ = {
+        Style::MARGIN,
+        Style::ICON_HEIGHT * (float)width + Style::SPACING
+    };
 
     for (auto& item : items_) {
         item->onWindowSizeChanged(width, height);
@@ -72,7 +78,7 @@ bool Scene::handleKey(int key, int action, int mods) {
     return false;
 }
 
-void Scene::tick(double time_elapsed) {
+void Scene::tick(double /*time_elapsed*/) {
     auto& packets = Client::packets();
     while (!packets.empty()) {
         auto data = std::move(packets.front());

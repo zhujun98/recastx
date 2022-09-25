@@ -11,13 +11,14 @@ StatusbarItem::StatusbarItem(Scene& scene)
 StatusbarItem::~StatusbarItem() = default;
 
 void StatusbarItem::onWindowSizeChanged(int width, int height) {
-    pos_ = {
-        Style::IMGUI_WINDOW_MARGIN + Style::IMGUI_CONTROL_PANEL_WIDTH + Style::IMGUI_WINDOW_SPACING,
-        static_cast<float>(height) - Style::IMGUI_BOTTOM_PANEL_HEIGHT - Style::IMGUI_WINDOW_MARGIN
-    };
     size_ = {
-        static_cast<float>(width) - pos_[0] - Style::IMGUI_WINDOW_MARGIN,
-        Style::IMGUI_BOTTOM_PANEL_HEIGHT
+        Style::BOTTOM_PANEL_WIDTH * (float)width,
+        Style::BOTTOM_PANEL_HEIGHT * (float)height
+    };
+
+    pos_ = {
+        Style::MARGIN + Style::LEFT_PANEL_WIDTH * (float)width + Style::SPACING,
+        (float)(height) - size_[1] - Style::MARGIN
     };
 }
 

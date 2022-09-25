@@ -13,7 +13,7 @@ GraphicsItem::~GraphicsItem() = default;
 
 void GraphicsItem::init() {}
 
-void GraphicsItem::onWindowSizeChanged(int width, int height) {}
+void GraphicsItem::onWindowSizeChanged(int /*width*/, int /*height*/) {}
 
 // class GraphicsDataItem
 

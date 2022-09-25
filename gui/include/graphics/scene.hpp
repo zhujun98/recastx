@@ -26,7 +26,6 @@ protected:
     std::unique_ptr<Camera> camera_;
     Client* client_;
 
-    std::vector<std::unique_ptr<Viewport>> viewports_;
     std::vector<GraphicsItem*> items_;
     std::vector<GraphicsDataItem*> data_items_;
 
@@ -62,7 +61,7 @@ protected:
     void tick(double time_elapsed) override;
 
     template <typename T>
-    void send(T&& packet) {
+    void send(T&& packet) const {
         client_->send(std::forward<T>(packet));
     }
 };

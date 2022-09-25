@@ -1,11 +1,11 @@
 R"glsl(
 #version 330
 
-in vec3 lineColor;
+in vec3 faceColor;
 
 out vec4 fragColor;
 
 void main() {
-    fragColor = vec4(lineColor, 1.0f);
+    fragColor = vec4(faceColor, 1.0f);
 }
 )glsl"

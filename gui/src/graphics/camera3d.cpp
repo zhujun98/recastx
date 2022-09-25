@@ -1,7 +1,7 @@
-#include "GL/gl3w.h"
-#include "GLFW/glfw3.h"
+#include <GL/gl3w.h>
+#include <GLFW/glfw3.h>
 
-#include "graphics/camera.hpp"
+#include "graphics/camera3d.hpp"
 
 namespace tomcat::gui {
 
@@ -11,9 +11,7 @@ Camera::Camera() : target_( {0.f, 0.f, 0.f}) {
 Camera::~Camera() = default;
 
 const glm::mat4& Camera::matrix() {
-    if (view_) { return view_.value(); }
-
-    view_ = glm::lookAt(pos_, target_, up_) * rotation_;
+    if (!view_) view_ = glm::lookAt(pos_, target_, up_) * rotation_;
     return view_.value();
 }
 

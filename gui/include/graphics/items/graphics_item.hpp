@@ -34,7 +34,7 @@ protected:
 
 public:
 
-    GraphicsItem(Scene& scene);
+    explicit GraphicsItem(Scene& scene);
 
     ~GraphicsItem() override;
 
@@ -47,6 +47,8 @@ public:
     virtual void init();
 
     virtual void onWindowSizeChanged(int width, int height);
+
+    [[nodiscard]] Scene& scene() const { return scene_; }
 };
 
 

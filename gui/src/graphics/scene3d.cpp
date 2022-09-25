@@ -3,7 +3,9 @@
 #include <spdlog/spdlog.h>
 
 #include "graphics/scene3d.hpp"
-#include "graphics/camera.hpp"
+#include "graphics/camera3d.hpp"
+#include "graphics/style.hpp"
+#include "graphics/items/axiscube_item.hpp"
 #include "graphics/items/axes_item.hpp"
 #include "graphics/items/statusbar_item.hpp"
 #include "graphics/items/recon_item.hpp"
@@ -12,17 +14,23 @@ namespace tomcat::gui {
 
 Scene3d::Scene3d(Client* client)
         : Scene(client),
+          viewport_(new Viewport()),
+          viewport_axiscube_(new Viewport(false)),
           axes_item_(new AxesItem(*this)),
           recon_item_(new ReconItem(*this)),
-          statusbar_item_(new StatusbarItem(*this)) {
+          statusbar_item_(new StatusbarItem(*this)),
+          axiscube_item_(new AxiscubeItem(*this)) {
     camera_ = std::make_unique<Camera>();
-    viewports_.emplace_back(std::make_unique<Viewport>());
 }
 
 Scene3d::~Scene3d() = default;
 
 void Scene3d::onFrameBufferSizeChanged(int width, int height) {
-    viewports_[0]->update(0, 0, width, height);
+    viewport_->update(0, 0, width, height);
+
+    int w = static_cast<int>(Style::AXISCUBE_WIDTH * static_cast<float>(width));
+    viewport_axiscube_->update(
+            width - w - int(Style::MARGIN), height - w - int(Style::MARGIN), w, w);
 }
 
 void Scene3d::render() {
@@ -58,12 +66,19 @@ void Scene3d::render() {
 
     ImGui::End();
 
+    viewport_->use();
     GraphicsItem::RenderParams params;
     params["distance"] = camera_->distance();
-    viewports_[0]->use();
-    for (auto &item : items_) {
-        item->renderGl(camera_->matrix(), viewports_[0]->projection(), params);
-    }
+    const auto& view = camera_->matrix();
+    const auto& projection = viewport_->projection();
+    axes_item_->renderGl(view, projection, params);
+    recon_item_->renderGl(view, projection, params);
+    statusbar_item_->renderGl(view, projection, params);
+
+    viewport_axiscube_->use();
+    const auto& view_axiscube = camera_->rotationMatrix();
+    const auto& projection_axiscube = viewport_axiscube_->projection();
+    axiscube_item_->renderGl(view_axiscube, projection_axiscube, params);
 }
 
 } // tomcat::gui

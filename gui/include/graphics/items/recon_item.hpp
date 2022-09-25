@@ -144,9 +144,11 @@ public:
 
     bool handleMouseMoved(float x, float y) override;
 
-    auto& scene() { return scene_; }
-    auto& dragged_slice() { return dragged_slice_; }
-    auto hovered_slice() { return hovered_slice_; }
+    Slice* draggedSlice() { return dragged_slice_; }
+    void setDraggedSlice(Slice* slice) { dragged_slice_ = slice; }
+
+    Slice* hoveredSlice() { return hovered_slice_; }
+
     auto& slices() { return slices_; }
 
     auto generate_slice_idx() { return next_idx_++; }
