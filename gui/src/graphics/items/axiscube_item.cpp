@@ -10,6 +10,8 @@
 namespace tomcat::gui {
 
 AxiscubeItem::AxiscubeItem(Scene &scene) : GraphicsItem(scene) {
+    scene.addItem(this);
+
     glGenVertexArrays(1, &vao_);
     glBindVertexArray(vao_);
 

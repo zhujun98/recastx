@@ -21,6 +21,8 @@
 namespace tomcat::gui {
 
 ReconItem::ReconItem(Scene& scene) : GraphicsDataItem(scene) {
+    scene.addItem(this);
+
     glGenVertexArrays(1, &vao_);
     glBindVertexArray(vao_);
     glGenBuffers(1, &vbo_);

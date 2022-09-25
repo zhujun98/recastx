@@ -1,12 +1,15 @@
 #include <imgui.h>
 
 #include "graphics/items/statusbar_item.hpp"
+#include "graphics/scene.hpp"
 #include "graphics/style.hpp"
 
 namespace tomcat::gui {
 
 StatusbarItem::StatusbarItem(Scene& scene)
-    : GraphicsDataItem(scene) {}
+        : GraphicsDataItem(scene) {
+    scene.addItem(this);
+}
 
 StatusbarItem::~StatusbarItem() = default;
 

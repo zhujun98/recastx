@@ -5,9 +5,7 @@ namespace tomcat::gui {
 
 // class GraphicsItem
 
-GraphicsItem::GraphicsItem(Scene& scene) : scene_(scene) {
-    scene_.addItem(this);
-}
+GraphicsItem::GraphicsItem(Scene& scene) : scene_(scene) {}
 
 GraphicsItem::~GraphicsItem() = default;
 
