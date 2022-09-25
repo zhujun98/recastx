@@ -56,10 +56,10 @@ class Camera : public InputHandler {
     bool handleMouseMoved(float x, float y) override;
     bool handleKey(int key, int action, int mods) override;
 
-    void setPerspectiveView();
     void setFrontView();
     void setTopView();
     void setSideView();
+    void setPerspectiveView();
 };
 
 } // namespace tomcat::gui
