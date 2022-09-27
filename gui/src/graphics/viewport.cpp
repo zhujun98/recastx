@@ -15,6 +15,8 @@ void Viewport::update(int x, int y, int w, int h) {
     y_ = y;
     w_ = w;
     h_ = h;
+
+    projection_.reset();
 }
 
 void Viewport::use() const {
