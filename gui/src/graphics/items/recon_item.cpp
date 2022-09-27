@@ -21,44 +21,43 @@ namespace tomcat::gui {
 ReconItem::ReconItem(Scene& scene) : GraphicsDataItem(scene) {
     scene.addItem(this);
 
-    glGenVertexArrays(1, &vao_);
-    glBindVertexArray(vao_);
-    glGenBuffers(1, &vbo_);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-    glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(GLfloat), primitives::square,
+    glGenVertexArrays(1, &slice_vao_);
+    glBindVertexArray(slice_vao_);
+    glGenBuffers(1, &slice_vbo_);
+    glBindBuffer(GL_ARRAY_BUFFER, slice_vbo_);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(primitives::square), primitives::square,
                  GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
     glEnableVertexAttribArray(0);
 
-    glGenVertexArrays(1, &line_vao_);
-    glBindVertexArray(line_vao_);
-    glGenBuffers(1, &line_vbo_);
-    glBindBuffer(GL_ARRAY_BUFFER, line_vbo_);
-    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(GLfloat), primitives::line, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glGenVertexArrays(1, &rotation_axis_vao_);
+    glBindVertexArray(rotation_axis_vao_);
+    glGenBuffers(1, &rotation_axis_vbo_);
+    glBindBuffer(GL_ARRAY_BUFFER, rotation_axis_vbo_);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(primitives::line), primitives::line, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
     glEnableVertexAttribArray(0);
 
-    glGenVertexArrays(1, &cube_vao_);
-    glBindVertexArray(cube_vao_);
-    cube_index_count_ = 24;
-    glGenBuffers(1, &cube_index_handle_);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cube_index_handle_);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, cube_index_count_ * sizeof(GLuint),
-                 primitives::cube_wireframe_idxs, GL_STATIC_DRAW);
+    glGenVertexArrays(1, &wireframe_vao_);
+    glBindVertexArray(wireframe_vao_);
+    glGenBuffers(1, &wireframe_ebo_);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, wireframe_ebo_);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(primitives::wireframe_cube_indices),
+                 primitives::wireframe_cube_indices, GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
-    glGenBuffers(1, &cube_vbo_);
-    glBindBuffer(GL_ARRAY_BUFFER, cube_vbo_);
-    glBufferData(GL_ARRAY_BUFFER, 24 * sizeof(float),
-                 primitives::cube_wireframe, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glGenBuffers(1, &wireframe_vbo_);
+    glBindBuffer(GL_ARRAY_BUFFER, wireframe_vbo_);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(primitives::wireframe_cube),
+                 primitives::wireframe_cube, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-    auto solid_vert =
-#include "../shaders/recon_cube.vert"
+    auto slice_vert =
+#include "../shaders/recon_slice.vert"
         ;
-    auto solid_frag =
-#include "../shaders/recon_cube.frag"
+    auto slice_frag =
+#include "../shaders/recon_slice.frag"
         ;
-    solid_shader_ = std::make_unique<ShaderProgram>(solid_vert, solid_frag);
+    slice_shader_ = std::make_unique<ShaderProgram>(slice_vert, slice_frag);
 
     auto wireframe_vert =
 #include "../shaders/wireframe_cube.vert"
@@ -74,15 +73,15 @@ ReconItem::ReconItem(Scene& scene) : GraphicsDataItem(scene) {
 }
 
 ReconItem::~ReconItem() {
-    glDeleteVertexArrays(1, &vao_);
-    glDeleteBuffers(1, &vbo_);
+    glDeleteVertexArrays(1, &slice_vao_);
+    glDeleteBuffers(1, &slice_vbo_);
 
-    glDeleteVertexArrays(1, &cube_vao_);
-    glDeleteBuffers(1, &cube_vbo_);
-    glDeleteBuffers(1, &cube_index_handle_);
+    glDeleteVertexArrays(1, &wireframe_vao_);
+    glDeleteBuffers(1, &wireframe_vbo_);
+    glDeleteBuffers(1, &wireframe_ebo_);
 
-    glDeleteVertexArrays(1, &line_vao_);
-    glDeleteBuffers(1, &line_vbo_);
+    glDeleteVertexArrays(1, &rotation_axis_vao_);
+    glDeleteBuffers(1, &rotation_axis_vbo_);
 }
 
 void ReconItem::onWindowSizeChanged(int width, int height) {
@@ -154,12 +153,12 @@ void ReconItem::renderGl(const glm::mat4& view,
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
 
-    solid_shader_->use();
-    solid_shader_->setInt("colormap", 0);
-    solid_shader_->setInt("sliceData", 1);
-    solid_shader_->setInt("volumeData", 2);
-    solid_shader_->setFloat("minValue", min_val_);
-    solid_shader_->setFloat("maxValue", max_val_);
+    slice_shader_->use();
+    slice_shader_->setInt("colormap", 0);
+    slice_shader_->setInt("sliceData", 1);
+    slice_shader_->setInt("volumeData", 2);
+    slice_shader_->setFloat("minValue", min_val_);
+    slice_shader_->setFloat("maxValue", max_val_);
 
     cm_.bind();
 
@@ -189,9 +188,9 @@ void ReconItem::renderGl(const glm::mat4& view,
     wireframe_shader_->setMat4("projection", projection);
     wireframe_shader_->setVec4("color", glm::vec4(1.f, 1.f, 1.f, 0.2f));
 
-    glBindVertexArray(cube_vao_);
+    glBindVertexArray(wireframe_vao_);
     glLineWidth(3.f);
-    glDrawElements(GL_LINES, cube_index_count_, GL_UNSIGNED_INT, nullptr);
+    glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, nullptr);
 
     glDisable(GL_DEPTH_TEST);
 
@@ -200,7 +199,7 @@ void ReconItem::renderGl(const glm::mat4& view,
         wireframe_shader_->setMat4(
                 "view", view * glm::translate(rotator.rot_base) * glm::scale(rotator.rot_end - rotator.rot_base));
         wireframe_shader_->setVec4("color", glm::vec4(1.f, 1.f, 1.f, 1.f));
-        glBindVertexArray(line_vao_);
+        glBindVertexArray(rotation_axis_vao_);
         glLineWidth(10.f);
         glDrawArrays(GL_LINES, 0, 2);
     }
@@ -397,14 +396,13 @@ void ReconItem::maybeSwitchDragMachine(ReconItem::DragType type) {
 void ReconItem::drawSlice(Slice* slice, const glm::mat4& view, const glm::mat4& projection) {
     slice->bind();
 
-    solid_shader_->setMat4("view", view);
-    solid_shader_->setMat4("projection", projection);
-    solid_shader_->setMat4("orientationMatrix",
-                      slice->orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0)));
-    solid_shader_->setBool("hovered", slice->hovered());
-    solid_shader_->setBool("empty", slice->empty());
+    slice_shader_->setMat4("view", view);
+    slice_shader_->setMat4("projection", projection);
+    slice_shader_->setMat4("orientationMatrix", slice->orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0)));
+    slice_shader_->setBool("hovered", slice->hovered());
+    slice_shader_->setBool("empty", slice->empty());
 
-    glBindVertexArray(vao_);
+    glBindVertexArray(slice_vao_);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
     slice->unbind();

@@ -73,17 +73,16 @@ class ReconItem : public GraphicsDataItem {
     std::map<int, std::unique_ptr<Slice>> slices_;
     std::unique_ptr<Volume> volume_;
 
-    GLuint vao_;
-    GLuint vbo_;
-    std::unique_ptr<ShaderProgram> solid_shader_;
+    GLuint slice_vao_;
+    GLuint slice_vbo_;
+    std::unique_ptr<ShaderProgram> slice_shader_;
 
-    GLuint line_vao_;
-    GLuint line_vbo_;
+    GLuint rotation_axis_vao_;
+    GLuint rotation_axis_vbo_;
 
-    GLuint cube_vao_;
-    GLuint cube_vbo_;
-    GLuint cube_index_handle_;
-    int cube_index_count_;
+    GLuint wireframe_vao_;
+    GLuint wireframe_vbo_;
+    GLuint wireframe_ebo_;
     std::unique_ptr<ShaderProgram> wireframe_shader_;
 
     int next_idx_ = 3;

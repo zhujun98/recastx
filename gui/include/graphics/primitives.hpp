@@ -68,7 +68,7 @@ inline constexpr GLfloat axiscube[] = {
         -0.5f,  0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
 };
 
-inline constexpr GLfloat cube_wireframe[] = {
+inline constexpr GLfloat wireframe_cube[] = {
          1.0f,  1.0f,  1.0f,
          1.0f,  1.0f, -1.0f,
          1.0f, -1.0f, -1.0f,
@@ -79,7 +79,7 @@ inline constexpr GLfloat cube_wireframe[] = {
          1.0f, -1.0f,  1.0f
 };
 
-inline constexpr GLuint cube_wireframe_idxs[] = {
+inline constexpr GLuint wireframe_cube_indices[] = {
         5, 4, 5, 0, 4, 7, 7, 0, 6, 5, 1, 0,
         3, 4, 2, 7, 6, 3, 6, 1, 3, 2, 2, 1};
 
