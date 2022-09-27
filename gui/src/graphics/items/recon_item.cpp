@@ -315,6 +315,7 @@ bool ReconItem::handleMouseMoved(float x, float y) {
 
     // TODO: fix for screen ratio
     if (dragged_slice_ != nullptr) {
+        dragged_slice_->setEmpty();
         drag_machine_->onDrag(delta);
         return true;
     }
@@ -441,45 +442,7 @@ ReconItem::SliceTranslator::SliceTranslator(ReconItem &comp, const glm::vec2& in
 
 ReconItem::SliceTranslator::~SliceTranslator() = default;
 
-void ReconItem::SliceTranslator::onDrag(glm::vec2 delta) {
-    // 1) what are we dragging, and does it have data?
-    // if it does then we need to make a new slice
-    // else we drag the current slice along the normal
-    if (comp_.draggedSlice() == nullptr) {
-        std::unique_ptr<Slice> new_slice;
-        int id = comp_.generate_slice_idx();
-        int to_remove = -1;
-        for (auto& id_the_slice : comp_.slices()) {
-            auto& the_slice = id_the_slice.second;
-            if (the_slice->hovered()) {
-                if (!the_slice->empty()) {
-                    new_slice = std::make_unique<Slice>(id);
-                    new_slice->setOrientation(the_slice->orientation4());
-                    to_remove = the_slice->id();
-                    // FIXME need to generate a new id and upon 'popping'
-                    // send a UpdateSlice packet
-                    comp_.setDraggedSlice(new_slice.get());
-                } else {
-                    comp_.setDraggedSlice(the_slice.get());
-                }
-                break;
-            }
-        }
-        if (new_slice) {
-            comp_.slices()[new_slice->id()] = std::move(new_slice);
-        }
-        if (to_remove >= 0) {
-            comp_.slices().erase(to_remove);
-            // send slice packet
-            auto packet = RemoveSlicePacket(to_remove);
-            comp_.scene().send(packet);
-        }
-        if (comp_.draggedSlice() == nullptr) {
-            std::cout << "WARNING: No dragged slice found." << std::endl;
-            return;
-        }
-    }
-
+void ReconItem::SliceTranslator::onDrag(const glm::vec2& delta) {
     Slice* slice = comp_.draggedSlice();
     auto& o = slice->orientation4();
 
@@ -577,42 +540,7 @@ ReconItem::SliceRotator::SliceRotator(ReconItem& comp, const glm::vec2& initial)
 
 ReconItem::SliceRotator::~SliceRotator() = default;
 
-void ReconItem::SliceRotator::onDrag(glm::vec2 delta) {
-    // 1) what are we dragging, and does it have data?
-    // if it does then we need to make a new slice
-    // else we drag the current slice along the normal
-    if (comp_.draggedSlice() == nullptr) {
-        std::unique_ptr<Slice> new_slice;
-        int id = comp_.generate_slice_idx();
-        int to_remove = -1;
-        for (auto& id_the_slice : comp_.slices()) {
-            auto& the_slice = id_the_slice.second;
-            if (the_slice->hovered()) {
-                if (!the_slice->empty()) {
-                    new_slice = std::make_unique<Slice>(id);
-                    new_slice->setOrientation(the_slice->orientation4());
-                    to_remove = the_slice->id();
-                    // FIXME need to generate a new id and upon 'popping'
-                    // send a UpdateSlice packet
-                    comp_.setDraggedSlice(new_slice.get());
-                } else {
-                    comp_.setDraggedSlice(the_slice.get());
-                }
-                break;
-            }
-        }
-        if (new_slice) {
-            comp_.slices()[new_slice->id()] = std::move(new_slice);
-        }
-        if (to_remove >= 0) {
-            comp_.slices().erase(to_remove);
-            // send slice packet
-            auto packet = RemoveSlicePacket(to_remove);
-            comp_.scene().send(packet);
-        }
-        assert(comp_.draggedSlice() != nullptr);
-    }
-
+void ReconItem::SliceRotator::onDrag(const glm::vec2& delta) {
     Slice* slice = comp_.draggedSlice();
     auto& o = slice->orientation4();
 

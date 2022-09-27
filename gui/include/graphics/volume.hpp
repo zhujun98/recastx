@@ -21,7 +21,7 @@ class Volume {
 
     VolumeTexture<float> texture_;
 
-    std::array<float, 2> min_max_vals_;
+    std::array<float, 2> min_max_vals_ {0.f, 0.f};
 
     void updateMinMaxVal();
 

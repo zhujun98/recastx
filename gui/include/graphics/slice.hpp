@@ -31,7 +31,7 @@ class Slice {
     bool hovered_ = false;
     bool inactive_ = false;
 
-    std::array<float, 2> min_max_vals_;
+    std::array<float, 2> min_max_vals_ {0.f, 0.f};
 
     Orient4Type orient_;
 
@@ -56,6 +56,8 @@ class Slice {
     [[nodiscard]] bool transparent() const;
 
     void setHovered(bool state);
+
+    void setEmpty();
 
     void setOrientation(const glm::vec3& base, const glm::vec3& x, const glm::vec3& y);
     void setOrientation(const Slice::Orient4Type& orient);

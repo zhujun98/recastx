@@ -33,6 +33,13 @@ void Slice::setHovered(bool state) {
     hovered_ = state;
 }
 
+void Slice::setEmpty() {
+    if (!data_.empty()) {
+        data_.clear();
+        // I think we can leave the texture as it is.
+    }
+}
+
 void Slice::setOrientation(const glm::vec3& base, const glm::vec3& x, const glm::vec3& y) {
     float orientation[16] = {x.x,  y.x,  base.x, 0.0f,  // 1
                              x.y,  y.y,  base.y, 0.0f,  // 2
