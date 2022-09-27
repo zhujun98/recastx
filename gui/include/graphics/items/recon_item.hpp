@@ -39,7 +39,7 @@ class ReconItem : public GraphicsDataItem {
         DragMachine(ReconItem& comp, const glm::vec2& initial, DragType type);
         virtual ~DragMachine();
 
-        virtual void onDrag(glm::vec2 delta) = 0;
+        virtual void onDrag(const glm::vec2& delta) = 0;
 
         [[nodiscard]] constexpr DragType type() const { return type_; }
     };
@@ -51,7 +51,7 @@ class ReconItem : public GraphicsDataItem {
         SliceTranslator(ReconItem& comp, const glm::vec2& initial);
         ~SliceTranslator() override;
 
-        void onDrag(glm::vec2 delta) override;
+        void onDrag(const glm::vec2& delta) override;
     };
 
     class SliceRotator : public DragMachine {
@@ -61,7 +61,7 @@ class ReconItem : public GraphicsDataItem {
         SliceRotator(ReconItem& comp, const glm::vec2& initial);
         ~SliceRotator() override;
 
-        void onDrag(glm::vec2 delta) override;
+        void onDrag(const glm::vec2& delta) override;
 
         glm::vec3 rot_base;
         glm::vec3 rot_end;
