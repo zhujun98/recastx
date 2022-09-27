@@ -5,11 +5,8 @@
 
 namespace tomcat::gui {
 
-// TODO: Use the default preview size as the edge length.
 Volume::Volume() : size_({128, 128, 128}) {
     DataType data(size_[0] * size_[1] * size_[2], 0);
-    // Non-uniform initialization is good for colormap display test.
-    for (size_t i = 0; i < data.size(); ++i) data[i] = static_cast<float>(i % 128);
     setData(std::move(data), size_);
 };
 
