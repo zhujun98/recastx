@@ -10,6 +10,7 @@ message(STATUS "Found Eigen3 ${Eigen3_VERSION}")
 find_package(nlohmann_json REQUIRED)
 
 find_package(TBB 2021.5 REQUIRED)
+message(STATUS "Found TBB ${TBB_VERSION}")
 
 add_library(astra-toolbox SHARED IMPORTED)
 set_target_properties(
@@ -32,19 +33,21 @@ set(RECON_LIB tomcat-live-recon)
 add_library(${RECON_LIB} ${SOURCES})
 
 target_include_directories(${RECON_LIB}
-        PRIVATE ${ASTRA_INCLUDE_DIR}
-                ${TBB_INCLUDE_DIRS}
-        PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include
-        )
+        PRIVATE
+                ${ASTRA_INCLUDE_DIR}
+        PUBLIC
+                ${CMAKE_CURRENT_LIST_DIR}/include)
 
 target_link_libraries(${RECON_LIB}
-        PUBLIC tomcat
-               spdlog::spdlog
-               Eigen3::Eigen
-               astra-toolbox
-        PRIVATE nlohmann_json::nlohmann_json
+        PUBLIC 
+                tomcat
                 spdlog::spdlog
-                ${TBB_LIBRARIES}
+                Eigen3::Eigen
+                astra-toolbox
+        PRIVATE
+                nlohmann_json::nlohmann_json
+                spdlog::spdlog
+                TBB::tbb
                 ${FFTW_FLOAT_LIB}
         )
 
