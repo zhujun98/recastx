@@ -83,32 +83,43 @@ bool Camera::handleKey(int key, int action, int /* mods */) {
 }
 
 void Camera::setFrontView() {
+    view_.reset();
+
     rotation_ = glm::mat4(1.0f);
     pos_ = target_;
-    pos_.z = 5.0;
-    up_ = glm::vec3(0.0f, 1.0f, 0.0f);
-    right_ = glm::vec3(1.0f, 0.0f, 0.0f);
-    view_.reset();
+    pos_.x = -5.0;
+    up_ = glm::vec3(0.0f, 0.0f, 1.0f);
+    right_ = glm::vec3(0.0f, 1.0f, 0.0f);
 }
 
 void Camera::setTopView() {
-    setFrontView();
-    adjustPitch(glm::radians(90.f));
+    view_.reset();
+
+    rotation_ = glm::mat4(1.0f);
+    pos_ = target_;
+    pos_.z = 5.0;
+    up_ = glm::vec3(1.0f, 0.0f, 0.0f);
+    right_ = glm::vec3(0.0f, 1.0f, 0.0f);
 }
 
 void Camera::setSideView() {
-    setFrontView();
-    adjustYaw(glm::radians(90.f));
+    view_.reset();
+
+    rotation_ = glm::mat4(1.0f);
+    pos_ = target_;
+    pos_.y = 5.0;
+    up_ = glm::vec3(0.0f, 0.0f, 1.0f);
+    right_ = glm::vec3(1.0f, 0.0f, 0.0f);
 }
 
 void Camera::setPerspectiveView() {
     setFrontView();
-    adjustYaw(glm::radians(-45.f));
+    adjustYaw(glm::radians(135.f));
     adjustPitch(glm::radians(-30.f));
 }
 
 void Camera::adjustPitch(float offset) {
-    rotation_ = glm::rotate(-offset, right_) * rotation_;
+    rotation_ = glm::rotate(offset, right_) * rotation_;
 }
 
 void Camera::adjustYaw(float offset) {

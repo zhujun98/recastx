@@ -49,15 +49,15 @@ void Scene3d::render() {
 
     ImGui::Checkbox("Fix camera", &fixed_camera_);
     if (ImGui::Button("X-Y")) {
-        camera_->setFrontView();
+        camera_->setTopView();
     }
     ImGui::SameLine();
     if (ImGui::Button("Y-Z")) {
-        camera_->setSideView();
+        camera_->setFrontView();
     }
     ImGui::SameLine();
     if (ImGui::Button("X-Z")) {
-        camera_->setTopView();
+        camera_->setSideView();
     }
     ImGui::SameLine();
     if (ImGui::Button("Perspective")) {
@@ -82,7 +82,7 @@ void Scene3d::render() {
     statusbar_item_->renderGl(view, projection, params);
 
     viewport_axiscube_->use();
-    const auto& view_axiscube = camera_->rotationMatrix();
+    const auto& view_axiscube = camera_->matrix();
     const auto& projection_axiscube = viewport_axiscube_->projection();
     axiscube_item_->renderGl(view_axiscube, projection_axiscube, params);
 }

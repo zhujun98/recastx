@@ -47,8 +47,6 @@ class Camera : public InputHandler {
 
     [[nodiscard]] const glm::mat4& matrix();
 
-    [[nodiscard]] const glm::mat4& rotationMatrix() { return rotation_; }
-
     [[nodiscard]] float distance() const;
 
     bool handleMouseButton(int button, int action) override;
