@@ -10,15 +10,18 @@ namespace tomcat::gui {
 
 class AxiscubeItem;
 class AxesItem;
+class IconItem;
 class ReconItem;
 class StatusbarItem;
 
 class Scene3d : public Scene {
 
     std::unique_ptr<Viewport> viewport_;
+    std::unique_ptr<Viewport> viewport_icon_;
     std::unique_ptr<Viewport> viewport_axiscube_;
 
     std::unique_ptr<AxesItem> axes_item_;
+    std::unique_ptr<IconItem> icon_item_;
     std::unique_ptr<ReconItem> recon_item_;
     std::unique_ptr<StatusbarItem> statusbar_item_;
 

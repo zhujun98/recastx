@@ -15,7 +15,7 @@ void Viewport::update(int x, int y, int w, int h) {
     y_ = y;
     w_ = w;
     h_ = h;
-
+    asp_ = (float)w_ / (float)h_;
     projection_.reset();
 }
 
@@ -25,11 +25,10 @@ void Viewport::use() const {
 
 [[nodiscard]] const glm::mat4& Viewport::projection() {
     if (!projection_) {
-        float asp = (float)w_ / (float)h_;
         if (perspective_) {
-            projection_ = glm::perspective(fov_, asp, near_, far_);
+            projection_ = glm::perspective(fov_, asp_, near_, far_);
         } else {
-            projection_ = glm::ortho(-asp, asp, -1.f, 1.f, -far_, far_);
+            projection_ = glm::ortho(-asp_, asp_, -1.f, 1.f, -far_, far_);
         }
     }
     return projection_.value();

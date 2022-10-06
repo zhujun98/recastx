@@ -16,11 +16,11 @@ Scene::~Scene() = default;
 void Scene::onWindowSizeChanged(int width, int height) {
     size_ = {
         Style::LEFT_PANEL_WIDTH * (float)width,
-        Style::LEFT_PANEL_HEIGHT * (float)height
+        (1.f - Style::ICON_HEIGHT - 3.f * Style::MARGIN) * (float)height
     };
     pos_ = {
-        Style::MARGIN,
-        Style::ICON_HEIGHT * (float)width + Style::SPACING
+        Style::MARGIN * (float)width,
+        (Style::ICON_HEIGHT + 2.f * Style::MARGIN) * (float)height
     };
 
     for (auto& item : items_) {

@@ -1,12 +1,14 @@
 #include <algorithm>
 
 #include <spdlog/spdlog.h>
+#include <glm/glm.hpp>
 
 #include "graphics/scene3d.hpp"
 #include "graphics/camera3d.hpp"
 #include "graphics/style.hpp"
 #include "graphics/items/axiscube_item.hpp"
 #include "graphics/items/axes_item.hpp"
+#include "graphics/items/icon_item.hpp"
 #include "graphics/items/statusbar_item.hpp"
 #include "graphics/items/recon_item.hpp"
 
@@ -15,8 +17,10 @@ namespace tomcat::gui {
 Scene3d::Scene3d(Client* client)
         : Scene(client),
           viewport_(new Viewport()),
+          viewport_icon_(new Viewport(false)),
           viewport_axiscube_(new Viewport(false)),
           axes_item_(new AxesItem(*this)),
+          icon_item_(new IconItem(*this)),
           recon_item_(new ReconItem(*this)),
           statusbar_item_(new StatusbarItem(*this)),
           axiscube_item_(new AxiscubeItem(*this)) {
@@ -34,9 +38,19 @@ void Scene3d::init() {
 void Scene3d::onFrameBufferSizeChanged(int width, int height) {
     viewport_->update(0, 0, width, height);
 
-    int w = static_cast<int>(Style::AXISCUBE_WIDTH * static_cast<float>(width));
-    viewport_axiscube_->update(
-            width - w - int(Style::MARGIN), height - w - int(Style::MARGIN), w, w);
+    int h = static_cast<int>(Style::TOP_PANEL_HEIGHT * (float)height);
+    int w = h;
+    viewport_axiscube_->update(width - w - int(Style::MARGIN * (float)width),
+                               height - h - int(Style::MARGIN * (float)height),
+                               w,
+                               h);
+
+    w = static_cast<int>(Style::ICON_WIDTH * (float)width);
+    h = static_cast<int>(Style::ICON_HEIGHT* (float)height);
+    viewport_icon_->update(int(Style::MARGIN * (float)width),
+                           height - h - int(Style::MARGIN * (float)height),
+                           w,
+                           h);
 }
 
 void Scene3d::render() {
@@ -81,10 +95,13 @@ void Scene3d::render() {
     recon_item_->renderGl(view, projection, params);
     statusbar_item_->renderGl(view, projection, params);
 
+    viewport_icon_->use();
+    params["aspectRatio"] = viewport_icon_->aspectRatio();
+    icon_item_->renderGl(view, viewport_icon_->projection(), params);
+
     viewport_axiscube_->use();
-    const auto& view_axiscube = camera_->matrix();
-    const auto& projection_axiscube = viewport_axiscube_->projection();
-    axiscube_item_->renderGl(view_axiscube, projection_axiscube, params);
+    params["aspectRatio"] = viewport_axiscube_->aspectRatio();
+    axiscube_item_->renderGl(view, viewport_axiscube_->projection(), params);
 }
 
 } // tomcat::gui

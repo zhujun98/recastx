@@ -7,7 +7,7 @@ module load gcc/9.3.0
 conda create -n tomcat-live
 
 conda activate tomcat-live
-conda install -c conda-forge cmake cppzmq eigen xtensor boost fftw libastra tbb-devel nlohmann_json spdlog
+conda install -c conda-forge cmake freetype cppzmq eigen xtensor boost fftw libastra tbb-devel nlohmann_json spdlog
 
 cd /afs/psi.ch/project/TOMCAT_dev/tomcat-live
 git clone --recursive <repo>
