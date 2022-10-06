@@ -2,6 +2,7 @@
 #define GUI_SCENE_H
 
 #include <any>
+#include <map>
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -26,6 +27,11 @@ public:
 
     using SceneStatus = std::unordered_map<std::string, std::any>;
 
+    enum class DataMode {
+        STREAM = 1,
+        REQUEST = 2,
+    };
+
 protected:
 
     std::unique_ptr<ShaderProgram> program_;
@@ -41,6 +47,9 @@ protected:
     bool fixed_camera_ = false;
 
     SceneStatus scene_status_;
+
+    std::map<DataMode, const char*> data_mode_options_;
+    DataMode data_mode_;
 
   public:
 
