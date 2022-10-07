@@ -47,7 +47,7 @@ class Texture {
 
 protected:
 
-    GLuint texture_id_ = -1;
+    GLuint texture_id_ = 0;
 
 public:
 
@@ -87,7 +87,7 @@ public:
     };
 
     ~ColormapTexture() override {
-        if (texture_id_ >= 0) glDeleteTextures(1, &texture_id_);
+        glDeleteTextures(1, &texture_id_);
     }
 
     ColormapTexture(ColormapTexture&& other) noexcept {
@@ -151,7 +151,7 @@ public:
     };
 
     ~SliceTexture() override {
-        if (texture_id_ >= 0) glDeleteTextures(1, &texture_id_);
+        glDeleteTextures(1, &texture_id_);
     }
 
     SliceTexture(SliceTexture&& other) noexcept {
@@ -226,7 +226,7 @@ public:
     };
 
     ~VolumeTexture() override {
-        if (texture_id_ >= 0) glDeleteTextures(1, &texture_id_);
+        glDeleteTextures(1, &texture_id_);
     }
 
     VolumeTexture(const VolumeTexture&) = delete;
