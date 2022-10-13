@@ -29,7 +29,7 @@ public:
                   advance(advance) {}
 
         ~Character() {
-            if (texture_id > 0) glDeleteTextures(1, &texture_id);
+            glDeleteTextures(1, &texture_id);
         }
 
         Character(const Character &) = delete;
