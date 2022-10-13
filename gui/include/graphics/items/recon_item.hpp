@@ -99,6 +99,8 @@ class ReconItem : public GraphicsDataItem {
     glm::mat4 matrix_;
 
     bool show_statistics_ = true;
+    ImVec2 st_win_pos_;
+    ImVec2 st_win_size_;
 
     double prev_x_ = -1.1;
     double prev_y_ = -1.1;

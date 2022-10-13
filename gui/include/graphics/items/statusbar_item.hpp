@@ -9,6 +9,9 @@ class Scene;
 
 class StatusbarItem : public GraphicsDataItem {
 
+    ImVec2 pos_;
+    ImVec2 size_;
+
     bool visible_ = true;
 
 public:
