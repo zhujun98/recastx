@@ -42,8 +42,7 @@ Application::Application() {
         throw std::runtime_error("Failed to initialize OpenGL!");
     }
     // Do we need them?
-    glEnable(GL_MULTISAMPLE);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//    glEnable(GL_MULTISAMPLE);
 
     initImgui();
     registerCallbacks();

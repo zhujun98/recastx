@@ -1,5 +1,5 @@
-#ifndef GUI_AXISCUBE_ITEM_H
-#define GUI_AXISCUBE_ITEM_H
+#ifndef GUI_ICON_ITEM_H
+#define GUI_ICON_ITEM_H
 
 #include <memory>
 
@@ -11,23 +11,20 @@ namespace tomcat::gui {
 class GlyphRenderer;
 class Scene;
 
-class AxiscubeItem : public GraphicsItem {
-
-    GLuint vao_;
-    GLuint vbo_;
-    std::unique_ptr<ShaderProgram> shader_;
+class IconItem : public GraphicsItem {
 
     std::unique_ptr<ShaderProgram> glyph_shader_;
     std::unique_ptr<GlyphRenderer> glyph_renderer_;
 
-    glm::vec3 text_color_;
-    glm::mat4 top_;
+    glm::vec3 color_;
+    glm::mat4 view_;
+    glm::mat4 translate_;
 
 public:
 
-    explicit AxiscubeItem(Scene& scene);
+    explicit IconItem(Scene& scene);
 
-    ~AxiscubeItem() override;
+    ~IconItem() override;
 
     void renderIm() override;
 
@@ -38,4 +35,4 @@ public:
 
 }  // namespace tomcat::gui
 
-#endif // GUI_AXISCUBE_ITEM_H
+#endif // GUI_ICON_ITEM_H

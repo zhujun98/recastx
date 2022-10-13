@@ -24,6 +24,9 @@ execute_process(COMMAND ${CMAKE_COMMAND} -G
 execute_process(COMMAND ${CMAKE_COMMAND} --build .
         WORKING_DIRECTORY ${GL3W_BUILD_DIR})
 
+# freetype
+find_package(Freetype 2.12 REQUIRED)
+
 # imgui
 set(IMGUI_DIR "${PROJECT_SOURCE_DIR}/../ext/imgui")
 set(IMGUI_SOURCE_FILES
@@ -53,6 +56,7 @@ set(SOURCE_NAMES
         "src/graphics/camera3d.cpp"
         "src/graphics/scene.cpp"
         "src/graphics/scene3d.cpp"
+        "src/graphics/glyph_renderer.cpp"
         "src/graphics/graph_node.cpp"
         "src/graphics/shader_program.cpp"
         "src/graphics/slice.cpp"
@@ -61,6 +65,7 @@ set(SOURCE_NAMES
         "src/graphics/items/axes_item.cpp"
         "src/graphics/items/axiscube_item.cpp"
         "src/graphics/items/graphics_item.cpp"
+        "src/graphics/items/icon_item.cpp"
         "src/graphics/items/recon_item.cpp"
         "src/graphics/items/statusbar_item.cpp"
         ${IMGUI_SOURCE_FILES}
@@ -71,6 +76,7 @@ set(TARGET_NAME tomcat-live-gui)
 add_executable(${TARGET_NAME} ${SOURCE_NAMES})
 target_include_directories(${TARGET_NAME}
         PRIVATE include
+                ${FREETYPE_INCLUDE_DIRS}
                 ${IMGUI_DIR}
                 ${IMGUI_DIR}/backends
                 ${IMPLOT_DIR}
@@ -81,6 +87,7 @@ target_link_libraries(${TARGET_NAME}
                 glfw
                 OpenGL::GL
                 glm
+                ${FREETYPE_LIBRARIES}
                 pthread
                 Eigen3::Eigen
                 xtensor

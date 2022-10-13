@@ -15,13 +15,13 @@ StatusbarItem::~StatusbarItem() = default;
 
 void StatusbarItem::onWindowSizeChanged(int width, int height) {
     size_ = {
-        Style::BOTTOM_PANEL_WIDTH * (float)width,
-        Style::BOTTOM_PANEL_HEIGHT * (float)height
+        (1.f - Style::LEFT_PANEL_WIDTH - 3.f * Style::MARGIN) * (float)width,
+        (float)height
     };
 
     pos_ = {
-        Style::MARGIN + Style::LEFT_PANEL_WIDTH * (float)width + Style::SPACING,
-        (float)(height) - size_[1] - Style::MARGIN
+        (2.f * Style::MARGIN + Style::LEFT_PANEL_WIDTH) * (float)width,
+        (1.f - Style::BOTTOM_PANEL_HEIGHT - Style::MARGIN) * (float)(height)
     };
 }
 

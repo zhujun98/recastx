@@ -15,6 +15,7 @@ protected:
     int y_ = 0;
     int w_ = 1;
     int h_ = 1;
+    float asp_ = 1.f;
 
     float fov_ = glm::radians(45.f);
     bool perspective_;
@@ -30,6 +31,8 @@ public:
     virtual ~Viewport();
 
     void update(int x, int y, int w, int h);
+
+    [[nodiscard]] float aspectRatio() const { return asp_; }
 
     [[nodiscard]] const glm::mat4& projection();
 

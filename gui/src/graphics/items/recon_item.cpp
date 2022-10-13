@@ -86,12 +86,13 @@ ReconItem::~ReconItem() {
 
 void ReconItem::onWindowSizeChanged(int width, int height) {
     size_ = {
-        Style::TOP_PANEL_WIDTH * static_cast<float>(width),
-        Style::TOP_PANEL_HEIGHT * static_cast<float>(height)
+        (1.f - Style::ICON_WIDTH - 4 * Style::MARGIN) * (float)width
+            - Style::TOP_PANEL_HEIGHT * (float)height,
+        Style::TOP_PANEL_HEIGHT * (float)height
     };
     pos_ = {
-        Style::MARGIN + Style::ICON_WIDTH * (float)width + Style::SPACING,
-        Style::MARGIN
+        (2.f * Style::MARGIN + Style::ICON_WIDTH) * (float)width,
+        Style::MARGIN * (float)height
     };
 }
 
@@ -152,6 +153,7 @@ void ReconItem::renderGl(const glm::mat4& view,
                          const RenderParams& /*params*/) {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     slice_shader_->use();
     slice_shader_->setInt("colormap", 0);

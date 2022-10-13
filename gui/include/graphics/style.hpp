@@ -6,17 +6,12 @@
 namespace tomcat::gui {
 
 struct Style {
-    static constexpr float MARGIN = 10.f;
-    static constexpr float SPACING = 10.f;
+    static constexpr float MARGIN = 0.01f;
     static constexpr float ICON_HEIGHT = 0.10f;
     static constexpr float ICON_WIDTH = 0.20f;
     static constexpr float LEFT_PANEL_WIDTH = 0.20f;
-    static constexpr float LEFT_PANEL_HEIGHT = 0.80f;
-    static constexpr float TOP_PANEL_WIDTH = 0.68f;
     static constexpr float TOP_PANEL_HEIGHT = 0.15f;
-    static constexpr float BOTTOM_PANEL_WIDTH = 0.75f;
     static constexpr float BOTTOM_PANEL_HEIGHT = 0.15f;
-    static constexpr float AXISCUBE_WIDTH = 0.10f;
 
     static void init() {
         ImGui::StyleColorsDark();
