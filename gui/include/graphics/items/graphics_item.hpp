@@ -29,9 +29,6 @@ protected:
 
     Scene& scene_;
 
-    ImVec2 pos_;
-    ImVec2 size_;
-
 public:
 
     explicit GraphicsItem(Scene& scene);

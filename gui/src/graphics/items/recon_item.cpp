@@ -85,12 +85,12 @@ ReconItem::~ReconItem() {
 }
 
 void ReconItem::onWindowSizeChanged(int width, int height) {
-    size_ = {
+    st_win_size_ = {
         (1.f - Style::ICON_WIDTH - 4 * Style::MARGIN) * (float)width
             - Style::TOP_PANEL_HEIGHT * (float)height,
         Style::TOP_PANEL_HEIGHT * (float)height
     };
-    pos_ = {
+    st_win_pos_ = {
         (2.f * Style::MARGIN + Style::ICON_WIDTH) * (float)width,
         Style::MARGIN * (float)height
     };
@@ -122,8 +122,8 @@ void ReconItem::renderIm() {
 
     ImGui::Checkbox("Show slice histograms", &show_statistics_);
     if (show_statistics_) {
-        ImGui::SetNextWindowPos(pos_);
-        ImGui::SetNextWindowSize(size_);
+        ImGui::SetNextWindowPos(st_win_pos_);
+        ImGui::SetNextWindowSize(st_win_size_);
 
         ImGui::Begin("Statistics##ReconItem", NULL, ImGuiWindowFlags_NoDecoration);
 
