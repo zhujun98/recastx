@@ -68,10 +68,11 @@ tomcat-live-server -h
 
 ### Step 3: Stream the data
 
-**Option1**: From the GPU node
+**Option1**: Streaming data from files on the GPU node
+
+Install [foamstream](https://github.com/zhujun98/foamstream.git)
 ```sh
-cd /afs/psi.ch/project/TOMCAT_dev/tomcat-live
-python producer/fake_stream.py --datafile pet1 --ordered
+foamstream-tomcat -datafile pet1 --ordered
 ```
 
-**Option2**: From the DAQ node:
+**Option2**: On the DAQ node:
