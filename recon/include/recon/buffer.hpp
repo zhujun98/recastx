@@ -202,7 +202,9 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
         std::queue<int>().swap(group_indices_);
         std::queue<size_t>().swap(unoccupied_);
         map_.clear();
+#if (VERBOSITY >= 2)
         data_received_ = 0;
+#endif
         for (size_t i = 0; i < buffer_.size(); ++i) {
             counter_[i] = 0;
             unoccupied_.push(i);
