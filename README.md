@@ -4,7 +4,6 @@
 
 ```sh
 module load gcc/9.3.0
-conda create --yes -n tomcat-live
 ```
 
 ### Installing the reconstruction server
@@ -85,9 +84,14 @@ tomcat-live-server -h
 
 **Option1**: Streaming data from files on the GPU node
 
-Install [foamstream](https://github.com/zhujun98/foamstream.git)
+Install [foamstream](https://github.com/zhujun98/foamstream.git), and stream real 
+experimental data, for example, by
 ```sh
-foamstream-tomcat -datafile pet1 --ordered
+foamstream-tomcat --datafile pet1 --ordered
+```
+or stream fake data, for example, by
+```sh
+foamstream-tomcat --rows 800 --cols 384 --projections 10000
 ```
 
 **Option2**: On the DAQ node:
