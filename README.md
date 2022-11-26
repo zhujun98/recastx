@@ -4,23 +4,38 @@
 
 ```sh
 module load gcc/9.3.0
-conda create -n tomcat-live
+conda create --yes -n tomcat-live
+```
 
-conda activate tomcat-live
-conda install -c conda-forge cmake freetype cppzmq eigen xtensor boost fftw libastra tbb-devel nlohmann_json spdlog
+### Installing the reconstruction server
 
+
+On the GPU node `x02da-gpu-1`
+
+```sh
 cd /afs/psi.ch/project/TOMCAT_dev/tomcat-live
 git clone --recursive <repo>
 
-# On the GPU node `x02da-gpu-1`
-# Build and install the reconstruction server, the dummy consumer as well as
-# the Python bindings 
+conda create -f environment-recon.yml
+conda activate tomcat-live-recon
+
 mkdir build && cd build
 cmake .. -DCMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"} \
          -DBUILD_TEST=ON 
 make -j12 && make install
+```
 
-# On the graphics workstation `x02da-gws-3`
+### Installing the GUI
+
+On the graphics workstation `x02da-gws-3`
+
+```sh
+cd /afs/psi.ch/project/TOMCAT_dev/tomcat-live
+git clone --recursive <repo>
+
+conda create -f environment-gui.yml
+conda activate tomcat-live-gui
+
 mkdir build-gui && cd build-gui
 cmake .. -DCMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"} \
          -DBUILD_GUI=ON -DBUILD_TEST=ON 
@@ -33,7 +48,7 @@ make -j12 && make install
 
 Log in (no ssh) onto the graphics workstation `x02da-gws-3` and open a terminal
 ```sh
-conda activate tomcat-live
+conda activate tomcat-live-gui
 tomcat-live-gui --recon-host x02da-gpu-1
 ```
 
@@ -52,7 +67,7 @@ ssh -L 9970:localhost:9970 -L 9971:localhost:9971 x02da-gpu-1
 ### Step 2: Start the reconstruction server
 
 ```sh
-conda activate tomcat-live
+conda activate tomcat-live-recon
 
 # Receiving the data stream and running the GUI both locally
 tomcat-live-server --threads 32 --rows 800 --cols 384 --group-size 400
