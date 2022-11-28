@@ -86,7 +86,7 @@ int main(int argc, char** argv)
          "number of required flat images")
         ("group-size", po::value<int>()->default_value(128),
          "number of projections per scan")
-        ("buffer-size", po::value<int>()->default_value(100),
+        ("buffer-size", po::value<int>()->default_value(10),
          "maximum number of projection groups to be cached in the memory buffer")
         ("retrieve-phase", po::bool_switch(&retrieve_phase),
          "switch to Paganin filter")
