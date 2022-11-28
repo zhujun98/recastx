@@ -34,7 +34,8 @@ add_executable(test_recon
     main.cpp
     test_buffer.cpp
     test_reconstructor.cpp
-    test_filter.cpp)
+    test_filter.cpp
+    test_utils.cpp)
 target_include_directories(test_recon
     PRIVATE
         "../include"
