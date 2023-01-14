@@ -65,15 +65,15 @@ Application& Application::instance() {
 void Application::setScene(Scene3d* scene) { scene_ = scene; }
 
 void Application::exec() {
-    glfwGetWindowSize(instance_->glfw_window_, &instance_->width_, &instance_->height_);
-    instance_->scene_->onWindowSizeChanged(instance_->width_, instance_->height_);
+    glfwGetWindowSize(glfw_window_, &width_, &height_);
+    scene_->onWindowSizeChanged(width_, height_);
 
     int display_w, display_h;
-    glfwGetFramebufferSize(instance_->glfw_window_, &display_w, &display_h);
-    instance_->scene_->onFrameBufferSizeChanged(display_w, display_h);
+    glfwGetFramebufferSize(glfw_window_, &display_w, &display_h);
+    scene_->onFrameBufferSizeChanged(display_w, display_h);
 
     double prev_time = glfwGetTime();
-    while (!glfwWindowShouldClose(instance_->glfw_window_)) {
+    while (!glfwWindowShouldClose(glfw_window_)) {
         glfwPollEvents();
 
         double curr_time = glfwGetTime();
@@ -83,15 +83,13 @@ void Application::exec() {
         // FIXME: this does not look like a proper event loop
         const auto time_step = 0.0166666666;
         while (time_elapsed > time_step) {
-            instance_->scene_->tick(time_step);
+            scene_->tick(time_step);
             time_elapsed -= time_step;
         }
-        instance_->scene_->tick(time_elapsed);
+        scene_->tick(time_elapsed);
 
-        instance_->render();
+        render();
     }
-
-    instance_.reset(nullptr);
 }
 
 void Application::initImgui() {
