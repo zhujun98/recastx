@@ -37,6 +37,8 @@ class Application {
 
     void initImgui();
 
+    void shutdownImgui();
+
     void registerCallbacks();
 
     static void mouseButtonCallback(GLFWwindow* window, int button, int action, int);
@@ -61,7 +63,7 @@ public:
 
     void setScene(Scene3d* scene);
 
-    void start();
+    static void exec();
 };
 
 }  // namespace tomcat::gui

@@ -49,7 +49,7 @@ Application::Application() {
 }
 
 Application::~Application() {
-    ImGui_ImplGlfw_Shutdown();
+    shutdownImgui();
 
     glfwDestroyWindow(glfw_window_);
     glfwTerminate();
@@ -64,16 +64,16 @@ Application& Application::instance() {
 
 void Application::setScene(Scene3d* scene) { scene_ = scene; }
 
-void Application::start() {
-    glfwGetWindowSize(glfw_window_, &width_, &height_);
-    scene_->onWindowSizeChanged(width_, height_);
+void Application::exec() {
+    glfwGetWindowSize(instance_->glfw_window_, &instance_->width_, &instance_->height_);
+    instance_->scene_->onWindowSizeChanged(instance_->width_, instance_->height_);
 
     int display_w, display_h;
-    glfwGetFramebufferSize(glfw_window_, &display_w, &display_h);
-    scene_->onFrameBufferSizeChanged(display_w, display_h);
+    glfwGetFramebufferSize(instance_->glfw_window_, &display_w, &display_h);
+    instance_->scene_->onFrameBufferSizeChanged(display_w, display_h);
 
     double prev_time = glfwGetTime();
-    while (!glfwWindowShouldClose(glfw_window_)) {
+    while (!glfwWindowShouldClose(instance_->glfw_window_)) {
         glfwPollEvents();
 
         double curr_time = glfwGetTime();
@@ -83,13 +83,15 @@ void Application::start() {
         // FIXME: this does not look like a proper event loop
         const auto time_step = 0.0166666666;
         while (time_elapsed > time_step) {
-            scene_->tick(time_step);
+            instance_->scene_->tick(time_step);
             time_elapsed -= time_step;
         }
-        scene_->tick(time_elapsed);
+        instance_->scene_->tick(time_elapsed);
 
-        render();
+        instance_->render();
     }
+
+    instance_.reset(nullptr);
 }
 
 void Application::initImgui() {
@@ -106,6 +108,13 @@ void Application::initImgui() {
     ImGuiIO& io = ImGui::GetIO();
     io.MouseDrawCursor = false;
     io.IniFilename = ""; // prevent ini file
+}
+
+void Application::shutdownImgui() {
+    ImPlot::DestroyContext();
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 }
 
 void Application::registerCallbacks() {

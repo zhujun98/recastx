@@ -30,15 +30,22 @@ Client::Client(const std::string& hostname, int port)
 
 Client::~Client() {
     data_socket_.set(zmq::sockopt::linger, 200);
+    cmd_socket_.set(zmq::sockopt::linger, 200);
 };
 
 void Client::start() {
     thread_ = std::thread([&]() {
         while (true) {
-            data_socket_.send(zmq::str_buffer("ready"), zmq::send_flags::none);
-
             zmq::message_t reply;
-            data_socket_.recv(reply, zmq::recv_flags::none);
+
+            try {
+                data_socket_.send(zmq::str_buffer("ready"), zmq::send_flags::none);
+                auto recv_ret = data_socket_.recv(reply, zmq::recv_flags::none);
+            } catch (const zmq::error_t& e) {
+                if (e.num() != ETERM) throw;
+                break;
+            }
+
             auto desc = ((PacketDesc*)reply.data())[0];
             auto buffer = tomcat::memory_buffer(reply.size(), (char*)reply.data());
             switch (desc) {
