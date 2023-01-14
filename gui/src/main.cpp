@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include <spdlog/spdlog.h>
 #include <boost/program_options.hpp>
 
 #include <GL/gl3w.h>
@@ -34,6 +35,8 @@ int main(int argc, char** argv) {
         return 0;
     }
 
+    spdlog::set_level(spdlog::level::info);
+
     auto& app = Application::instance();
 
     Client client(opts["recon-host"].as<std::string>(), opts["recon-port"].as<int>());
@@ -42,7 +45,9 @@ int main(int argc, char** argv) {
 
     scene.init();
     client.start();
-    app.start();
 
+    Application::exec();
+
+    spdlog::info("GUI application closed!");
     return 0;
 }
