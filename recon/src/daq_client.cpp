@@ -1,7 +1,7 @@
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 
-#include "recon/data_receiver.hpp"
+#include "recon/daq_client.hpp"
 
 
 namespace tomcat::recon {
@@ -22,9 +22,9 @@ ProjectionType parseProjectionType(int v) {
 } // detail
 
 
-DataReceiver::DataReceiver(const std::string& endpoint,
-                           zmq::socket_type socket_type,
-                           std::shared_ptr<Reconstructor> recon)
+DaqClient::DaqClient(const std::string& endpoint,
+                     zmq::socket_type socket_type,
+                     std::shared_ptr<Reconstructor> recon)
         : context_(1),
           socket_(context_, socket_type),
           recon_(recon) {
@@ -40,12 +40,11 @@ DataReceiver::DataReceiver(const std::string& endpoint,
     }
 }
 
-DataReceiver::~DataReceiver() {
-    socket_.close();
-    context_.close();
+DaqClient::~DaqClient() {
+    socket_.set(zmq::sockopt::linger, 200);
 }
 
-void DataReceiver::start() {
+void DaqClient::start() {
     thread_ = std::thread([&] {
 
 #if (VERBOSITY >= 1)

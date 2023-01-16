@@ -12,7 +12,7 @@
 
 namespace tomcat::recon {
 
-class Broker {
+class GuiClient {
     zmq::context_t context_;
 
     zmq::socket_t data_socket_;
@@ -27,9 +27,9 @@ class Broker {
 
   public:
 
-    Broker(int gui_port, std::shared_ptr<Reconstructor> recon);
+    GuiClient(int gui_port, std::shared_ptr<Reconstructor> recon);
 
-    ~Broker();
+    ~GuiClient();
 
     void send(const tomcat::Packet& packet);
 
