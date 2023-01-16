@@ -57,9 +57,28 @@ void Scene3d::render() {
     ImGui::SetNextWindowPos(pos_);
     ImGui::SetNextWindowSize(size_);
 
-    ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoResize);
+    ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_MenuBar);
     // 2/3 of the space for widget and 1/3 for labels
     ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.65f);
+
+    if (ImGui::BeginMenuBar()) {
+        if (ImGui::BeginMenu("Tools")) {
+            ImGui::MenuItem("Recording (not implemented)");
+            ImGui::EndMenu();
+        }
+        ImGui::EndMenuBar();
+    }
+    ImGui::Spacing();
+
+    if (ImGui::BeginCombo("Data mode", data_mode_options_[DataMode::STREAM])) {
+        for (auto& [mode, name] : data_mode_options_) {
+            if (ImGui::Selectable(name, mode == data_mode_)) {
+                data_mode_ = mode;
+            }
+        }
+        ImGui::EndCombo();
+    }
+    ImGui::Separator();
 
     ImGui::Checkbox("Fix camera", &fixed_camera_);
     if (ImGui::Button("X-Y")) {

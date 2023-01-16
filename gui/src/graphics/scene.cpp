@@ -9,7 +9,10 @@
 
 namespace tomcat::gui {
 
-Scene::Scene(Client* client) : client_(client) {};
+Scene::Scene(Client* client) : client_(client), data_mode_(DataMode::STREAM) {
+    data_mode_options_.emplace(std::make_pair(DataMode::STREAM, "Stream"));
+    data_mode_options_.emplace(std::make_pair(DataMode::REQUEST, "Request"));
+};
 
 Scene::~Scene() = default;
 
