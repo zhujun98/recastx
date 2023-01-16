@@ -15,7 +15,7 @@ On the GPU node `x02da-gpu-1`
 cd /afs/psi.ch/project/TOMCAT_dev/tomcat-live
 git clone --recursive <repo>
 
-conda create -f environment-recon.yml
+conda env create -f environment-recon.yml
 conda activate tomcat-live-recon
 
 mkdir build && cd build
@@ -32,7 +32,7 @@ On the graphics workstation `x02da-gws-3`
 cd /afs/psi.ch/project/TOMCAT_dev/tomcat-live
 git clone --recursive <repo>
 
-conda create -f environment-gui.yml
+conda env create -f environment-gui.yml
 conda activate tomcat-live-gui
 
 mkdir build-gui && cd build-gui
@@ -69,15 +69,15 @@ ssh -L 9970:localhost:9970 -L 9971:localhost:9971 x02da-gpu-1
 conda activate tomcat-live-recon
 
 # Receiving the data stream and running the GUI both locally
-tomcat-live-server --threads 32 --rows 800 --cols 384 --group-size 400
+tomcat-live-recon --threads 32 --rows 800 --cols 384 --group-size 400
 
 # Receiving the data stream from a DAQ node
-tomcat-live-server --data-host xbl-daq-36 --threads 32 --rows 800 --cols 384 --group-size 400
+tomcat-live-recon --data-host xbl-daq-36 --threads 32 --rows 800 --cols 384 --group-size 400
 ```
 
 For more information, type
 ```sh
-tomcat-live-server -h
+tomcat-live-recon -h
 ```
 
 ### Step 3: Stream the data

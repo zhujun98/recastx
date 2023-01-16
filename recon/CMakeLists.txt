@@ -29,7 +29,7 @@ set(SOURCES
         "src/broker.cpp"
 )
 
-set(RECON_LIB tomcat-live-recon)
+set(RECON_LIB lib-tomcat-live-recon)
 add_library(${RECON_LIB} ${SOURCES})
 
 target_include_directories(${RECON_LIB}
@@ -60,8 +60,8 @@ if (BUILD_TEST)
     add_subdirectory(tests)
 endif()
 
-set(EXEC_NAME "tomcat-live-server")
-add_executable(${EXEC_NAME} "src/server.cpp")
+set(EXEC_NAME "tomcat-live-recon")
+add_executable(${EXEC_NAME} "src/main.cpp")
 target_link_libraries(${EXEC_NAME} PUBLIC ${RECON_LIB} Boost::program_options)
 
 install(TARGETS ${EXEC_NAME} RUNTIME DESTINATION bin)
