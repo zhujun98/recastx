@@ -1,13 +1,13 @@
 #include <spdlog/spdlog.h>
 
-#include "recon/broker.hpp"
+#include "recon/gui_client.hpp"
 
 
 namespace tomcat::recon {
 
 using namespace std::string_literals;
 
-Broker::Broker(int port, std::shared_ptr<Reconstructor> recon)
+GuiClient::GuiClient(int port, std::shared_ptr<Reconstructor> recon)
     : context_(1), 
       data_socket_(context_, ZMQ_REP),
       cmd_socket_(context_, ZMQ_PAIR),
@@ -21,9 +21,9 @@ Broker::Broker(int port, std::shared_ptr<Reconstructor> recon)
                  port, port + 1);
 }
 
-Broker::~Broker() = default; 
+GuiClient::~GuiClient() = default; 
 
-void Broker::send(const Packet& packet) {
+void GuiClient::send(const Packet& packet) {
     
     zmq::message_t msg;
     data_socket_.recv(msg, zmq::recv_flags::none);
@@ -35,7 +35,7 @@ void Broker::send(const Packet& packet) {
     }
 }
 
-void Broker::start() {
+void GuiClient::start() {
     cmd_thread_ = std::thread([&] {
         while (true) {
             zmq::message_t update;

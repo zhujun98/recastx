@@ -26,7 +26,7 @@ set(SOURCES
         "src/solver.cpp"
         "src/reconstructor.cpp"
         "src/daq_client.cpp"
-        "src/broker.cpp"
+        "src/gui_client.cpp"
 )
 
 set(RECON_LIB lib-tomcat-live-recon)
