@@ -25,7 +25,7 @@ set(SOURCES
         "src/phase.cpp"
         "src/solver.cpp"
         "src/reconstructor.cpp"
-        "src/data_receiver.cpp"
+        "src/daq_client.cpp"
         "src/broker.cpp"
 )
 

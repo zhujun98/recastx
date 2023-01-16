@@ -7,7 +7,7 @@
 
 namespace tomcat::recon {
 
-class DataReceiver {
+class DaqClient {
 
     zmq::context_t context_;
     zmq::socket_t socket_;
@@ -17,11 +17,11 @@ class DataReceiver {
     std::shared_ptr<Reconstructor> recon_;
 
 public:
-    DataReceiver(const std::string& endpoint,
-                 zmq::socket_type socket_type,
-                 std::shared_ptr<Reconstructor> recon);
+    DaqClient(const std::string& endpoint,
+              zmq::socket_type socket_type,
+              std::shared_ptr<Reconstructor> recon);
 
-    ~DataReceiver();
+    ~DaqClient();
 
     void start();
 };

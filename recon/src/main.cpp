@@ -8,7 +8,7 @@
 #include <boost/program_options.hpp>
 
 #include "recon/reconstructor.hpp"
-#include "recon/data_receiver.hpp"
+#include "recon/daq_client.hpp"
 #include "recon/broker.hpp"
 #include "recon/utils.hpp"
 
@@ -198,11 +198,11 @@ int main(int argc, char** argv)
 
     // set up data bridges
 
-    auto data_receiver = DataReceiver(
+    auto client = DaqClient(
         "tcp://"s + data_hostname + ":"s + std::to_string(data_port),
         data_socket_type,
         recon);
-    data_receiver.start();
+    client.start();
 
     auto broker = Broker(gui_port, recon);
     broker.start();
