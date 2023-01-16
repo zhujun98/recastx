@@ -193,8 +193,7 @@ int main(int argc, char** argv)
         ));
     }
 
-    recon->startProcessing();
-    recon->startReconstructing();
+    recon->run();
 
     // set up data bridges
 

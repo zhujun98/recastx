@@ -73,8 +73,8 @@ void Reconstructor::setSolver(std::unique_ptr<Solver>&& solver) {
     solver_ = std::move(solver);
 }
 
-void Reconstructor::startProcessing() {
-    processing_thread_ = std::thread([&] {
+void Reconstructor::startPreprocessing() {
+    preproc_thread_ = std::thread([&] {
         oneapi::tbb::task_arena arena(num_threads_);
         while (true) {
             buffer_.fetch();
@@ -83,11 +83,11 @@ void Reconstructor::startProcessing() {
         }
     });
 
-    processing_thread_.detach();
+    preproc_thread_.detach();
 }
 
-void Reconstructor::startReconstructing() {
-    gpu_upload_thread_ = std::thread([&] {
+void Reconstructor::startUploading() {
+    upload_thread_ = std::thread([&] {
         while (true) {
             sino_buffer_.fetch();
 
@@ -104,7 +104,12 @@ void Reconstructor::startReconstructing() {
         }
     });
 
-    gpu_recon_thread_ = std::thread([&] {
+    upload_thread_.detach();
+}
+
+void Reconstructor::startReconstructing() {
+
+    recon_thread_ = std::thread([&] {
 
 #if (VERBOSITY >= 1)
         const float data_size = group_size_ * pixels_ * sizeof(RawDtype) / (1024.f * 1024.f); // in MB
@@ -162,8 +167,13 @@ void Reconstructor::startReconstructing() {
         }
     });
 
-    gpu_upload_thread_.detach();
-    gpu_recon_thread_.detach();
+    recon_thread_.detach();
+}
+
+void Reconstructor::run() {
+    startPreprocessing();
+    startUploading();
+    startReconstructing();
 }
 
 void Reconstructor::pushProjection(ProjectionType k, 
