@@ -63,7 +63,7 @@ public:
 
     void setScene(Scene3d* scene);
 
-    static void exec();
+    void exec();
 };
 
 }  // namespace tomcat::gui

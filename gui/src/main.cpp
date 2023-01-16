@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
     scene.init();
     client.start();
 
-    Application::exec();
+    app.exec();
 
     spdlog::info("GUI application closed!");
     return 0;
