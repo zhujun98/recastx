@@ -30,11 +30,12 @@ Solver::Solver(int rows,
         volume_min_point[0], volume_min_point[1], mid_z - half_slab_height, 
         volume_max_point[0], volume_max_point[1], mid_z + half_slab_height);
 
-    spdlog::info("Slice volume: {}", utils::info(*vol_geom_));
+    spdlog::info("astra: slice geometry initialized: {}", utils::info(*vol_geom_));
 
-    // Volume data
     vol_handle_ = astraCUDA3d::allocateGPUMemory(slice_size, slice_size, 1, astraCUDA3d::INIT_ZERO);
     vol_data_ = std::make_unique<astra::CFloat32VolumeData3DGPU>(vol_geom_.get(), vol_handle_);
+    
+    spdlog::info("astra: slice data initialized: {}", utils::info(*vol_geom_));
 
     // Small preview volume
     vol_geom_small_ = std::make_unique<astra::CVolumeGeometry3D>(
@@ -42,12 +43,14 @@ Solver::Solver(int rows,
         volume_min_point[0], volume_min_point[1], volume_min_point[2],
         volume_max_point[0], volume_max_point[1], volume_max_point[2]);
 
-    spdlog::info("Small preview volume: {}", utils::info(*vol_geom_small_));
+    spdlog::info("astra: preview geometry initialized: {}", utils::info(*vol_geom_small_));
 
     vol_handle_small_ = astraCUDA3d::allocateGPUMemory(
         preview_size, preview_size, preview_size, astraCUDA3d::INIT_ZERO);
     vol_data_small_ = std::make_unique<astra::CFloat32VolumeData3DGPU>(
         vol_geom_small_.get(), vol_handle_small_);
+
+    spdlog::info("astra: preview data initialized: {}", utils::info(*vol_geom_small_));
 }
 
 Solver::~Solver() {
