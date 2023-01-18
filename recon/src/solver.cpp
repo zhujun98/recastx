@@ -60,9 +60,7 @@ Solver::~Solver() {
 
     astraCUDA3d::freeGPUMemory(gpu_mem_slice_);
     astraCUDA3d::freeGPUMemory(gpu_mem_preview_);
-    for (auto& proj_handle : gpu_mem_proj_) {
-        astraCUDA3d::freeGPUMemory(proj_handle);
-    }
+    for (auto& handle : gpu_mem_proj_) astraCUDA3d::freeGPUMemory(handle);
 }
 
 void Solver::uploadSinograms(int buffer_idx, 
