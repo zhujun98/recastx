@@ -41,7 +41,7 @@ class ReconTest : public testing::Test {
     void SetUp() override {
         angles_ = utils::defaultAngles(group_size_);
         buildRecon();
-        recon_.startProcessing();
+        recon_.startPreprocessing();
     }
 
     void buildRecon() {
@@ -175,6 +175,15 @@ TEST_F(ReconTest, TestPushProjectionUnordered) {
     pushProjection(group_size_ + overflow, 2 * group_size_ - 1);
     // trigger warn log message, there must be at least one unfilled group in the buffer
     pushProjection(0, 1);
+}
+
+TEST_F(ReconTest, TestUploading) {
+    recon_.startUploading();
+}
+
+TEST_F(ReconTest, TestReconstructing) {
+    recon_.startUploading();
+    recon_.startReconstructing();
 }
 
 } // tomcat::recon::test

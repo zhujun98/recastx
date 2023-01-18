@@ -62,12 +62,12 @@ class Reconstructor {
     std::unique_ptr<Filter> filter_;
     std::unique_ptr<Solver> solver_;
 
-    std::thread processing_thread_;
+    std::thread preproc_thread_;
 
     int gpu_buffer_index_ = 0;
     bool sino_uploaded_ = false;
-    std::thread gpu_upload_thread_;
-    std::thread gpu_recon_thread_;
+    std::thread upload_thread_;
+    std::thread recon_thread_;
     std::condition_variable gpu_cv_;
     std::mutex gpu_mutex_;
 
@@ -94,9 +94,13 @@ public:
 
     void setSolver(std::unique_ptr<Solver>&& solver);
 
-    void startProcessing();
+    void startPreprocessing();
+
+    void startUploading();
 
     void startReconstructing();
+
+    void run();
 
     void pushProjection(ProjectionType k, 
                         int32_t proj_idx, 
@@ -106,7 +110,7 @@ public:
     void setSlice(int slice_id, const Orientation& orientation);
     
     void removeSlice(int slice_id);
-    
+ 
     void removeAllSlices();
 
     std::optional<VolumeDataPacket> previewDataPacket(int timeout=-1);
