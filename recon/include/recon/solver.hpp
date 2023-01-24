@@ -33,19 +33,19 @@ protected:
     int preview_size_;
     int slice_size_;
 
-    std::unique_ptr<astra::CVolumeGeometry3D> vol_geom_;
-    astraCUDA3d::MemHandle3D vol_handle_;
-    std::unique_ptr<astra::CFloat32VolumeData3DGPU> vol_data_;
+    std::vector<std::unique_ptr<astra::CFloat32ProjectionData3DGPU>> proj_data_;
+    std::vector<astraCUDA3d::MemHandle3D> gpu_mem_proj_;
     std::unique_ptr<astra::CCudaProjector3D> projector_;
 
-    std::unique_ptr<astra::CVolumeGeometry3D> vol_geom_small_;
-    astraCUDA3d::MemHandle3D vol_handle_small_;
-    std::unique_ptr<astra::CFloat32VolumeData3DGPU> vol_data_small_;
-    std::vector<std::unique_ptr<astra::CCudaBackProjectionAlgorithm3D>> algs_small_;
+    std::unique_ptr<astra::CVolumeGeometry3D> vol_geom_slice_;
+    astraCUDA3d::MemHandle3D gpu_mem_slice_;
+    std::unique_ptr<astra::CFloat32VolumeData3DGPU> vol_data_slice_;
+    std::vector<std::unique_ptr<astra::CCudaBackProjectionAlgorithm3D>> algo_slice_;
 
-    std::vector<std::unique_ptr<astra::CFloat32ProjectionData3DGPU>> proj_data_;
-    std::vector<std::unique_ptr<astra::CCudaBackProjectionAlgorithm3D>> algs_;
-    std::vector<astraCUDA3d::MemHandle3D> proj_handles_;
+    std::unique_ptr<astra::CVolumeGeometry3D> vol_geom_preview_;
+    astraCUDA3d::MemHandle3D gpu_mem_preview_;
+    std::unique_ptr<astra::CFloat32VolumeData3DGPU> vol_data_preview_;
+    std::vector<std::unique_ptr<astra::CCudaBackProjectionAlgorithm3D>> algo_preview_;
 
 public:
 
@@ -82,8 +82,8 @@ public:
 
 class ParallelBeamSolver : public Solver {
 
-    std::unique_ptr<astra::CParallelVecProjectionGeometry3D> proj_geom_;
-    std::unique_ptr<astra::CParallelVecProjectionGeometry3D> proj_geom_small_;
+    std::unique_ptr<astra::CParallelVecProjectionGeometry3D> proj_geom_slice_;
+    std::unique_ptr<astra::CParallelVecProjectionGeometry3D> proj_geom_preview_;
     std::vector<astra::SPar3DProjection> vectors_;
     std::vector<astra::SPar3DProjection> original_vectors_;
     std::vector<astra::SPar3DProjection> vec_buf_;
@@ -127,8 +127,8 @@ public:
 
 class ConeBeamSolver : public Solver {
 
-    std::unique_ptr<astra::CConeVecProjectionGeometry3D> proj_geom_;
-    std::unique_ptr<astra::CConeVecProjectionGeometry3D> proj_geom_small_;
+    std::unique_ptr<astra::CConeVecProjectionGeometry3D> proj_geom_slice_;
+    std::unique_ptr<astra::CConeVecProjectionGeometry3D> proj_geom_preview_;
     std::vector<astra::SConeProjection> vectors_;
     std::vector<astra::SConeProjection> vec_buf_;
 
