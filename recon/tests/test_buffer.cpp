@@ -29,6 +29,8 @@ class TrippleBufferTest : public testing::Test {
 
 TEST_F(TrippleBufferTest, TestNormal) {
 
+    ASSERT_EQ(buffer_.capacity(), capacity_);
+
     std::vector<float> data1 {1.f, 2.f};
     std::vector<float> data2 {3.f, 4.f};
     std::vector<float> data3 {5.f, 6.f};
@@ -81,6 +83,10 @@ class MemoryBufferTest : public testing::Test {
 };
 
 TEST_F(MemoryBufferTest, TestNormal) {
+
+    ASSERT_EQ(buffer_.capacity(), capacity_);
+    ASSERT_EQ(buffer_.groupSize(), group_size_);
+    ASSERT_EQ(buffer_.chunkSize(), chunk_size_);
 
     ASSERT_EQ(buffer_.occupied(), 0);
     EXPECT_THROW(buffer_.ready(), std::out_of_range);

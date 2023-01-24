@@ -54,7 +54,11 @@ class DoubleBuffer : public DoubleBufferInterface<std::vector<T>> {
 template<typename T>
 class TrippleBufferInterface {
 
-  public:
+protected:
+
+    size_t capacity_;
+
+public:
 
     virtual bool fetch(int timeout = -1) = 0;
     virtual void prepare() = 0;
@@ -65,6 +69,8 @@ class TrippleBufferInterface {
     virtual const T& front() const  = 0;
     virtual const T& ready() const = 0;
     virtual const T& back() const = 0;
+
+    size_t capacity() const { return capacity_; }
 };
 
 template<typename T>
@@ -103,10 +109,12 @@ class TripleBuffer : public TrippleBufferInterface<std::vector<T>> {
         return *this;
     }
 
+    // TODO: move into constructor
     void initialize(size_t capacity) {
-        this->back_.resize(capacity);
-        this->ready_.resize(capacity);
-        this->front_.resize(capacity);
+        back_.resize(capacity);
+        ready_.resize(capacity);
+        front_.resize(capacity);
+        this->capacity_ = capacity;
     }
 
     bool fetch(int timeout = -1) override {
@@ -139,6 +147,7 @@ class TripleBuffer : public TrippleBufferInterface<std::vector<T>> {
     const std::vector<T>& front() const override { return front_; }
     const std::vector<T>& ready() const override { return ready_; }
     const std::vector<T>& back() const override { return back_; };
+    
 };
 
 template<typename T>
@@ -186,9 +195,7 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
     MemoryBuffer(MemoryBuffer&&) = delete;
     MemoryBuffer& operator=(MemoryBuffer&&) = delete;
 
-    void initialize(size_t capacity, size_t group_size, int chunk_size) {
-        chunk_size_ = chunk_size;
-        group_size_ = group_size;
+    void initialize(size_t capacity, size_t group_size, size_t chunk_size) {
         for (size_t i = 0; i < capacity; ++i) {
             std::vector<T> group_buffer(chunk_size * group_size, 0);
             buffer_.emplace_back(std::move(group_buffer));
@@ -196,6 +203,10 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
             unoccupied_.push(i);
         }
         front_.resize(chunk_size * group_size);
+
+        this->capacity_ = capacity;
+        chunk_size_ = chunk_size;
+        group_size_ = group_size;
     }
 
     void reset() {
@@ -321,6 +332,9 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
     size_t capacity() const { return buffer_.size(); }
 
     size_t occupied() const { return buffer_.size() - unoccupied_.size(); }
+
+    size_t groupSize() const { return group_size_; }
+    size_t chunkSize() const { return chunk_size_; }
 };
 
 } // tomcat::recon
