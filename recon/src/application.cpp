@@ -80,7 +80,7 @@ void Application::initConnection(const DaqClientConfig& client_config,
         this);
 
     zmq_server_ = std::make_unique<ZmqServer>(
-        server_config.data_port, server_config.data_port, this);
+        server_config.data_port, server_config.message_port, this);
 }
 
 void Application::startPreprocessing() {
