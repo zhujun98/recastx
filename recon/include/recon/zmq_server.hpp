@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SLICERECON_ZMQSERVER_H
+#define SLICERECON_ZMQSERVER_H
 
 #include <array>
 #include <mutex>
@@ -39,3 +40,5 @@ class ZmqServer {
 };
 
 } // tomcat::recon
+
+#endif // SLICERECON_ZMQSERVER_H

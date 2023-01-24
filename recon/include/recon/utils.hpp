@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SLICERECON_UTILS_H
+#define SLICERECON_UTILS_H
 
 #include <memory>
 #include <numeric>
@@ -106,3 +107,5 @@ inline std::vector<float> defaultAngles(int n) {
 
 
 } // tomcat::recon::utils
+
+#endif // SLICERECON_UTILS_H

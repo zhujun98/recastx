@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SLICERECON_RECONSTRUCTOR_H
+#define SLICERECON_RECONSTRUCTOR_H
 
 #include <memory>
 #include <variant>
@@ -115,3 +116,5 @@ std::unique_ptr<Reconstructor> createReconstructor(
     std::array<float, 3> vol_mins, std::array<float, 3> vol_maxs);
 
 } // tomcat::recon
+
+#endif // SLICERECON_RECONSTRUCTOR_H

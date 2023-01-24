@@ -1,3 +1,6 @@
+#ifndef SLICERECON_DAQCLIENT_H
+#define SLICERECON_DAQCLIENT_H
+
 #include <string>
 #include <thread>
 
@@ -30,3 +33,5 @@ public:
 
 
 } // tomcat::recon
+
+#endif // SLICERECON_DAQCLIENT_H
