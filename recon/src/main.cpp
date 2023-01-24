@@ -47,8 +47,12 @@ int main(int argc, char** argv)
         ("data-socket", po::value<std::string>()->default_value("pull"),
          "ZMQ socket type of the data source server. Options: sub/pull")
         ("gui-port", po::value<int>()->default_value(9970),
-         "First ZMQ socket port of the GUI server. The second port has an increment of 1. "
-         "The valid port range is [9970, 9979]")
+         "First ZMQ socket port of the GUI server. "
+         "At TOMCAT, the valid port range is [9970, 9979]")
+        ("gui-port2", po::value<int>()->default_value(9970),
+         "Second ZMQ socket port of the GUI server. "
+         "If it is equal to the first one, it will be increased by 1. "
+         "At TOMCAT, the valid port range is [9970, 9979]")
     ;
 
     po::options_description geometry_desc("Geometry options");
@@ -129,6 +133,8 @@ int main(int argc, char** argv)
     auto data_port = opts["data-port"].as<int>();
     auto data_socket_type = opts["data-socket"].as<std::string>();
     auto gui_port = opts["gui-port"].as<int>();
+    auto gui_port2 = opts["gui-port2"].as<int>();
+    if (gui_port2 == gui_port) gui_port2 += 1;
 
     auto num_rows = opts["rows"].as<int>();
     auto num_cols = opts["cols"].as<int>();
@@ -170,7 +176,7 @@ int main(int argc, char** argv)
         cone_beam, num_rows, num_cols, num_angles, 1.f, 1.f, 0.0f, 0.0f, 
         slice_size, preview_size, volume_min_point, volume_max_point));
     
-    app->initConnection({data_hostname, data_port, data_socket_type}, {gui_port, gui_port + 1});
+    app->initConnection({data_hostname, data_port, data_socket_type}, {gui_port, gui_port2});
 
     app->runForEver();
 
