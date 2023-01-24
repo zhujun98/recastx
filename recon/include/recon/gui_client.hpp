@@ -8,7 +8,7 @@
 #include <zmq.hpp>
 
 #include "tomcat/tomcat.hpp"
-#include "reconstructor.hpp"
+#include "server.hpp"
 
 namespace tomcat::recon {
 
@@ -23,11 +23,11 @@ class GuiClient {
 
     std::mutex send_mtx_;
 
-    std::shared_ptr<Reconstructor> recon_;
+    std::shared_ptr<Server> server_;
 
   public:
 
-    GuiClient(int gui_port, std::shared_ptr<Reconstructor> recon);
+    GuiClient(int gui_port, std::shared_ptr<Server> server);
 
     ~GuiClient();
 

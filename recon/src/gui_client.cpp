@@ -7,11 +7,11 @@ namespace tomcat::recon {
 
 using namespace std::string_literals;
 
-GuiClient::GuiClient(int port, std::shared_ptr<Reconstructor> recon)
+GuiClient::GuiClient(int port, std::shared_ptr<Server> server)
     : context_(1), 
       data_socket_(context_, ZMQ_REP),
       cmd_socket_(context_, ZMQ_PAIR),
-      recon_(recon) {
+      server_(server) {
     using namespace std::chrono_literals;
 
     data_socket_.bind("tcp://*:"s + std::to_string(port));
@@ -52,17 +52,17 @@ void GuiClient::start() {
                 case PacketDesc::set_slice: {
                     auto packet = std::make_unique<SetSlicePacket>();
                     packet->deserialize(std::move(buffer));
-                    recon_->setSlice(packet->slice_id, packet->orientation);
+                    server_->setSlice(packet->slice_id, packet->orientation);
                     break;
                 }
                 case PacketDesc::remove_slice: {
                     auto packet = std::make_unique<RemoveSlicePacket>();
                     packet->deserialize(std::move(buffer));
-                    recon_->removeSlice(packet->slice_id);
+                    server_->removeSlice(packet->slice_id);
                     break;
                 }
                 case PacketDesc::remove_all_slices: {
-                    recon_->removeAllSlices();
+                    server_->removeAllSlices();
                     break;
                 }
                 default: {
@@ -80,9 +80,9 @@ void GuiClient::start() {
             // - Do not block because slice request needs to be responsive
             // - If the number of the logical threads are more than the number of the physical threads, 
             //   the preview_data could always have value.
-            auto preview_data = recon_->previewDataPacket(0);
+            auto preview_data = server_->previewDataPacket(0);
             if (preview_data) {
-                auto slice_data = recon_->sliceDataPackets();
+                auto slice_data = server_->sliceDataPackets();
 
                 std::lock_guard<std::mutex> lck(send_mtx_);
                 send(std::move(preview_data.value()));
@@ -100,7 +100,7 @@ void GuiClient::start() {
 
                 }
             } else {
-                auto slice_data = recon_->requestedSliceDataPackets(10);
+                auto slice_data = server_->requestedSliceDataPackets(10);
 
                 if (slice_data) {
                     std::lock_guard<std::mutex> lck(send_mtx_);

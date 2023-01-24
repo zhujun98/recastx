@@ -6,7 +6,7 @@ namespace tomcat::recon {
 namespace details {
 
 std::vector<float> paganinFilter(
-        float pixel_size, float lambda, float delta, float beta, float distance, int rows, int cols) {
+        float pixel_size, float lambda, float delta, float beta, float distance, int cols, int rows) {
     auto filter = std::vector<float>(rows * cols);
 
     auto dx = pixel_size / (2.0f * M_PI);
@@ -31,13 +31,14 @@ std::vector<float> paganinFilter(
 
 }; // details
 
-Paganin::Paganin(float pixel_size, float lambda, float delta, float beta, float distance, float* data, int rows, int cols): 
+Paganin::Paganin(float pixel_size, float lambda, float delta, float beta, float distance, float* data, int cols, int rows): 
         pixel_size_(pixel_size), 
         lambda_(lambda),
         delta_(delta),
         beta_(beta),
         distance_(distance),
-        rows_(rows), cols_(cols) {
+        cols_(cols),
+        rows_(rows)  {
 
     freq_ = std::vector<std::vector<std::complex<float>>>(
         1, std::vector<std::complex<float>>(cols_ * rows_));

@@ -7,15 +7,17 @@
 #include <spdlog/spdlog.h>
 #include <boost/program_options.hpp>
 
+#include "recon/server.hpp"
 #include "recon/reconstructor.hpp"
 #include "recon/daq_client.hpp"
 #include "recon/gui_client.hpp"
 #include "recon/utils.hpp"
-
+#include "tomcat/tomcat.hpp"
 
 using namespace std::string_literals;
 namespace po = boost::program_options;
 
+namespace tomcat::recon {
 
 zmq::socket_type parseSocketType(const std::string& socket_type) {
     if (socket_type.compare("pull") == 0) return zmq::socket_type::pull;
@@ -33,6 +35,8 @@ std::array<float, 3> makeVolumeMinmaxPoint(const po::variable_value& point, floa
     throw std::invalid_argument(
         "Length of volume min/max point vector must be either 1 or 3");
 }
+
+} // tomcat::recon
 
 int main(int argc, char** argv)
 {
@@ -84,7 +88,7 @@ int main(int argc, char** argv)
          "number of required dark images")
         ("flats", po::value<int>()->default_value(10),
          "number of required flat images")
-        ("group-size", po::value<int>()->default_value(128),
+        ("angles", po::value<int>()->default_value(128),
          "number of projections per scan")
         ("buffer-size", po::value<int>()->default_value(10),
          "maximum number of projection groups to be cached in the memory buffer")
@@ -135,20 +139,20 @@ int main(int argc, char** argv)
     auto data_socket_type = parseSocketType(opts["data-socket"].as<std::string>());
     auto gui_port = opts["gui-port"].as<int>();
 
-    auto rows = opts["rows"].as<int>();
-    auto cols = opts["cols"].as<int>();
+    auto num_rows = opts["rows"].as<int>();
+    auto num_cols = opts["cols"].as<int>();
     auto vminp = opts["volume-min-point"];
     auto vmaxp = opts["volume-max-point"];
-    auto volume_min_point = makeVolumeMinmaxPoint(vminp, -cols / 2.f);
-    auto volume_max_point = makeVolumeMinmaxPoint(vmaxp, cols / 2.f);
+    auto volume_min_point = makeVolumeMinmaxPoint(vminp, -num_cols / 2.f);
+    auto volume_max_point = makeVolumeMinmaxPoint(vmaxp, num_cols / 2.f);
 
     auto slice_size = opts["slice-size"].as<int>();
-    if (slice_size <= 0) slice_size = cols;
+    if (slice_size <= 0) slice_size = num_cols;
     auto preview_size = opts["preview-size"].as<int>();
     auto num_threads = opts["threads"].as<int>();
     auto num_darks = opts["darks"].as<int>();
     auto num_flats = opts["flats"].as<int>();
-    auto group_size = opts["group-size"].as<int>();
+    auto num_angles = opts["angles"].as<int>();
     auto buffer_size = opts["buffer-size"].as<int>();
 
     auto filter_name = opts["filter"].as<std::string>();
@@ -162,48 +166,30 @@ int main(int argc, char** argv)
     spdlog::set_pattern("[%Y-%m-%d %T.%e] [%^%l%$] %v");
     spdlog::set_level(spdlog::level::info);
 
-    std::array<float, 2> detector_size {1.0f, 1.0f};
-    float source_origin = 0.f;
-    float origin_det = 0.f;
+    // 1. set up server
+    auto server = std::make_shared<Server>(num_threads);
 
-    bool vec_geometry = false;
+    server->init(num_rows, num_cols, num_angles, num_darks, num_flats, slice_size, preview_size, buffer_size);
 
-    // 1. set up reconstructor
-    auto recon = std::make_shared<Reconstructor>(rows, cols, num_threads);
+    if (retrieve_phase) server->initPaganin(pixel_size, lambda, delta, beta, distance, num_cols, num_rows);
 
-    recon->initialize(num_darks, num_flats, group_size, buffer_size, preview_size, slice_size);
+    server->initFilter(filter_name, num_rows, num_cols, gaussian_pass);
 
-    if (retrieve_phase) recon->initPaganin(pixel_size, lambda, delta, beta, distance);
-
-    recon->initFilter(filter_name, gaussian_pass);
-
-    // set up solver
-
-    // TODO:: receive/create angles in different ways.
-    auto angles = utils::defaultAngles(group_size);
-    if (cone_beam) {
-        recon->setSolver(std::make_unique<ConeBeamSolver>(
-            rows, cols, angles, volume_min_point, volume_max_point, preview_size, slice_size,
-            vec_geometry, detector_size, source_origin, origin_det
-        ));
-    } else {
-        recon->setSolver(std::make_unique<ParallelBeamSolver>(
-            rows, cols, angles, volume_min_point, volume_max_point, preview_size, slice_size, 
-            vec_geometry, detector_size
-        ));
-    }
-
-    recon->run();
+    server->setReconstructor(tomcat::recon::createReconstructor(
+        cone_beam, num_rows, num_cols, num_angles, 1.f, 1.f, 0.0f, 0.0f, 
+        slice_size, preview_size, volume_min_point, volume_max_point));
+    
+    server->run();
 
     // set up data bridges
 
     auto daq_client = DaqClient(
         "tcp://"s + data_hostname + ":"s + std::to_string(data_port),
         data_socket_type,
-        recon);
+        server);
     daq_client.start();
 
-    auto gui_client = GuiClient(gui_port, recon);
+    auto gui_client = GuiClient(gui_port, server);
     gui_client.start();
 
     while (true) {

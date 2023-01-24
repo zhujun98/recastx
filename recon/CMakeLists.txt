@@ -23,8 +23,8 @@ set(SOURCES
         "src/utils.cpp"
         "src/filter.cpp"
         "src/phase.cpp"
-        "src/solver.cpp"
         "src/reconstructor.cpp"
+        "src/server.cpp"
         "src/daq_client.cpp"
         "src/gui_client.cpp"
 )

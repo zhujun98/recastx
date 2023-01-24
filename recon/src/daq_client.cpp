@@ -24,10 +24,10 @@ ProjectionType parseProjectionType(int v) {
 
 DaqClient::DaqClient(const std::string& endpoint,
                      zmq::socket_type socket_type,
-                     std::shared_ptr<Reconstructor> recon)
+                     std::shared_ptr<Server> server)
         : context_(1),
           socket_(context_, socket_type),
-          recon_(recon) {
+          server_(server) {
     socket_.connect(endpoint);
     if(socket_type == zmq::socket_type::sub) {
         spdlog::info("Connected to data server (PUB-SUB){}", endpoint);
@@ -48,7 +48,7 @@ void DaqClient::start() {
     thread_ = std::thread([&] {
 
 #if (VERBOSITY >= 1)
-        int monitor_every = recon_->bufferSize();
+        int monitor_every = server_->bufferSize();
         int msg_counter = 0;
 #endif
 
@@ -72,10 +72,10 @@ void DaqClient::start() {
             spdlog::info("Projection received: type = {0:d}, frame = {1:d}", scan_index, frame);
 #endif
 
-            recon_->pushProjection(proj_type,
-                                   frame,
-                                   {shape[0], shape[1]},
-                                   static_cast<char*>(update.data()));
+            server_->pushProjection(proj_type,
+                                    frame,
+                                    {shape[0], shape[1]},
+                                    static_cast<char*>(update.data()));
 
 #if (VERBOSITY >= 1)
             if (proj_type == ProjectionType::projection) {

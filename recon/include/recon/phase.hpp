@@ -9,7 +9,7 @@ namespace tomcat::recon {
 
 namespace details {
     std::vector<float> paganinFilter(
-        float pixel_size, float lambda, float delta, float beta, float distance, int rows, int cols);
+        float pixel_size, float lambda, float delta, float beta, float distance, int cols, int rows);
 } // details
 
 class Paganin {
@@ -19,8 +19,8 @@ class Paganin {
     float beta_;
     float distance_;
 
-    int rows_;
     int cols_;
+    int rows_;
 
     fftwf_plan fft2d_plan_;
     fftwf_plan ffti2d_plan_;
@@ -28,7 +28,7 @@ class Paganin {
     std::vector<float> filter_;
 
   public:
-    Paganin(float pixel_size, float lambda, float delta, float beta, float distance, float* data, int rows, int cols);
+    Paganin(float pixel_size, float lambda, float delta, float beta, float distance, float* data, int cols, int rows);
 
     void apply(float* data, int idx=1);
 

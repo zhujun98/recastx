@@ -3,7 +3,7 @@
 
 #include <zmq.hpp>
 
-#include "reconstructor.hpp"
+#include "server.hpp"
 
 namespace tomcat::recon {
 
@@ -14,12 +14,12 @@ class DaqClient {
 
     std::thread thread_;
 
-    std::shared_ptr<Reconstructor> recon_;
+    std::shared_ptr<Server> server_;
 
 public:
     DaqClient(const std::string& endpoint,
               zmq::socket_type socket_type,
-              std::shared_ptr<Reconstructor> recon);
+              std::shared_ptr<Server> recon);
 
     ~DaqClient();
 

@@ -69,10 +69,10 @@ ssh -L 9970:localhost:9970 -L 9971:localhost:9971 x02da-gpu-1
 conda activate tomcat-live-recon
 
 # Receiving the data stream and running the GUI both locally
-tomcat-live-recon --threads 32 --rows 800 --cols 384 --group-size 400
+tomcat-live-recon --threads 32 --rows 800 --cols 384 --angles 400
 
 # Receiving the data stream from a DAQ node
-tomcat-live-recon --data-host xbl-daq-36 --threads 32 --rows 800 --cols 384 --group-size 400
+tomcat-live-recon --data-host xbl-daq-36 --threads 32 --rows 800 --cols 384 --angles 400
 ```
 
 For more information, type
