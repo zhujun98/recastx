@@ -1,18 +1,18 @@
 #include <spdlog/spdlog.h>
 
 #include "recon/zmq_server.hpp"
-#include "recon/server.hpp"
+#include "recon/application.hpp"
 
 
 namespace tomcat::recon {
 
 using namespace std::string_literals;
 
-ZmqServer::ZmqServer(int data_port, int message_port, Server* server)
+ZmqServer::ZmqServer(int data_port, int message_port, Application* app)
     : context_(1), 
       data_socket_(context_, ZMQ_REP),
       cmd_socket_(context_, ZMQ_PAIR),
-      server_(server) {
+      app_(app) {
     using namespace std::chrono_literals;
 
     data_socket_.bind("tcp://*:"s + std::to_string(data_port));
@@ -53,17 +53,17 @@ void ZmqServer::start() {
                 case PacketDesc::set_slice: {
                     auto packet = std::make_unique<SetSlicePacket>();
                     packet->deserialize(std::move(buffer));
-                    server_->setSlice(packet->slice_id, packet->orientation);
+                    app_->setSlice(packet->slice_id, packet->orientation);
                     break;
                 }
                 case PacketDesc::remove_slice: {
                     auto packet = std::make_unique<RemoveSlicePacket>();
                     packet->deserialize(std::move(buffer));
-                    server_->removeSlice(packet->slice_id);
+                    app_->removeSlice(packet->slice_id);
                     break;
                 }
                 case PacketDesc::remove_all_slices: {
-                    server_->removeAllSlices();
+                    app_->removeAllSlices();
                     break;
                 }
                 default: {
@@ -81,9 +81,9 @@ void ZmqServer::start() {
             // - Do not block because slice request needs to be responsive
             // - If the number of the logical threads are more than the number of the physical threads, 
             //   the preview_data could always have value.
-            auto preview_data = server_->previewDataPacket(0);
+            auto preview_data = app_->previewDataPacket(0);
             if (preview_data) {
-                auto slice_data = server_->sliceDataPackets();
+                auto slice_data = app_->sliceDataPackets();
 
                 std::lock_guard<std::mutex> lck(send_mtx_);
                 send(std::move(preview_data.value()));
@@ -101,7 +101,7 @@ void ZmqServer::start() {
 
                 }
             } else {
-                auto slice_data = server_->requestedSliceDataPackets(10);
+                auto slice_data = app_->requestedSliceDataPackets(10);
 
                 if (slice_data) {
                     std::lock_guard<std::mutex> lck(send_mtx_);

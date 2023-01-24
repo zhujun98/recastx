@@ -6,7 +6,7 @@ using namespace std::chrono_literals;
 #include <Eigen/Eigen>
 #include <spdlog/spdlog.h>
 
-#include "recon/server.hpp"
+#include "recon/application.hpp"
 #include "recon/utils.hpp"
 #include "recon/daq_client.hpp"
 #include "recon/zmq_server.hpp"
@@ -15,13 +15,13 @@ namespace tomcat::recon {
 
 using namespace std::string_literals;
 
-Server::Server(int num_threads) : num_threads_(num_threads) {}
+Application::Application(int num_threads) : num_threads_(num_threads) {}
 
-Server::~Server() = default;
+Application::~Application() = default;
 
-void Server::init(int num_rows, int num_cols, int num_angles,
-                  int num_darks, int num_flats, 
-                  int slice_size, int preview_size, int buffer_size) {
+void Application::init(int num_rows, int num_cols, int num_angles,
+                       int num_darks, int num_flats, 
+                       int slice_size, int preview_size, int buffer_size) {
     rows_ = num_rows;
     cols_ = num_cols;
     pixels_ = rows_ * cols_;
@@ -42,7 +42,7 @@ void Server::init(int num_rows, int num_cols, int num_angles,
     preview_buffer_.initialize(preview_size * preview_size * preview_size);
 
     initialized_ = true;
-    spdlog::info("Reconstruction server initialized:");
+    spdlog::info("Real-time 3D tomographic reconstruction application initialized:");
     spdlog::info("- Number of required dark images: {}", num_darks);
     spdlog::info("- Number of required flat images: {}", num_flats);
     spdlog::info("- Number of projection images per tomogram: {}", num_angles);
@@ -50,30 +50,30 @@ void Server::init(int num_rows, int num_cols, int num_angles,
     spdlog::info("- Preview size: {}", preview_size);
 }
 
-void Server::initPaganin(float pixel_size, 
-                         float lambda, 
-                         float delta, 
-                         float beta, 
-                         float distance,
-                         int num_cols,
-                         int num_rows) {
-    if (!initialized_) throw std::runtime_error("Server not initialized!");
+void Application::initPaganin(float pixel_size, 
+                              float lambda, 
+                              float delta, 
+                              float beta, 
+                              float distance,
+                              int num_cols,
+                              int num_rows) {
+    if (!initialized_) throw std::runtime_error("Application not initialized!");
 
     paganin_ = std::make_unique<Paganin>(
         pixel_size, lambda, delta, beta, distance, &buffer_.front()[0], num_cols, num_rows);
 }
 
-void Server::initFilter(const std::string& name, int num_rows, int num_cols, bool gaussian_pass) {
-    if (!initialized_) throw std::runtime_error("Server not initialized!");
+void Application::initFilter(const std::string& name, int num_rows, int num_cols, bool gaussian_pass) {
+    if (!initialized_) throw std::runtime_error("Application not initialized!");
 
     filter_ = std::make_unique<Filter>(
         name, gaussian_pass, &buffer_.front()[0], num_rows, num_cols, num_threads_);
 }
 
-void Server::setReconstructor(std::unique_ptr<Reconstructor>&& recon) { recon_ = std::move(recon); }
+void Application::setReconstructor(std::unique_ptr<Reconstructor>&& recon) { recon_ = std::move(recon); }
 
-void Server::initConnection(const DaqClientConfig& client_config, 
-                            const ZmqServerConfig& server_config) {
+void Application::initConnection(const DaqClientConfig& client_config, 
+                                 const ZmqServerConfig& server_config) {
     daq_client_ = std::make_unique<DaqClient>(
         "tcp://"s + client_config.hostname + ":"s + std::to_string(client_config.port),
         client_config.socket_type,
@@ -83,7 +83,7 @@ void Server::initConnection(const DaqClientConfig& client_config,
         server_config.data_port, server_config.data_port, this);
 }
 
-void Server::startPreprocessing() {
+void Application::startPreprocessing() {
     preproc_thread_ = std::thread([&] {
         oneapi::tbb::task_arena arena(num_threads_);
         while (true) {
@@ -96,7 +96,7 @@ void Server::startPreprocessing() {
     preproc_thread_.detach();
 }
 
-void Server::startUploading() {
+void Application::startUploading() {
     upload_thread_ = std::thread([&] {
         while (true) {
             sino_buffer_.fetch();
@@ -117,7 +117,7 @@ void Server::startUploading() {
     upload_thread_.detach();
 }
 
-void Server::startReconstructing() {
+void Application::startReconstructing() {
 
     recon_thread_ = std::thread([&] {
 
@@ -180,7 +180,7 @@ void Server::startReconstructing() {
     recon_thread_.detach();
 }
 
-void Server::runForEver() {
+void Application::runForEver() {
     startPreprocessing();
     startUploading();
     startReconstructing();
@@ -189,11 +189,10 @@ void Server::runForEver() {
     zmq_server_->start();
 }
 
-void Server::pushProjection(ProjectionType k, 
-                            int32_t proj_idx, 
-                            const std::array<int32_t, 2>& shape, 
-                            const char* data) {
-
+void Application::pushProjection(ProjectionType k, 
+                                 int32_t proj_idx, 
+                                 const std::array<int32_t, 2>& shape, 
+                                 const char* data) {
     if (shape[0] != rows_ || shape[1] != cols_) {
         spdlog::error("Received projection with wrong shape. Actual: {} x {}, expected: {} x {}", 
                       shape[0], shape[1], rows_, cols_);
@@ -263,7 +262,7 @@ void Server::pushProjection(ProjectionType k,
     }
 }
 
-void Server::setSlice(int slice_id, const Orientation& orientation) {
+void Application::setSlice(int slice_id, const Orientation& orientation) {
     std::lock_guard lk(slice_mtx_);
     if (slices_.find(slice_id) == slices_.end()) {
         std::vector<float> slice_buffer(slice_size_ * slice_size_);
@@ -285,7 +284,7 @@ void Server::setSlice(int slice_id, const Orientation& orientation) {
 
 }
 
-void Server::removeSlice(int slice_id) {
+void Application::removeSlice(int slice_id) {
     std::lock_guard lk(slice_mtx_);
     slices_.erase(slice_id);
     slices_buffer_.erase(slice_id);
@@ -296,8 +295,7 @@ void Server::removeSlice(int slice_id) {
 
 }
 
-
-void Server::removeAllSlices() {
+void Application::removeAllSlices() {
     std::lock_guard lk(slice_mtx_);
     slices_.clear();
 
@@ -307,7 +305,7 @@ void Server::removeAllSlices() {
 
 }
 
-std::optional<VolumeDataPacket> Server::previewDataPacket(int timeout) { 
+std::optional<VolumeDataPacket> Application::previewDataPacket(int timeout) { 
     if(preview_buffer_.fetch(timeout)) {
         return VolumeDataPacket({preview_size_, preview_size_, preview_size_}, 
                                 preview_buffer_.front());
@@ -315,7 +313,7 @@ std::optional<VolumeDataPacket> Server::previewDataPacket(int timeout) {
     return std::nullopt;
 }
 
-std::vector<SliceDataPacket> Server::sliceDataPackets() {
+std::vector<SliceDataPacket> Application::sliceDataPackets() {
     std::vector<SliceDataPacket> ret;
     {
         std::lock_guard lk(slice_mtx_);
@@ -326,7 +324,7 @@ std::vector<SliceDataPacket> Server::sliceDataPackets() {
     return ret;
 }
 
-std::optional<std::vector<SliceDataPacket>> Server::requestedSliceDataPackets(int timeout) {
+std::optional<std::vector<SliceDataPacket>> Application::requestedSliceDataPackets(int timeout) {
     std::vector<SliceDataPacket> ret;
     {
         std::unique_lock<std::mutex> lck(slice_mtx_);
@@ -348,9 +346,9 @@ std::optional<std::vector<SliceDataPacket>> Server::requestedSliceDataPackets(in
     return ret;
 }
 
-size_t Server::bufferSize() const { return num_angles_; }
+size_t Application::bufferSize() const { return num_angles_; }
 
-void Server::processProjections(oneapi::tbb::task_arena& arena) {
+void Application::processProjections(oneapi::tbb::task_arena& arena) {
 
 int num_angles = static_cast<int>(buffer_.groupSize());
 int num_pixels = static_cast<size_t>(buffer_.chunkSize());
@@ -404,9 +402,9 @@ int num_pixels = static_cast<size_t>(buffer_.chunkSize());
 #endif
 }
 
-const std::vector<RawDtype>& Server::darks() const { return all_darks_; }
-const std::vector<RawDtype>& Server::flats() const { return all_flats_; }
-const MemoryBuffer<float>& Server::buffer() const { return buffer_; }
-const TripleBuffer<float>& Server::sinoBuffer() const { return sino_buffer_; }
+const std::vector<RawDtype>& Application::darks() const { return all_darks_; }
+const std::vector<RawDtype>& Application::flats() const { return all_flats_; }
+const MemoryBuffer<float>& Application::buffer() const { return buffer_; }
+const TripleBuffer<float>& Application::sinoBuffer() const { return sino_buffer_; }
 
 } // tomcat::recon

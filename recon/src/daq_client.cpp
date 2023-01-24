@@ -2,7 +2,7 @@
 #include <spdlog/spdlog.h>
 
 #include "recon/daq_client.hpp"
-#include "recon/server.hpp"
+#include "recon/application.hpp"
 
 
 namespace tomcat::recon {
@@ -25,10 +25,10 @@ ProjectionType parseProjectionType(int v) {
 
 DaqClient::DaqClient(const std::string& endpoint,
                      const std::string& socket_type,
-                     Server* server)
+                     Application* app)
         : context_(1),
           socket_(context_, parseSocketType(socket_type)),
-          server_(server) {
+          app_(app) {
     socket_.connect(endpoint);
 
     if(socket_.get(zmq::sockopt::type) == static_cast<int>(zmq::socket_type::sub)) {
@@ -47,7 +47,7 @@ void DaqClient::start() {
     thread_ = std::thread([&] {
 
 #if (VERBOSITY >= 1)
-        int monitor_every = server_->bufferSize();
+        int monitor_every = app_->bufferSize();
         int msg_counter = 0;
 #endif
 
@@ -71,10 +71,10 @@ void DaqClient::start() {
             spdlog::info("Projection received: type = {0:d}, frame = {1:d}", scan_index, frame);
 #endif
 
-            server_->pushProjection(proj_type,
-                                    frame,
-                                    {shape[0], shape[1]},
-                                    static_cast<char*>(update.data()));
+            app_->pushProjection(proj_type,
+                                 frame,
+                                 {shape[0], shape[1]},
+                                 static_cast<char*>(update.data()));
 
 #if (VERBOSITY >= 1)
             if (proj_type == ProjectionType::projection) {

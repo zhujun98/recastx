@@ -7,7 +7,7 @@
 #include <spdlog/spdlog.h>
 #include <boost/program_options.hpp>
 
-#include "recon/server.hpp"
+#include "recon/application.hpp"
 #include "recon/reconstructor.hpp"
 #include "recon/utils.hpp"
 #include "tomcat/tomcat.hpp"
@@ -158,21 +158,21 @@ int main(int argc, char** argv)
     spdlog::set_level(spdlog::level::info);
 
     // 1. set up server
-    auto server = std::make_shared<Server>(num_threads);
+    auto app = std::make_shared<Application>(num_threads);
 
-    server->init(num_rows, num_cols, num_angles, num_darks, num_flats, slice_size, preview_size, buffer_size);
+    app->init(num_rows, num_cols, num_angles, num_darks, num_flats, slice_size, preview_size, buffer_size);
 
-    if (retrieve_phase) server->initPaganin(pixel_size, lambda, delta, beta, distance, num_cols, num_rows);
+    if (retrieve_phase) app->initPaganin(pixel_size, lambda, delta, beta, distance, num_cols, num_rows);
 
-    server->initFilter(filter_name, num_rows, num_cols, gaussian_pass);
+    app->initFilter(filter_name, num_rows, num_cols, gaussian_pass);
 
-    server->setReconstructor(tomcat::recon::createReconstructor(
+    app->setReconstructor(tomcat::recon::createReconstructor(
         cone_beam, num_rows, num_cols, num_angles, 1.f, 1.f, 0.0f, 0.0f, 
         slice_size, preview_size, volume_min_point, volume_max_point));
     
-    server->initConnection({data_hostname, data_port, data_socket_type}, {gui_port, gui_port + 1});
+    app->initConnection({data_hostname, data_port, data_socket_type}, {gui_port, gui_port + 1});
 
-    server->runForEver();
+    app->runForEver();
 
     // set up data bridges
 

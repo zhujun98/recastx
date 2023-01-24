@@ -5,7 +5,7 @@
 
 namespace tomcat::recon {
 
-class Server;
+class Application;
 
 class DaqClient {
 
@@ -14,14 +14,14 @@ class DaqClient {
 
     std::thread thread_;
 
-    Server* server_;
+    Application* app_;
 
     zmq::socket_type parseSocketType(const std::string& socket_type) const; 
 
 public:
     DaqClient(const std::string& endpoint,
               const std::string& socket_type,
-              Server* server);
+              Application* app);
 
     ~DaqClient();
 

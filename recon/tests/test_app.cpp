@@ -5,7 +5,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include "recon/server.hpp"
+#include "recon/application.hpp"
 #include "recon/utils.hpp"
 
 
@@ -36,19 +36,19 @@ class ReconTest : public testing::Test {
     std::array<float, 3> volume_max_point_ {1.0f, 1.0f, 1.0f};
     std::array<float, 2> detector_size_ {1.0f, 1.0f};
 
-    Server server_ {threads_};
+    Application app_ {threads_};
 
     void SetUp() override {
         angles_ = utils::defaultAngles(num_angles_);
         buildRecon();
-        server_.startPreprocessing();
+        app_.startPreprocessing();
     }
 
     void buildRecon() {
-        server_.init(num_rows_, num_cols_, num_angles_, num_darks_, num_flats_, slice_size_, preview_size_, buffer_size_);
-        server_.initFilter(filter_name_, num_rows_, num_cols_, gaussian_pass_);
+        app_.init(num_rows_, num_cols_, num_angles_, num_darks_, num_flats_, slice_size_, preview_size_, buffer_size_);
+        app_.initFilter(filter_name_, num_rows_, num_cols_, gaussian_pass_);
 
-        server_.setReconstructor(tomcat::recon::createReconstructor(
+        app_.setReconstructor(tomcat::recon::createReconstructor(
             false, num_rows_, num_cols_, num_angles_, 1.f, 1.f, 0.0f, 0.0f, 
             slice_size_, preview_size_, volume_min_point_, volume_max_point_));
     }
@@ -56,16 +56,16 @@ class ReconTest : public testing::Test {
     void pushDarks(int n) {
         std::vector<RawDtype> img(pixels_, 0);
         for (int i = 0; i < n; ++i) {
-            server_.pushProjection(
-                ProjectionType::dark, i, {num_rows_, num_cols_}, reinterpret_cast<char*>(img.data()));
+            app_.pushProjection(ProjectionType::dark, i, {num_rows_, num_cols_}, 
+                                reinterpret_cast<char*>(img.data()));
         }
     } 
 
     void pushFlats(int n) {
         std::vector<RawDtype> img(pixels_, 1);
         for (int i = 0; i < n; ++i) {
-            server_.pushProjection(
-                ProjectionType::flat, i, {num_rows_, num_cols_}, reinterpret_cast<char*>(img.data()));
+            app_.pushProjection(ProjectionType::flat, i, {num_rows_, num_cols_}, 
+                                reinterpret_cast<char*>(img.data()));
         }
     } 
 
@@ -81,15 +81,15 @@ class ReconTest : public testing::Test {
             if (i % 2 == 1) {
                 for (size_t i = 0; i < img.size(); ++i) img[i] += 1;
             }
-            server_.pushProjection(
-                ProjectionType::projection, i, {num_rows_, num_cols_}, reinterpret_cast<char*>(img.data()));
+            app_.pushProjection(ProjectionType::projection, i, {num_rows_, num_cols_}, 
+                                reinterpret_cast<char*>(img.data()));
         }
     }
 };
 
 TEST_F(ReconTest, TestPushProjectionException) {
     std::vector<RawDtype> img(pixels_);
-    EXPECT_THROW(server_.pushProjection(
+    EXPECT_THROW(app_.pushProjection(
         ProjectionType::dark, 0, {10, 10}, reinterpret_cast<char*>(img.data())), 
         std::runtime_error);
 }
@@ -98,18 +98,18 @@ TEST_F(ReconTest, TestPushProjection) {
     pushDarks(num_darks_);
     pushFlats(num_flats_);
 
-    auto& sino = server_.sinoBuffer().ready();
+    auto& sino = app_.sinoBuffer().ready();
 
     // push projections (don't completely fill the buffer)
     pushProjection(0, num_angles_ - 1);
-    auto& projs_ready = server_.buffer().ready();
+    auto& projs_ready = app_.buffer().ready();
     EXPECT_EQ(projs_ready[0], 2.f);
     EXPECT_EQ(projs_ready[(num_angles_ - 1) * pixels_ - 1], 3.f); 
 
     // push projections to fill the buffer
     pushProjection(num_angles_ - 1, num_angles_);
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    auto& projs_front = server_.buffer().front();
+    auto& projs_front = app_.buffer().front();
     EXPECT_THAT(std::vector<float>(projs_front.begin(), projs_front.begin() + 10), 
                 Pointwise(FloatNear(1e-6), {0.110098f, -0.272487f, 0.133713f, -0.491590f, 0.520265f,
                                             0.099537f, -0.214807f, 0.464008f, -0.369369f, 0.020631f}));
@@ -129,13 +129,13 @@ TEST_F(ReconTest, TestMemoryBufferReset) {
     pushFlats(num_flats_);
     pushProjection(0, 1);
     pushProjection(num_angles_, num_angles_ + 1);
-    EXPECT_EQ(server_.buffer().occupied(), 2);
+    EXPECT_EQ(app_.buffer().occupied(), 2);
 
     pushDarks(num_darks_);
     pushFlats(num_flats_);
     // buffer should have been reset
     pushProjection(0, 1);
-    EXPECT_EQ(server_.buffer().occupied(), 1);
+    EXPECT_EQ(app_.buffer().occupied(), 1);
 }
 
 TEST_F(ReconTest, TestPushProjectionUnordered) {
@@ -145,14 +145,14 @@ TEST_F(ReconTest, TestPushProjectionUnordered) {
     pushProjection(0, num_angles_ - 3);
     int overflow = 3;
     pushProjection(num_angles_ - 1, num_angles_ + overflow);
-    auto& projs_ready = server_.buffer().ready();
+    auto& projs_ready = app_.buffer().ready();
     EXPECT_EQ(projs_ready[0], 2.f);
     EXPECT_EQ(projs_ready[overflow * pixels_ - 1], 3.f);
     EXPECT_EQ(projs_ready[num_angles_ * pixels_ - 1], 4.f);
 
     pushProjection(num_angles_ - 3, num_angles_ - 1);
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    auto& projs_front = server_.buffer().front();
+    auto& projs_front = app_.buffer().front();
     // FIXME: unittest fails from now and then
     EXPECT_THAT(std::vector<float>(projs_front.begin(), projs_front.begin() + 10), 
                 Pointwise(FloatNear(1e-6), {0.110098f, -0.272487f, 0.133713f, -0.491590f, 0.520265f,
@@ -161,7 +161,7 @@ TEST_F(ReconTest, TestPushProjectionUnordered) {
                 Pointwise(FloatNear(1e-6), { 0.443812f,  0.056262f, -0.205481f,  0.034181f, -0.328773f,
                                             -0.028346f, -0.080572f, -0.066762f, -0.086848f,  0.262528f}));
 
-    auto& sino = server_.sinoBuffer().ready();
+    auto& sino = app_.sinoBuffer().ready();
     EXPECT_THAT(std::vector<float>(sino.begin(), sino.begin() + 10), 
                 Pointwise(FloatNear(1e-6), {0.110098f, -0.272487f, 0.133713f, -0.491590f, 0.520265f,
                                             0.101732f, -0.201946f, 0.119072f, -0.369920f, 0.351062f}));
@@ -176,12 +176,12 @@ TEST_F(ReconTest, TestPushProjectionUnordered) {
 }
 
 TEST_F(ReconTest, TestUploading) {
-    server_.startUploading();
+    app_.startUploading();
 }
 
 TEST_F(ReconTest, TestReconstructing) {
-    server_.startUploading();
-    server_.startReconstructing();
+    app_.startUploading();
+    app_.startReconstructing();
 }
 
 } // tomcat::recon::test

@@ -24,9 +24,9 @@ set(SOURCES
         "src/filter.cpp"
         "src/phase.cpp"
         "src/reconstructor.cpp"
-        "src/server.cpp"
         "src/daq_client.cpp"
         "src/zmq_server.cpp"
+        "src/application.cpp"
 )
 
 set(RECON_LIB lib-tomcat-live-recon)

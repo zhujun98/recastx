@@ -12,7 +12,7 @@
 
 namespace tomcat::recon {
 
-class Server;
+class Application;
 
 class ZmqServer {
     zmq::context_t context_;
@@ -25,11 +25,11 @@ class ZmqServer {
 
     std::mutex send_mtx_;
 
-    Server* server_;
+    Application* app_;
 
   public:
 
-    ZmqServer(int data_port, int message_port, Server* server);
+    ZmqServer(int data_port, int message_port, Application* app);
 
     ~ZmqServer();
 

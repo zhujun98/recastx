@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SLICERECON_APPLICATION_H
+#define SLICERECON_APPLICATION_H
 
 #include <complex>
 #include <condition_variable>
@@ -29,7 +30,7 @@ namespace tomcat::recon {
 class DaqClient;
 class ZmqServer;
 
-class Server {
+class Application {
 
     int cols_;
     int rows_;
@@ -87,9 +88,9 @@ class Server {
 
 public:
 
-    explicit Server(int num_threads); 
+    explicit Application(int num_threads); 
 
-    ~Server();
+    ~Application();
 
     void init(int num_rows, int num_cols, int num_angles,
               int num_darks, int num_flats, 
@@ -140,3 +141,5 @@ public:
 };
 
 } // tomcat::recon
+
+#endif // SLICERECON_APPLICATION_H
