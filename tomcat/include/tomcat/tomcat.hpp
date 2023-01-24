@@ -19,6 +19,17 @@ namespace tomcat {
     using RawImageData = std::vector<RawDtype>;
     using ImageData = std::vector<float>;
 
+    struct DaqClientConfig {
+        std::string hostname;
+        int port;
+        std::string socket_type;
+    };
+
+    struct ZmqServerConfig {
+        int data_port;
+        int message_port;
+    };
+
     struct ProjectionGeometry {
         int32_t col_count; // number of detector columns
         int32_t row_count; // number of detector rows

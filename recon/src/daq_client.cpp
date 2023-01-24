@@ -2,6 +2,7 @@
 #include <spdlog/spdlog.h>
 
 #include "recon/daq_client.hpp"
+#include "recon/server.hpp"
 
 
 namespace tomcat::recon {
@@ -23,20 +24,18 @@ ProjectionType parseProjectionType(int v) {
 
 
 DaqClient::DaqClient(const std::string& endpoint,
-                     zmq::socket_type socket_type,
-                     std::shared_ptr<Server> server)
+                     const std::string& socket_type,
+                     Server* server)
         : context_(1),
-          socket_(context_, socket_type),
+          socket_(context_, parseSocketType(socket_type)),
           server_(server) {
     socket_.connect(endpoint);
-    if(socket_type == zmq::socket_type::sub) {
-        spdlog::info("Connected to data server (PUB-SUB){}", endpoint);
-    } else if (socket_type == zmq::socket_type::pull) {
-        spdlog::info("Connected to data server (PUSH-PULL) {}", endpoint);
-    }
 
-    if (socket_type == zmq::socket_type::sub) {
+    if(socket_.get(zmq::sockopt::type) == static_cast<int>(zmq::socket_type::sub)) {
+        spdlog::info("Connected to data server (PUB-SUB){}", endpoint);
         socket_.set(zmq::sockopt::subscribe, "");
+    } else if (socket_.get(zmq::sockopt::type) == static_cast<int>(zmq::socket_type::pull)) {
+        spdlog::info("Connected to data server (PUSH-PULL) {}", endpoint);
     }
 }
 
@@ -95,6 +94,12 @@ void DaqClient::start() {
     });
 
     thread_.detach();
+}
+
+zmq::socket_type DaqClient::parseSocketType(const std::string& socket_type) const {
+    if (socket_type.compare("pull") == 0) return zmq::socket_type::pull;
+    if (socket_type.compare("sub") == 0) return zmq::socket_type::sub;
+    throw std::invalid_argument("Unsupported socket type: "s + socket_type); 
 }
 
 } // tomcat::recon

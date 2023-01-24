@@ -8,9 +8,12 @@ using namespace std::chrono_literals;
 
 #include "recon/server.hpp"
 #include "recon/utils.hpp"
-
+#include "recon/daq_client.hpp"
+#include "recon/zmq_server.hpp"
 
 namespace tomcat::recon {
+
+using namespace std::string_literals;
 
 Server::Server(int num_threads) : num_threads_(num_threads) {}
 
@@ -68,6 +71,17 @@ void Server::initFilter(const std::string& name, int num_rows, int num_cols, boo
 }
 
 void Server::setReconstructor(std::unique_ptr<Reconstructor>&& recon) { recon_ = std::move(recon); }
+
+void Server::initConnection(const DaqClientConfig& client_config, 
+                            const ZmqServerConfig& server_config) {
+    daq_client_ = std::make_unique<DaqClient>(
+        "tcp://"s + client_config.hostname + ":"s + std::to_string(client_config.port),
+        client_config.socket_type,
+        this);
+
+    zmq_server_ = std::make_unique<ZmqServer>(
+        server_config.data_port, server_config.data_port, this);
+}
 
 void Server::startPreprocessing() {
     preproc_thread_ = std::thread([&] {
@@ -166,10 +180,13 @@ void Server::startReconstructing() {
     recon_thread_.detach();
 }
 
-void Server::run() {
+void Server::runForEver() {
     startPreprocessing();
     startUploading();
     startReconstructing();
+
+    daq_client_->start();
+    zmq_server_->start();
 }
 
 void Server::pushProjection(ProjectionType k, 

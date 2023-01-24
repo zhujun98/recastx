@@ -45,7 +45,7 @@ class ReconTest : public testing::Test {
     }
 
     void buildRecon() {
-        server_.init(num_cols_, num_rows_, num_angles_, num_darks_, num_flats_, slice_size_, preview_size_, buffer_size_);
+        server_.init(num_rows_, num_cols_, num_angles_, num_darks_, num_flats_, slice_size_, preview_size_, buffer_size_);
         server_.initFilter(filter_name_, num_rows_, num_cols_, gaussian_pass_);
 
         server_.setReconstructor(tomcat::recon::createReconstructor(

@@ -8,11 +8,13 @@
 #include <zmq.hpp>
 
 #include "tomcat/tomcat.hpp"
-#include "server.hpp"
+
 
 namespace tomcat::recon {
 
-class GuiClient {
+class Server;
+
+class ZmqServer {
     zmq::context_t context_;
 
     zmq::socket_t data_socket_;
@@ -23,13 +25,13 @@ class GuiClient {
 
     std::mutex send_mtx_;
 
-    std::shared_ptr<Server> server_;
+    Server* server_;
 
   public:
 
-    GuiClient(int gui_port, std::shared_ptr<Server> server);
+    ZmqServer(int data_port, int message_port, Server* server);
 
-    ~GuiClient();
+    ~ZmqServer();
 
     void send(const tomcat::Packet& packet);
 

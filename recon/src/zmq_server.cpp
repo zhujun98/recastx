@@ -1,29 +1,30 @@
 #include <spdlog/spdlog.h>
 
-#include "recon/gui_client.hpp"
+#include "recon/zmq_server.hpp"
+#include "recon/server.hpp"
 
 
 namespace tomcat::recon {
 
 using namespace std::string_literals;
 
-GuiClient::GuiClient(int port, std::shared_ptr<Server> server)
+ZmqServer::ZmqServer(int data_port, int message_port, Server* server)
     : context_(1), 
       data_socket_(context_, ZMQ_REP),
       cmd_socket_(context_, ZMQ_PAIR),
       server_(server) {
     using namespace std::chrono_literals;
 
-    data_socket_.bind("tcp://*:"s + std::to_string(port));
-    cmd_socket_.bind("tcp://*:"s + std::to_string(port + 1));
+    data_socket_.bind("tcp://*:"s + std::to_string(data_port));
+    cmd_socket_.bind("tcp://*:"s + std::to_string(message_port));
 
     spdlog::info("Waiting for connections from the GUI client. Ports: {}, {}", 
-                 port, port + 1);
+                 data_port, message_port);
 }
 
-GuiClient::~GuiClient() = default; 
+ZmqServer::~ZmqServer() = default; 
 
-void GuiClient::send(const Packet& packet) {
+void ZmqServer::send(const Packet& packet) {
     
     zmq::message_t msg;
     data_socket_.recv(msg, zmq::recv_flags::none);
@@ -35,7 +36,7 @@ void GuiClient::send(const Packet& packet) {
     }
 }
 
-void GuiClient::start() {
+void ZmqServer::start() {
     cmd_thread_ = std::thread([&] {
         while (true) {
             zmq::message_t update;

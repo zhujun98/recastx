@@ -26,6 +26,9 @@ extern "C" {
 
 namespace tomcat::recon {
 
+class DaqClient;
+class ZmqServer;
+
 class Server {
 
     int cols_;
@@ -34,7 +37,6 @@ class Server {
     int num_angles_;
     int preview_size_;
     int slice_size_;
-
 
     ProjectionGeometry proj_geom_;
     VolumeGeometry vol_geom_;
@@ -76,6 +78,9 @@ class Server {
 
     int num_threads_;
 
+    std::unique_ptr<DaqClient> daq_client_;
+    std::unique_ptr<ZmqServer> zmq_server_;
+
     void processProjections(oneapi::tbb::task_arena& arena);
 
     static std::unique_ptr<Reconstructor> initReconstructor(int rows, int cols, const ProjectionGeometry& geom);
@@ -96,13 +101,15 @@ public:
 
     void setReconstructor(std::unique_ptr<Reconstructor>&& recon);
 
+    void initConnection(const DaqClientConfig& client_config, const ZmqServerConfig& server_config);
+
     void startPreprocessing();
 
     void startUploading();
 
     void startReconstructing();
 
-    void run();
+    void runForEver();
 
     void pushProjection(ProjectionType k, 
                         int32_t proj_idx, 

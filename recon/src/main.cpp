@@ -9,21 +9,12 @@
 
 #include "recon/server.hpp"
 #include "recon/reconstructor.hpp"
-#include "recon/daq_client.hpp"
-#include "recon/gui_client.hpp"
 #include "recon/utils.hpp"
 #include "tomcat/tomcat.hpp"
 
-using namespace std::string_literals;
 namespace po = boost::program_options;
 
 namespace tomcat::recon {
-
-zmq::socket_type parseSocketType(const std::string& socket_type) {
-    if (socket_type.compare("pull") == 0) return zmq::socket_type::pull;
-    if (socket_type.compare("sub") == 0) return zmq::socket_type::sub;
-    throw std::invalid_argument("Unsupported socket type: "s + socket_type); 
-}
 
 std::array<float, 3> makeVolumeMinmaxPoint(const po::variable_value& point, float v) {
     if (point.empty()) return {v, v, v};
@@ -136,7 +127,7 @@ int main(int argc, char** argv)
 
     auto data_hostname = opts["data-host"].as<std::string>();
     auto data_port = opts["data-port"].as<int>();
-    auto data_socket_type = parseSocketType(opts["data-socket"].as<std::string>());
+    auto data_socket_type = opts["data-socket"].as<std::string>();
     auto gui_port = opts["gui-port"].as<int>();
 
     auto num_rows = opts["rows"].as<int>();
@@ -179,18 +170,11 @@ int main(int argc, char** argv)
         cone_beam, num_rows, num_cols, num_angles, 1.f, 1.f, 0.0f, 0.0f, 
         slice_size, preview_size, volume_min_point, volume_max_point));
     
-    server->run();
+    server->initConnection({data_hostname, data_port, data_socket_type}, {gui_port, gui_port + 1});
+
+    server->runForEver();
 
     // set up data bridges
-
-    auto daq_client = DaqClient(
-        "tcp://"s + data_hostname + ":"s + std::to_string(data_port),
-        data_socket_type,
-        server);
-    daq_client.start();
-
-    auto gui_client = GuiClient(gui_port, server);
-    gui_client.start();
 
     while (true) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
