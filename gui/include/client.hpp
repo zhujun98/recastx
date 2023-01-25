@@ -1,5 +1,5 @@
-#ifndef GUI_SERVER_H
-#define GUI_SERVER_H
+#ifndef GUI_CLIENT_H
+#define GUI_CLIENT_H
 
 #include <cstring>
 #include <map>
@@ -38,4 +38,4 @@ class Client {
 
 }  // namespace tomcat::gui
 
-#endif //GUI_SERVER_H
+#endif //GUI_CLIENT_H

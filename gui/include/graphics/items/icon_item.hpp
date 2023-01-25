@@ -1,5 +1,5 @@
-#ifndef GUI_ICON_ITEM_H
-#define GUI_ICON_ITEM_H
+#ifndef GUI_ICONITEM_H
+#define GUI_ICONITEM_H
 
 #include <memory>
 
@@ -35,4 +35,4 @@ public:
 
 }  // namespace tomcat::gui
 
-#endif // GUI_ICON_ITEM_H
+#endif // GUI_ICONITEM_H

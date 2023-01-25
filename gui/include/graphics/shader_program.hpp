@@ -1,5 +1,5 @@
-#ifndef GUI_SHADER_PROGRAM_H
-#define GUI_SHADER_PROGRAM_H
+#ifndef GUI_SHADERPROGRAM_H
+#define GUI_SHADERPROGRAM_H
 
 #include <string>
 
@@ -37,4 +37,4 @@ class ShaderProgram {
 
 } // namespace tomcat::gui
 
-#endif // GUI_SHADER_PROGRAM_H
+#endif // GUI_SHADERPROGRAM_H

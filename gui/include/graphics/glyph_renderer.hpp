@@ -1,5 +1,5 @@
-#ifndef GUI_GLYPH_RENDERER_H
-#define GUI_GLYPH_RENDERER_H
+#ifndef GUI_GLYPHRENDERER_H
+#define GUI_GLYPHRENDERER_H
 
 #include <map>
 #include <string>
@@ -75,4 +75,4 @@ public:
 
 }  // namespace tomcat::gui
 
-#endif //GUI_GLYPH_RENDERER_H
+#endif //GUI_GLYPHRENDERER_H
