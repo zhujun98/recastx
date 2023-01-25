@@ -1,5 +1,5 @@
-#ifndef GUI_SCENE_ITEM_H
-#define GUI_SCENE_ITEM_H
+#ifndef GUI_SCENEITEM_H
+#define GUI_SCENEITEM_H
 
 #include <string>
 #include <unordered_map>
@@ -62,4 +62,4 @@ public:
 
 } // tomcat::gui
 
-#endif // GUI_SCENE_ITEM_H
+#endif // GUI_SCENEITEM_H

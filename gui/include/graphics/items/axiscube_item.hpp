@@ -1,5 +1,5 @@
-#ifndef GUI_AXISCUBE_ITEM_H
-#define GUI_AXISCUBE_ITEM_H
+#ifndef GUI_AXISCUBEITEM_H
+#define GUI_AXISCUBEITEM_H
 
 #include <memory>
 
@@ -38,4 +38,4 @@ public:
 
 }  // namespace tomcat::gui
 
-#endif // GUI_AXISCUBE_ITEM_H
+#endif // GUI_AXISCUBEITEM_H

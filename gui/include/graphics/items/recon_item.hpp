@@ -1,5 +1,5 @@
-#ifndef GUI_RECON_ITEM_H
-#define GUI_RECON_ITEM_H
+#ifndef GUI_RECONITEM_H
+#define GUI_RECONITEM_H
 
 #include <cstddef>
 #include <iostream>
@@ -162,4 +162,4 @@ public:
 
 } // namespace tomcat::gui
 
-#endif // GUI_RECON_ITEM_H
+#endif // GUI_RECONITEM_H

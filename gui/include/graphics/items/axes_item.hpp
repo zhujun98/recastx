@@ -1,5 +1,5 @@
-#ifndef GUI_AXES_ITEM_H
-#define GUI_AXES_ITEM_H
+#ifndef GUI_AXESITEM_H
+#define GUI_AXESITEM_H
 
 #include <memory>
 
@@ -33,4 +33,4 @@ public:
 
 }  // namespace tomcat::gui
 
-#endif // GUI_AXES_ITEM_H
+#endif // GUI_AXESITEM_H

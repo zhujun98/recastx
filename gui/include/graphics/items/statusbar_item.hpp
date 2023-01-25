@@ -1,5 +1,5 @@
-#ifndef GUI_STATUSBAR_ITEM_H
-#define GUI_STATUSBAR_ITEM_H
+#ifndef GUI_STATUSBARITEM_H
+#define GUI_STATUSBARITEM_H
 
 #include "graphics/items/graphics_item.hpp"
 
@@ -33,4 +33,4 @@ public:
 
 }
 
-#endif //GUI_STATUSBAR_ITEM_H
+#endif //GUI_STATUSBARITEM_H

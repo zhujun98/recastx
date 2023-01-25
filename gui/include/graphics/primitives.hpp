@@ -1,4 +1,5 @@
-#pragma once
+#ifndef GUI_PRIMITIVES_H
+#define GUI_PRIMITIVES_H
 
 #include <GL/gl3w.h>
 
@@ -84,3 +85,5 @@ inline constexpr GLuint wireframe_cube_indices[] = {
         3, 4, 2, 7, 6, 3, 6, 1, 3, 2, 2, 1};
 
 } // namespace tomcat::gui
+
+#endif // GUI_PRIMITIVES_H

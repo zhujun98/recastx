@@ -1,4 +1,5 @@
-#pragma once
+#ifndef GUI_TICKER_H
+#define GUI_TICKER_H
 
 namespace tomcat::gui {
 
@@ -8,3 +9,5 @@ class Ticker {
 };
 
 } // tomcat::gui
+
+#endif // GUI_TICKER_H

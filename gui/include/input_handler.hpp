@@ -1,5 +1,5 @@
-#ifndef GUI_INPUT_HANDLER_H
-#define GUI_INPUT_HANDLER_H
+#ifndef GUI_INPUTHANDLER_H
+#define GUI_INPUTHANDLER_H
 
 namespace tomcat::gui {
 
@@ -14,4 +14,4 @@ class InputHandler {
 
 } // namespace tomcat::gui
 
-#endif // GUI_INPUT_HANDLER_H
+#endif // GUI_INPUTHANDLER_H
