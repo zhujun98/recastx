@@ -23,10 +23,10 @@ set(SOURCES
         "src/utils.cpp"
         "src/filter.cpp"
         "src/phase.cpp"
-        "src/solver.cpp"
         "src/reconstructor.cpp"
         "src/daq_client.cpp"
-        "src/gui_client.cpp"
+        "src/zmq_server.cpp"
+        "src/application.cpp"
 )
 
 set(RECON_LIB lib-tomcat-live-recon)

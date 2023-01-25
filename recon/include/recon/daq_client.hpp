@@ -1,11 +1,14 @@
+#ifndef SLICERECON_DAQCLIENT_H
+#define SLICERECON_DAQCLIENT_H
+
 #include <string>
 #include <thread>
 
 #include <zmq.hpp>
 
-#include "reconstructor.hpp"
-
 namespace tomcat::recon {
+
+class Application;
 
 class DaqClient {
 
@@ -14,12 +17,14 @@ class DaqClient {
 
     std::thread thread_;
 
-    std::shared_ptr<Reconstructor> recon_;
+    Application* app_;
+
+    zmq::socket_type parseSocketType(const std::string& socket_type) const; 
 
 public:
     DaqClient(const std::string& endpoint,
-              zmq::socket_type socket_type,
-              std::shared_ptr<Reconstructor> recon);
+              const std::string& socket_type,
+              Application* app);
 
     ~DaqClient();
 
@@ -28,3 +33,5 @@ public:
 
 
 } // tomcat::recon
+
+#endif // SLICERECON_DAQCLIENT_H

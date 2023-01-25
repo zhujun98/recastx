@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SLICERECON_ZMQSERVER_H
+#define SLICERECON_ZMQSERVER_H
 
 #include <array>
 #include <mutex>
@@ -8,11 +9,13 @@
 #include <zmq.hpp>
 
 #include "tomcat/tomcat.hpp"
-#include "reconstructor.hpp"
+
 
 namespace tomcat::recon {
 
-class GuiClient {
+class Application;
+
+class ZmqServer {
     zmq::context_t context_;
 
     zmq::socket_t data_socket_;
@@ -23,13 +26,13 @@ class GuiClient {
 
     std::mutex send_mtx_;
 
-    std::shared_ptr<Reconstructor> recon_;
+    Application* app_;
 
   public:
 
-    GuiClient(int gui_port, std::shared_ptr<Reconstructor> recon);
+    ZmqServer(int data_port, int message_port, Application* app);
 
-    ~GuiClient();
+    ~ZmqServer();
 
     void send(const tomcat::Packet& packet);
 
@@ -37,3 +40,5 @@ class GuiClient {
 };
 
 } // tomcat::recon
+
+#endif // SLICERECON_ZMQSERVER_H

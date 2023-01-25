@@ -1,133 +1,120 @@
-#pragma once
+#ifndef SLICERECON_RECONSTRUCTOR_H
+#define SLICERECON_RECONSTRUCTOR_H
 
-#include <complex>
-#include <condition_variable>
-#include <cstdint>
-#include <iostream>
-#include <optional>
-#include <set>
-#include <thread>
-#include <unordered_map>
-#include <vector>
+#include <memory>
+#include <variant>
 
-#include <spdlog/spdlog.h>
-#include <oneapi/tbb.h>
+#ifndef ASTRA_CUDA
+#define ASTRA_CUDA
+#endif
 
-extern "C" {
-#include <fftw3.h>
-}
+#include "astra/ConeProjectionGeometry3D.h"
+#include "astra/ConeVecProjectionGeometry3D.h"
+#include "astra/CudaBackProjectionAlgorithm3D.h"
+#include "astra/CudaProjector3D.h"
+#include "astra/Float32Data3DGPU.h"
+#include "astra/Float32ProjectionData3DGPU.h"
+#include "astra/Float32VolumeData3DGPU.h"
+#include "astra/ParallelProjectionGeometry3D.h"
+#include "astra/ParallelVecProjectionGeometry3D.h"
+#include "astra/VolumeGeometry3D.h"
 
-#include "buffer.hpp"
-#include "phase.hpp"
-#include "filter.hpp"
-#include "solver.hpp"
-
+#include "tomcat/tomcat.hpp"
 
 namespace tomcat::recon {
 
 class Reconstructor {
 
-    int rows_;
-    int cols_;
-    int pixels_;
+protected:
 
-    int num_darks_ = 1;
-    int num_flats_ = 1;
-    int preview_size_ = 0;
-    int slice_size_ = 0;
-    std::unordered_map<int, Orientation> slices_;
-    std::set<int> updated_slices_;
-    std::set<int> requested_slices_;
-    std::condition_variable slice_cv_;
-    std::mutex slice_mtx_;
+    std::vector<std::unique_ptr<astra::CFloat32ProjectionData3DGPU>> proj_data_;
+    std::vector<astraCUDA3d::MemHandle3D> gpu_mem_proj_;
+    std::unique_ptr<astra::CCudaProjector3D> projector_;
 
-    std::vector<RawDtype> all_darks_;
-    std::vector<RawDtype> all_flats_;
-    std::vector<float> dark_avg_;
-    std::vector<float> reciprocal_;
-    MemoryBuffer<float> buffer_;
-    TripleBuffer<float> sino_buffer_;
-    TripleBuffer<float> preview_buffer_;
-    std::unordered_map<int, std::vector<float>> slices_buffer_;
-    bool initialized_ = false;
+    std::unique_ptr<astra::CVolumeGeometry3D> vol_geom_slice_;
+    astraCUDA3d::MemHandle3D gpu_mem_slice_;
+    std::unique_ptr<astra::CFloat32VolumeData3DGPU> vol_data_slice_;
+    std::vector<std::unique_ptr<astra::CCudaBackProjectionAlgorithm3D>> algo_slice_;
 
-    size_t group_size_;
-    size_t buffer_size_;
+    std::unique_ptr<astra::CVolumeGeometry3D> vol_geom_preview_;
+    astraCUDA3d::MemHandle3D gpu_mem_preview_;
+    std::unique_ptr<astra::CFloat32VolumeData3DGPU> vol_data_preview_;
+    std::vector<std::unique_ptr<astra::CCudaBackProjectionAlgorithm3D>> algo_preview_;
 
-    int32_t received_darks_ = 0;
-    int32_t received_flats_ = 0;
-    bool reciprocal_computed_ = false;
+    static std::unique_ptr<astra::CVolumeGeometry3D> makeVolumeGeometry(const VolumeGeometry& geom);
 
-    std::unique_ptr<Paganin> paganin_;
-    std::unique_ptr<Filter> filter_;
-    std::unique_ptr<Solver> solver_;
-
-    std::thread preproc_thread_;
-
-    int gpu_buffer_index_ = 0;
-    bool sino_uploaded_ = false;
-    std::thread upload_thread_;
-    std::thread recon_thread_;
-    std::condition_variable gpu_cv_;
-    std::mutex gpu_mutex_;
-
-    int num_threads_;
-
-    void processProjections(oneapi::tbb::task_arena& arena);
+    static astraCUDA3d::MemHandle3D allocateGpuMemory(const VolumeGeometry& geom);
 
 public:
 
-    Reconstructor(int rows, int cols, int num_threads); 
+    Reconstructor(VolumeGeometry slice_geom, VolumeGeometry preview_geom);
 
-    ~Reconstructor();
+    virtual ~Reconstructor();
 
-    void initialize(int num_darks, 
-                    int num_flats, 
-                    int group_size,
-                    int buffer_size,
-                    int preview_size,
-                    int slice_size);
+    virtual void reconstructSlice(std::vector<float>& slice_buffer, 
+                                  Orientation x, 
+                                  int buffer_idx) = 0;
 
-    void initPaganin(float pixel_size, float lambda, float delta, float beta, float distance);
+    virtual void reconstructPreview(std::vector<float>& preview_buffer, 
+                                    int buffer_idx) = 0;
 
-    void initFilter(const std::string& name, bool gaussian_pass);
+    void uploadSinograms(int buffer_idx, const std::vector<float>& sino, int begin, int end);
+};
 
-    void setSolver(std::unique_ptr<Solver>&& solver);
+class ParallelBeamReconstructor : public Reconstructor {
 
-    void startPreprocessing();
+    std::unique_ptr<astra::CParallelVecProjectionGeometry3D> proj_geom_slice_;
+    std::unique_ptr<astra::CParallelVecProjectionGeometry3D> proj_geom_preview_;
+    std::vector<astra::SPar3DProjection> vectors_;
+    std::vector<astra::SPar3DProjection> original_vectors_;
+    std::vector<astra::SPar3DProjection> vec_buf_;
 
-    void startUploading();
+public:
 
-    void startReconstructing();
+    ParallelBeamReconstructor(ProjectionGeometry proj_geom,
+                              VolumeGeometry slice_geom,
+                              VolumeGeometry preview_geom);
+    // FIXME ~solver clean up
 
-    void run();
+    void reconstructSlice(std::vector<float>& slice_buffer, 
+                          Orientation x, 
+                          int buffer_idx) override;
 
-    void pushProjection(ProjectionType k, 
-                        int32_t proj_idx, 
-                        const std::array<int32_t, 2>& shape, 
-                        const char* data); 
-
-    void setSlice(int slice_id, const Orientation& orientation);
-    
-    void removeSlice(int slice_id);
- 
-    void removeAllSlices();
-
-    std::optional<VolumeDataPacket> previewDataPacket(int timeout=-1);
-
-    std::vector<SliceDataPacket> sliceDataPackets();
-
-    std::optional<std::vector<SliceDataPacket>> requestedSliceDataPackets(int timeout=-1);
-
-    size_t bufferSize() const;
-
-    // for unittest
-
-    const std::vector<RawDtype>& darks() const;
-    const std::vector<RawDtype>& flats() const;
-    const MemoryBuffer<float>& buffer() const;
-    const TripleBuffer<float>& sinoBuffer() const;
+    void reconstructPreview(std::vector<float>& preview_buffer, 
+                            int buffer_idx) override;
 
 };
 
+class ConeBeamReconstructor : public Reconstructor {
+
+    std::unique_ptr<astra::CConeVecProjectionGeometry3D> proj_geom_slice_;
+    std::unique_ptr<astra::CConeVecProjectionGeometry3D> proj_geom_preview_;
+    std::vector<astra::SConeProjection> vectors_;
+    std::vector<astra::SConeProjection> vec_buf_;
+
+public:
+
+    ConeBeamReconstructor(ProjectionGeometry proj_geom, 
+                          VolumeGeometry slice_geom,
+                          VolumeGeometry preview_geom);
+    // FIXME ~solver clean up
+
+    void reconstructSlice(std::vector<float>& slice_buffer, 
+                          Orientation x, 
+                          int buffer_idx) override;
+
+    void reconstructPreview(std::vector<float>& preview_buffer, 
+                            int buffer_idx) override;
+
+    std::vector<float> fdk_weights();
+};
+
+std::unique_ptr<Reconstructor> createReconstructor(
+    bool cone_beam, int num_rows, int num_cols, int num_angles, 
+    float pixel_h, float pixel_w, float source2origin, float origin2det,
+    int slice_size, int preview_size, 
+    std::array<float, 3> vol_mins, std::array<float, 3> vol_maxs);
+
 } // tomcat::recon
+
+#endif // SLICERECON_RECONSTRUCTOR_H

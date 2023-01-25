@@ -33,9 +33,9 @@ find_package(Threads REQUIRED)
 add_executable(test_recon
     main.cpp
     test_buffer.cpp
-    test_reconstructor.cpp
     test_filter.cpp
-    test_utils.cpp)
+    test_utils.cpp
+    test_app.cpp)
 target_include_directories(test_recon
     PRIVATE
         "../include"

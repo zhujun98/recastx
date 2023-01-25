@@ -1,29 +1,30 @@
 #include <spdlog/spdlog.h>
 
-#include "recon/gui_client.hpp"
+#include "recon/zmq_server.hpp"
+#include "recon/application.hpp"
 
 
 namespace tomcat::recon {
 
 using namespace std::string_literals;
 
-GuiClient::GuiClient(int port, std::shared_ptr<Reconstructor> recon)
+ZmqServer::ZmqServer(int data_port, int message_port, Application* app)
     : context_(1), 
       data_socket_(context_, ZMQ_REP),
       cmd_socket_(context_, ZMQ_PAIR),
-      recon_(recon) {
+      app_(app) {
     using namespace std::chrono_literals;
 
-    data_socket_.bind("tcp://*:"s + std::to_string(port));
-    cmd_socket_.bind("tcp://*:"s + std::to_string(port + 1));
+    data_socket_.bind("tcp://*:"s + std::to_string(data_port));
+    cmd_socket_.bind("tcp://*:"s + std::to_string(message_port));
 
     spdlog::info("Waiting for connections from the GUI client. Ports: {}, {}", 
-                 port, port + 1);
+                 data_port, message_port);
 }
 
-GuiClient::~GuiClient() = default; 
+ZmqServer::~ZmqServer() = default; 
 
-void GuiClient::send(const Packet& packet) {
+void ZmqServer::send(const Packet& packet) {
     
     zmq::message_t msg;
     data_socket_.recv(msg, zmq::recv_flags::none);
@@ -35,7 +36,7 @@ void GuiClient::send(const Packet& packet) {
     }
 }
 
-void GuiClient::start() {
+void ZmqServer::start() {
     cmd_thread_ = std::thread([&] {
         while (true) {
             zmq::message_t update;
@@ -52,17 +53,17 @@ void GuiClient::start() {
                 case PacketDesc::set_slice: {
                     auto packet = std::make_unique<SetSlicePacket>();
                     packet->deserialize(std::move(buffer));
-                    recon_->setSlice(packet->slice_id, packet->orientation);
+                    app_->setSlice(packet->slice_id, packet->orientation);
                     break;
                 }
                 case PacketDesc::remove_slice: {
                     auto packet = std::make_unique<RemoveSlicePacket>();
                     packet->deserialize(std::move(buffer));
-                    recon_->removeSlice(packet->slice_id);
+                    app_->removeSlice(packet->slice_id);
                     break;
                 }
                 case PacketDesc::remove_all_slices: {
-                    recon_->removeAllSlices();
+                    app_->removeAllSlices();
                     break;
                 }
                 default: {
@@ -80,9 +81,9 @@ void GuiClient::start() {
             // - Do not block because slice request needs to be responsive
             // - If the number of the logical threads are more than the number of the physical threads, 
             //   the preview_data could always have value.
-            auto preview_data = recon_->previewDataPacket(0);
+            auto preview_data = app_->previewDataPacket(0);
             if (preview_data) {
-                auto slice_data = recon_->sliceDataPackets();
+                auto slice_data = app_->sliceDataPackets();
 
                 std::lock_guard<std::mutex> lck(send_mtx_);
                 send(std::move(preview_data.value()));
@@ -100,7 +101,7 @@ void GuiClient::start() {
 
                 }
             } else {
-                auto slice_data = recon_->requestedSliceDataPackets(10);
+                auto slice_data = app_->requestedSliceDataPackets(10);
 
                 if (slice_data) {
                     std::lock_guard<std::mutex> lck(send_mtx_);

@@ -6,9 +6,9 @@ namespace tomcat::recon {
 Filter::Filter(const std::string& filter_name, 
                bool gaussian_pass,
                float* data,
-               int rows, 
-               int cols,
-               int buffer_size) : rows_(rows), cols_(cols) {
+               int num_rows, 
+               int num_cols,
+               int buffer_size) : num_rows_(num_rows), num_cols_(num_cols) {
     initialize(filter_name, gaussian_pass, data, buffer_size);
 }
 
@@ -19,43 +19,43 @@ void Filter::initialize(const std::string& filter_name,
                         float* data, 
                         int buffer_size) {
     freq_ = std::vector<std::vector<std::complex<float>>>(
-        buffer_size, std::vector<std::complex<float>>(cols_));
+        buffer_size, std::vector<std::complex<float>>(num_cols_));
 
     fft_plan_ = fftwf_plan_dft_r2c_1d(
-        cols_, 
+        num_cols_, 
         data,
         reinterpret_cast<fftwf_complex*>(&freq_[0][0]),
         FFTW_ESTIMATE);
 
     ffti_plan_ = fftwf_plan_dft_c2r_1d(
-        cols_,
+        num_cols_,
         reinterpret_cast<fftwf_complex*>(&freq_[0][0]),
         data, 
         FFTW_ESTIMATE);
 
     if (filter_name == "shepp"){
-        filter_ = Filter::shepp(cols_);
+        filter_ = Filter::shepp(num_cols_);
     } else if (filter_name == "ramlak") {
-        filter_ = Filter::ramlak(cols_);
+        filter_ = Filter::ramlak(num_cols_);
     } else {
         throw std::invalid_argument("Unsupported filter: " + filter_name);
     }
 
     if (gaussian_pass) {
-        auto filter_lowpass = gaussian(cols_, 0.06f);
-        for (int i = 0; i < cols_; ++i) filter_[i] *= filter_lowpass[i];
+        auto filter_lowpass = gaussian(num_cols_, 0.06f);
+        for (int i = 0; i < num_cols_; ++i) filter_[i] *= filter_lowpass[i];
     }
 }
 
 void Filter::apply(float *data, int buffer_index) {
-    for (int r = 0; r < rows_; ++r) {
-        auto idx = r * cols_;
+    for (int r = 0; r < num_rows_; ++r) {
+        auto idx = r * num_cols_;
 
         fftwf_execute_dft_r2c(fft_plan_, 
                               &data[idx],
                               reinterpret_cast<fftwf_complex*>(&freq_[buffer_index][0]));
 
-        for (int c = 0; c < cols_; ++c) freq_[buffer_index][c] *= filter_[c];
+        for (int c = 0; c < num_cols_; ++c) freq_[buffer_index][c] *= filter_[c];
 
         fftwf_execute_dft_c2r(ffti_plan_,
                               reinterpret_cast<fftwf_complex*>(&freq_[buffer_index][0]),
