@@ -12,8 +12,8 @@ using ::testing::FloatNear;
 
 class FilterTest : public testing::Test {
   protected:
-    int rows_ = 2;
     int cols_ = 5;
+    int rows_ = 2;
     int pixels_ = rows_ * cols_;
     int threads_ = rows_;
     oneapi::tbb::task_arena arena_{threads_};
@@ -32,7 +32,7 @@ TEST_F(FilterTest, TestRamlak) {
     EXPECT_THAT(Filter::ramlak(5), 
                 Pointwise(FloatNear(1e-6), {0.f, .08f, .16f, .16f, .08f}));
 
-    auto filter = Filter("ramlak", false, src_.data(), rows_, cols_, threads_);
+    auto filter = Filter("ramlak", false, src_.data(), cols_, rows_, threads_);
     arena_.execute([&]{
         tbb::parallel_for(tbb::blocked_range<int>(0, int(src_.size() / pixels_)),
                           [&](const tbb::blocked_range<int> &block) {
@@ -62,7 +62,7 @@ TEST_F(FilterTest, TestShepp) {
     EXPECT_THAT(Filter::shepp(5), 
                 Pointwise(FloatNear(1e-6), {0.f, 0.07483914f, 0.12109228f, 0.12109228f, 0.07483914f}));
 
-    auto filter = Filter("shepp", false, src_.data(), rows_, cols_, threads_);
+    auto filter = Filter("shepp", false, src_.data(), cols_, rows_, threads_);
     arena_.execute([&]{
         tbb::parallel_for(tbb::blocked_range<int>(0, int(src_.size() / pixels_)),
                           [&](const tbb::blocked_range<int> &block) {

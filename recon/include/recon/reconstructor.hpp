@@ -110,10 +110,10 @@ public:
 };
 
 std::unique_ptr<Reconstructor> createReconstructor(
-    bool cone_beam, int num_rows, int num_cols, int num_angles, 
-    float pixel_h, float pixel_w, float source2origin, float origin2det,
+    bool cone_beam, int num_cols, int num_rows, int num_angles, 
+    std::array<float, 2> pixel_size, float source2origin, float origin2det,
     int slice_size, int preview_size, 
-    std::array<float, 3> vol_mins, std::array<float, 3> vol_maxs);
+    std::array<float, 2> xrange, std::array<float, 2> yrange, std::array<float, 2> zrange);
 
 } // tomcat::recon
 

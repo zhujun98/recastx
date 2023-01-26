@@ -351,34 +351,33 @@ std::vector<float> ConeBeamReconstructor::fdk_weights() {
 }
 
 std::unique_ptr<Reconstructor> createReconstructor(
-        bool cone_beam, int num_rows, int num_cols, int num_angles, 
-        float pixel_h, float pixel_w, float source2origin, float origin2det,
-        int slice_size, int preview_size, 
-        std::array<float, 3> vol_mins, std::array<float, 3> vol_maxs) {
+    bool cone_beam, int num_cols, int num_rows, int num_angles, 
+    std::array<float, 2> pixel_size, float source2origin, float origin2det,
+    int slice_size, int preview_size, 
+    std::array<float, 2> xrange, std::array<float, 2> yrange, std::array<float, 2> zrange) {
 
     ProjectionGeometry proj_geom = {
         .col_count = num_cols,
         .row_count = num_rows,
-        .pixel_width = pixel_w,
-        .pixel_height = pixel_h,
+        .pixel_width = pixel_size[0],
+        .pixel_height = pixel_size[1],
         // TODO:: receive/create angles in different ways.
         .angles = utils::defaultAngles(num_angles),
         .source2origin = source2origin,
         .origin2detector = origin2det
     };
 
-    float half_slab_height = 0.5f * (vol_maxs[2] - vol_mins[2]) / preview_size;
-    float z0 = 0.5f * (vol_maxs[2] + vol_mins[2]);
-
+    float half_slab_height = 0.5f * (zrange[1] - zrange[0]) / preview_size;
+    float z0 = 0.5f * (zrange[0] + zrange[1]);
     VolumeGeometry slice_geom = {
         .col_count = slice_size,
         .row_count = slice_size,
         .slice_count = 1,
-        .min_x = vol_mins[0],
-        .min_y = vol_mins[1],
+        .min_x = xrange[0],
+        .max_x = xrange[1],
+        .min_y = yrange[0],
+        .max_y = yrange[1],
         .min_z = z0 - half_slab_height,
-        .max_x = vol_maxs[0],
-        .max_y = vol_maxs[1],
         .max_z = z0 + half_slab_height
     };
     
@@ -386,12 +385,12 @@ std::unique_ptr<Reconstructor> createReconstructor(
         .col_count = preview_size,
         .row_count = preview_size,
         .slice_count = preview_size,
-        .min_x = vol_mins[0],
-        .min_y = vol_mins[1],
-        .min_z = vol_mins[2],
-        .max_x = vol_maxs[0],
-        .max_y = vol_maxs[1],
-        .max_z = vol_maxs[2]
+        .min_x = xrange[0],
+        .max_x = xrange[1],
+        .min_y = yrange[0],
+        .max_y = yrange[1],
+        .min_z = zrange[0],
+        .max_z = zrange[1]
     };
 
     if (cone_beam)

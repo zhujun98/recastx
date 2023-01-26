@@ -32,9 +32,10 @@ class ReconTest : public testing::Test {
     bool gaussian_pass_ = false;
     int threads_ = 4;
 
-    std::array<float, 3> volume_min_point_ {0.0f, 0.0f, 0.0f};
-    std::array<float, 3> volume_max_point_ {1.0f, 1.0f, 1.0f};
-    std::array<float, 2> detector_size_ {1.0f, 1.0f};
+    std::array<float, 2> xrange_ {-1.f, 1.f};
+    std::array<float, 2> yrange_ {-1.f, 1.f};
+    std::array<float, 2> zrange_ {-1.f, 1.f};
+    std::array<float, 2> pixel_size_ {1.0f, 1.0f};
 
     Application app_ {threads_};
 
@@ -45,12 +46,14 @@ class ReconTest : public testing::Test {
     }
 
     void buildRecon() {
-        app_.init(num_rows_, num_cols_, num_angles_, num_darks_, num_flats_, slice_size_, preview_size_, buffer_size_);
-        app_.initFilter(filter_name_, num_rows_, num_cols_, gaussian_pass_);
+        app_.init(num_cols_, num_rows_, num_angles_, 
+                  num_darks_, num_flats_, slice_size_, 
+                  preview_size_, buffer_size_);
+        app_.initFilter(filter_name_, num_cols_, num_rows_, gaussian_pass_);
 
         app_.setReconstructor(tomcat::recon::createReconstructor(
-            false, num_rows_, num_cols_, num_angles_, 1.f, 1.f, 0.0f, 0.0f, 
-            slice_size_, preview_size_, volume_min_point_, volume_max_point_));
+            false, num_cols_, num_rows_, num_angles_, pixel_size_, 0.0f, 0.0f, 
+            slice_size_, preview_size_, xrange_, yrange_, zrange_));
     }
 
     void pushDarks(int n) {

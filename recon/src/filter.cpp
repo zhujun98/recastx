@@ -6,9 +6,9 @@ namespace tomcat::recon {
 Filter::Filter(const std::string& filter_name, 
                bool gaussian_pass,
                float* data,
-               int num_rows, 
                int num_cols,
-               int buffer_size) : num_rows_(num_rows), num_cols_(num_cols) {
+               int num_rows, 
+               int buffer_size) : num_cols_(num_cols), num_rows_(num_rows)  {
     initialize(filter_name, gaussian_pass, data, buffer_size);
 }
 
