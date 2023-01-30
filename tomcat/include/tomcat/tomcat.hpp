@@ -30,6 +30,19 @@ namespace tomcat {
         int message_port;
     };
 
+    struct FilterConfig {
+        std::string name;
+        bool gaussian_lowpass_filter;
+    };
+
+    struct PaganinConfig {
+        float pixel_size;
+        float lambda;
+        float delta;
+        float beta;
+        float distance;
+    };
+
     struct ProjectionGeometry {
         int32_t col_count; // number of detector columns
         int32_t row_count; // number of detector rows

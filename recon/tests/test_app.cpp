@@ -19,6 +19,8 @@ class ReconTest : public testing::Test {
     int num_cols_ = 5;
     int num_rows_ = 4;
     int pixels_ = num_rows_ * num_cols_;
+    float src2origin = 0.f;
+    float origin2det = 0.f;
 
     int num_darks_ = 4;
     int num_flats_ = 6;
@@ -29,31 +31,39 @@ class ReconTest : public testing::Test {
     int preview_size_ = slice_size_ / 2;
 
     std::string filter_name_ = "shepp";
-    bool gaussian_pass_ = false;
+    bool gaussian_lowpass_filter_ = false;
     int threads_ = 4;
 
-    std::array<float, 2> xrange_ {-1.f, 1.f};
-    std::array<float, 2> yrange_ {-1.f, 1.f};
-    std::array<float, 2> zrange_ {-1.f, 1.f};
     std::array<float, 2> pixel_size_ {1.0f, 1.0f};
 
     Application app_ {threads_};
 
     void SetUp() override {
         angles_ = utils::defaultAngles(num_angles_);
-        buildRecon();
+        initApp();
         app_.startPreprocessing();
     }
 
-    void buildRecon() {
+    void initApp() {
         app_.init(num_cols_, num_rows_, num_angles_, 
                   num_darks_, num_flats_, slice_size_, 
                   preview_size_, buffer_size_);
-        app_.initFilter(filter_name_, num_cols_, num_rows_, gaussian_pass_);
+        app_.initFilter({filter_name_, gaussian_lowpass_filter_}, num_cols_, num_rows_);
 
-        app_.initReconstructor(false, num_cols_, num_rows_, num_angles_, 
-                               pixel_size_, 0.0f, 0.0f, 
-                               slice_size_, preview_size_, xrange_, yrange_, zrange_);
+        float min_x = -num_cols_ / 2.f;
+        float max_x =  num_cols_ / 2.f;
+        float min_y = -num_cols_ / 2.f;
+        float max_y =  num_cols_ / 2.f;
+        float min_z = -num_rows_ / 2.f;
+        float max_z =  num_rows_ / 2.f;
+        float z0 = 0.f;
+        float half_slice_height = 0.5f * (max_z - min_z) / preview_size_;
+        app_.initReconstructor(
+            false, 
+            {num_cols_, num_rows_, pixel_size_[0], pixel_size_[1], angles_, src2origin, origin2det}, 
+            {slice_size_, slice_size_, 1, min_x, max_x, min_y, max_y, z0 - half_slice_height, z0 + half_slice_height},
+            {preview_size_, preview_size_, preview_size_, min_x, max_x, min_y, max_y, min_z, max_z}
+        );
     }
 
     void pushDarks(int n) {

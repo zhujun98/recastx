@@ -249,14 +249,14 @@ ConeBeamReconstructor::ConeBeamReconstructor(ProjectionGeometry proj_geom,
     float det_width = proj_geom.pixel_width;
     float det_height = proj_geom.pixel_height;
     auto angles = proj_geom.angles;
-    float source2origin = proj_geom.source2origin;
+    float src2origin = proj_geom.source2origin;
     float origin2det = proj_geom.origin2detector;
 
     bool vec_geometry = false;
     if (!vec_geometry) {
         // TODO: should detector_size be (Height, Width)?
         auto proj_geom = astra::CConeProjectionGeometry3D(
-            num_angles, num_rows, num_cols, det_width, det_height, angles.data(), source2origin, origin2det);
+            num_angles, num_rows, num_cols, det_width, det_height, angles.data(), src2origin, origin2det);
 
         proj_geom_slice_ = utils::proj_to_vec(&proj_geom);
         proj_geom_preview_ = utils::proj_to_vec(&proj_geom);

@@ -49,69 +49,28 @@ void Application::init(int num_cols, int num_rows, int num_angles,
     spdlog::info("- Number of projection images per tomogram: {}", num_angles);
 }
 
-void Application::initPaganin(float pixel_size, 
-                              float lambda, 
-                              float delta, 
-                              float beta, 
-                              float distance,
+void Application::initPaganin(const PaganinConfig& config, 
                               int num_cols,
                               int num_rows) {
     if (!initialized_) throw std::runtime_error("Application not initialized!");
 
     paganin_ = std::make_unique<Paganin>(
-        pixel_size, lambda, delta, beta, distance, &buffer_.front()[0], num_cols, num_rows);
+        config.pixel_size, config.lambda, config.delta, config.beta, config.distance, 
+        &buffer_.front()[0], num_cols, num_rows);
 }
 
-void Application::initFilter(const std::string& name, int num_cols, int num_rows, bool gaussian_lowpass_filter) {
+void Application::initFilter(const FilterConfig& config, int num_cols, int num_rows) {
     if (!initialized_) throw std::runtime_error("Application not initialized!");
 
     filter_ = std::make_unique<Filter>(
-        name, gaussian_lowpass_filter, &buffer_.front()[0], num_cols, num_rows, num_threads_);
+        config.name, config.gaussian_lowpass_filter, 
+        &buffer_.front()[0], num_cols, num_rows, num_threads_);
 }
 
-void Application::initReconstructor(
-        bool cone_beam, int num_cols, int num_rows, int num_angles, 
-        std::array<float, 2> pixel_size, float source2origin, float origin2det,
-        int slice_size, int preview_size, 
-        std::array<float, 2> xrange, std::array<float, 2> yrange, std::array<float, 2> zrange) { 
-
-    ProjectionGeometry proj_geom = {
-        .col_count = num_cols,
-        .row_count = num_rows,
-        .pixel_width = pixel_size[0],
-        .pixel_height = pixel_size[1],
-        // TODO:: receive/create angles in different ways.
-        .angles = utils::defaultAngles(num_angles),
-        .source2origin = source2origin,
-        .origin2detector = origin2det
-    };
-
-    float half_slab_height = 0.5f * (zrange[1] - zrange[0]) / preview_size;
-    float z0 = 0.5f * (zrange[0] + zrange[1]);
-    VolumeGeometry slice_geom = {
-        .col_count = slice_size,
-        .row_count = slice_size,
-        .slice_count = 1,
-        .min_x = xrange[0],
-        .max_x = xrange[1],
-        .min_y = yrange[0],
-        .max_y = yrange[1],
-        .min_z = z0 - half_slab_height,
-        .max_z = z0 + half_slab_height
-    };
-    
-    VolumeGeometry preview_geom = {
-        .col_count = preview_size,
-        .row_count = preview_size,
-        .slice_count = preview_size,
-        .min_x = xrange[0],
-        .max_x = xrange[1],
-        .min_y = yrange[0],
-        .max_y = yrange[1],
-        .min_z = zrange[0],
-        .max_z = zrange[1]
-    };
-
+void Application::initReconstructor(bool cone_beam,
+                                    const ProjectionGeometry& proj_geom,
+                                    const VolumeGeometry& slice_geom,
+                                    const VolumeGeometry& preview_geom) {
     if (cone_beam) {
         recon_ = std::make_unique<ConeBeamReconstructor>(proj_geom, slice_geom, preview_geom);
     } else {

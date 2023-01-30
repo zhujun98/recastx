@@ -172,13 +172,19 @@ int main(int argc, char** argv)
               slice_size, preview_size, 
               buffer_size);
 
-    if (retrieve_phase) app->initPaganin(pixel_size, lambda, delta, beta, distance, num_cols, num_rows);
+    if (retrieve_phase) app->initPaganin(
+        {pixel_size, lambda, delta, beta, distance}, num_cols, num_rows);
 
-    app->initFilter(filter_name, num_cols, num_rows, gaussian_lowpass_filter);
+    app->initFilter({filter_name, gaussian_lowpass_filter}, num_cols, num_rows);
 
-    app->initReconstructor(cone_beam, num_cols, num_rows, num_angles, {1.f, 1.f}, 0.0f, 0.0f, 
-                           slice_size, preview_size, 
-                           {min_x, max_x}, {min_y, max_y}, {min_z, max_z});
+    float half_slice_height = 0.5f * (max_z - min_z) / preview_size;
+    float z0 = 0.5f * (max_z + min_z);
+    app->initReconstructor(
+        cone_beam, 
+        {num_cols, num_rows, 1.f, 1.f, utils::defaultAngles(num_angles), 0.0f, 0.0f}, 
+        {slice_size, slice_size, 1, min_x, max_x, min_y, max_y, z0 - half_slice_height, z0 + half_slice_height},
+        {preview_size, preview_size, preview_size, min_x, max_x, min_y, max_y, min_z, max_z}
+    );
     
     app->initConnection({data_hostname, data_port, data_socket_type}, {gui_port, gui_port2});
 

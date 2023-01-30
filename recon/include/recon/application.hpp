@@ -95,17 +95,14 @@ public:
               int slice_size, int preview_size, 
               int buffer_size);
 
-    void initPaganin(float pixel_size, float lambda, float delta, float beta, float distance, int num_cols, int num_rows);
+    void initPaganin(const PaganinConfig& config, int num_cols, int num_rows);
 
-    void initFilter(const std::string& name, int num_cols, int num_rows, bool gaussian_lowpass_filter);
+    void initFilter(const FilterConfig& config, int num_cols, int num_rows);
 
-    void initReconstructor(
-        bool cone_beam, int num_cols, int num_rows, int num_angles, 
-        std::array<float, 2> pixel_size, float source2origin, float origin2det,
-        int slice_size, int preview_size, 
-        std::array<float, 2> xrange, std::array<float, 2> yrange, std::array<float, 2> zrange);
-
-    void setReconstructor(std::unique_ptr<Reconstructor>&& recon);
+    void initReconstructor(bool cone_beam,
+                           const ProjectionGeometry& proj_geom,
+                           const VolumeGeometry& slice_geom,
+                           const VolumeGeometry& preview_geom);
 
     void initConnection(const DaqClientConfig& client_config, const ZmqServerConfig& server_config);
 
