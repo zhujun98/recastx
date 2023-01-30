@@ -99,6 +99,12 @@ public:
 
     void initFilter(const std::string& name, int num_cols, int num_rows, bool gaussian_pass);
 
+    void initReconstructor(
+        bool cone_beam, int num_cols, int num_rows, int num_angles, 
+        std::array<float, 2> pixel_size, float source2origin, float origin2det,
+        int slice_size, int preview_size, 
+        std::array<float, 2> xrange, std::array<float, 2> yrange, std::array<float, 2> zrange);
+
     void setReconstructor(std::unique_ptr<Reconstructor>&& recon);
 
     void initConnection(const DaqClientConfig& client_config, const ZmqServerConfig& server_config);

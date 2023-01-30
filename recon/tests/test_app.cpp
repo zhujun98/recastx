@@ -51,9 +51,9 @@ class ReconTest : public testing::Test {
                   preview_size_, buffer_size_);
         app_.initFilter(filter_name_, num_cols_, num_rows_, gaussian_pass_);
 
-        app_.setReconstructor(tomcat::recon::createReconstructor(
-            false, num_cols_, num_rows_, num_angles_, pixel_size_, 0.0f, 0.0f, 
-            slice_size_, preview_size_, xrange_, yrange_, zrange_));
+        app_.initReconstructor(false, num_cols_, num_rows_, num_angles_, 
+                               pixel_size_, 0.0f, 0.0f, 
+                               slice_size_, preview_size_, xrange_, yrange_, zrange_);
     }
 
     void pushDarks(int n) {

@@ -176,9 +176,9 @@ int main(int argc, char** argv)
 
     app->initFilter(filter_name, num_cols, num_rows, gaussian_pass);
 
-    app->setReconstructor(tomcat::recon::createReconstructor(
-        cone_beam, num_cols, num_rows, num_angles, {1.f, 1.f}, 0.0f, 0.0f, 
-        slice_size, preview_size, {min_x, max_x}, {min_y, max_y}, {min_z, max_z}));
+    app->initReconstructor(cone_beam, num_cols, num_rows, num_angles, {1.f, 1.f}, 0.0f, 0.0f, 
+                           slice_size, preview_size, 
+                           {min_x, max_x}, {min_y, max_y}, {min_z, max_z});
     
     app->initConnection({data_hostname, data_port, data_socket_type}, {gui_port, gui_port2});
 

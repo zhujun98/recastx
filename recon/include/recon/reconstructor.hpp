@@ -113,12 +113,6 @@ public:
     std::vector<float> fdk_weights();
 };
 
-std::unique_ptr<Reconstructor> createReconstructor(
-    bool cone_beam, int num_cols, int num_rows, int num_angles, 
-    std::array<float, 2> pixel_size, float source2origin, float origin2det,
-    int slice_size, int preview_size, 
-    std::array<float, 2> xrange, std::array<float, 2> yrange, std::array<float, 2> zrange);
-
 } // tomcat::recon
 
 #endif // SLICERECON_RECONSTRUCTOR_H
