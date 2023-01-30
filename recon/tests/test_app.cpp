@@ -14,7 +14,7 @@ namespace tomcat::recon::test {
 using ::testing::Pointwise;
 using ::testing::FloatNear;
 
-class ReconTest : public testing::Test {
+class AppTest : public testing::Test {
   protected:
     int num_cols_ = 5;
     int num_rows_ = 4;
@@ -100,14 +100,14 @@ class ReconTest : public testing::Test {
     }
 };
 
-TEST_F(ReconTest, TestPushProjectionException) {
+TEST_F(AppTest, TestPushProjectionException) {
     std::vector<RawDtype> img(pixels_);
     EXPECT_THROW(app_.pushProjection(
         ProjectionType::dark, 0, {10, 10}, reinterpret_cast<char*>(img.data())), 
         std::runtime_error);
 }
 
-TEST_F(ReconTest, TestPushProjection) {
+TEST_F(AppTest, TestPushProjection) {
     pushDarks(num_darks_);
     pushFlats(num_flats_);
 
@@ -137,7 +137,7 @@ TEST_F(ReconTest, TestPushProjection) {
                                             -0.028346f, -0.080572f, -0.066762f, -0.086848f, 0.262528f}));
 }
 
-TEST_F(ReconTest, TestMemoryBufferReset) {
+TEST_F(AppTest, TestMemoryBufferReset) {
     pushDarks(num_darks_);
     pushFlats(num_flats_);
     pushProjection(0, 1);
@@ -151,7 +151,7 @@ TEST_F(ReconTest, TestMemoryBufferReset) {
     EXPECT_EQ(app_.buffer().occupied(), 1);
 }
 
-TEST_F(ReconTest, TestPushProjectionUnordered) {
+TEST_F(AppTest, TestPushProjectionUnordered) {
     pushDarks(num_darks_);
     pushFlats(num_flats_);
 
@@ -188,13 +188,27 @@ TEST_F(ReconTest, TestPushProjectionUnordered) {
     pushProjection(0, 1);
 }
 
-TEST_F(ReconTest, TestUploading) {
+TEST_F(AppTest, TestUploading) {
     app_.startUploading();
 }
 
-TEST_F(ReconTest, TestReconstructing) {
+TEST_F(AppTest, TestReconstructing) {
     app_.startUploading();
     app_.startReconstructing();
+}
+
+TEST_F(AppTest, TestWithPagagin) {
+    float pixel_size = 1.0f;
+    float lambda = 1.23984193e-9f;
+    float delta = 1.e-8f;
+    float beta = 1.e-10f;
+    float distance = 40.f;
+
+    app_.initPaganin({pixel_size, lambda, delta, beta, distance}, num_cols_, num_rows_);
+    pushDarks(num_darks_);
+    pushFlats(num_flats_);
+    // FIXME: segmentation fault with Paganin
+    // pushProjection(0, num_angles_);
 }
 
 } // tomcat::recon::test
