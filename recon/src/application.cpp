@@ -62,11 +62,11 @@ void Application::initPaganin(float pixel_size,
         pixel_size, lambda, delta, beta, distance, &buffer_.front()[0], num_cols, num_rows);
 }
 
-void Application::initFilter(const std::string& name, int num_cols, int num_rows, bool gaussian_pass) {
+void Application::initFilter(const std::string& name, int num_cols, int num_rows, bool gaussian_lowpass_filter) {
     if (!initialized_) throw std::runtime_error("Application not initialized!");
 
     filter_ = std::make_unique<Filter>(
-        name, gaussian_pass, &buffer_.front()[0], num_cols, num_rows, num_threads_);
+        name, gaussian_lowpass_filter, &buffer_.front()[0], num_cols, num_rows, num_threads_);
 }
 
 void Application::initReconstructor(

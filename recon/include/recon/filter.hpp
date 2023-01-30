@@ -23,7 +23,7 @@ class Filter {
 
   public:
     Filter(const std::string& filter_name, 
-           bool gaussian_pass, 
+           bool gaussian_lowpass_filter, 
            float* data,
            int num_cols,
            int num_rows, 
@@ -32,7 +32,7 @@ class Filter {
     ~Filter();
 
     void initialize(const std::string& filter_name, 
-                    bool gaussian_pass, 
+                    bool gaussian_lowpass_filter, 
                     float* data, 
                     int buffer_size);
 

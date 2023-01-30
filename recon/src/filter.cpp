@@ -4,18 +4,18 @@
 namespace tomcat::recon {
 
 Filter::Filter(const std::string& filter_name, 
-               bool gaussian_pass,
+               bool gaussian_lowpass_filter,
                float* data,
                int num_cols,
                int num_rows, 
                int buffer_size) : num_cols_(num_cols), num_rows_(num_rows)  {
-    initialize(filter_name, gaussian_pass, data, buffer_size);
+    initialize(filter_name, gaussian_lowpass_filter, data, buffer_size);
 }
 
 Filter::~Filter() = default;
 
 void Filter::initialize(const std::string& filter_name, 
-                        bool gaussian_pass, 
+                        bool gaussian_lowpass_filter, 
                         float* data, 
                         int buffer_size) {
     freq_ = std::vector<std::vector<std::complex<float>>>(
@@ -41,7 +41,7 @@ void Filter::initialize(const std::string& filter_name,
         throw std::invalid_argument("Unsupported filter: " + filter_name);
     }
 
-    if (gaussian_pass) {
+    if (gaussian_lowpass_filter) {
         auto filter_lowpass = gaussian(num_cols_, 0.06f);
         for (int i = 0; i < num_cols_; ++i) filter_[i] *= filter_lowpass[i];
     }

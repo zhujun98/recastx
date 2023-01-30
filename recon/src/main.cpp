@@ -76,7 +76,7 @@ int main(int argc, char** argv)
     po::options_description reconstruction_desc("Reconstruction options");
     bool retrieve_phase = false;
     bool tilt = false;
-    bool gaussian_pass = false;
+    bool gaussian_lowpass_filter = false;
     reconstruction_desc.add_options()
         ("slice-size", po::value<int>()->default_value(-1),
          "size of the square reconstructed slice in pixels. Default to detector columns.")
@@ -96,8 +96,8 @@ int main(int argc, char** argv)
          "...")
         ("filter", po::value<std::string>()->default_value("shepp"),
          "Supported filters are: shepp (Shepp-Logan), ramlak (Ram-Lak)")
-        ("gaussian", po::bool_switch(&gaussian_pass),
-         "enable Gaussian low pass filter (not verified)")
+        ("gaussian-lowpass-filter", po::bool_switch(&gaussian_lowpass_filter),
+         "enable Gaussian low-pass filter (not verified)")
     ;
 
     po::options_description paganin_desc("Paganin options");
@@ -174,7 +174,7 @@ int main(int argc, char** argv)
 
     if (retrieve_phase) app->initPaganin(pixel_size, lambda, delta, beta, distance, num_cols, num_rows);
 
-    app->initFilter(filter_name, num_cols, num_rows, gaussian_pass);
+    app->initFilter(filter_name, num_cols, num_rows, gaussian_lowpass_filter);
 
     app->initReconstructor(cone_beam, num_cols, num_rows, num_angles, {1.f, 1.f}, 0.0f, 0.0f, 
                            slice_size, preview_size, 

@@ -97,7 +97,7 @@ public:
 
     void initPaganin(float pixel_size, float lambda, float delta, float beta, float distance, int num_cols, int num_rows);
 
-    void initFilter(const std::string& name, int num_cols, int num_rows, bool gaussian_pass);
+    void initFilter(const std::string& name, int num_cols, int num_rows, bool gaussian_lowpass_filter);
 
     void initReconstructor(
         bool cone_beam, int num_cols, int num_rows, int num_angles, 
