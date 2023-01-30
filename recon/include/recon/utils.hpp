@@ -42,9 +42,6 @@ std::tuple<Eigen::Vector3f, Eigen::Matrix3f, Eigen::Vector3f>
 slice_transform(Eigen::Vector3f base, Eigen::Vector3f axis_1,
                 Eigen::Vector3f axis_2, float k);
 
-std::string info(const astra::CConeVecProjectionGeometry3D& x);
-std::string info(const astra::CVolumeGeometry3D& x);
-
 template<typename T>
 inline void averageImages(const std::vector<T>& images, 
                           size_t pixels,

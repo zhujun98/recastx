@@ -43,12 +43,10 @@ void Application::init(int num_cols, int num_rows, int num_angles,
     preview_buffer_.initialize(preview_size * preview_size * preview_size);
 
     initialized_ = true;
-    spdlog::info("Real-time 3D tomographic reconstruction application initialized:");
+    spdlog::info("Initial parameters for real-time 3D tomographic reconstruction:");
     spdlog::info("- Number of required dark images: {}", num_darks);
     spdlog::info("- Number of required flat images: {}", num_flats);
     spdlog::info("- Number of projection images per tomogram: {}", num_angles);
-    spdlog::info("- Slice size: {}", slice_size);
-    spdlog::info("- Preview size: {}", preview_size);
 }
 
 void Application::initPaganin(float pixel_size, 

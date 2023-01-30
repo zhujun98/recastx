@@ -173,33 +173,4 @@ slice_transform(Eigen::Vector3f base, Eigen::Vector3f axis_1,
     return {-delta, rot, {1.0f, 1.0f, 1.0f}};
 }
 
-std::string info(const astra::CConeVecProjectionGeometry3D& x) {
-    auto ss = std::stringstream("");
-
-    auto vectors = x.getProjectionVectors();
-
-    ss << "DetectorRowCount: " << x.getDetectorRowCount() << ", ";
-    ss << "DetectorColCount: " << x.getDetectorColCount() << ", ";
-    ss << "ProjectionCount: " << x.getProjectionCount() << ", ";
-    ss << "Vectors: [[" << vectors[0].fSrcX << ", " << vectors[0].fSrcY << ", "
-       << vectors[0].fSrcZ << " ... " << vectors[0].fDetVY << ", "
-       << vectors[0].fDetVZ << "], [" << vectors[1].fSrcX << ", "
-       << vectors[1].fSrcY << "...]...]";
-
-    return ss.str();
-}
-
-std::string info(const astra::CVolumeGeometry3D& x) {
-    auto ss = std::stringstream("");
-
-    ss << "Min = [" << x.getWindowMinX() << ", " << x.getWindowMinY() << ", "
-       << x.getWindowMinZ() << "], ";
-    ss << "Max = [" << x.getWindowMaxX() << ", " << x.getWindowMaxY() << ", "
-       << x.getWindowMaxZ() << "], ";
-    ss << "Shape = [" << x.getGridRowCount() << ", " << x.getGridColCount()
-       << ", " << x.getGridSliceCount() << "]";
-
-    return ss.str();
-}
-
 } // tomcat::recon::util

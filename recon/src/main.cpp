@@ -14,6 +14,16 @@
 
 namespace po = boost::program_options;
 
+
+std::pair<float, float> parseReconstructedVolumeBoundary(
+        const po::variable_value& min_val, const po::variable_value& max_val, int size) {
+    float min_v = min_val.empty() ? - size / 2.f : min_val.as<float>();
+    float max_v = max_val.empty() ?   size / 2.f : max_val.as<float>();
+    if (min_v >= max_v) throw std::invalid_argument(
+        "Minimum of volume coordinate must be smaller than maximum of volume coordinate");
+    return {min_v, max_v};
+}
+
 int main(int argc, char** argv)
 {
     using namespace tomcat::recon;
@@ -49,17 +59,17 @@ int main(int argc, char** argv)
          "detector height in pixels")
         ("angles", po::value<int>()->default_value(128),
          "number of projections per scan")
-        ("minx", po::value<float>()->default_value(0),
+        ("minx", po::value<float>(),
          "minimal X-coordinate of the reconstructed volume")
-        ("maxx", po::value<float>()->default_value(0),
+        ("maxx", po::value<float>(),
          "maximal X-coordinate of the reconstructed volume")
-        ("miny", po::value<float>()->default_value(0),
+        ("miny", po::value<float>(),
          "minimal Y-coordinate of the reconstructed volume")
-        ("maxy", po::value<float>()->default_value(0),
+        ("maxy", po::value<float>(),
          "maximal Y-coordinate of the reconstructed volume")
-        ("minz", po::value<float>()->default_value(0),
+        ("minz", po::value<float>(),
          "minimal Z-coordinate of the reconstructed volume")
-        ("maxz", po::value<float>()->default_value(0),
+        ("maxz", po::value<float>(),
          "maximal Z-coordinate of the reconstructed volume")
     ;
 
@@ -132,25 +142,9 @@ int main(int argc, char** argv)
     auto num_cols = opts["cols"].as<int>();
     auto num_rows = opts["rows"].as<int>();
     auto num_angles = opts["angles"].as<int>();
-    auto min_x = opts["minx"].as<float>();
-    auto max_x = opts["maxx"].as<float>();
-    if (min_x == max_x) {
-        min_x = -num_cols / 2.f;
-        max_x = -min_x;
-    }
-    auto min_y = opts["miny"].as<float>();
-    auto max_y = opts["maxy"].as<float>();
-    if (min_y == max_y) {
-        min_y = -num_cols / 2.f;
-        max_y = -min_y;
-    }
-    auto min_z = opts["minz"].as<float>();
-    auto max_z = opts["maxz"].as<float>();
-    if (min_z == max_z) {
-        min_z = -num_rows / 2.f;
-        max_z = -min_z;
-    }
-
+    auto [min_x, max_x] = parseReconstructedVolumeBoundary(opts["minx"], opts["maxx"], num_cols);
+    auto [min_y, max_y] = parseReconstructedVolumeBoundary(opts["miny"], opts["maxy"], num_cols);
+    auto [min_z, max_z] = parseReconstructedVolumeBoundary(opts["minz"], opts["maxz"], num_rows);
     auto slice_size = opts["slice-size"].as<int>();
     if (slice_size <= 0) slice_size = num_cols;
     auto preview_size = opts["preview-size"].as<int>();

@@ -23,6 +23,11 @@
 
 namespace tomcat::recon {
 
+namespace details {
+    std::string astraInfo(const astra::CConeVecProjectionGeometry3D& x);
+    std::string astraInfo(const astra::CVolumeGeometry3D& x);
+}
+
 class Reconstructor {
 
 protected:
@@ -32,18 +37,17 @@ protected:
     std::unique_ptr<astra::CCudaProjector3D> projector_;
 
     std::unique_ptr<astra::CVolumeGeometry3D> vol_geom_slice_;
-    astraCUDA3d::MemHandle3D gpu_mem_slice_;
+    astraCUDA3d::MemHandle3D vol_mem_slice_;
     std::unique_ptr<astra::CFloat32VolumeData3DGPU> vol_data_slice_;
     std::vector<std::unique_ptr<astra::CCudaBackProjectionAlgorithm3D>> algo_slice_;
 
     std::unique_ptr<astra::CVolumeGeometry3D> vol_geom_preview_;
-    astraCUDA3d::MemHandle3D gpu_mem_preview_;
+    astraCUDA3d::MemHandle3D vol_mem_preview_;
     std::unique_ptr<astra::CFloat32VolumeData3DGPU> vol_data_preview_;
     std::vector<std::unique_ptr<astra::CCudaBackProjectionAlgorithm3D>> algo_preview_;
 
-    static std::unique_ptr<astra::CVolumeGeometry3D> makeVolumeGeometry(const VolumeGeometry& geom);
-
-    static astraCUDA3d::MemHandle3D allocateGpuMemory(const VolumeGeometry& geom);
+    std::unique_ptr<astra::CVolumeGeometry3D> makeVolumeGeometry(const VolumeGeometry& geom);
+    astraCUDA3d::MemHandle3D makeVolumeGeometryMemHandle(const VolumeGeometry& geom);
 
 public:
 
