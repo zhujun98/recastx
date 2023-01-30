@@ -14,20 +14,15 @@
 
 namespace po = boost::program_options;
 
-namespace tomcat::recon {
 
-std::array<float, 3> makeVolumeMinmaxPoint(const po::variable_value& point, float v) {
-    if (point.empty()) return {v, v, v};
-
-    auto pv = point.as<std::vector<float>>();
-    if (pv.size() == 1) return {pv[0], pv[0], pv[0]};
-    if (pv.size() == 3) return {pv[0], pv[1], pv[2]};
-    
-    throw std::invalid_argument(
-        "Length of volume min/max point vector must be either 1 or 3");
+std::pair<float, float> parseReconstructedVolumeBoundary(
+        const po::variable_value& min_val, const po::variable_value& max_val, int size) {
+    float min_v = min_val.empty() ? - size / 2.f : min_val.as<float>();
+    float max_v = max_val.empty() ?   size / 2.f : max_val.as<float>();
+    if (min_v >= max_v) throw std::invalid_argument(
+        "Minimum of volume coordinate must be smaller than maximum of volume coordinate");
+    return {min_v, max_v};
 }
-
-} // tomcat::recon
 
 int main(int argc, char** argv)
 {
@@ -58,20 +53,30 @@ int main(int argc, char** argv)
     po::options_description geometry_desc("Geometry options");
     bool cone_beam = false;
     geometry_desc.add_options()
-        ("rows", po::value<int>()->default_value(1200),
-         "detector height in pixels")
         ("cols", po::value<int>()->default_value(2016),
          "detector width in pixels")
-        ("volume-min-point", po::value<std::vector<float>>()->multitoken(), 
-         "minimal (X, Y, Z)-coordinate in the volume window.")
-        ("volume-max-point", po::value<std::vector<float>>()->multitoken(), 
-         "maximal (X, Y, Z)-coordinate in the volume window.")
+        ("rows", po::value<int>()->default_value(1200),
+         "detector height in pixels")
+        ("angles", po::value<int>()->default_value(128),
+         "number of projections per scan")
+        ("minx", po::value<float>(),
+         "minimal X-coordinate of the reconstructed volume")
+        ("maxx", po::value<float>(),
+         "maximal X-coordinate of the reconstructed volume")
+        ("miny", po::value<float>(),
+         "minimal Y-coordinate of the reconstructed volume")
+        ("maxy", po::value<float>(),
+         "maximal Y-coordinate of the reconstructed volume")
+        ("minz", po::value<float>(),
+         "minimal Z-coordinate of the reconstructed volume")
+        ("maxz", po::value<float>(),
+         "maximal Z-coordinate of the reconstructed volume")
     ;
 
     po::options_description reconstruction_desc("Reconstruction options");
     bool retrieve_phase = false;
     bool tilt = false;
-    bool gaussian_pass = false;
+    bool gaussian_lowpass_filter = false;
     reconstruction_desc.add_options()
         ("slice-size", po::value<int>()->default_value(-1),
          "size of the square reconstructed slice in pixels. Default to detector columns.")
@@ -83,8 +88,6 @@ int main(int argc, char** argv)
          "number of required dark images")
         ("flats", po::value<int>()->default_value(10),
          "number of required flat images")
-        ("angles", po::value<int>()->default_value(128),
-         "number of projections per scan")
         ("buffer-size", po::value<int>()->default_value(10),
          "maximum number of projection groups to be cached in the memory buffer")
         ("retrieve-phase", po::bool_switch(&retrieve_phase),
@@ -93,8 +96,8 @@ int main(int argc, char** argv)
          "...")
         ("filter", po::value<std::string>()->default_value("shepp"),
          "Supported filters are: shepp (Shepp-Logan), ramlak (Ram-Lak)")
-        ("gaussian", po::bool_switch(&gaussian_pass),
-         "enable Gaussian low pass filter (not verified)")
+        ("gaussian-lowpass-filter", po::bool_switch(&gaussian_lowpass_filter),
+         "enable Gaussian low-pass filter (not verified)")
     ;
 
     po::options_description paganin_desc("Paganin options");
@@ -136,20 +139,18 @@ int main(int argc, char** argv)
     auto gui_port2 = opts["gui-port2"].as<int>();
     if (gui_port2 == gui_port) gui_port2 += 1;
 
-    auto num_rows = opts["rows"].as<int>();
     auto num_cols = opts["cols"].as<int>();
-    auto vminp = opts["volume-min-point"];
-    auto vmaxp = opts["volume-max-point"];
-    auto volume_min_point = makeVolumeMinmaxPoint(vminp, -num_cols / 2.f);
-    auto volume_max_point = makeVolumeMinmaxPoint(vmaxp, num_cols / 2.f);
-
+    auto num_rows = opts["rows"].as<int>();
+    auto num_angles = opts["angles"].as<int>();
+    auto [min_x, max_x] = parseReconstructedVolumeBoundary(opts["minx"], opts["maxx"], num_cols);
+    auto [min_y, max_y] = parseReconstructedVolumeBoundary(opts["miny"], opts["maxy"], num_cols);
+    auto [min_z, max_z] = parseReconstructedVolumeBoundary(opts["minz"], opts["maxz"], num_rows);
     auto slice_size = opts["slice-size"].as<int>();
     if (slice_size <= 0) slice_size = num_cols;
     auto preview_size = opts["preview-size"].as<int>();
     auto num_threads = opts["threads"].as<int>();
     auto num_darks = opts["darks"].as<int>();
     auto num_flats = opts["flats"].as<int>();
-    auto num_angles = opts["angles"].as<int>();
     auto buffer_size = opts["buffer-size"].as<int>();
 
     auto filter_name = opts["filter"].as<std::string>();
@@ -166,15 +167,24 @@ int main(int argc, char** argv)
     // 1. set up server
     auto app = std::make_shared<Application>(num_threads);
 
-    app->init(num_rows, num_cols, num_angles, num_darks, num_flats, slice_size, preview_size, buffer_size);
+    app->init(num_cols, num_rows, num_angles, 
+              num_darks, num_flats, 
+              slice_size, preview_size, 
+              buffer_size);
 
-    if (retrieve_phase) app->initPaganin(pixel_size, lambda, delta, beta, distance, num_cols, num_rows);
+    if (retrieve_phase) app->initPaganin(
+        {pixel_size, lambda, delta, beta, distance}, num_cols, num_rows);
 
-    app->initFilter(filter_name, num_rows, num_cols, gaussian_pass);
+    app->initFilter({filter_name, gaussian_lowpass_filter}, num_cols, num_rows);
 
-    app->setReconstructor(tomcat::recon::createReconstructor(
-        cone_beam, num_rows, num_cols, num_angles, 1.f, 1.f, 0.0f, 0.0f, 
-        slice_size, preview_size, volume_min_point, volume_max_point));
+    float half_slice_height = 0.5f * (max_z - min_z) / preview_size;
+    float z0 = 0.5f * (max_z + min_z);
+    app->initReconstructor(
+        cone_beam, 
+        {num_cols, num_rows, 1.f, 1.f, utils::defaultAngles(num_angles), 0.0f, 0.0f}, 
+        {slice_size, slice_size, 1, min_x, max_x, min_y, max_y, z0 - half_slice_height, z0 + half_slice_height},
+        {preview_size, preview_size, preview_size, min_x, max_x, min_y, max_y, min_z, max_z}
+    );
     
     app->initConnection({data_hostname, data_port, data_socket_type}, {gui_port, gui_port2});
 

@@ -30,12 +30,25 @@ namespace tomcat {
         int message_port;
     };
 
+    struct FilterConfig {
+        std::string name;
+        bool gaussian_lowpass_filter;
+    };
+
+    struct PaganinConfig {
+        float pixel_size;
+        float lambda;
+        float delta;
+        float beta;
+        float distance;
+    };
+
     struct ProjectionGeometry {
         int32_t col_count; // number of detector columns
         int32_t row_count; // number of detector rows
         float pixel_width; // width of each detector
         float pixel_height; // height of each detector
-        std::vector<float> angles;  
+        std::vector<float> angles; // array of projection angles 
         float source2origin = 0.f;
         float origin2detector = 0.f;
     };
@@ -45,10 +58,10 @@ namespace tomcat {
         int32_t row_count; // number of rows
         int32_t slice_count; // number of slices
         float min_x; // minimum x coordinates
-        float min_y; // minimum y coordinates
-        float min_z; // minimum z coordinates
         float max_x; // maximum x coordinates
+        float min_y; // minimum y coordinates
         float max_y; // maximum y coordinates
+        float min_z; // minimum z coordinates
         float max_z; // maximum z coordinates
     };
 

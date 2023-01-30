@@ -16,23 +16,23 @@ class Filter {
     fftwf_plan fft_plan_;
     fftwf_plan ffti_plan_;
 
-    int num_rows_;
     int num_cols_;
+    int num_rows_;
 
     static std::vector<float> frequency(int n);
 
   public:
     Filter(const std::string& filter_name, 
-           bool gaussian_pass, 
+           bool gaussian_lowpass_filter, 
            float* data,
-           int num_rows, 
            int num_cols,
+           int num_rows, 
            int buffer_size);
 
     ~Filter();
 
     void initialize(const std::string& filter_name, 
-                    bool gaussian_pass, 
+                    bool gaussian_lowpass_filter, 
                     float* data, 
                     int buffer_size);
 

@@ -14,11 +14,13 @@ namespace tomcat::recon::test {
 using ::testing::Pointwise;
 using ::testing::FloatNear;
 
-class ReconTest : public testing::Test {
+class AppTest : public testing::Test {
   protected:
     int num_cols_ = 5;
     int num_rows_ = 4;
     int pixels_ = num_rows_ * num_cols_;
+    float src2origin = 0.f;
+    float origin2det = 0.f;
 
     int num_darks_ = 4;
     int num_flats_ = 6;
@@ -29,28 +31,39 @@ class ReconTest : public testing::Test {
     int preview_size_ = slice_size_ / 2;
 
     std::string filter_name_ = "shepp";
-    bool gaussian_pass_ = false;
+    bool gaussian_lowpass_filter_ = false;
     int threads_ = 4;
 
-    std::array<float, 3> volume_min_point_ {0.0f, 0.0f, 0.0f};
-    std::array<float, 3> volume_max_point_ {1.0f, 1.0f, 1.0f};
-    std::array<float, 2> detector_size_ {1.0f, 1.0f};
+    std::array<float, 2> pixel_size_ {1.0f, 1.0f};
 
     Application app_ {threads_};
 
     void SetUp() override {
         angles_ = utils::defaultAngles(num_angles_);
-        buildRecon();
+        initApp();
         app_.startPreprocessing();
     }
 
-    void buildRecon() {
-        app_.init(num_rows_, num_cols_, num_angles_, num_darks_, num_flats_, slice_size_, preview_size_, buffer_size_);
-        app_.initFilter(filter_name_, num_rows_, num_cols_, gaussian_pass_);
+    void initApp() {
+        app_.init(num_cols_, num_rows_, num_angles_, 
+                  num_darks_, num_flats_, slice_size_, 
+                  preview_size_, buffer_size_);
+        app_.initFilter({filter_name_, gaussian_lowpass_filter_}, num_cols_, num_rows_);
 
-        app_.setReconstructor(tomcat::recon::createReconstructor(
-            false, num_rows_, num_cols_, num_angles_, 1.f, 1.f, 0.0f, 0.0f, 
-            slice_size_, preview_size_, volume_min_point_, volume_max_point_));
+        float min_x = -num_cols_ / 2.f;
+        float max_x =  num_cols_ / 2.f;
+        float min_y = -num_cols_ / 2.f;
+        float max_y =  num_cols_ / 2.f;
+        float min_z = -num_rows_ / 2.f;
+        float max_z =  num_rows_ / 2.f;
+        float z0 = 0.f;
+        float half_slice_height = 0.5f * (max_z - min_z) / preview_size_;
+        app_.initReconstructor(
+            false, 
+            {num_cols_, num_rows_, pixel_size_[0], pixel_size_[1], angles_, src2origin, origin2det}, 
+            {slice_size_, slice_size_, 1, min_x, max_x, min_y, max_y, z0 - half_slice_height, z0 + half_slice_height},
+            {preview_size_, preview_size_, preview_size_, min_x, max_x, min_y, max_y, min_z, max_z}
+        );
     }
 
     void pushDarks(int n) {
@@ -87,14 +100,14 @@ class ReconTest : public testing::Test {
     }
 };
 
-TEST_F(ReconTest, TestPushProjectionException) {
+TEST_F(AppTest, TestPushProjectionException) {
     std::vector<RawDtype> img(pixels_);
     EXPECT_THROW(app_.pushProjection(
         ProjectionType::dark, 0, {10, 10}, reinterpret_cast<char*>(img.data())), 
         std::runtime_error);
 }
 
-TEST_F(ReconTest, TestPushProjection) {
+TEST_F(AppTest, TestPushProjection) {
     pushDarks(num_darks_);
     pushFlats(num_flats_);
 
@@ -124,7 +137,7 @@ TEST_F(ReconTest, TestPushProjection) {
                                             -0.028346f, -0.080572f, -0.066762f, -0.086848f, 0.262528f}));
 }
 
-TEST_F(ReconTest, TestMemoryBufferReset) {
+TEST_F(AppTest, TestMemoryBufferReset) {
     pushDarks(num_darks_);
     pushFlats(num_flats_);
     pushProjection(0, 1);
@@ -138,7 +151,7 @@ TEST_F(ReconTest, TestMemoryBufferReset) {
     EXPECT_EQ(app_.buffer().occupied(), 1);
 }
 
-TEST_F(ReconTest, TestPushProjectionUnordered) {
+TEST_F(AppTest, TestPushProjectionUnordered) {
     pushDarks(num_darks_);
     pushFlats(num_flats_);
 
@@ -175,13 +188,27 @@ TEST_F(ReconTest, TestPushProjectionUnordered) {
     pushProjection(0, 1);
 }
 
-TEST_F(ReconTest, TestUploading) {
+TEST_F(AppTest, TestUploading) {
     app_.startUploading();
 }
 
-TEST_F(ReconTest, TestReconstructing) {
+TEST_F(AppTest, TestReconstructing) {
     app_.startUploading();
     app_.startReconstructing();
+}
+
+TEST_F(AppTest, TestWithPagagin) {
+    float pixel_size = 1.0f;
+    float lambda = 1.23984193e-9f;
+    float delta = 1.e-8f;
+    float beta = 1.e-10f;
+    float distance = 40.f;
+
+    app_.initPaganin({pixel_size, lambda, delta, beta, distance}, num_cols_, num_rows_);
+    pushDarks(num_darks_);
+    pushFlats(num_flats_);
+    // FIXME: segmentation fault with Paganin
+    // pushProjection(0, num_angles_);
 }
 
 } // tomcat::recon::test

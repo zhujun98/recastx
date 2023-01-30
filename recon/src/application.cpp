@@ -19,58 +19,64 @@ Application::Application(int num_threads) : num_threads_(num_threads) {}
 
 Application::~Application() = default;
 
-void Application::init(int num_rows, int num_cols, int num_angles,
+void Application::init(int num_cols, int num_rows, int num_angles,
                        int num_darks, int num_flats, 
-                       int slice_size, int preview_size, int buffer_size) {
-    rows_ = num_rows;
-    cols_ = num_cols;
-    pixels_ = rows_ * cols_;
+                       int slice_size, int preview_size, 
+                       int buffer_size) {
+    num_cols_ = num_cols;
+    num_rows_ = num_rows;
+    num_pixels_ = num_rows_ * num_cols_;
     num_angles_ = num_angles;
     slice_size_ = slice_size;
     preview_size_ = preview_size;
     num_darks_ = num_darks;
     num_flats_ = num_flats;
 
-    auto pixels = static_cast<size_t>(num_rows * num_cols);
-    all_darks_.resize(pixels * num_darks);
-    all_flats_.resize(pixels * num_flats);
-    dark_avg_.resize(pixels);
-    reciprocal_.resize(pixels, 1.0f);
+    auto num_pixels_t = static_cast<size_t>(num_pixels_);
+    all_darks_.resize(num_pixels_t * num_darks);
+    all_flats_.resize(num_pixels_t * num_flats);
+    dark_avg_.resize(num_pixels_t);
+    reciprocal_.resize(num_pixels_t, 1.0f);
 
-    buffer_.initialize(buffer_size, num_angles, pixels);
-    sino_buffer_.initialize(num_angles * pixels);
+    buffer_.initialize(buffer_size, num_angles, num_pixels_t);
+    sino_buffer_.initialize(num_angles * num_pixels_t);
     preview_buffer_.initialize(preview_size * preview_size * preview_size);
 
     initialized_ = true;
-    spdlog::info("Real-time 3D tomographic reconstruction application initialized:");
+    spdlog::info("Initial parameters for real-time 3D tomographic reconstruction:");
     spdlog::info("- Number of required dark images: {}", num_darks);
     spdlog::info("- Number of required flat images: {}", num_flats);
     spdlog::info("- Number of projection images per tomogram: {}", num_angles);
-    spdlog::info("- Slice size: {}", slice_size);
-    spdlog::info("- Preview size: {}", preview_size);
 }
 
-void Application::initPaganin(float pixel_size, 
-                              float lambda, 
-                              float delta, 
-                              float beta, 
-                              float distance,
+void Application::initPaganin(const PaganinConfig& config, 
                               int num_cols,
                               int num_rows) {
     if (!initialized_) throw std::runtime_error("Application not initialized!");
 
     paganin_ = std::make_unique<Paganin>(
-        pixel_size, lambda, delta, beta, distance, &buffer_.front()[0], num_cols, num_rows);
+        config.pixel_size, config.lambda, config.delta, config.beta, config.distance, 
+        &buffer_.front()[0], num_cols, num_rows);
 }
 
-void Application::initFilter(const std::string& name, int num_rows, int num_cols, bool gaussian_pass) {
+void Application::initFilter(const FilterConfig& config, int num_cols, int num_rows) {
     if (!initialized_) throw std::runtime_error("Application not initialized!");
 
     filter_ = std::make_unique<Filter>(
-        name, gaussian_pass, &buffer_.front()[0], num_rows, num_cols, num_threads_);
+        config.name, config.gaussian_lowpass_filter, 
+        &buffer_.front()[0], num_cols, num_rows, num_threads_);
 }
 
-void Application::setReconstructor(std::unique_ptr<Reconstructor>&& recon) { recon_ = std::move(recon); }
+void Application::initReconstructor(bool cone_beam,
+                                    const ProjectionGeometry& proj_geom,
+                                    const VolumeGeometry& slice_geom,
+                                    const VolumeGeometry& preview_geom) {
+    if (cone_beam) {
+        recon_ = std::make_unique<ConeBeamReconstructor>(proj_geom, slice_geom, preview_geom);
+    } else {
+        recon_ = std::make_unique<ParallelBeamReconstructor>(proj_geom, slice_geom, preview_geom);
+    }
+}
 
 void Application::initConnection(const DaqClientConfig& client_config, 
                                  const ZmqServerConfig& server_config) {
@@ -193,9 +199,9 @@ void Application::pushProjection(ProjectionType k,
                                  int32_t proj_idx, 
                                  const std::array<int32_t, 2>& shape, 
                                  const char* data) {
-    if (shape[0] != rows_ || shape[1] != cols_) {
+    if (shape[0] != num_rows_ || shape[1] != num_cols_) {
         spdlog::error("Received projection with wrong shape. Actual: {} x {}, expected: {} x {}", 
-                      shape[0], shape[1], rows_, cols_);
+                      shape[0], shape[1], num_rows_, num_cols_);
         throw std::runtime_error(
             "Received projection has a different shape than the one set by "
             "the acquisition geometry");
@@ -211,7 +217,7 @@ void Application::pushProjection(ProjectionType k,
                 }
 
                 spdlog::info("Computing reciprocal for flat fielding ...");
-                utils::computeReciprocal(all_darks_, all_flats_, pixels_, reciprocal_, dark_avg_);
+                utils::computeReciprocal(all_darks_, all_flats_, num_pixels_, reciprocal_, dark_avg_);
                 buffer_.reset();
 
 #if (VERBOSITY >= 1)
@@ -242,7 +248,7 @@ void Application::pushProjection(ProjectionType k,
                 return;
             }
             spdlog::info("Received: {}", received_darks_);
-            memcpy(&all_darks_[(received_darks_ - 1) * pixels_], data, sizeof(RawDtype) * pixels_);
+            memcpy(&all_darks_[(received_darks_ - 1) * num_pixels_], data, sizeof(RawDtype) * num_pixels_);
             break;
         }
         case ProjectionType::flat: {
@@ -254,7 +260,7 @@ void Application::pushProjection(ProjectionType k,
                 spdlog::warn("Received more flats than expected. New flat ignored!");
                 return;
             }
-            memcpy(&all_flats_[(received_flats_ - 1) * pixels_], data, sizeof(RawDtype) * pixels_);
+            memcpy(&all_flats_[(received_flats_ - 1) * num_pixels_], data, sizeof(RawDtype) * num_pixels_);
             break;
         }
         default:
@@ -368,7 +374,7 @@ int num_pixels = static_cast<size_t>(buffer_.chunkSize());
 
                 if (paganin_) paganin_->apply(p, i % num_threads_);
                 else
-                    utils::negativeLog(p, pixels_);
+                    utils::negativeLog(p, num_pixels_);
 
                 filter_->apply(p, tbb::this_task_arena::current_thread_index());
 
@@ -380,13 +386,13 @@ int num_pixels = static_cast<size_t>(buffer_.chunkSize());
     // (projection_id, rows, cols) -> (rows, projection_id, cols).
     auto& sinos = sino_buffer_.back();
     arena.execute([&]{
-        tbb::parallel_for(tbb::blocked_range<int>(0, rows_),
+        tbb::parallel_for(tbb::blocked_range<int>(0, num_rows_),
                           [&](const tbb::blocked_range<int> &block) {
             for (auto i = block.begin(); i != block.end(); ++i) {
-                for (size_t j = 0; j < num_angles_; ++j) {
-                    for (size_t k = 0; k < cols_; ++k) {
-                        sinos[i * num_angles_ * cols_ + j * cols_ + k] = 
-                            projs[j * cols_ * rows_ + i * cols_ + k];
+                for (size_t j = 0; j < static_cast<size_t>(num_angles_); ++j) {
+                    for (size_t k = 0; k < static_cast<size_t>(num_cols_); ++k) {
+                        sinos[i * num_angles_ * num_cols_ + j * num_cols_ + k] = 
+                            projs[j * num_cols_ * num_rows_ + i * num_cols_ + k];
                     }
                 }
             }
