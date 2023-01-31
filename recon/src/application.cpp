@@ -136,11 +136,11 @@ void Application::startReconstructing() {
             {
                 std::unique_lock<std::mutex> lck(gpu_mutex_);
                 if (gpu_cv_.wait_for(lck, 10ms, [&] { return sino_uploaded_; })) {
-                    recon_->reconstructPreview(preview_buffer_.back(), gpu_buffer_index_);
+                    recon_->reconstructPreview(gpu_buffer_index_, preview_buffer_.back());
                 } else {    
                     std::lock_guard lk(slice_mtx_);
                     for (auto slice_id : updated_slices_) {
-                        recon_->reconstructSlice(slice_buffer_[slice_id], slices_[slice_id], gpu_buffer_index_);
+                        recon_->reconstructSlice(slices_[slice_id], gpu_buffer_index_, slice_buffer_[slice_id]);
                     }
                     requested_slices_.clear(); // it could have not been consumed by the GUI.
                     requested_slices_.swap(updated_slices_);
@@ -150,7 +150,7 @@ void Application::startReconstructing() {
 
                 std::lock_guard lk(slice_mtx_);
                 for (const auto& [slice_id, orientation] : slices_) {
-                    recon_->reconstructSlice(slice_buffer_[slice_id], orientation, gpu_buffer_index_);
+                    recon_->reconstructSlice(orientation, gpu_buffer_index_, slice_buffer_[slice_id]);
                 }
                 updated_slices_.clear();
                 sino_uploaded_ = false;

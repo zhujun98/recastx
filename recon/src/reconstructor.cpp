@@ -155,9 +155,8 @@ ParallelBeamReconstructor::ParallelBeamReconstructor(ProjectionGeometry proj_geo
     }
 }
 
-void ParallelBeamReconstructor::reconstructSlice(std::vector<float>& slice_buffer, 
-                                                 Orientation x, 
-                                                 int buffer_idx) {
+void ParallelBeamReconstructor::reconstructSlice(
+    Orientation x, int buffer_idx, std::vector<float>& slice_buffer) {
 
 #if (VERBOSITY >= 2)
     auto start = std::chrono::steady_clock::now();
@@ -212,8 +211,8 @@ void ParallelBeamReconstructor::reconstructSlice(std::vector<float>& slice_buffe
 
 }
 
-void ParallelBeamReconstructor::reconstructPreview(std::vector<float>& preview_buffer, 
-                                                   int buffer_idx) {
+void ParallelBeamReconstructor::reconstructPreview(int buffer_idx, std::vector<float>& preview_buffer) {
+
 #if (VERBOSITY >= 2)
     auto start = std::chrono::steady_clock::now();
 #endif
@@ -298,9 +297,8 @@ ConeBeamReconstructor::ConeBeamReconstructor(ProjectionGeometry proj_geom,
     }
 }
 
-void ConeBeamReconstructor::reconstructSlice(std::vector<float>& slice_buffer, 
-                                             Orientation x, 
-                                             int buffer_idx) {
+void ConeBeamReconstructor::reconstructSlice(
+        Orientation x, int buffer_idx, std::vector<float>& slice_buffer) {
     auto k = vol_geom_slice_->getWindowMaxX();
 
     auto [delta, rot, scale] = utils::slice_transform(
@@ -341,7 +339,7 @@ void ConeBeamReconstructor::reconstructSlice(std::vector<float>& slice_buffer,
     astraCUDA3d::copyFromGPUMemory(slice_buffer.data(), vol_mem_slice_, pos);
 }
 
-void ConeBeamReconstructor::reconstructPreview(std::vector<float>& preview_buffer, int buffer_idx) {
+void ConeBeamReconstructor::reconstructPreview(int buffer_idx, std::vector<float>& preview_buffer) {
     proj_data_[buffer_idx]->changeGeometry(proj_geom_preview_.get());
     algo_preview_[buffer_idx]->run();
 
