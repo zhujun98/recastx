@@ -56,7 +56,7 @@ void DaqClient::start() {
             socket_.recv(update, zmq::recv_flags::none);
 
             auto meta = nlohmann::json::parse(std::string((char*)update.data(), update.size()));
-            int frame = meta["frame"];
+            size_t frame = meta["frame"];
             int scan_index = meta["image_attributes"]["scan_index"]; 
             ProjectionType proj_type = detail::parseProjectionType(scan_index);
             if (proj_type == ProjectionType::unknown) {

@@ -44,8 +44,8 @@ namespace tomcat {
     };
 
     struct ProjectionGeometry {
-        int32_t col_count; // number of detector columns
-        int32_t row_count; // number of detector rows
+        size_t col_count; // number of detector columns
+        size_t row_count; // number of detector rows
         float pixel_width; // width of each detector
         float pixel_height; // height of each detector
         std::vector<float> angles; // array of projection angles 
@@ -54,9 +54,9 @@ namespace tomcat {
     };
 
     struct VolumeGeometry {
-        int32_t col_count; // number of columns
-        int32_t row_count; // number of rows
-        int32_t slice_count; // number of slices
+        size_t col_count; // number of columns
+        size_t row_count; // number of rows
+        size_t slice_count; // number of slices
         float min_x; // minimum x coordinates
         float max_x; // maximum x coordinates
         float min_y; // minimum y coordinates

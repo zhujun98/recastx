@@ -53,6 +53,22 @@ class DoubleBuffer : public DoubleBufferInterface<std::vector<T>> {
     const std::vector<T>& back() const override { return back_; }
 };
 
+class SliceBuffer {
+
+    std::array<size_t, 2> shape_;
+
+public:
+    SliceBuffer() = default;
+    ~SliceBuffer() = default;
+
+    void resize(const std::array<size_t, 2>& shape) {
+        size_t chunk_size = shape[0] * shape[1];
+        shape_ = shape;
+    }
+
+    const std::array<size_t, 2>& shape() const { return shape_; }
+};
+
 template<typename T, size_t N>
 class TrippleBufferInterface {
 

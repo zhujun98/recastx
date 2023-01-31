@@ -16,19 +16,19 @@ using ::testing::FloatNear;
 
 class AppTest : public testing::Test {
   protected:
-    int num_cols_ = 5;
-    int num_rows_ = 4;
-    int pixels_ = num_rows_ * num_cols_;
+    size_t num_cols_ = 5;
+    size_t num_rows_ = 4;
+    size_t pixels_ = num_rows_ * num_cols_;
     float src2origin = 0.f;
     float origin2det = 0.f;
 
-    int num_darks_ = 4;
-    int num_flats_ = 6;
-    int buffer_size_ = 100;
-    int num_angles_ = 16;
+    size_t num_darks_ = 4;
+    size_t num_flats_ = 6;
+    size_t buffer_size_ = 100;
+    size_t num_angles_ = 16;
     std::vector<float> angles_;
-    int slice_size_ = num_cols_;
-    int preview_size_ = slice_size_ / 2;
+    size_t slice_size_ = num_cols_;
+    size_t preview_size_ = slice_size_ / 2;
 
     std::string filter_name_ = "shepp";
     bool gaussian_lowpass_filter_ = false;
@@ -45,16 +45,15 @@ class AppTest : public testing::Test {
     }
 
     void initApp() {
-        app_.init(num_cols_, num_rows_, num_angles_, 
-                  num_darks_, num_flats_, slice_size_, 
-                  buffer_size_);
+        app_.init(num_cols_, num_rows_, num_angles_, num_darks_, num_flats_, buffer_size_);
+
         app_.initFilter({filter_name_, gaussian_lowpass_filter_}, num_cols_, num_rows_);
 
-        float min_x = -num_cols_ / 2.f;
+        float min_x = -(num_cols_ / 2.f);
         float max_x =  num_cols_ / 2.f;
-        float min_y = -num_cols_ / 2.f;
+        float min_y = -(num_cols_ / 2.f);
         float max_y =  num_cols_ / 2.f;
-        float min_z = -num_rows_ / 2.f;
+        float min_z = -(num_rows_ / 2.f);
         float max_z =  num_rows_ / 2.f;
         float z0 = 0.f;
         float half_slice_height = 0.5f * (max_z - min_z) / preview_size_;

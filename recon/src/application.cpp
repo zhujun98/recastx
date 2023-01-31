@@ -19,23 +19,19 @@ Application::Application(int num_threads) : num_threads_(num_threads) {}
 
 Application::~Application() = default;
 
-void Application::init(int num_cols, int num_rows, int num_angles,
-                       int num_darks, int num_flats, 
-                       int slice_size,  
-                       int buffer_size) {
+void Application::init(size_t num_cols, size_t num_rows, size_t num_angles,
+                       size_t num_darks, size_t num_flats, size_t buffer_size) {
     num_cols_ = num_cols;
     num_rows_ = num_rows;
     num_pixels_ = num_rows_ * num_cols_;
     num_angles_ = num_angles;
-    slice_size_ = slice_size;
     num_darks_ = num_darks;
     num_flats_ = num_flats;
 
-    auto num_pixels_t = static_cast<size_t>(num_pixels_);
-    all_darks_.resize(num_pixels_t * num_darks);
-    all_flats_.resize(num_pixels_t * num_flats);
-    dark_avg_.resize(num_pixels_t);
-    reciprocal_.resize(num_pixels_t, 1.0f);
+    all_darks_.resize(num_pixels_ * num_darks);
+    all_flats_.resize(num_pixels_ * num_flats);
+    dark_avg_.resize(num_pixels_);
+    reciprocal_.resize(num_pixels_, 1.0f);
 
     raw_buffer_.resize(buffer_size, num_angles, {num_cols, num_rows});
     sino_buffer_.resize(num_angles, {num_cols, num_rows});
@@ -72,6 +68,7 @@ void Application::initReconstructor(bool cone_beam,
     preview_buffer_.resize(1, {preview_geom.col_count, 
                                preview_geom.row_count, 
                                preview_geom.slice_count});
+    sb.resize({slice_geom.col_count, slice_geom.row_count});
     if (cone_beam) {
         recon_ = std::make_unique<ConeBeamReconstructor>(proj_geom, slice_geom, preview_geom);
     } else {
@@ -143,7 +140,7 @@ void Application::startReconstructing() {
                 } else {    
                     std::lock_guard lk(slice_mtx_);
                     for (auto slice_id : updated_slices_) {
-                        recon_->reconstructSlice(slices_buffer_[slice_id], slices_[slice_id], gpu_buffer_index_);
+                        recon_->reconstructSlice(slice_buffer_[slice_id], slices_[slice_id], gpu_buffer_index_);
                     }
                     requested_slices_.clear(); // it could have not been consumed by the GUI.
                     requested_slices_.swap(updated_slices_);
@@ -153,7 +150,7 @@ void Application::startReconstructing() {
 
                 std::lock_guard lk(slice_mtx_);
                 for (const auto& [slice_id, orientation] : slices_) {
-                    recon_->reconstructSlice(slices_buffer_[slice_id], orientation, gpu_buffer_index_);
+                    recon_->reconstructSlice(slice_buffer_[slice_id], orientation, gpu_buffer_index_);
                 }
                 updated_slices_.clear();
                 sino_uploaded_ = false;
@@ -197,8 +194,8 @@ void Application::runForEver() {
 }
 
 void Application::pushProjection(ProjectionType k, 
-                                 int32_t proj_idx, 
-                                 const std::array<int32_t, 2>& shape, 
+                                 size_t proj_idx, 
+                                 const std::array<size_t, 2>& shape, 
                                  const char* data) {
     if (shape[0] != num_rows_ || shape[1] != num_cols_) {
         spdlog::error("Received projection with wrong shape. Actual: {} x {}, expected: {} x {}", 
@@ -272,8 +269,8 @@ void Application::pushProjection(ProjectionType k,
 void Application::setSlice(int slice_id, const Orientation& orientation) {
     std::lock_guard lk(slice_mtx_);
     if (slices_.find(slice_id) == slices_.end()) {
-        std::vector<float> slice_buffer(slice_size_ * slice_size_);
-        slices_buffer_[slice_id] = std::move(slice_buffer);
+        std::vector<float> buffer(sb.shape()[0] * sb.shape()[1]);
+        slice_buffer_[slice_id] = std::move(buffer);
 
 #if (VERBOSITY >= 3)
         spdlog::info("Slice {} added", slice_id);
@@ -294,7 +291,7 @@ void Application::setSlice(int slice_id, const Orientation& orientation) {
 void Application::removeSlice(int slice_id) {
     std::lock_guard lk(slice_mtx_);
     slices_.erase(slice_id);
-    slices_buffer_.erase(slice_id);
+    slice_buffer_.erase(slice_id);
 
 #if (VERBOSITY >= 3)
         spdlog::info("Slice {} removed", slice_id);
@@ -324,8 +321,9 @@ std::vector<SliceDataPacket> Application::sliceDataPackets() {
     std::vector<SliceDataPacket> ret;
     {
         std::lock_guard lk(slice_mtx_);
-        for (const auto& [slice_id, data] : slices_buffer_) {
-            ret.emplace_back(SliceDataPacket(slice_id, {slice_size_, slice_size_}, data));
+        for (const auto& [slice_id, data] : slice_buffer_) {
+            auto [x, y] = sb.shape();
+            ret.emplace_back(SliceDataPacket(slice_id, {x, y}, data));
         }
     }    
     return ret;
@@ -345,8 +343,9 @@ std::optional<std::vector<SliceDataPacket>> Application::requestedSliceDataPacke
         }
 
         for (auto slice_id : requested_slices_) {
+            auto [x, y] = sb.shape();
             ret.emplace_back(SliceDataPacket(
-                slice_id, {slice_size_, slice_size_}, slices_buffer_[slice_id]));
+                slice_id, {x, y}, slice_buffer_[slice_id]));
         }
         requested_slices_.clear();
     }

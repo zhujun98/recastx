@@ -32,36 +32,39 @@ class ZmqServer;
 
 class Application {
 
-    int num_cols_;
-    int num_rows_;
-    int num_pixels_;
-    int num_angles_;
-    int slice_size_;
+    size_t num_cols_;
+    size_t num_rows_;
+    size_t num_pixels_;
+    size_t num_angles_;
 
     ProjectionGeometry proj_geom_;
     VolumeGeometry vol_geom_;
 
-    int num_darks_ = 1;
-    int num_flats_ = 1;
+    MemoryBuffer<float, 2> raw_buffer_;
+
+    size_t num_darks_ = 1;
+    size_t num_flats_ = 1;
+    std::vector<RawDtype> all_darks_;
+    std::vector<RawDtype> all_flats_;
+    std::vector<float> dark_avg_;
+    std::vector<float> reciprocal_;
+    size_t received_darks_ = 0;
+    size_t received_flats_ = 0;
+    bool reciprocal_computed_ = false;
+
+    TripleVectorBuffer<float, 2> sino_buffer_;
+
     std::unordered_map<int, Orientation> slices_;
     std::set<int> updated_slices_;
     std::set<int> requested_slices_;
     std::condition_variable slice_cv_;
     std::mutex slice_mtx_;
+    std::unordered_map<int, std::vector<float>> slice_buffer_;
+    SliceBuffer sb;
 
-    std::vector<RawDtype> all_darks_;
-    std::vector<RawDtype> all_flats_;
-    std::vector<float> dark_avg_;
-    std::vector<float> reciprocal_;
-    MemoryBuffer<float, 2> raw_buffer_;
-    TripleVectorBuffer<float, 2> sino_buffer_;
     TripleVectorBuffer<float, 3> preview_buffer_;
-    std::unordered_map<int, std::vector<float>> slices_buffer_;
-    bool initialized_ = false;
 
-    int32_t received_darks_ = 0;
-    int32_t received_flats_ = 0;
-    bool reciprocal_computed_ = false;
+    bool initialized_ = false;
 
     std::unique_ptr<Paganin> paganin_;
     std::unique_ptr<Filter> filter_;
@@ -89,10 +92,8 @@ public:
 
     ~Application();
 
-    void init(int num_cols, int num_rows, int num_angles,
-              int num_darks, int num_flats, 
-              int slice_size,  
-              int buffer_size);
+    void init(size_t num_cols, size_t num_rows, size_t num_angles,
+              size_t num_darks, size_t num_flats, size_t buffer_size);
 
     void initPaganin(const PaganinConfig& config, int num_cols, int num_rows);
 
@@ -114,8 +115,8 @@ public:
     void runForEver();
 
     void pushProjection(ProjectionType k, 
-                        int32_t proj_idx, 
-                        const std::array<int32_t, 2>& shape, 
+                        size_t proj_idx, 
+                        const std::array<size_t, 2>& shape, 
                         const char* data); 
 
     void setSlice(int slice_id, const Orientation& orientation);
