@@ -19,15 +19,23 @@ class TrippleBufferTest : public testing::Test {
   protected:
 
     size_t capacity_ = 2;
+    std::array<size_t, 2> shape {5, 4};
 
-    TripleBuffer<float> buffer_;
+    TripleVectorBuffer<float, 2> buffer_;
 
     void SetUp() override {
-        buffer_.initialize(capacity_);
+        buffer_.resize(capacity_, shape);
     }
 };
 
-TEST_F(TrippleBufferTest, TestNormal) {
+TEST_F(TrippleBufferTest, TestConstructors) {
+    bool can_copy = std::is_copy_constructible_v<TripleVectorBuffer<float, 2>>;
+    ASSERT_FALSE(can_copy);
+    bool can_move = std::is_move_constructible_v<TripleVectorBuffer<float, 2>>;
+    ASSERT_FALSE(can_move);
+}
+
+TEST_F(TrippleBufferTest, TestGeneral) {
 
     ASSERT_EQ(buffer_.capacity(), capacity_);
 
@@ -48,24 +56,6 @@ TEST_F(TrippleBufferTest, TestNormal) {
     buffer_.prepare();
 
     buffer_.back() = data3;
-
-    // test move constructor
-    TripleBuffer<float> buffer2(std::move(buffer_));
-    ASSERT_TRUE(buffer_.back().empty());
-    ASSERT_TRUE(buffer_.ready().empty());
-    ASSERT_TRUE(buffer_.front().empty());
-    EXPECT_THAT(buffer2.back(), Pointwise(FloatNear(1e-6), data3));
-    EXPECT_THAT(buffer2.ready(), Pointwise(FloatNear(1e-6), data2));
-    EXPECT_THAT(buffer2.front(), Pointwise(FloatNear(1e-6), data1));
-
-    // test move assignment constructor
-    TripleBuffer<float> buffer3 = std::move(buffer2);
-    ASSERT_TRUE(buffer2.back().empty());
-    ASSERT_TRUE(buffer2.ready().empty());
-    ASSERT_TRUE(buffer2.front().empty());
-    EXPECT_THAT(buffer3.back(), Pointwise(FloatNear(1e-6), data3));
-    EXPECT_THAT(buffer3.ready(), Pointwise(FloatNear(1e-6), data2));
-    EXPECT_THAT(buffer3.front(), Pointwise(FloatNear(1e-6), data1));
 }
 
 class MemoryBufferTest : public testing::Test {
@@ -73,67 +63,75 @@ class MemoryBufferTest : public testing::Test {
 
     size_t capacity_ = 3;
     size_t group_size_ = 4;
-    size_t chunk_size_ = 3;
+    std::array<size_t, 2> shape_ {2, 3};
 
-    MemoryBuffer<float> buffer_;
+    MemoryBuffer<float, 2> buffer_;
 
     void SetUp() override {
-        buffer_.initialize(capacity_, group_size_, chunk_size_);
+        buffer_.resize(capacity_, group_size_, shape_);
     }
 };
 
-TEST_F(MemoryBufferTest, TestNormal) {
+TEST_F(MemoryBufferTest, TestGeneral) {
 
     ASSERT_EQ(buffer_.capacity(), capacity_);
     ASSERT_EQ(buffer_.groupSize(), group_size_);
-    ASSERT_EQ(buffer_.chunkSize(), chunk_size_);
+    ASSERT_EQ(buffer_.chunkSize(), shape_[0] * shape_[1]);
 
     ASSERT_EQ(buffer_.occupied(), 0);
     EXPECT_THROW(buffer_.ready(), std::out_of_range);
 
-    buffer_.fill<RawDtype>(_produceRawData({1, 2, 3}).data(), 0, 0);
+    buffer_.fill<RawDtype>(_produceRawData({1, 2, 3, 4, 5, 6}).data(), 0, 0);
     ASSERT_EQ(buffer_.occupied(), 1);
-    buffer_.fill<RawDtype>(_produceRawData({4, 5, 6}).data(), 0, 1);
-    buffer_.fill<RawDtype>(_produceRawData({1, 2, 3}).data(), 0, 2);
-    buffer_.fill<RawDtype>(_produceRawData({1, 2, 3}).data(), 0, 3);
+    buffer_.fill<RawDtype>(_produceRawData({6, 5, 4, 3, 2, 1}).data(), 0, 1);
+    buffer_.fill<RawDtype>(_produceRawData({1, 2, 3, 4, 5, 6}).data(), 0, 2);
+    buffer_.fill<RawDtype>(_produceRawData({6, 5, 4, 3, 2, 1}).data(), 0, 3);
     EXPECT_EQ(&buffer_.ready(), &buffer_.back());
     ASSERT_TRUE(buffer_.fetch());
-    EXPECT_THAT(buffer_.front(), Pointwise(FloatNear(1e-6), 
-                                           {1., 2., 3., 4., 5., 6., 1., 2., 3., 1., 2., 3.}));
+    EXPECT_THAT(buffer_.front(), 
+                Pointwise(FloatNear(1e-6), {1., 2., 3., 4., 5., 6., 
+                                            6., 5., 4., 3., 2., 1.,
+                                            1., 2., 3., 4., 5., 6.,
+                                            6., 5., 4., 3., 2., 1.}));
     ASSERT_EQ(buffer_.occupied(), 0);
-
     ASSERT_FALSE(buffer_.fetch(10));
 }
 
 TEST_F(MemoryBufferTest, TestBufferFull) {
     for (size_t j = 0; j < group_size_; ++j) {
-        buffer_.fill<RawDtype>(_produceRawData({1, 2, 3}).data(), 0, j); 
+        buffer_.fill<RawDtype>(_produceRawData({1, 2, 3, 4, 5, 6}).data(), 0, j); 
     }
     ASSERT_EQ(buffer_.occupied(), 1);
 
     for (size_t j = 0; j < group_size_; ++j) {
-        buffer_.fill<RawDtype>(_produceRawData({4, 5, 6}).data(), 1, j); 
+        buffer_.fill<RawDtype>(_produceRawData({6, 5, 4, 3, 2, 1}).data(), 1, j); 
     }
     ASSERT_EQ(buffer_.occupied(), 1); // group 0 was dropped
-    EXPECT_THAT(buffer_.ready(), Pointwise(FloatNear(1e-6), 
-                                           {4., 5., 6., 4., 5., 6., 4., 5., 6., 4., 5., 6.}));
+    EXPECT_THAT(buffer_.ready(), 
+                Pointwise(FloatNear(1e-6), {6., 5., 4., 3., 2., 1., 
+                                            6., 5., 4., 3., 2., 1.,
+                                            6., 5., 4., 3., 2., 1.,
+                                            6., 5., 4., 3., 2., 1.}));
 
     // group 1 was dropped; group 2 was added first and then dropped
     for (size_t j = 0; j < group_size_ - 1; ++j) {
-        buffer_.fill<RawDtype>(_produceRawData({7, 8, 9}).data(), capacity_ + 2, j); 
+        buffer_.fill<RawDtype>(_produceRawData({4, 5, 6, 7, 8, 9}).data(), capacity_ + 2, j); 
     }
     ASSERT_EQ(buffer_.occupied(), 3);
 
     for (size_t j = 0; j < group_size_-1; ++j) {
-        buffer_.fill<RawDtype>(_produceRawData({1, 4, 7}).data(), capacity_ + 1, j); 
+        buffer_.fill<RawDtype>(_produceRawData({1, 3, 5, 7, 9, 11}).data(), capacity_ + 1, j); 
     }
     ASSERT_EQ(buffer_.occupied(), 3);
 
-    buffer_.fill<RawDtype>(_produceRawData({9, 8, 7}).data(), capacity_ + 2, group_size_ - 1); 
+    buffer_.fill<RawDtype>(_produceRawData({9, 8, 7, 6, 5, 4}).data(), capacity_ + 2, group_size_ - 1); 
     ASSERT_EQ(buffer_.occupied(), 1); // group 3 was dropped
     buffer_.fetch();
-    EXPECT_THAT(buffer_.front(), Pointwise(FloatNear(1e-6), 
-                                           {7., 8., 9., 7., 8., 9., 7., 8., 9., 9., 8., 7.}));
+    EXPECT_THAT(buffer_.front(), 
+                Pointwise(FloatNear(1e-6), {4., 5., 6., 7., 8., 9., 
+                                            4., 5., 6., 7., 8., 9.,
+                                            4., 5., 6., 7., 8., 9.,
+                                            9., 8., 7., 6., 5., 4.}));
 }
 
 TEST_F(MemoryBufferTest, TestSameDataReceivedRepeatedly) {

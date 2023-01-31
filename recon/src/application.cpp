@@ -21,14 +21,13 @@ Application::~Application() = default;
 
 void Application::init(int num_cols, int num_rows, int num_angles,
                        int num_darks, int num_flats, 
-                       int slice_size, int preview_size, 
+                       int slice_size,  
                        int buffer_size) {
     num_cols_ = num_cols;
     num_rows_ = num_rows;
     num_pixels_ = num_rows_ * num_cols_;
     num_angles_ = num_angles;
     slice_size_ = slice_size;
-    preview_size_ = preview_size;
     num_darks_ = num_darks;
     num_flats_ = num_flats;
 
@@ -38,9 +37,8 @@ void Application::init(int num_cols, int num_rows, int num_angles,
     dark_avg_.resize(num_pixels_t);
     reciprocal_.resize(num_pixels_t, 1.0f);
 
-    buffer_.initialize(buffer_size, num_angles, num_pixels_t);
-    sino_buffer_.initialize(num_angles * num_pixels_t);
-    preview_buffer_.initialize(preview_size * preview_size * preview_size);
+    raw_buffer_.resize(buffer_size, num_angles, {num_cols, num_rows});
+    sino_buffer_.resize(num_angles, {num_cols, num_rows});
 
     initialized_ = true;
     spdlog::info("Initial parameters for real-time 3D tomographic reconstruction:");
@@ -56,7 +54,7 @@ void Application::initPaganin(const PaganinConfig& config,
 
     paganin_ = std::make_unique<Paganin>(
         config.pixel_size, config.lambda, config.delta, config.beta, config.distance, 
-        &buffer_.front()[0], num_cols, num_rows);
+        &raw_buffer_.front()[0], num_cols, num_rows);
 }
 
 void Application::initFilter(const FilterConfig& config, int num_cols, int num_rows) {
@@ -64,13 +62,16 @@ void Application::initFilter(const FilterConfig& config, int num_cols, int num_r
 
     filter_ = std::make_unique<Filter>(
         config.name, config.gaussian_lowpass_filter, 
-        &buffer_.front()[0], num_cols, num_rows, num_threads_);
+        &raw_buffer_.front()[0], num_cols, num_rows, num_threads_);
 }
 
 void Application::initReconstructor(bool cone_beam,
                                     const ProjectionGeometry& proj_geom,
                                     const VolumeGeometry& slice_geom,
                                     const VolumeGeometry& preview_geom) {
+    preview_buffer_.resize(1, {preview_geom.col_count, 
+                               preview_geom.row_count, 
+                               preview_geom.slice_count});
     if (cone_beam) {
         recon_ = std::make_unique<ConeBeamReconstructor>(proj_geom, slice_geom, preview_geom);
     } else {
@@ -93,7 +94,7 @@ void Application::startPreprocessing() {
     preproc_thread_ = std::thread([&] {
         oneapi::tbb::task_arena arena(num_threads_);
         while (true) {
-            buffer_.fetch();
+            raw_buffer_.fetch();
             spdlog::info("Processing projections ...");
             processProjections(arena);
         }
@@ -218,7 +219,7 @@ void Application::pushProjection(ProjectionType k,
 
                 spdlog::info("Computing reciprocal for flat fielding ...");
                 utils::computeReciprocal(all_darks_, all_flats_, num_pixels_, reciprocal_, dark_avg_);
-                buffer_.reset();
+                raw_buffer_.reset();
 
 #if (VERBOSITY >= 1)
                 spdlog::info("Memory buffer reset!");
@@ -235,7 +236,7 @@ void Application::pushProjection(ProjectionType k,
             }
 
             // TODO: compute the average on the fly instead of storing the data in the buffer
-            buffer_.fill<RawDtype>(data, proj_idx / num_angles_, proj_idx % num_angles_);
+            raw_buffer_.fill<RawDtype>(data, proj_idx / num_angles_, proj_idx % num_angles_);
             break;
         }
         case ProjectionType::dark: {
@@ -313,8 +314,8 @@ void Application::removeAllSlices() {
 
 std::optional<VolumeDataPacket> Application::previewDataPacket(int timeout) { 
     if(preview_buffer_.fetch(timeout)) {
-        return VolumeDataPacket({preview_size_, preview_size_, preview_size_}, 
-                                preview_buffer_.front());
+        auto [x, y, z] = preview_buffer_.shape();
+        return VolumeDataPacket({x, y, z}, preview_buffer_.front());
     }
     return std::nullopt;
 }
@@ -356,13 +357,13 @@ size_t Application::bufferSize() const { return num_angles_; }
 
 void Application::processProjections(oneapi::tbb::task_arena& arena) {
 
-int num_angles = static_cast<int>(buffer_.groupSize());
-int num_pixels = static_cast<size_t>(buffer_.chunkSize());
+int num_angles = static_cast<int>(raw_buffer_.groupSize());
+int num_pixels = static_cast<int>(raw_buffer_.chunkSize());
 #if (VERBOSITY >= 2)
     auto start = std::chrono::steady_clock::now();
 #endif
 
-    auto projs = buffer_.front().data();
+    auto projs = raw_buffer_.front().data();
     using namespace oneapi;
     arena.execute([&]{
         tbb::parallel_for(tbb::blocked_range<int>(0, num_angles),
@@ -410,7 +411,7 @@ int num_pixels = static_cast<size_t>(buffer_.chunkSize());
 
 const std::vector<RawDtype>& Application::darks() const { return all_darks_; }
 const std::vector<RawDtype>& Application::flats() const { return all_flats_; }
-const MemoryBuffer<float>& Application::buffer() const { return buffer_; }
-const TripleBuffer<float>& Application::sinoBuffer() const { return sino_buffer_; }
+const MemoryBuffer<float, 2>& Application::buffer() const { return raw_buffer_; }
+const TripleVectorBuffer<float, 2>& Application::sinoBuffer() const { return sino_buffer_; }
 
 } // tomcat::recon

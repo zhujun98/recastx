@@ -169,7 +169,7 @@ int main(int argc, char** argv)
 
     app->init(num_cols, num_rows, num_angles, 
               num_darks, num_flats, 
-              slice_size, preview_size, 
+              slice_size, 
               buffer_size);
 
     if (retrieve_phase) app->initPaganin(

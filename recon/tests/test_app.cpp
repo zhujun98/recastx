@@ -47,7 +47,7 @@ class AppTest : public testing::Test {
     void initApp() {
         app_.init(num_cols_, num_rows_, num_angles_, 
                   num_darks_, num_flats_, slice_size_, 
-                  preview_size_, buffer_size_);
+                  buffer_size_);
         app_.initFilter({filter_name_, gaussian_lowpass_filter_}, num_cols_, num_rows_);
 
         float min_x = -num_cols_ / 2.f;

@@ -36,7 +36,6 @@ class Application {
     int num_rows_;
     int num_pixels_;
     int num_angles_;
-    int preview_size_;
     int slice_size_;
 
     ProjectionGeometry proj_geom_;
@@ -54,9 +53,9 @@ class Application {
     std::vector<RawDtype> all_flats_;
     std::vector<float> dark_avg_;
     std::vector<float> reciprocal_;
-    MemoryBuffer<float> buffer_;
-    TripleBuffer<float> sino_buffer_;
-    TripleBuffer<float> preview_buffer_;
+    MemoryBuffer<float, 2> raw_buffer_;
+    TripleVectorBuffer<float, 2> sino_buffer_;
+    TripleVectorBuffer<float, 3> preview_buffer_;
     std::unordered_map<int, std::vector<float>> slices_buffer_;
     bool initialized_ = false;
 
@@ -92,7 +91,7 @@ public:
 
     void init(int num_cols, int num_rows, int num_angles,
               int num_darks, int num_flats, 
-              int slice_size, int preview_size, 
+              int slice_size,  
               int buffer_size);
 
     void initPaganin(const PaganinConfig& config, int num_cols, int num_rows);
@@ -137,8 +136,8 @@ public:
 
     const std::vector<RawDtype>& darks() const;
     const std::vector<RawDtype>& flats() const;
-    const MemoryBuffer<float>& buffer() const;
-    const TripleBuffer<float>& sinoBuffer() const;
+    const MemoryBuffer<float, 2>& buffer() const;
+    const TripleVectorBuffer<float, 2>& sinoBuffer() const;
 
 };
 
