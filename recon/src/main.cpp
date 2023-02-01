@@ -88,7 +88,7 @@ int main(int argc, char** argv)
          "number of required dark images")
         ("flats", po::value<size_t>()->default_value(10),
          "number of required flat images")
-        ("buffer-size", po::value<size_t>()->default_value(10),
+        ("raw-buffer-size", po::value<size_t>()->default_value(10),
          "maximum number of projection groups to be cached in the memory buffer")
         ("retrieve-phase", po::bool_switch(&retrieve_phase),
          "switch to Paganin filter")
@@ -150,7 +150,7 @@ int main(int argc, char** argv)
     auto num_threads = opts["threads"].as<size_t>();
     auto num_darks = opts["darks"].as<size_t>();
     auto num_flats = opts["flats"].as<size_t>();
-    auto buffer_size = opts["buffer-size"].as<size_t>();
+    auto raw_buffer_size = opts["raw-buffer-size"].as<size_t>();
 
     auto filter_name = opts["filter"].as<std::string>();
 
@@ -164,9 +164,9 @@ int main(int argc, char** argv)
     spdlog::set_level(spdlog::level::info);
 
     // 1. set up server
-    auto app = std::make_shared<Application>(num_threads);
+    auto app = std::make_shared<Application>(raw_buffer_size, num_threads);
 
-    app->init(num_cols, num_rows, num_angles, num_darks, num_flats, buffer_size);
+    app->init(num_cols, num_rows, num_angles, num_darks, num_flats);
 
     if (retrieve_phase) app->initPaganin(
         {pixel_size, lambda, delta, beta, distance}, num_cols, num_rows);

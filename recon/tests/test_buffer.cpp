@@ -18,13 +18,12 @@ std::vector<char> _produceRawData(std::vector<RawDtype>&& data) {
 class TripleBufferTest : public testing::Test {
   protected:
 
-    size_t capacity_ = 2;
-    std::array<size_t, 2> shape {5, 4};
+    std::array<size_t, 3> shape {2, 5, 4};
 
-    TripleVectorBuffer<float, 2> buffer_;
+    TripleVectorBuffer<float, 3> buffer_;
 
     void SetUp() override {
-        buffer_.resize(capacity_, shape);
+        buffer_.resize(shape);
     }
 };
 
@@ -36,8 +35,6 @@ TEST_F(TripleBufferTest, TestConstructors) {
 }
 
 TEST_F(TripleBufferTest, TestGeneral) {
-
-    ASSERT_EQ(buffer_.capacity(), capacity_);
 
     std::vector<float> data1 {1.f, 2.f};
     std::vector<float> data2 {3.f, 4.f};
@@ -62,21 +59,19 @@ class MemoryBufferTest : public testing::Test {
   protected:
 
     size_t capacity_ = 3;
-    size_t group_size_ = 4;
-    std::array<size_t, 2> shape_ {2, 3};
+    std::array<size_t, 3> shape_ {4, 2, 3};
 
-    MemoryBuffer<float, 2> buffer_;
+    MemoryBuffer<float, 3> buffer_ {capacity_};
 
     void SetUp() override {
-        buffer_.resize(capacity_, group_size_, shape_);
+        buffer_.resize(shape_);
     }
 };
 
 TEST_F(MemoryBufferTest, TestGeneral) {
 
     ASSERT_EQ(buffer_.capacity(), capacity_);
-    ASSERT_EQ(buffer_.groupSize(), group_size_);
-    ASSERT_EQ(buffer_.chunkSize(), shape_[0] * shape_[1]);
+    ASSERT_EQ(buffer_.chunkSize(), shape_[0] * shape_[1] * shape_[2]);
 
     ASSERT_EQ(buffer_.occupied(), 0);
     EXPECT_THROW(buffer_.ready(), std::out_of_range);
@@ -98,12 +93,12 @@ TEST_F(MemoryBufferTest, TestGeneral) {
 }
 
 TEST_F(MemoryBufferTest, TestBufferFull) {
-    for (size_t j = 0; j < group_size_; ++j) {
+    for (size_t j = 0; j < shape_[0]; ++j) {
         buffer_.fill<RawDtype>(_produceRawData({1, 2, 3, 4, 5, 6}).data(), 0, j); 
     }
     ASSERT_EQ(buffer_.occupied(), 1);
 
-    for (size_t j = 0; j < group_size_; ++j) {
+    for (size_t j = 0; j < shape_[0]; ++j) {
         buffer_.fill<RawDtype>(_produceRawData({6, 5, 4, 3, 2, 1}).data(), 1, j); 
     }
     ASSERT_EQ(buffer_.occupied(), 1); // group 0 was dropped
@@ -114,17 +109,17 @@ TEST_F(MemoryBufferTest, TestBufferFull) {
                                             6., 5., 4., 3., 2., 1.}));
 
     // group 1 was dropped; group 2 was added first and then dropped
-    for (size_t j = 0; j < group_size_ - 1; ++j) {
+    for (size_t j = 0; j < shape_[0] - 1; ++j) {
         buffer_.fill<RawDtype>(_produceRawData({4, 5, 6, 7, 8, 9}).data(), capacity_ + 2, j); 
     }
     ASSERT_EQ(buffer_.occupied(), 3);
 
-    for (size_t j = 0; j < group_size_-1; ++j) {
+    for (size_t j = 0; j < shape_[0]-1; ++j) {
         buffer_.fill<RawDtype>(_produceRawData({1, 3, 5, 7, 9, 11}).data(), capacity_ + 1, j); 
     }
     ASSERT_EQ(buffer_.occupied(), 3);
 
-    buffer_.fill<RawDtype>(_produceRawData({9, 8, 7, 6, 5, 4}).data(), capacity_ + 2, group_size_ - 1); 
+    buffer_.fill<RawDtype>(_produceRawData({9, 8, 7, 6, 5, 4}).data(), capacity_ + 2, shape_[0] - 1); 
     ASSERT_EQ(buffer_.occupied(), 1); // group 3 was dropped
     buffer_.fetch();
     EXPECT_THAT(buffer_.front(), 
@@ -137,13 +132,13 @@ TEST_F(MemoryBufferTest, TestBufferFull) {
 TEST_F(MemoryBufferTest, TestSameDataReceivedRepeatedly) {
     for (size_t i = 0; i < 8; ++i) {
         // Attempt to fill the 1st group.
-        for (size_t j = 0; j < group_size_; ++j) {
+        for (size_t j = 0; j < shape_[0]; ++j) {
             buffer_.fill<RawDtype>(_produceRawData({1, 2, 3}).data(), 0, j); 
         }
         if (i % 2 == 0) buffer_.fetch();
 
         // Attempt to fill half of the second group.
-        for (size_t j = 0; j < group_size_ / 2; ++j) {
+        for (size_t j = 0; j < shape_[0] / 2; ++j) {
             buffer_.fill<RawDtype>(_produceRawData({1, 2, 3}).data(), 1, j); 
         }
         if (i % 2 == 1) {

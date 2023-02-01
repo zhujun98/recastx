@@ -90,9 +90,9 @@ void ZmqServer::start() {
             } else {
                 auto slice_data = app_->requestedSliceDataPackets();
 
-                if (slice_data) {
+                if (!slice_data.empty()) {
                     std::lock_guard<std::mutex> lck(send_mtx_);
-                    for (const auto& packet : slice_data.value()) {
+                    for (const auto& packet : slice_data) {
                         send(std::move(packet));
 
 #if (VERBOSITY >= 3)

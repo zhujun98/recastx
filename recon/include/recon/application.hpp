@@ -8,7 +8,7 @@
 #include <optional>
 #include <set>
 #include <thread>
-#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include <spdlog/spdlog.h>
@@ -30,6 +30,84 @@ namespace tomcat::recon {
 class DaqClient;
 class ZmqServer;
 
+class Reconstructor;
+
+class SliceBufferBridge {
+
+public:
+
+    using DataType = typename SliceBuffer<float>::DataType;
+    using ValueType = typename SliceBuffer<float>::ValueType;
+
+protected:
+
+    std::map<size_t, std::pair<size_t, Orientation>> params_;
+    SliceBuffer<float> slices_;
+    SliceBuffer<float> requested_slices_;
+    std::unordered_set<size_t> updated_;
+
+    std::mutex mtx_;
+
+public:
+
+    SliceBufferBridge() : slices_(NUM_SLICES), requested_slices_(NUM_SLICES, false) {}
+
+    ~SliceBufferBridge() = default;
+
+    void resize(const std::array<size_t, 2>& shape) {
+        slices_.resize(shape);
+        requested_slices_.resize(shape);
+    }
+
+    void insert(size_t timestamp, const Orientation& orientation) {
+        std::lock_guard<std::mutex> lck(mtx_);
+        size_t sid = timestamp % NUM_SLICES;
+        params_[sid] = std::make_pair(timestamp, orientation);
+        updated_.insert(sid);
+    }
+
+    void reconAll(Reconstructor* recon, int gpu_buffer_index) {
+        {
+            std::lock_guard<std::mutex> lck(mtx_);
+
+            for (const auto& [sid, param] : params_) {
+                auto& slice = slices_.back().second[sid];
+                recon->reconstructSlice(param.second, gpu_buffer_index, slice.second);
+                slice.first = param.first;
+            }
+
+            updated_.clear();
+        }
+
+        slices_.prepare();
+    }
+
+    void reconRequested(Reconstructor* recon, int gpu_buffer_index) {
+        if (!updated_.empty()) {
+            {
+                std::lock_guard<std::mutex> lck(mtx_);
+
+                for (auto sid : updated_) {
+                    auto slice = requested_slices_.back().second[sid];
+                    auto param = params_[sid];
+                    recon->reconstructSlice(param.second, gpu_buffer_index, slice.second);
+                    slice.first = param.first;
+                    requested_slices_.back().first.emplace(sid);
+                }
+
+                updated_.clear();
+            }
+
+            requested_slices_.prepare();
+        }
+    }
+
+    SliceBuffer<float>& slices() { return slices_; }
+
+    SliceBuffer<float>& requestedSlices() { return requested_slices_; }
+
+};
+
 class Application {
 
     size_t num_cols_;
@@ -40,7 +118,7 @@ class Application {
     ProjectionGeometry proj_geom_;
     VolumeGeometry vol_geom_;
 
-    MemoryBuffer<float, 2> raw_buffer_;
+    MemoryBuffer<float, 3> raw_buffer_;
 
     size_t num_darks_ = 1;
     size_t num_flats_ = 1;
@@ -52,15 +130,9 @@ class Application {
     size_t received_flats_ = 0;
     bool reciprocal_computed_ = false;
 
-    TripleVectorBuffer<float, 2> sino_buffer_;
+    TripleVectorBuffer<float, 3> sino_buffer_;
 
-    SliceBuffer slice_buffer_;
-    SliceBuffer requested_slice_buffer_;
-    std::map<size_t, std::pair<size_t, Orientation>> slice_params_;
-    std::set<int> updated_slices_;
-    std::set<int> requested_slices_;
-    std::condition_variable slice_cv_;
-    std::mutex slice_mutex_;
+    SliceBufferBridge slice_buffer_;
 
     TripleVectorBuffer<float, 3> preview_buffer_;
 
@@ -88,12 +160,11 @@ class Application {
 
 public:
 
-    explicit Application(int num_threads); 
+    Application(size_t raw_buffer_size, int num_threads); 
 
     ~Application();
 
-    void init(size_t num_cols, size_t num_rows, size_t num_angles,
-              size_t num_darks, size_t num_flats, size_t buffer_size);
+    void init(size_t num_cols, size_t num_rows, size_t num_angles, size_t num_darks, size_t num_flats);
 
     void initPaganin(const PaganinConfig& config, int num_cols, int num_rows);
 
@@ -125,17 +196,16 @@ public:
 
     std::vector<SliceDataPacket> sliceDataPackets();
 
-    std::optional<std::vector<SliceDataPacket>> requestedSliceDataPackets();
+    std::vector<SliceDataPacket> requestedSliceDataPackets();
 
     size_t bufferSize() const;
 
     // for unittest
 
-    const std::vector<RawDtype>& darks() const;
-    const std::vector<RawDtype>& flats() const;
-    const MemoryBuffer<float, 2>& buffer() const;
-    const TripleVectorBuffer<float, 2>& sinoBuffer() const;
-
+    const std::vector<RawDtype>& darks() const { return all_darks_; }
+    const std::vector<RawDtype>& flats() const { return all_flats_; }
+    const MemoryBuffer<float, 3>& rawBuffer() const { return raw_buffer_; }
+    const TripleVectorBuffer<float, 3>& sinoBuffer() const { return sino_buffer_; }
 };
 
 } // tomcat::recon

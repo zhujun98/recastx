@@ -36,7 +36,7 @@ class AppTest : public testing::Test {
 
     std::array<float, 2> pixel_size_ {1.0f, 1.0f};
 
-    Application app_ {threads_};
+    Application app_ {buffer_size_, threads_};
 
     void SetUp() override {
         angles_ = utils::defaultAngles(num_angles_);
@@ -45,7 +45,7 @@ class AppTest : public testing::Test {
     }
 
     void initApp() {
-        app_.init(num_cols_, num_rows_, num_angles_, num_darks_, num_flats_, buffer_size_);
+        app_.init(num_cols_, num_rows_, num_angles_, num_darks_, num_flats_);
 
         app_.initFilter({filter_name_, gaussian_lowpass_filter_}, num_cols_, num_rows_);
 
@@ -114,14 +114,14 @@ TEST_F(AppTest, TestPushProjection) {
 
     // push projections (don't completely fill the buffer)
     pushProjection(0, num_angles_ - 1);
-    auto& projs_ready = app_.buffer().ready();
+    auto& projs_ready = app_.rawBuffer().ready();
     EXPECT_EQ(projs_ready[0], 2.f);
     EXPECT_EQ(projs_ready[(num_angles_ - 1) * pixels_ - 1], 3.f); 
 
     // push projections to fill the buffer
     pushProjection(num_angles_ - 1, num_angles_);
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    auto& projs_front = app_.buffer().front();
+    auto& projs_front = app_.rawBuffer().front();
     EXPECT_THAT(std::vector<float>(projs_front.begin(), projs_front.begin() + 10), 
                 Pointwise(FloatNear(1e-6), {0.110098f, -0.272487f, 0.133713f, -0.491590f, 0.520265f,
                                             0.099537f, -0.214807f, 0.464008f, -0.369369f, 0.020631f}));
@@ -141,13 +141,13 @@ TEST_F(AppTest, TestMemoryBufferReset) {
     pushFlats(num_flats_);
     pushProjection(0, 1);
     pushProjection(num_angles_, num_angles_ + 1);
-    EXPECT_EQ(app_.buffer().occupied(), 2);
+    EXPECT_EQ(app_.rawBuffer().occupied(), 2);
 
     pushDarks(num_darks_);
     pushFlats(num_flats_);
     // buffer should have been reset
     pushProjection(0, 1);
-    EXPECT_EQ(app_.buffer().occupied(), 1);
+    EXPECT_EQ(app_.rawBuffer().occupied(), 1);
 }
 
 TEST_F(AppTest, TestPushProjectionUnordered) {
@@ -157,14 +157,14 @@ TEST_F(AppTest, TestPushProjectionUnordered) {
     pushProjection(0, num_angles_ - 3);
     int overflow = 3;
     pushProjection(num_angles_ - 1, num_angles_ + overflow);
-    auto& projs_ready = app_.buffer().ready();
+    auto& projs_ready = app_.rawBuffer().ready();
     EXPECT_EQ(projs_ready[0], 2.f);
     EXPECT_EQ(projs_ready[overflow * pixels_ - 1], 3.f);
     EXPECT_EQ(projs_ready[num_angles_ * pixels_ - 1], 4.f);
 
     pushProjection(num_angles_ - 3, num_angles_ - 1);
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    auto& projs_front = app_.buffer().front();
+    auto& projs_front = app_.rawBuffer().front();
     // FIXME: unittest fails from now and then
     EXPECT_THAT(std::vector<float>(projs_front.begin(), projs_front.begin() + 10), 
                 Pointwise(FloatNear(1e-6), {0.110098f, -0.272487f, 0.133713f, -0.491590f, 0.520265f,

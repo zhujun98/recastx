@@ -15,12 +15,13 @@ namespace tomcat::recon {
 
 using namespace std::string_literals;
 
-Application::Application(int num_threads) : num_threads_(num_threads) {}
+Application::Application(size_t raw_buffer_size, int num_threads)
+     : raw_buffer_(raw_buffer_size), num_threads_(num_threads) {}
 
 Application::~Application() = default;
 
-void Application::init(size_t num_cols, size_t num_rows, size_t num_angles,
-                       size_t num_darks, size_t num_flats, size_t buffer_size) {
+void Application::init(size_t num_cols, size_t num_rows, size_t num_angles, 
+                       size_t num_darks, size_t num_flats) {
     num_cols_ = num_cols;
     num_rows_ = num_rows;
     num_pixels_ = num_rows_ * num_cols_;
@@ -33,8 +34,8 @@ void Application::init(size_t num_cols, size_t num_rows, size_t num_angles,
     dark_avg_.resize(num_pixels_);
     reciprocal_.resize(num_pixels_, 1.0f);
 
-    raw_buffer_.resize(buffer_size, num_angles, {num_cols, num_rows});
-    sino_buffer_.resize(num_angles, {num_cols, num_rows});
+    raw_buffer_.resize({num_angles, num_cols, num_rows});
+    sino_buffer_.resize({num_angles, num_cols, num_rows});
 
     initialized_ = true;
     spdlog::info("Initial parameters for real-time 3D tomographic reconstruction:");
@@ -63,10 +64,8 @@ void Application::initReconstructor(bool cone_beam,
                                     const ProjectionGeometry& proj_geom,
                                     const VolumeGeometry& slice_geom,
                                     const VolumeGeometry& preview_geom) {
-    preview_buffer_.resize(1, {preview_geom.col_count, 
-                               preview_geom.row_count, 
-                               preview_geom.slice_count});
-    slice_buffer_.resize(NUM_SLICES, {slice_geom.col_count, slice_geom.row_count});
+    preview_buffer_.resize({preview_geom.col_count, preview_geom.row_count, preview_geom.slice_count});
+    slice_buffer_.resize({slice_geom.col_count, slice_geom.row_count});
     if (cone_beam) {
         recon_ = std::make_unique<ConeBeamReconstructor>(proj_geom, slice_geom, preview_geom);
     } else {
@@ -124,7 +123,7 @@ void Application::startReconstructing() {
     recon_thread_ = std::thread([&] {
 
 #if (VERBOSITY >= 1)
-        const float data_size = sino_buffer_.capacity() * sizeof(RawDtype) / (1024.f * 1024.f); // in MB
+        const float data_size = sino_buffer_.shape()[0] * sizeof(RawDtype) / (1024.f * 1024.f); // in MB
         auto start = std::chrono::steady_clock::now();
         size_t count = 0;
         float total_duration = 0.f;
@@ -136,28 +135,16 @@ void Application::startReconstructing() {
                 if (gpu_cv_.wait_for(lck, 10ms, [&] { return sino_uploaded_; })) {
                     recon_->reconstructPreview(gpu_buffer_index_, preview_buffer_.back());
                 } else {
-                    for (auto sid : updated_slices_) {
-                        recon_->reconstructSlice(
-                            slice_params_[sid].second, gpu_buffer_index_, requested_slice_buffer_.back()[sid]);
-                    }
-                    requested_slices_.clear(); // it could have not been consumed by the GUI.
-                    requested_slices_.swap(updated_slices_);
-                    requested_slice_buffer_.prepare();
+                    slice_buffer_.reconRequested(recon_.get(), gpu_buffer_index_);
                     continue;
                 }
 
-                // TODO: reconstruct multiple slices in a batch?
-                for (const auto& [sid, param] : slice_params_) {
-                    recon_->reconstructSlice(param.second, gpu_buffer_index_, slice_buffer_.back()[sid]);
-                }
-
-                updated_slices_.clear();
+                slice_buffer_.reconAll(recon_.get(), gpu_buffer_index_);
 
                 sino_uploaded_ = false;
             }
             preview_buffer_.prepare();
-            slice_buffer_.prepare();
-
+ 
 #if (VERBOSITY >= 1)
             // The throughtput is measured in the last step of the pipeline because
             // data could be dropped beforehand.
@@ -268,10 +255,7 @@ void Application::pushProjection(ProjectionType k,
 }
 
 void Application::setSlice(size_t timestamp, const Orientation& orientation) {
-    auto sid = timestamp % NUM_SLICES;
-    slice_params_[sid] = std::make_pair(timestamp, orientation);
-    updated_slices_.erase(sid);
-    updated_slices_.insert(sid);
+    slice_buffer_.insert(timestamp, orientation);
 }
 
 std::optional<VolumeDataPacket> Application::previewDataPacket() { 
@@ -287,26 +271,28 @@ std::optional<VolumeDataPacket> Application::previewDataPacket() {
 
 std::vector<SliceDataPacket> Application::sliceDataPackets() {
     std::vector<SliceDataPacket> ret;
-    if (slice_buffer_.fetch(-1)) {
-        auto [x, y] = slice_buffer_.shape();
+    auto& buffer = slice_buffer_.slices();
+    if (buffer.fetch(-1)) {
+        auto [x, y] = buffer.shape();
         for (size_t i = 0; i < NUM_SLICES; ++i) {
-            ret.emplace_back(SliceDataPacket(slice_params_[i].first, {x, y}, slice_buffer_.front()[i]));
+            auto item = buffer.front().second[i];
+            ret.emplace_back(SliceDataPacket(item.first, {x, y}, item.second));
         }
     }
 
     return ret;
 }
 
-std::optional<std::vector<SliceDataPacket>> Application::requestedSliceDataPackets() {
+std::vector<SliceDataPacket> Application::requestedSliceDataPackets() {
     std::vector<SliceDataPacket> ret;
-    if (requested_slice_buffer_.fetch(10)) {
-        auto [x, y] = slice_buffer_.shape();
-        for (auto sid : requested_slices_) {
-            ret.emplace_back(SliceDataPacket(sid, {x, y}, requested_slice_buffer_.front()[sid]));
+    auto& buffer = slice_buffer_.requestedSlices();
+    if (buffer.fetch(10)) {
+        auto [x, y] = buffer.shape();
+        for (auto sid : buffer.front().first) {
+            auto item = buffer.front().second[sid];
+            ret.emplace_back(SliceDataPacket(item.first, {x, y}, item.second));
         }
     }
-
-    requested_slices_.clear();
     return ret;
 }
 
@@ -314,13 +300,16 @@ size_t Application::bufferSize() const { return num_angles_; }
 
 void Application::processProjections(oneapi::tbb::task_arena& arena) {
 
-int num_angles = static_cast<int>(raw_buffer_.groupSize());
-int num_pixels = static_cast<int>(raw_buffer_.chunkSize());
+    auto& shape = raw_buffer_.shape();
+    int num_angles = static_cast<int>(shape[0]);
+    int num_pixels = static_cast<int>(shape[1] * shape[2]);
+
 #if (VERBOSITY >= 2)
     auto start = std::chrono::steady_clock::now();
 #endif
 
     auto projs = raw_buffer_.front().data();
+
     using namespace oneapi;
     arena.execute([&]{
         tbb::parallel_for(tbb::blocked_range<int>(0, num_angles),
@@ -365,10 +354,5 @@ int num_pixels = static_cast<int>(raw_buffer_.chunkSize());
     spdlog::info("[bench] Processing projections took {} ms", duration / 1000);
 #endif
 }
-
-const std::vector<RawDtype>& Application::darks() const { return all_darks_; }
-const std::vector<RawDtype>& Application::flats() const { return all_flats_; }
-const MemoryBuffer<float, 2>& Application::buffer() const { return raw_buffer_; }
-const TripleVectorBuffer<float, 2>& Application::sinoBuffer() const { return sino_buffer_; }
 
 } // tomcat::recon

@@ -35,6 +35,7 @@ add_executable(test_recon
     test_buffer.cpp
     test_filter.cpp
     test_utils.cpp
+    test_slicebufferbridge.cpp
     test_app.cpp)
 target_include_directories(test_recon
     PRIVATE
