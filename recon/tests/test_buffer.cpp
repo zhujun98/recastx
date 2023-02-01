@@ -15,7 +15,7 @@ std::vector<char> _produceRawData(std::vector<RawDtype>&& data) {
     return raw;
 }
 
-class TrippleBufferTest : public testing::Test {
+class TripleBufferTest : public testing::Test {
   protected:
 
     size_t capacity_ = 2;
@@ -28,14 +28,14 @@ class TrippleBufferTest : public testing::Test {
     }
 };
 
-TEST_F(TrippleBufferTest, TestConstructors) {
+TEST_F(TripleBufferTest, TestConstructors) {
     bool can_copy = std::is_copy_constructible_v<TripleVectorBuffer<float, 2>>;
     ASSERT_FALSE(can_copy);
     bool can_move = std::is_move_constructible_v<TripleVectorBuffer<float, 2>>;
     ASSERT_FALSE(can_move);
 }
 
-TEST_F(TrippleBufferTest, TestGeneral) {
+TEST_F(TripleBufferTest, TestGeneral) {
 
     ASSERT_EQ(buffer_.capacity(), capacity_);
 

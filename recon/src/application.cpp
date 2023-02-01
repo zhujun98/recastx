@@ -43,9 +43,7 @@ void Application::init(size_t num_cols, size_t num_rows, size_t num_angles,
     spdlog::info("- Number of projection images per tomogram: {}", num_angles);
 }
 
-void Application::initPaganin(const PaganinConfig& config, 
-                              int num_cols,
-                              int num_rows) {
+void Application::initPaganin(const PaganinConfig& config, int num_cols, int num_rows) {
     if (!initialized_) throw std::runtime_error("Application not initialized!");
 
     paganin_ = std::make_unique<Paganin>(
@@ -68,7 +66,7 @@ void Application::initReconstructor(bool cone_beam,
     preview_buffer_.resize(1, {preview_geom.col_count, 
                                preview_geom.row_count, 
                                preview_geom.slice_count});
-    sb.resize({slice_geom.col_count, slice_geom.row_count});
+    slice_buffer_.resize(NUM_SLICES, {slice_geom.col_count, slice_geom.row_count});
     if (cone_beam) {
         recon_ = std::make_unique<ConeBeamReconstructor>(proj_geom, slice_geom, preview_geom);
     } else {
@@ -137,25 +135,28 @@ void Application::startReconstructing() {
                 std::unique_lock<std::mutex> lck(gpu_mutex_);
                 if (gpu_cv_.wait_for(lck, 10ms, [&] { return sino_uploaded_; })) {
                     recon_->reconstructPreview(gpu_buffer_index_, preview_buffer_.back());
-                } else {    
-                    std::lock_guard lk(slice_mtx_);
-                    for (auto slice_id : updated_slices_) {
-                        recon_->reconstructSlice(slices_[slice_id], gpu_buffer_index_, slice_buffer_[slice_id]);
+                } else {
+                    for (auto sid : updated_slices_) {
+                        recon_->reconstructSlice(
+                            slice_params_[sid].second, gpu_buffer_index_, requested_slice_buffer_.back()[sid]);
                     }
                     requested_slices_.clear(); // it could have not been consumed by the GUI.
                     requested_slices_.swap(updated_slices_);
-                    slice_cv_.notify_one();
+                    requested_slice_buffer_.prepare();
                     continue;
                 }
 
-                std::lock_guard lk(slice_mtx_);
-                for (const auto& [slice_id, orientation] : slices_) {
-                    recon_->reconstructSlice(orientation, gpu_buffer_index_, slice_buffer_[slice_id]);
+                // TODO: reconstruct multiple slices in a batch?
+                for (const auto& [sid, param] : slice_params_) {
+                    recon_->reconstructSlice(param.second, gpu_buffer_index_, slice_buffer_.back()[sid]);
                 }
+
                 updated_slices_.clear();
+
                 sino_uploaded_ = false;
             }
             preview_buffer_.prepare();
+            slice_buffer_.prepare();
 
 #if (VERBOSITY >= 1)
             // The throughtput is measured in the last step of the pipeline because
@@ -266,51 +267,18 @@ void Application::pushProjection(ProjectionType k,
     }
 }
 
-void Application::setSlice(int slice_id, const Orientation& orientation) {
-    std::lock_guard lk(slice_mtx_);
-    if (slices_.find(slice_id) == slices_.end()) {
-        std::vector<float> buffer(sb.shape()[0] * sb.shape()[1]);
-        slice_buffer_[slice_id] = std::move(buffer);
-
-#if (VERBOSITY >= 3)
-        spdlog::info("Slice {} added", slice_id);
-#endif
-
-    }
-
-    slices_[slice_id] = orientation;
-    updated_slices_.erase(slice_id);
-    updated_slices_.insert(slice_id);
-
-#if (VERBOSITY >= 3)
-    spdlog::info("Slice {} updated", slice_id);
-#endif
-
+void Application::setSlice(size_t timestamp, const Orientation& orientation) {
+    auto sid = timestamp % NUM_SLICES;
+    slice_params_[sid] = std::make_pair(timestamp, orientation);
+    updated_slices_.erase(sid);
+    updated_slices_.insert(sid);
 }
 
-void Application::removeSlice(int slice_id) {
-    std::lock_guard lk(slice_mtx_);
-    slices_.erase(slice_id);
-    slice_buffer_.erase(slice_id);
-
-#if (VERBOSITY >= 3)
-        spdlog::info("Slice {} removed", slice_id);
-#endif
-
-}
-
-void Application::removeAllSlices() {
-    std::lock_guard lk(slice_mtx_);
-    slices_.clear();
-
-#if (VERBOSITY >= 3)
-    spdlog::info("All slices removed");
-#endif
-
-}
-
-std::optional<VolumeDataPacket> Application::previewDataPacket(int timeout) { 
-    if(preview_buffer_.fetch(timeout)) {
+std::optional<VolumeDataPacket> Application::previewDataPacket() { 
+    // - Do not block because slice request needs to be responsive
+    // - If the number of the logical threads are more than the number of the physical threads, 
+    //   the preview_data could always have value.
+    if (preview_buffer_.fetch(0)) {
         auto [x, y, z] = preview_buffer_.shape();
         return VolumeDataPacket({x, y, z}, preview_buffer_.front());
     }
@@ -319,36 +287,26 @@ std::optional<VolumeDataPacket> Application::previewDataPacket(int timeout) {
 
 std::vector<SliceDataPacket> Application::sliceDataPackets() {
     std::vector<SliceDataPacket> ret;
-    {
-        std::lock_guard lk(slice_mtx_);
-        for (const auto& [slice_id, data] : slice_buffer_) {
-            auto [x, y] = sb.shape();
-            ret.emplace_back(SliceDataPacket(slice_id, {x, y}, data));
+    if (slice_buffer_.fetch(-1)) {
+        auto [x, y] = slice_buffer_.shape();
+        for (size_t i = 0; i < NUM_SLICES; ++i) {
+            ret.emplace_back(SliceDataPacket(slice_params_[i].first, {x, y}, slice_buffer_.front()[i]));
         }
-    }    
+    }
+
     return ret;
 }
 
-std::optional<std::vector<SliceDataPacket>> Application::requestedSliceDataPackets(int timeout) {
+std::optional<std::vector<SliceDataPacket>> Application::requestedSliceDataPackets() {
     std::vector<SliceDataPacket> ret;
-    {
-        std::unique_lock<std::mutex> lck(slice_mtx_);
-
-        if (timeout < 0) {
-            slice_cv_.wait(lck, [&] { return !requested_slices_.empty(); });
-        } else {
-            if (!(slice_cv_.wait_for(lck, timeout * 1ms, [&] { return !requested_slices_.empty(); }))) {
-                return std::nullopt;
-            }
+    if (requested_slice_buffer_.fetch(10)) {
+        auto [x, y] = slice_buffer_.shape();
+        for (auto sid : requested_slices_) {
+            ret.emplace_back(SliceDataPacket(sid, {x, y}, requested_slice_buffer_.front()[sid]));
         }
-
-        for (auto slice_id : requested_slices_) {
-            auto [x, y] = sb.shape();
-            ret.emplace_back(SliceDataPacket(
-                slice_id, {x, y}, slice_buffer_[slice_id]));
-        }
-        requested_slices_.clear();
     }
+
+    requested_slices_.clear();
     return ret;
 }
 

@@ -53,17 +53,7 @@ void ZmqServer::start() {
                 case PacketDesc::set_slice: {
                     auto packet = std::make_unique<SetSlicePacket>();
                     packet->deserialize(std::move(buffer));
-                    app_->setSlice(packet->slice_id, packet->orientation);
-                    break;
-                }
-                case PacketDesc::remove_slice: {
-                    auto packet = std::make_unique<RemoveSlicePacket>();
-                    packet->deserialize(std::move(buffer));
-                    app_->removeSlice(packet->slice_id);
-                    break;
-                }
-                case PacketDesc::remove_all_slices: {
-                    app_->removeAllSlices();
+                    app_->setSlice(packet->timestamp, packet->orientation);
                     break;
                 }
                 default: {
@@ -78,10 +68,7 @@ void ZmqServer::start() {
 
     data_thread_ = std::thread([&] {
         while (true) {
-            // - Do not block because slice request needs to be responsive
-            // - If the number of the logical threads are more than the number of the physical threads, 
-            //   the preview_data could always have value.
-            auto preview_data = app_->previewDataPacket(0);
+            auto preview_data = app_->previewDataPacket();
             if (preview_data) {
                 auto slice_data = app_->sliceDataPackets();
 
@@ -96,12 +83,12 @@ void ZmqServer::start() {
                     send(std::move(packet));
 
 #if (VERBOSITY >= 3)
-                    spdlog::info("Updated slice data {} sent", packet.slice_id);
+                    spdlog::info("Updated slice data {} sent", packet.timestamp % NUM_SLICES);
 #endif
 
                 }
             } else {
-                auto slice_data = app_->requestedSliceDataPackets(10);
+                auto slice_data = app_->requestedSliceDataPackets();
 
                 if (slice_data) {
                     std::lock_guard<std::mutex> lck(send_mtx_);
@@ -109,7 +96,7 @@ void ZmqServer::start() {
                         send(std::move(packet));
 
 #if (VERBOSITY >= 3)
-                    spdlog::info("Requested slice data {} sent", packet.slice_id);
+                    spdlog::info("Requested slice data {} sent", packet.timestamp % NUM_SLICES);
 #endif
 
                     }

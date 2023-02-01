@@ -54,13 +54,13 @@ class Application {
 
     TripleVectorBuffer<float, 2> sino_buffer_;
 
-    std::unordered_map<int, Orientation> slices_;
+    SliceBuffer slice_buffer_;
+    SliceBuffer requested_slice_buffer_;
+    std::map<size_t, std::pair<size_t, Orientation>> slice_params_;
     std::set<int> updated_slices_;
     std::set<int> requested_slices_;
     std::condition_variable slice_cv_;
-    std::mutex slice_mtx_;
-    std::unordered_map<int, std::vector<float>> slice_buffer_;
-    SliceBuffer sb;
+    std::mutex slice_mutex_;
 
     TripleVectorBuffer<float, 3> preview_buffer_;
 
@@ -119,17 +119,13 @@ public:
                         const std::array<size_t, 2>& shape, 
                         const char* data); 
 
-    void setSlice(int slice_id, const Orientation& orientation);
-    
-    void removeSlice(int slice_id);
- 
-    void removeAllSlices();
+    void setSlice(size_t timestamp, const Orientation& orientation);
 
-    std::optional<VolumeDataPacket> previewDataPacket(int timeout=-1);
+    std::optional<VolumeDataPacket> previewDataPacket();
 
     std::vector<SliceDataPacket> sliceDataPackets();
 
-    std::optional<std::vector<SliceDataPacket>> requestedSliceDataPackets(int timeout=-1);
+    std::optional<std::vector<SliceDataPacket>> requestedSliceDataPackets();
 
     size_t bufferSize() const;
 
