@@ -7,6 +7,8 @@
 
 namespace tomcat {
 
+    constexpr size_t NUM_SLICES = 3;
+
     using PacketDataEvent = std::pair<PacketDesc, std::unique_ptr<Packet>>;
 
     using Orientation = std::array<float, 9>;

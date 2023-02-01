@@ -70,8 +70,7 @@ class ReconItem : public GraphicsDataItem {
 
     friend class SliceRotator;
 
-    std::vector<std::pair<int, std::unique_ptr<Slice>>> slices_;
-    int next_slice_idx_ = 0;
+    std::vector<std::pair<int32_t, std::unique_ptr<Slice>>> slices_;
     std::unique_ptr<Volume> volume_;
 
     GLuint slice_vao_;

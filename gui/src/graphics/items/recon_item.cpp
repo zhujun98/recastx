@@ -127,7 +127,7 @@ void ReconItem::renderIm() {
 
         ImGui::Begin("Statistics##ReconItem", NULL, ImGuiWindowFlags_NoDecoration);
 
-        ImPlot::BeginSubplots("##Histograms", 1, 3, ImVec2(-1.f, -1.f));
+        ImPlot::BeginSubplots("##Histograms", 1, NUM_SLICES, ImVec2(-1.f, -1.f));
         for (auto& slice: slices_) {
             Slice* ptr = slice.second.get();
             const auto &data = ptr->data();
@@ -211,8 +211,6 @@ void ReconItem::renderGl(const glm::mat4& view,
 }
 
 void ReconItem::init() {
-    scene_.send(RemoveAllSlicesPacket());
-
     for (auto& slice : slices_) {
         scene_.send(SetSlicePacket(slice.first, slice.second->orientation3()));
     }
@@ -220,9 +218,9 @@ void ReconItem::init() {
 
 void ReconItem::setSliceData(std::vector<float>&& data,
                              const std::array<uint32_t, 2>& size,
-                             int slice_idx) {
+                             int32_t timestamp) {
     for (auto& slice : slices_) {
-        if (slice.first == slice_idx) {
+        if (slice.first == timestamp) {
             Slice* ptr = slice.second.get();
             if (ptr == dragged_slice_) return;
 
@@ -246,8 +244,8 @@ bool ReconItem::consume(const tomcat::PacketDataEvent &data) {
     switch (data.first) {
         case PacketDesc::slice_data: {
             auto packet = dynamic_cast<SliceDataPacket*>(data.second.get());
-            setSliceData(std::move(packet->data), packet->shape, packet->index);
-            spdlog::info("Set slice data {}", packet->index);
+            setSliceData(std::move(packet->data), packet->shape, packet->timestamp);
+            spdlog::info("Set slice data {}", packet->timestamp % NUM_SLICES);
             return true;
         }
         case PacketDesc::volume_data: {
@@ -290,12 +288,13 @@ bool ReconItem::handleMouseButton(int button, int action) {
         }
     } else if (action == GLFW_RELEASE) {
         if (dragged_slice_ != nullptr) {
-            auto packet = SetSlicePacket(next_slice_idx_, dragged_slice_->orientation3());
-            slices_[dragged_slice_->id()].first = next_slice_idx_++;
+            slices_[dragged_slice_->id()].first += NUM_SLICES;
+            auto packet = SetSlicePacket(slices_[dragged_slice_->id()].first,
+                                         dragged_slice_->orientation3());
 
 #if (VERBOSITY >= 4)
             spdlog::info("Sent slice {} ({}) orientation update request",
-                         dragged_slice_->id(), next_slice_idx_);
+                         dragged_slice_->id(), slices_[dragged_slice_->id()].first);
 #endif
 
             scene_.send(packet);
@@ -336,7 +335,7 @@ bool ReconItem::handleMouseMoved(float x, float y) {
 }
 
 void ReconItem::initSlices() {
-    for (int i = 0; i < 3; ++i) slices_.emplace_back(next_slice_idx_++, std::make_unique<Slice>(i));
+    for (size_t i = 0; i < NUM_SLICES; ++i) slices_.emplace_back(i, std::make_unique<Slice>(i));
 
     resetSlices();
 }
