@@ -163,7 +163,6 @@ int main(int argc, char** argv)
     spdlog::set_pattern("[%Y-%m-%d %T.%e] [%^%l%$] %v");
     spdlog::set_level(spdlog::level::info);
 
-    // 1. set up server
     auto app = std::make_shared<Application>(raw_buffer_size, num_threads);
 
     app->init(num_cols, num_rows, num_angles, num_darks, num_flats);
@@ -185,12 +184,6 @@ int main(int argc, char** argv)
     app->initConnection({data_hostname, data_port, data_socket_type}, {gui_port, gui_port2});
 
     app->runForEver();
-
-    // set up data bridges
-
-    while (true) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    }
 
     return 0;
 }

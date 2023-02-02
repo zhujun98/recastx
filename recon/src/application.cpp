@@ -179,6 +179,11 @@ void Application::runForEver() {
 
     daq_client_->start();
     zmq_server_->start();
+
+    // TODO: start the event loop in the main thread
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    }
 }
 
 void Application::pushProjection(ProjectionType k, 
