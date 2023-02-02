@@ -10,6 +10,9 @@ using namespace std::chrono_literals;
 #include "recon/utils.hpp"
 #include "recon/daq_client.hpp"
 #include "recon/zmq_server.hpp"
+#include "recon/phase.hpp"
+#include "recon/filter.hpp"
+#include "recon/reconstructor.hpp"
 
 namespace tomcat::recon {
 
@@ -65,7 +68,7 @@ void Application::initReconstructor(bool cone_beam,
                                     const VolumeGeometry& slice_geom,
                                     const VolumeGeometry& preview_geom) {
     preview_buffer_.resize({preview_geom.col_count, preview_geom.row_count, preview_geom.slice_count});
-    slice_buffer_.resize({slice_geom.col_count, slice_geom.row_count});
+    slice_mediator_.resize({slice_geom.col_count, slice_geom.row_count});
     if (cone_beam) {
         recon_ = std::make_unique<ConeBeamReconstructor>(proj_geom, slice_geom, preview_geom);
     } else {
@@ -135,11 +138,11 @@ void Application::startReconstructing() {
                 if (gpu_cv_.wait_for(lck, 10ms, [&] { return sino_uploaded_; })) {
                     recon_->reconstructPreview(gpu_buffer_index_, preview_buffer_.back());
                 } else {
-                    slice_buffer_.reconRequested(recon_.get(), gpu_buffer_index_);
+                    slice_mediator_.reconRequested(recon_.get(), gpu_buffer_index_);
                     continue;
                 }
 
-                slice_buffer_.reconAll(recon_.get(), gpu_buffer_index_);
+                slice_mediator_.reconAll(recon_.get(), gpu_buffer_index_);
 
                 sino_uploaded_ = false;
             }
@@ -260,7 +263,7 @@ void Application::pushProjection(ProjectionType k,
 }
 
 void Application::setSlice(size_t timestamp, const Orientation& orientation) {
-    slice_buffer_.insert(timestamp, orientation);
+    slice_mediator_.insert(timestamp, orientation);
 }
 
 std::optional<VolumeDataPacket> Application::previewDataPacket() { 
@@ -276,7 +279,7 @@ std::optional<VolumeDataPacket> Application::previewDataPacket() {
 
 std::vector<SliceDataPacket> Application::sliceDataPackets() {
     std::vector<SliceDataPacket> ret;
-    auto& buffer = slice_buffer_.slices();
+    auto& buffer = slice_mediator_.allSlices();
     if (buffer.fetch(-1)) {
         auto [x, y] = buffer.shape();
         for (size_t i = 0; i < NUM_SLICES; ++i) {
@@ -290,7 +293,7 @@ std::vector<SliceDataPacket> Application::sliceDataPackets() {
 
 std::vector<SliceDataPacket> Application::requestedSliceDataPackets() {
     std::vector<SliceDataPacket> ret;
-    auto& buffer = slice_buffer_.requestedSlices();
+    auto& buffer = slice_mediator_.requestedSlices();
     if (buffer.fetch(10)) {
         auto [x, y] = buffer.shape();
         for (auto sid : buffer.front().first) {

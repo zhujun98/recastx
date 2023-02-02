@@ -24,6 +24,7 @@ set(SOURCES
         "src/filter.cpp"
         "src/phase.cpp"
         "src/reconstructor.cpp"
+        "src/slice_mediator.cpp"
         "src/daq_client.cpp"
         "src/zmq_server.cpp"
         "src/application.cpp"
