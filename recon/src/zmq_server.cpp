@@ -44,10 +44,8 @@ void ZmqServer::start() {
             auto desc = ((PacketDesc*)update.data())[0];
             auto buffer = tomcat::memory_buffer(update.size(), (char*)update.data());
 
-#if (VERBOSITY >= 3)
-            spdlog::info("Received packet with descriptor: 0x{0:x}", 
-                         std::underlying_type<PacketDesc>::type(desc));
-#endif
+            spdlog::debug("Received packet with descriptor: 0x{0:x}", 
+                          std::underlying_type<PacketDesc>::type(desc));
 
             switch (desc) {
                 case PacketDesc::set_slice: {
@@ -75,16 +73,12 @@ void ZmqServer::start() {
                 std::lock_guard<std::mutex> lck(send_mtx_);
                 send(std::move(preview_data.value()));
 
-#if (VERBOSITY >= 3)
-                spdlog::info("Updated volume preview data sent");
-#endif
+                spdlog::debug("Updated volume preview data sent");
                 
                 for (const auto& packet : slice_data) {
                     send(std::move(packet));
 
-#if (VERBOSITY >= 3)
-                    spdlog::info("Updated slice data {} sent", packet.timestamp % NUM_SLICES);
-#endif
+                    spdlog::debug("Updated slice data {} sent", packet.timestamp % NUM_SLICES);
 
                 }
             } else {
@@ -95,9 +89,7 @@ void ZmqServer::start() {
                     for (const auto& packet : slice_data) {
                         send(std::move(packet));
 
-#if (VERBOSITY >= 3)
-                    spdlog::info("Requested slice data {} sent", packet.timestamp % NUM_SLICES);
-#endif
+                    spdlog::debug("Requested slice data {} sent", packet.timestamp % NUM_SLICES);
 
                     }
                 }

@@ -268,9 +268,7 @@ bool ReconItem::handleMouseButton(int button, int action) {
                 maybeSwitchDragMachine(DragType::translator);
                 dragged_slice_ = hovered_slice_;
 
-#if (VERBOSITY >= 4)
-                spdlog::info("Set dragged slice: {}", dragged_slice_->id());
-#endif
+                spdlog::debug("Set dragged slice: {}", dragged_slice_->id());
 
                 return true;
             }
@@ -279,9 +277,7 @@ bool ReconItem::handleMouseButton(int button, int action) {
                 maybeSwitchDragMachine(DragType::rotator);
                 dragged_slice_ = hovered_slice_;
 
-#if (VERBOSITY >= 4)
-                spdlog::info("Set dragged slice: {}", dragged_slice_->id());
-#endif
+                spdlog::debug("Set dragged slice: {}", dragged_slice_->id());
 
                 return true;
             }
@@ -292,10 +288,8 @@ bool ReconItem::handleMouseButton(int button, int action) {
             auto packet = SetSlicePacket(slices_[dragged_slice_->id()].first,
                                          dragged_slice_->orientation3());
 
-#if (VERBOSITY >= 4)
-            spdlog::info("Sent slice {} ({}) orientation update request",
-                         dragged_slice_->id(), slices_[dragged_slice_->id()].first);
-#endif
+            spdlog::debug("Sent slice {} ({}) orientation update request",
+                          dragged_slice_->id(), slices_[dragged_slice_->id()].first);
 
             scene_.send(packet);
 

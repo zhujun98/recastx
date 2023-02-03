@@ -67,9 +67,8 @@ void DaqClient::start() {
 
             socket_.recv(update, zmq::recv_flags::none);
 
-#if (VERBOSITY >= 4)
-            spdlog::info("Projection received: type = {0:d}, frame = {1:d}", scan_index, frame);
-#endif
+            // TODO: too much information even if for debug only
+            // spdlog::debug("Projection received: type = {0:d}, frame = {1:d}", scan_index, frame);
 
             app_->pushProjection(proj_type,
                                  frame,
