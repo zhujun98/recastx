@@ -13,6 +13,12 @@
 #include "client.hpp"
 
 int main(int argc, char** argv) {
+
+    spdlog::set_pattern("[%Y-%m-%d %T.%e] [%^%l%$] %v");
+#ifndef NDEBUG
+    spdlog::set_level(spdlog::level::debug);
+#endif
+
     using namespace tomcat::gui;
     namespace po = boost::program_options;
 
@@ -34,8 +40,6 @@ int main(int argc, char** argv) {
         std::cout << desc << "\n";
         return 0;
     }
-
-    spdlog::set_level(spdlog::level::info);
 
     auto& app = Application::instance();
 

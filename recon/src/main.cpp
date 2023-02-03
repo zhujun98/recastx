@@ -24,8 +24,13 @@ std::pair<float, float> parseReconstructedVolumeBoundary(
     return {min_v, max_v};
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
+
+    spdlog::set_pattern("[%Y-%m-%d %T.%e] [%^%l%$] %v");
+#ifndef NDEBUG
+    spdlog::set_level(spdlog::level::debug);
+#endif
+
     using namespace tomcat::recon;
 
     po::options_description general_desc("General options");
@@ -159,9 +164,6 @@ int main(int argc, char** argv)
     auto delta = opts["delta"].as<float>();
     auto beta = opts["beta"].as<float>();
     auto distance = opts["distance"].as<float>();
-
-    spdlog::set_pattern("[%Y-%m-%d %T.%e] [%^%l%$] %v");
-    spdlog::set_level(spdlog::level::info);
 
     auto app = std::make_shared<Application>(raw_buffer_size, num_threads);
 
