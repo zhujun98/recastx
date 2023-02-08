@@ -18,12 +18,12 @@ using namespace std::chrono_literals;
 
 namespace tomcat::recon {
 
-template<typename T, size_t N>
+template<typename T>
 class TripleBufferInterface {
 
 public:
 
-    using ValueType = T;
+    using DataType = T;
 
 private:
 
@@ -33,12 +33,12 @@ private:
 
 protected:
 
-    size_t chunk_size_ = 0;
-    std::array<size_t, N> shape_;
-
     T back_;
     T ready_;
     T front_;
+
+    // Something beyond the normal swap might be needed.
+    virtual void swap(T& v1, T& v2) = 0;
 
 public:
 
@@ -51,27 +51,24 @@ public:
     TripleBufferInterface(TripleBufferInterface&&) = delete;
     TripleBufferInterface& operator=(TripleBufferInterface&&) = delete;
     
-    virtual void resize(const std::array<size_t, N>& shape) = 0;
-
     bool fetch(int timeout = -1) {
         std::unique_lock lk(mtx_);
         if (timeout < 0) {
             cv_.wait(lk, [this] { return is_ready_; });
         } else {
-            if(!(cv_.wait_for(lk, timeout * 1ms, 
-                              [this] { return is_ready_; }))) {
+            if (!(cv_.wait_for(lk, timeout * 1ms, [this] { return is_ready_; }))) {
                 return false;
             }
         }
-        this->front_.swap(ready_); 
-        this->is_ready_ = false;
+        swap(front_, ready_);
+        is_ready_ = false;
         return true;
     }
 
-    void prepare() {
+    virtual void prepare() {
         {
             std::lock_guard lk(mtx_);
-            ready_.swap(back_);
+            swap(ready_, back_);
             is_ready_ = true;    
         }
         cv_.notify_one();
@@ -83,89 +80,97 @@ public:
     const T& front() const { return front_; }
     const T& ready() const { return ready_; }
     const T& back() const { return back_; };
-
-    size_t chunkSize() const { return chunk_size_; }
-
-    const std::array<size_t, N>& shape() const { return shape_; }
 };
 
 template<typename T, size_t N>
-class TripleBuffer : public TripleBufferInterface<T, N> {
+class TripleContainerBuffer : public TripleBufferInterface<T> {
 
-  public:
+public:
 
-    TripleBuffer() = default;
-    ~TripleBuffer() override = default;
+    using DataType = T;
+    using ValueType = typename T::value_type;
 
-    void resize(const std::array<size_t, N>& shape) override {
+protected:
+
+    std::array<size_t, N> shape_;
+
+    void swap(T& c1, T& c2) override { c1.swap(c2); }
+
+public:
+
+    TripleContainerBuffer() = default;
+    ~TripleContainerBuffer() override = default;
+
+    virtual void resize(const std::array<size_t, N>& shape) {
         size_t chunk_size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<size_t>());
 
         this->back_.resize(chunk_size);
         this->ready_.resize(chunk_size);
         this->front_.resize(chunk_size);
-        this->shape_ = shape;
-        this->chunk_size_ = chunk_size;
+
+        shape_ = shape;
     }
+
+    size_t chunkSize() const { return this->back_.size(); }
+
+    const std::array<size_t, N>& shape() const { return shape_; }
 };
 
-
 template<typename T, size_t N>
-using TripleVectorBuffer = TripleBuffer<std::vector<T>, N>;
+using TripleVectorBuffer = TripleContainerBuffer<std::vector<T>, N>;
 
-
-namespace details {
-
-    template<typename T>
-    using SliceBufferDataType = std::pair<size_t, std::vector<T>>;
-
-    template<typename T>
-    using SliceBufferValueType = std::pair<std::unordered_set<size_t>, 
-                                          std::vector<SliceBufferDataType<T>>>;
-}
 
 template<typename T>
-class SliceBuffer : public TripleBufferInterface<details::SliceBufferValueType<T>, 2> {
+class SliceBuffer : public TripleBufferInterface<std::vector<std::tuple<bool, size_t, std::vector<T>>>> {
 
 public:
 
-    using DataType = typename details::SliceBufferDataType<T>;
-    using ValueType = typename details::SliceBufferValueType<T>;
+    using DataType = std::vector<std::tuple<bool, size_t, std::vector<T>>>;
+    using ValueType = typename DataType::value_type;
 
 private:
 
-    size_t capacity_;
-    bool full_;
+    std::array<size_t, 2> shape_;
+
+    bool on_demand_;
+
+protected:
+
+    void swap(DataType& v1, DataType& v2) override {
+        v1.swap(v2);
+        if (on_demand_) {
+            for (auto& v : v2) std::get<0>(v) = false;
+        }
+    }
 
 public:
 
-    SliceBuffer(size_t capacity, bool full = true) : 
-        TripleBufferInterface<ValueType, 2>(), capacity_(capacity), full_(full) {}
+    SliceBuffer(size_t capacity, bool on_demand = false) : 
+        TripleBufferInterface<DataType>(), on_demand_(on_demand) {
+            for (size_t i = 0; i < capacity; ++i) {
+                this->back_.emplace_back(!on_demand, 0, std::vector<T>());
+                this->ready_.emplace_back(!on_demand, 0, std::vector<T>());
+                this->front_.emplace_back(!on_demand, 0, std::vector<T>());
+            }
+        }
     
     ~SliceBuffer() override = default;
 
     void resize(const std::array<size_t, 2>& shape) {
-        size_t chunk_size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<size_t>());
+        size_t chunk_size = shape[0] * shape[1];
 
-        for (size_t i = 0; i < capacity_; ++i) {
-            this->back_.second.emplace_back(DataType());
-            this->ready_.second.emplace_back(DataType());
-            this->front_.second.emplace_back(DataType());
+        for (auto& v : this->back_) std::get<2>(v).resize(chunk_size);
+        for (auto& v : this->ready_) std::get<2>(v).resize(chunk_size);
+        for (auto& v : this->front_) std::get<2>(v).resize(chunk_size);
 
-            this->back_.second.back().second.resize(chunk_size);
-            this->ready_.second.back().second.resize(chunk_size);
-            this->front_.second.back().second.resize(chunk_size);
-
-            if (full_) {
-                this->back_.first.emplace(i);
-                this->ready_.first.emplace(i);
-                this->front_.first.emplace(i);
-            }
-        }
-        this->chunk_size_ = chunk_size;
         this->shape_ = shape;
     }
 
-    size_t capacity() const { return capacity_; }
+    size_t capacity() const { return this->back_.size(); }
+
+    size_t chunkSize() const { return std::get<2>(this->back_[0]).size(); }   
+
+    const std::array<size_t, 2>& shape() const { return shape_; }
 };
 
 

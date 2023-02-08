@@ -15,7 +15,9 @@ using ::testing::Pointwise;
 using ::testing::FloatNear;
 
 class AppTest : public testing::Test {
-  protected:
+
+protected:
+
     size_t num_cols_ = 5;
     size_t num_rows_ = 4;
     size_t pixels_ = num_rows_ * num_cols_;
@@ -26,7 +28,6 @@ class AppTest : public testing::Test {
     size_t num_flats_ = 6;
     size_t buffer_size_ = 100;
     size_t num_angles_ = 16;
-    std::vector<float> angles_;
     size_t slice_size_ = num_cols_;
     size_t preview_size_ = slice_size_ / 2;
 
@@ -34,17 +35,19 @@ class AppTest : public testing::Test {
     bool gaussian_lowpass_filter_ = false;
     int threads_ = 4;
 
-    std::array<float, 2> pixel_size_ {1.0f, 1.0f};
+    const std::vector<float> angles_;
+    const std::array<float, 2> pixel_size_;
 
-    Application app_ {buffer_size_, threads_};
+    Application app_;
 
-    void SetUp() override {
-        angles_ = utils::defaultAngles(num_angles_);
-        initApp();
-        app_.startPreprocessing();
+    AppTest() : angles_ {utils::defaultAngles(num_angles_)}, 
+                pixel_size_ {1.0f, 1.0f}, 
+                app_ {buffer_size_, threads_} {
     }
 
-    void initApp() {
+    ~AppTest() override = default;
+
+    void SetUp() override { 
         app_.init(num_cols_, num_rows_, num_angles_, num_darks_, num_flats_);
 
         app_.initFilter({filter_name_, gaussian_lowpass_filter_}, num_cols_, num_rows_);
@@ -63,6 +66,8 @@ class AppTest : public testing::Test {
             {slice_size_, slice_size_, 1, min_x, max_x, min_y, max_y, z0 - half_slice_height, z0 + half_slice_height},
             {preview_size_, preview_size_, preview_size_, min_x, max_x, min_y, max_y, min_z, max_z}
         );
+
+        app_.startPreprocessing();
     }
 
     void pushDarks(int n) {

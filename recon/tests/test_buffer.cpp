@@ -8,6 +8,7 @@ namespace tomcat::recon::test {
 
 using ::testing::Pointwise;
 using ::testing::FloatNear;
+using ::testing::ElementsAre;
 
 std::vector<char> _produceRawData(std::vector<RawDtype>&& data) {
     std::vector<char> raw(data.size() * 2, 0);
@@ -15,26 +16,31 @@ std::vector<char> _produceRawData(std::vector<RawDtype>&& data) {
     return raw;
 }
 
-class TripleBufferTest : public testing::Test {
-  protected:
+class TripleVectorBufferTest : public testing::Test {
+
+protected:
 
     std::array<size_t, 3> shape {2, 5, 4};
 
     TripleVectorBuffer<float, 3> buffer_;
 
-    void SetUp() override {
+    TripleVectorBufferTest() {
         buffer_.resize(shape);
     }
+
+    ~TripleVectorBufferTest() override = default;
 };
 
-TEST_F(TripleBufferTest, TestConstructors) {
+TEST_F(TripleVectorBufferTest, TestConstructors) {
     bool can_copy = std::is_copy_constructible_v<TripleVectorBuffer<float, 2>>;
     ASSERT_FALSE(can_copy);
     bool can_move = std::is_move_constructible_v<TripleVectorBuffer<float, 2>>;
     ASSERT_FALSE(can_move);
 }
 
-TEST_F(TripleBufferTest, TestGeneral) {
+TEST_F(TripleVectorBufferTest, TestGeneral) {
+    EXPECT_THAT(buffer_.shape(), ElementsAre(2, 5, 4));
+    EXPECT_EQ(buffer_.chunkSize(), 2 * 5 * 4);
 
     std::vector<float> data1 {1.f, 2.f};
     std::vector<float> data2 {3.f, 4.f};
@@ -55,8 +61,31 @@ TEST_F(TripleBufferTest, TestGeneral) {
     buffer_.back() = data3;
 }
 
+
+class SliceBufferTest : public testing::Test {
+
+protected:
+
+    const size_t capacity_;
+    const std::array<size_t, 2> shape_;
+
+    SliceBuffer<float> buffer_;
+
+    SliceBufferTest() : capacity_(4), shape_ {3, 5}, buffer_{capacity_} {
+        buffer_.resize(shape_);
+    }
+};
+
+TEST_F(SliceBufferTest, TestGeneral) {
+    ASSERT_EQ(buffer_.capacity(), capacity_);
+    ASSERT_EQ(buffer_.chunkSize(), shape_[0] * shape_[1]);
+    EXPECT_THAT(buffer_.shape(), ElementsAre(3, 5)); 
+}
+
+
 class MemoryBufferTest : public testing::Test {
-  protected:
+
+protected:
 
     size_t capacity_ = 3;
     std::array<size_t, 3> shape_ {4, 2, 3};

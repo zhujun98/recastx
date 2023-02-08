@@ -138,7 +138,7 @@ void Application::startReconstructing() {
                 if (gpu_cv_.wait_for(lck, 10ms, [&] { return sino_uploaded_; })) {
                     recon_->reconstructPreview(gpu_buffer_index_, preview_buffer_.back());
                 } else {
-                    slice_mediator_.reconRequested(recon_.get(), gpu_buffer_index_);
+                    slice_mediator_.reconOnDemand(recon_.get(), gpu_buffer_index_);
                     continue;
                 }
 
@@ -266,39 +266,37 @@ void Application::setSlice(size_t timestamp, const Orientation& orientation) {
     slice_mediator_.insert(timestamp, orientation);
 }
 
-std::optional<VolumeDataPacket> Application::previewDataPacket() { 
-    // - Do not block because slice request needs to be responsive
-    // - If the number of the logical threads are more than the number of the physical threads, 
-    //   the preview_data could always have value.
-    if (preview_buffer_.fetch(0)) {
+std::optional<VolumeDataPacket> Application::previewDataPacket(int timeout) { 
+    if (preview_buffer_.fetch(timeout)) {
         auto [x, y, z] = preview_buffer_.shape();
         return VolumeDataPacket({x, y, z}, preview_buffer_.front());
     }
     return std::nullopt;
 }
 
-std::vector<SliceDataPacket> Application::sliceDataPackets() {
+std::vector<SliceDataPacket> Application::sliceDataPackets(int timeout) {
     std::vector<SliceDataPacket> ret;
     auto& buffer = slice_mediator_.allSlices();
-    if (buffer.fetch(-1)) {
+    if (buffer.fetch(timeout)) {
         auto [x, y] = buffer.shape();
-        for (size_t i = 0; i < NUM_SLICES; ++i) {
-            auto item = buffer.front().second[i];
-            ret.emplace_back(SliceDataPacket(item.first, {x, y}, item.second));
+        for (auto& slice : buffer.front()) {
+            ret.emplace_back(SliceDataPacket(std::get<1>(slice), {x, y}, std::get<2>(slice)));
         }
     }
 
     return ret;
 }
 
-std::vector<SliceDataPacket> Application::requestedSliceDataPackets() {
+std::vector<SliceDataPacket> Application::onDemandSliceDataPackets(int timeout) {
     std::vector<SliceDataPacket> ret;
-    auto& buffer = slice_mediator_.requestedSlices();
-    if (buffer.fetch(10)) {
+    auto& buffer = slice_mediator_.onDemandSlices();
+    if (buffer.fetch(timeout)) {
         auto [x, y] = buffer.shape();
-        for (auto sid : buffer.front().first) {
-            auto item = buffer.front().second[sid];
-            ret.emplace_back(SliceDataPacket(item.first, {x, y}, item.second));
+        for (auto& slice : buffer.front()) {
+            std::cout << std::get<0>(slice) << std::endl;
+            if (std::get<0>(slice)) {
+                ret.emplace_back(SliceDataPacket(std::get<1>(slice), {x, y}, std::get<2>(slice)));
+            }
         }
     }
     return ret;

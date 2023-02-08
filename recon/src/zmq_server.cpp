@@ -66,30 +66,35 @@ void ZmqServer::start() {
 
     data_thread_ = std::thread([&] {
         while (true) {
-            auto preview_data = app_->previewDataPacket();
+            // - Do not block because slice request needs to be responsive
+            // - If the number of the logical threads are more than the number of the physical threads, 
+            //   the preview_data could always have value.
+            auto preview_data = app_->previewDataPacket(0);
             if (preview_data) {
-                auto slice_data = app_->sliceDataPackets();
+                auto slice_data = app_->sliceDataPackets(-1);
 
                 std::lock_guard<std::mutex> lck(send_mtx_);
                 send(std::move(preview_data.value()));
 
-                spdlog::debug("Updated volume preview data sent");
+                spdlog::debug("Preview data sent");
                 
                 for (const auto& packet : slice_data) {
                     send(std::move(packet));
 
-                    spdlog::debug("Updated slice data {} sent", packet.timestamp % NUM_SLICES);
+                    spdlog::debug("Slice data {} ({}) sent", 
+                                  packet.timestamp % NUM_SLICES, packet.timestamp);
 
                 }
             } else {
-                auto slice_data = app_->requestedSliceDataPackets();
+                auto slice_data = app_->onDemandSliceDataPackets(10);
 
                 if (!slice_data.empty()) {
                     std::lock_guard<std::mutex> lck(send_mtx_);
                     for (const auto& packet : slice_data) {
                         send(std::move(packet));
 
-                    spdlog::debug("Requested slice data {} sent", packet.timestamp % NUM_SLICES);
+                        spdlog::debug("On-demand slice data {} ({}) sent", 
+                                      packet.timestamp % NUM_SLICES, packet.timestamp);
 
                     }
                 }

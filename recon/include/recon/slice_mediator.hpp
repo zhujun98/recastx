@@ -21,7 +21,7 @@ protected:
 
     std::map<size_t, std::pair<size_t, Orientation>> params_;
     SliceBuffer<float> all_slices_;
-    SliceBuffer<float> requested_slices_;
+    SliceBuffer<float> ondemand_slices_;
     std::unordered_set<size_t> updated_;
 
     std::mutex mtx_;
@@ -38,11 +38,11 @@ public:
 
     void reconAll(Reconstructor* recon, int gpu_buffer_index);
 
-    void reconRequested(Reconstructor* recon, int gpu_buffer_index);
+    void reconOnDemand(Reconstructor* recon, int gpu_buffer_index);
 
     SliceBuffer<float>& allSlices() { return all_slices_; }
 
-    SliceBuffer<float>& requestedSlices() { return requested_slices_; }
+    SliceBuffer<float>& onDemandSlices() { return ondemand_slices_; }
 
 };
 

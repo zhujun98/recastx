@@ -115,11 +115,11 @@ public:
 
     void setSlice(size_t timestamp, const Orientation& orientation);
 
-    std::optional<VolumeDataPacket> previewDataPacket();
+    std::optional<VolumeDataPacket> previewDataPacket(int timeout);
 
-    std::vector<SliceDataPacket> sliceDataPackets();
+    std::vector<SliceDataPacket> sliceDataPackets(int timeout);
 
-    std::vector<SliceDataPacket> requestedSliceDataPackets();
+    std::vector<SliceDataPacket> onDemandSliceDataPackets(int timeout);
 
     size_t bufferSize() const;
 

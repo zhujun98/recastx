@@ -11,7 +11,9 @@ using ::testing::Pointwise;
 using ::testing::FloatNear;
 
 class FilterTest : public testing::Test {
-  protected:
+
+protected:
+
     int cols_ = 5;
     int rows_ = 2;
     int pixels_ = rows_ * cols_;
