@@ -219,19 +219,18 @@ void ReconItem::init() {
 void ReconItem::setSliceData(std::vector<float>&& data,
                              const std::array<uint32_t, 2>& size,
                              int32_t timestamp) {
-    for (auto& slice : slices_) {
-        if (slice.first == timestamp) {
-            Slice* ptr = slice.second.get();
-            if (ptr == dragged_slice_) return;
+    auto& slice = slices_[timestamp % NUM_SLICES];
+    if (slice.first == timestamp) {
+        Slice* ptr = slice.second.get();
+        if (ptr == dragged_slice_) return;
 
-            // FIXME: replace uint32_t with size_t in Packet
-            ptr->setData(std::move(data), {size[0], size[1]});
-            maybeUpdateMinMaxValues();
-            break;
-        }
+        // FIXME: replace uint32_t with size_t in Packet
+        ptr->setData(std::move(data), {size[0], size[1]});
+        maybeUpdateMinMaxValues();
+    } else {
+        // Ignore outdated reconstructed slices.
+        spdlog::debug("Outdated slice received: {}", timestamp);
     }
-
-    // Ignore outdated reconstructed slices.
 }
 
 void ReconItem::setVolumeData(std::vector<float>&& data, const std::array<uint32_t, 3>& size) {
