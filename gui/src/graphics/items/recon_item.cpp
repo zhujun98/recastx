@@ -219,23 +219,26 @@ void ReconItem::init() {
 void ReconItem::setSliceData(std::vector<float>&& data,
                              const std::array<uint32_t, 2>& size,
                              int32_t timestamp) {
-    auto& slice = slices_[timestamp % NUM_SLICES];
+    size_t sid = timestamp % NUM_SLICES;
+    auto& slice = slices_[sid];
     if (slice.first == timestamp) {
         Slice* ptr = slice.second.get();
         if (ptr == dragged_slice_) return;
 
         // FIXME: replace uint32_t with size_t in Packet
         ptr->setData(std::move(data), {size[0], size[1]});
+        spdlog::info("Set slice data {}", sid);
         maybeUpdateMinMaxValues();
     } else {
         // Ignore outdated reconstructed slices.
-        spdlog::debug("Outdated slice received: {}", timestamp);
+        spdlog::debug("Outdated slice received: {} ({})", sid, timestamp);
     }
 }
 
 void ReconItem::setVolumeData(std::vector<float>&& data, const std::array<uint32_t, 3>& size) {
     // FIXME: replace uint32_t with size_t in Packet
     volume_->setData(std::move(data), {size[0], size[1], size[2]});
+    spdlog::info("Set volume data");
     maybeUpdateMinMaxValues();
 }
 
@@ -244,13 +247,11 @@ bool ReconItem::consume(const tomcat::PacketDataEvent &data) {
         case PacketDesc::slice_data: {
             auto packet = dynamic_cast<SliceDataPacket*>(data.second.get());
             setSliceData(std::move(packet->data), packet->shape, packet->timestamp);
-            spdlog::info("Set slice data {}", packet->timestamp % NUM_SLICES);
             return true;
         }
         case PacketDesc::volume_data: {
             auto packet = dynamic_cast<VolumeDataPacket*>(data.second.get());
             setVolumeData(std::move(packet->data), packet->shape);
-            spdlog::info("Set volume data");
             fps_counter_.update();
             return true;
         }
