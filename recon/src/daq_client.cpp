@@ -56,7 +56,7 @@ void DaqClient::start() {
             socket_.recv(update, zmq::recv_flags::none);
 
             auto meta = nlohmann::json::parse(std::string((char*)update.data(), update.size()));
-            int frame = meta["frame"];
+            size_t frame = meta["frame"];
             int scan_index = meta["image_attributes"]["scan_index"]; 
             ProjectionType proj_type = detail::parseProjectionType(scan_index);
             if (proj_type == ProjectionType::unknown) {
@@ -67,9 +67,8 @@ void DaqClient::start() {
 
             socket_.recv(update, zmq::recv_flags::none);
 
-#if (VERBOSITY >= 4)
-            spdlog::info("Projection received: type = {0:d}, frame = {1:d}", scan_index, frame);
-#endif
+            // TODO: too much information even if for debug only
+            // spdlog::debug("Projection received: type = {0:d}, frame = {1:d}", scan_index, frame);
 
             app_->pushProjection(proj_type,
                                  frame,

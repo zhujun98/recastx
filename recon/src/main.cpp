@@ -24,8 +24,13 @@ std::pair<float, float> parseReconstructedVolumeBoundary(
     return {min_v, max_v};
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
+
+    spdlog::set_pattern("[%Y-%m-%d %T.%e] [%^%l%$] %v");
+#ifndef NDEBUG
+    spdlog::set_level(spdlog::level::debug);
+#endif
+
     using namespace tomcat::recon;
 
     po::options_description general_desc("General options");
@@ -53,11 +58,11 @@ int main(int argc, char** argv)
     po::options_description geometry_desc("Geometry options");
     bool cone_beam = false;
     geometry_desc.add_options()
-        ("cols", po::value<int>()->default_value(2016),
+        ("cols", po::value<size_t>()->default_value(2016),
          "detector width in pixels")
-        ("rows", po::value<int>()->default_value(1200),
+        ("rows", po::value<size_t>()->default_value(1200),
          "detector height in pixels")
-        ("angles", po::value<int>()->default_value(128),
+        ("angles", po::value<size_t>()->default_value(128),
          "number of projections per scan")
         ("minx", po::value<float>(),
          "minimal X-coordinate of the reconstructed volume")
@@ -78,17 +83,17 @@ int main(int argc, char** argv)
     bool tilt = false;
     bool gaussian_lowpass_filter = false;
     reconstruction_desc.add_options()
-        ("slice-size", po::value<int>()->default_value(-1),
+        ("slice-size", po::value<size_t>(),
          "size of the square reconstructed slice in pixels. Default to detector columns.")
-        ("preview-size", po::value<int>()->default_value(128),
+        ("preview-size", po::value<size_t>()->default_value(128),
          "size of the cubic reconstructed volume for preview.")
-        ("threads", po::value<int>()->default_value(8),
+        ("threads", po::value<size_t>()->default_value(8),
          "number of threads used for data processing")
-        ("darks", po::value<int>()->default_value(10),
+        ("darks", po::value<size_t>()->default_value(10),
          "number of required dark images")
-        ("flats", po::value<int>()->default_value(10),
+        ("flats", po::value<size_t>()->default_value(10),
          "number of required flat images")
-        ("buffer-size", po::value<int>()->default_value(10),
+        ("raw-buffer-size", po::value<size_t>()->default_value(10),
          "maximum number of projection groups to be cached in the memory buffer")
         ("retrieve-phase", po::bool_switch(&retrieve_phase),
          "switch to Paganin filter")
@@ -139,19 +144,18 @@ int main(int argc, char** argv)
     auto gui_port2 = opts["gui-port2"].as<int>();
     if (gui_port2 == gui_port) gui_port2 += 1;
 
-    auto num_cols = opts["cols"].as<int>();
-    auto num_rows = opts["rows"].as<int>();
-    auto num_angles = opts["angles"].as<int>();
+    auto num_cols = opts["cols"].as<size_t>();
+    auto num_rows = opts["rows"].as<size_t>();
+    auto num_angles = opts["angles"].as<size_t>();
     auto [min_x, max_x] = parseReconstructedVolumeBoundary(opts["minx"], opts["maxx"], num_cols);
     auto [min_y, max_y] = parseReconstructedVolumeBoundary(opts["miny"], opts["maxy"], num_cols);
     auto [min_z, max_z] = parseReconstructedVolumeBoundary(opts["minz"], opts["maxz"], num_rows);
-    auto slice_size = opts["slice-size"].as<int>();
-    if (slice_size <= 0) slice_size = num_cols;
-    auto preview_size = opts["preview-size"].as<int>();
-    auto num_threads = opts["threads"].as<int>();
-    auto num_darks = opts["darks"].as<int>();
-    auto num_flats = opts["flats"].as<int>();
-    auto buffer_size = opts["buffer-size"].as<int>();
+    size_t slice_size = opts["slice-size"].empty() ? num_cols : opts["slice-size"].as<size_t>();
+    auto preview_size = opts["preview-size"].as<size_t>();
+    auto num_threads = opts["threads"].as<size_t>();
+    auto num_darks = opts["darks"].as<size_t>();
+    auto num_flats = opts["flats"].as<size_t>();
+    auto raw_buffer_size = opts["raw-buffer-size"].as<size_t>();
 
     auto filter_name = opts["filter"].as<std::string>();
 
@@ -161,16 +165,9 @@ int main(int argc, char** argv)
     auto beta = opts["beta"].as<float>();
     auto distance = opts["distance"].as<float>();
 
-    spdlog::set_pattern("[%Y-%m-%d %T.%e] [%^%l%$] %v");
-    spdlog::set_level(spdlog::level::info);
+    auto app = std::make_shared<Application>(raw_buffer_size, num_threads);
 
-    // 1. set up server
-    auto app = std::make_shared<Application>(num_threads);
-
-    app->init(num_cols, num_rows, num_angles, 
-              num_darks, num_flats, 
-              slice_size, preview_size, 
-              buffer_size);
+    app->init(num_cols, num_rows, num_angles, num_darks, num_flats);
 
     if (retrieve_phase) app->initPaganin(
         {pixel_size, lambda, delta, beta, distance}, num_cols, num_rows);
@@ -189,12 +186,6 @@ int main(int argc, char** argv)
     app->initConnection({data_hostname, data_port, data_socket_type}, {gui_port, gui_port2});
 
     app->runForEver();
-
-    // set up data bridges
-
-    while (true) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    }
 
     return 0;
 }

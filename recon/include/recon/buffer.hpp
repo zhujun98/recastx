@@ -1,168 +1,193 @@
 #ifndef SLICERECON_BUFFER_H
 #define SLICERECON_BUFFER_H
 
+#include <cassert>
 #include <chrono>
 #include <condition_variable>
+#include <numeric>
 #include <queue>
 #include <thread>
+#include <type_traits>
 #include <unordered_map>
+#include <unordered_set>
 using namespace std::chrono_literals;
 
 #include <spdlog/spdlog.h>
 
+#include <tomcat/tomcat.hpp>
+
 namespace tomcat::recon {
 
 template<typename T>
-class DoubleBufferInterface {
-
-  public:
-
-    virtual void swap() = 0;
-
-    virtual T& front() = 0;
-    virtual T& back() = 0;
-
-    virtual const T& front() const = 0;
-    virtual const T& back() const = 0;
-};
-
-template<typename T>
-class DoubleBuffer : public DoubleBufferInterface<std::vector<T>> {
-    
-    std::vector<T> front_;
-    std::vector<T> back_;
-
-  public:
-
-    DoubleBuffer() = default;
-    ~DoubleBuffer() = default;
-
-    void initialize(size_t capacity) {
-        this->back_.resize(capacity);
-        this->front_.resize(capacity);
-    }
-
-    void swap() override { this->front_.swap(this->back_); }
-
-    std::vector<T>& front() override { return front_; }
-    std::vector<T>& back() override { return back_; }
-
-    const std::vector<T>& front() const override { return front_; }
-    const std::vector<T>& back() const override { return back_; }
-};
-
-template<typename T>
-class TrippleBufferInterface {
-
-protected:
-
-    size_t capacity_;
+class TripleBufferInterface {
 
 public:
 
-    virtual bool fetch(int timeout = -1) = 0;
-    virtual void prepare() = 0;
+    using DataType = T;
 
-    virtual T& front() = 0;
-    virtual T& back() = 0;
-
-    virtual const T& front() const  = 0;
-    virtual const T& ready() const = 0;
-    virtual const T& back() const = 0;
-
-    size_t capacity() const { return capacity_; }
-};
-
-template<typename T>
-class TripleBuffer : public TrippleBufferInterface<std::vector<T>> {
-
-    std::vector<T> back_;
-    std::vector<T> ready_;
-    std::vector<T> front_;
+private:
 
     bool is_ready_ = false;
     std::mutex mtx_;
     std::condition_variable cv_;
 
-  public:
+protected:
 
-    TripleBuffer() = default;
-    ~TripleBuffer() = default;
+    T back_;
+    T ready_;
+    T front_;
 
-    TripleBuffer(const TripleBuffer&) = delete;
-    TripleBuffer& operator=(const TripleBuffer&) = delete;
+    // Something beyond the normal swap might be needed.
+    virtual void swap(T& v1, T& v2) = 0;
 
-    TripleBuffer(TripleBuffer&& other) noexcept {
-        std::lock_guard lk(other.mtx_);
-        back_ = std::move(other.back_);
-        ready_ = std::move(other.ready_);
-        front_ = std::move(other.front_);
-        is_ready_ = other.is_ready_;
-    }
+public:
 
-    TripleBuffer& operator=(TripleBuffer&& other) noexcept {
-        std::lock_guard lk(other.mtx_);
-        back_ = std::move(other.back_);
-        ready_ = std::move(other.ready_);
-        front_ = std::move(other.front_);
-        is_ready_ = other.is_ready_;
-        return *this;
-    }
+    TripleBufferInterface() = default;
+    virtual ~TripleBufferInterface() = default;
 
-    // TODO: move into constructor
-    void initialize(size_t capacity) {
-        back_.resize(capacity);
-        ready_.resize(capacity);
-        front_.resize(capacity);
-        this->capacity_ = capacity;
-    }
+    TripleBufferInterface(const TripleBufferInterface&) = delete;
+    TripleBufferInterface& operator=(const TripleBufferInterface&) = delete;
 
-    bool fetch(int timeout = -1) override {
-        std::unique_lock lk(this->mtx_);
+    TripleBufferInterface(TripleBufferInterface&&) = delete;
+    TripleBufferInterface& operator=(TripleBufferInterface&&) = delete;
+    
+    bool fetch(int timeout = -1) {
+        std::unique_lock lk(mtx_);
         if (timeout < 0) {
-            cv_.wait(lk, [this] { return this->is_ready_; });
+            cv_.wait(lk, [this] { return is_ready_; });
         } else {
-            if(!(cv_.wait_for(lk, timeout * 1ms, 
-                              [this] { return this->is_ready_; }))) {
+            if (!(cv_.wait_for(lk, timeout * 1ms, [this] { return is_ready_; }))) {
                 return false;
             }
         }
-        this->front_.swap(this->ready_); 
-        this->is_ready_ = false;
+        swap(front_, ready_);
+        is_ready_ = false;
         return true;
     }
 
-    void prepare() override {
+    virtual void prepare() {
         {
-            std::lock_guard lk(this->mtx_);
-            this->ready_.swap(this->back_);
-            this->is_ready_ = true;    
+            std::lock_guard lk(mtx_);
+            swap(ready_, back_);
+            is_ready_ = true;    
         }
-        this->cv_.notify_one();
+        cv_.notify_one();
     }
 
-    std::vector<T>& front() override { return front_; }
-    std::vector<T>& back() override { return back_; };
+    T& front() { return front_; }
+    T& back() { return back_; };
 
-    const std::vector<T>& front() const override { return front_; }
-    const std::vector<T>& ready() const override { return ready_; }
-    const std::vector<T>& back() const override { return back_; };
-    
+    const T& front() const { return front_; }
+    const T& ready() const { return ready_; }
+    const T& back() const { return back_; };
 };
 
-template<typename T>
-class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
+template<typename T, size_t N>
+class TripleContainerBuffer : public TripleBufferInterface<T> {
 
-    std::queue<int> group_indices_;
-    std::unordered_map<int, size_t> map_;
+public:
+
+    using DataType = T;
+    using ValueType = typename T::value_type;
+
+protected:
+
+    std::array<size_t, N> shape_;
+
+    void swap(T& c1, T& c2) override { c1.swap(c2); }
+
+public:
+
+    TripleContainerBuffer() = default;
+    ~TripleContainerBuffer() override = default;
+
+    virtual void resize(const std::array<size_t, N>& shape) {
+        size_t chunk_size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<size_t>());
+
+        this->back_.resize(chunk_size);
+        this->ready_.resize(chunk_size);
+        this->front_.resize(chunk_size);
+
+        shape_ = shape;
+    }
+
+    size_t chunkSize() const { return this->back_.size(); }
+
+    const std::array<size_t, N>& shape() const { return shape_; }
+};
+
+template<typename T, size_t N>
+using TripleVectorBuffer = TripleContainerBuffer<std::vector<T>, N>;
+
+
+template<typename T>
+class SliceBuffer : public TripleBufferInterface<std::vector<std::tuple<bool, size_t, std::vector<T>>>> {
+
+public:
+
+    using DataType = std::vector<std::tuple<bool, size_t, std::vector<T>>>;
+    using ValueType = typename DataType::value_type;
+
+private:
+
+    std::array<size_t, 2> shape_;
+
+    bool on_demand_;
+
+protected:
+
+    void swap(DataType& v1, DataType& v2) override {
+        v1.swap(v2);
+        if (on_demand_) {
+            for (auto& v : v2) std::get<0>(v) = false;
+        }
+    }
+
+public:
+
+    SliceBuffer(size_t capacity, bool on_demand = false) : 
+        TripleBufferInterface<DataType>(), on_demand_(on_demand) {
+            for (size_t i = 0; i < capacity; ++i) {
+                this->back_.emplace_back(!on_demand, 0, std::vector<T>());
+                this->ready_.emplace_back(!on_demand, 0, std::vector<T>());
+                this->front_.emplace_back(!on_demand, 0, std::vector<T>());
+            }
+        }
+    
+    ~SliceBuffer() override = default;
+
+    void resize(const std::array<size_t, 2>& shape) {
+        size_t chunk_size = shape[0] * shape[1];
+
+        for (auto& v : this->back_) std::get<2>(v).resize(chunk_size);
+        for (auto& v : this->ready_) std::get<2>(v).resize(chunk_size);
+        for (auto& v : this->front_) std::get<2>(v).resize(chunk_size);
+
+        this->shape_ = shape;
+    }
+
+    size_t capacity() const { return this->back_.size(); }
+
+    size_t chunkSize() const { return std::get<2>(this->back_[0]).size(); }   
+
+    const std::array<size_t, 2>& shape() const { return shape_; }
+};
+
+
+template<typename T, size_t N>
+class MemoryBuffer {
+
+    std::queue<size_t> chunk_indices_;
+    std::unordered_map<size_t, size_t> map_;
 
     std::vector<T> front_;
     std::deque<std::vector<T>> buffer_;
     std::queue<size_t> unoccupied_;
     std::vector<size_t> counter_;
 
+    size_t capacity_ = 0;
     size_t chunk_size_ = 0;
-    size_t group_size_ = 0;
+    std::array<size_t, N> shape_;
 
 #if (VERBOSITY >= 2)
     size_t data_received_ = 0;
@@ -173,8 +198,8 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
     bool is_ready_ = false;
 
     void pop() {
-        int idx = group_indices_.front();
-        group_indices_.pop();
+        size_t idx = chunk_indices_.front();
+        chunk_indices_.pop();
 
         size_t buffer_idx = map_[idx];
         counter_[buffer_idx] = 0;
@@ -186,36 +211,31 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
 
   public:
 
-    MemoryBuffer() = default;
+    explicit MemoryBuffer(size_t capacity) : capacity_(capacity) {}
     ~MemoryBuffer() = default;
 
-    MemoryBuffer(const MemoryBuffer&) = delete;
-    MemoryBuffer& operator=(const MemoryBuffer&) = delete;
-
-    MemoryBuffer(MemoryBuffer&&) = delete;
-    MemoryBuffer& operator=(MemoryBuffer&&) = delete;
-
-    void initialize(size_t capacity, size_t group_size, size_t chunk_size) {
-        for (size_t i = 0; i < capacity; ++i) {
-            std::vector<T> group_buffer(chunk_size * group_size, 0);
-            buffer_.emplace_back(std::move(group_buffer));
+    void resize(const std::array<size_t, N>& shape) {
+        size_t chunk_size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>());
+        for (size_t i = 0; i < capacity_; ++i) {
+            buffer_.emplace_back(std::vector<T>(chunk_size, 0));
             counter_.push_back(0);
             unoccupied_.push(i);
         }
-        front_.resize(chunk_size * group_size);
+        front_.resize(chunk_size);
 
-        this->capacity_ = capacity;
         chunk_size_ = chunk_size;
-        group_size_ = group_size;
+        shape_ = shape;
     }
 
     void reset() {
-        std::queue<int>().swap(group_indices_);
+        std::queue<size_t>().swap(chunk_indices_);
         std::queue<size_t>().swap(unoccupied_);
         map_.clear();
+
 #if (VERBOSITY >= 2)
         data_received_ = 0;
 #endif
+
         for (size_t i = 0; i < buffer_.size(); ++i) {
             counter_[i] = 0;
             unoccupied_.push(i);
@@ -223,42 +243,43 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
     }
 
     template<typename D>
-    void fill(const char* raw, int group_idx, int chunk_idx) {
+    void fill(const char* raw, size_t chunk_idx, size_t data_idx) {
         std::lock_guard lk(mtx_);
 
-        if (group_indices_.empty()) {
-            group_indices_.push(group_idx);
+        if (chunk_indices_.empty()) {
+            chunk_indices_.push(chunk_idx);
             size_t buffer_idx = unoccupied_.front();
-            map_[group_idx] = buffer_idx;
+            map_[chunk_idx] = buffer_idx;
             unoccupied_.pop();
-        } else if (group_idx > group_indices_.back()) {
-            for (int i = group_indices_.back() + 1; i <= group_idx; ++i) {
+        } else if (chunk_idx > chunk_indices_.back()) {
+            for (size_t i = chunk_indices_.back() + 1; i <= chunk_idx; ++i) {
                 if (unoccupied_.empty()) {
-                    int idx = group_indices_.front();
+                    int idx = chunk_indices_.front();
                     this->pop();
 #if (VERBOSITY >= 1)
                     spdlog::warn("Memory buffer is full! Group {} dropped!", idx);
 #endif
                 }
-                group_indices_.push(i);
+                chunk_indices_.push(i);
                 size_t buffer_idx = unoccupied_.front();
                 map_[i] = buffer_idx;
                 unoccupied_.pop();
             }
-        } else if (group_idx < group_indices_.front()) {
+        } else if (chunk_idx < chunk_indices_.front()) {
 
 #if (VERBOSITY >= 1)
-            spdlog::warn("Received projection with outdated group index: {}, data ignored!", 
-                         group_idx);
+            spdlog::warn("Received projection with outdated chunk index: {}, data ignored!", 
+                         chunk_idx);
 #endif
 
             return;
         }
 
-        size_t buffer_idx = map_[group_idx];
+        size_t buffer_idx = map_[chunk_idx];
 
         float* data = buffer_[buffer_idx].data();
-        for (size_t i = chunk_idx * chunk_size_; i < (chunk_idx + 1) * chunk_size_; ++i) {
+        for (size_t data_size = chunk_size_ / shape_[0], 
+                i = data_idx * data_size; i < (data_idx + 1) * data_size; ++i) {
             D v;
             memcpy(&v, raw, sizeof(D));
             raw += sizeof(D);
@@ -266,17 +287,17 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
         }
 
         ++counter_[buffer_idx];
-        // Caveat: We do not track the chunk indices. Therefore, if data with the same
-        //         frame idx arrives repeatedly, it will still fill the group.
-        if (counter_[buffer_idx] == group_size_) {
-            // Remove earlier groups, no matter they are ready or not.
-            int idx = group_indices_.front();
-            while (group_idx != idx) {
+        // Caveat: We do not track the data indices. Therefore, if data with the same
+        //         frame idx arrives repeatedly, it will still fill the chunk.
+        if (counter_[buffer_idx] == shape_[0]) {
+            // Remove earlier chunks, no matter they are ready or not.
+            size_t idx = chunk_indices_.front();
+            while (chunk_idx != idx) {
                 pop();
 #if (VERBOSITY >= 1)
-                spdlog::warn("Group {} is ready! Earlier group {} dropped!", group_idx, idx);
+                spdlog::warn("Chunk {} is ready! Earlier chunks {} dropped!", chunk_idx, idx);
 #endif
-                idx = group_indices_.front();
+                idx = chunk_indices_.front();
             }
             is_ready_ = true;
             cv_.notify_one();
@@ -285,7 +306,7 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
 #if (VERBOSITY >= 2)
         // Outdated data are excluded.
         ++data_received_;
-        if (data_received_ % group_size_ == 0) {
+        if (data_received_ % shape_[0] == 0) {
             spdlog::info("{}/{} groups in the memory buffer are occupied", 
                          occupied(), buffer_.size());
         }
@@ -293,48 +314,50 @@ class MemoryBuffer: TrippleBufferInterface<std::vector<T>> {
 
     }
 
-    bool fetch(int timeout = -1) override {
+    bool fetch(int timeout = -1) {
         std::unique_lock lk(mtx_);
         if (timeout < 0) {
-            cv_.wait(lk, [this] { return this->is_ready_; });
+            cv_.wait(lk, [this] { return is_ready_; });
         } else {
             if (!(cv_.wait_for(lk, timeout * 1ms, 
-                               [this] { return this->is_ready_; }))) {
+                               [this] { return is_ready_; }))) {
                 return false;
             }
         }
-        this->front_.swap(buffer_[map_.at(group_indices_.front())]);
+        front_.swap(buffer_[map_.at(chunk_indices_.front())]);
         pop();
         is_ready_ = false;
         
         return true;
     }
 
-    void prepare() override {}
-
-    std::vector<T>& front() override {
-        return this->front_;
+    std::vector<T>& front() {
+        return front_;
     }
-    std::vector<T>& back() override {
-        return buffer_[map_.at(group_indices_.front())];
+    std::vector<T>& back() {
+        return buffer_[map_.at(chunk_indices_.front())];
     }
 
-    const std::vector<T>& front() const override {
-        return this->front_;
+    const std::vector<T>& front() const {
+        return front_;
     }
-    const std::vector<T>& ready() const override {
-        return buffer_[map_.at(group_indices_.front())]; 
+    const std::vector<T>& ready() const {
+        return buffer_[map_.at(chunk_indices_.front())]; 
     }
-    const std::vector<T>& back() const override {
-        return buffer_[map_.at(group_indices_.front())]; 
+    const std::vector<T>& back() const {
+        return buffer_[map_.at(chunk_indices_.front())]; 
     }
 
-    size_t capacity() const { return buffer_.size(); }
+    size_t capacity() const {
+        assert(this->capacity_ == buffer_.size());
+        return this->capacity_; 
+    }
 
-    size_t occupied() const { return buffer_.size() - unoccupied_.size(); }
+    size_t occupied() const { return this->capacity_ - unoccupied_.size(); }
 
-    size_t groupSize() const { return group_size_; }
     size_t chunkSize() const { return chunk_size_; }
+
+    const std::array<size_t, N>& shape() const { return shape_; }
 };
 
 } // tomcat::recon

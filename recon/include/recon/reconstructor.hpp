@@ -55,12 +55,9 @@ public:
 
     virtual ~Reconstructor();
 
-    virtual void reconstructSlice(std::vector<float>& slice_buffer, 
-                                  Orientation x, 
-                                  int buffer_idx) = 0;
+    virtual void reconstructSlice(Orientation x, int buffer_idx, std::vector<float>& slice_buffer) = 0;
 
-    virtual void reconstructPreview(std::vector<float>& preview_buffer, 
-                                    int buffer_idx) = 0;
+    virtual void reconstructPreview(int buffer_idx, std::vector<float>& preview_buffer) = 0;
 
     void uploadSinograms(int buffer_idx, const std::vector<float>& sino, int begin, int end);
 };
@@ -75,17 +72,13 @@ class ParallelBeamReconstructor : public Reconstructor {
 
 public:
 
-    ParallelBeamReconstructor(ProjectionGeometry proj_geom,
-                              VolumeGeometry slice_geom,
+    ParallelBeamReconstructor(ProjectionGeometry proj_geom, VolumeGeometry slice_geom,
                               VolumeGeometry preview_geom);
     // FIXME ~solver clean up
 
-    void reconstructSlice(std::vector<float>& slice_buffer, 
-                          Orientation x, 
-                          int buffer_idx) override;
+    void reconstructSlice(Orientation x, int buffer_idx, std::vector<float>& slice_buffer) override;
 
-    void reconstructPreview(std::vector<float>& preview_buffer, 
-                            int buffer_idx) override;
+    void reconstructPreview(int buffer_idx, std::vector<float>& preview_buffer) override;
 
 };
 
@@ -103,12 +96,9 @@ public:
                           VolumeGeometry preview_geom);
     // FIXME ~solver clean up
 
-    void reconstructSlice(std::vector<float>& slice_buffer, 
-                          Orientation x, 
-                          int buffer_idx) override;
+    void reconstructSlice(Orientation x, int buffer_idx, std::vector<float>& slice_buffer) override;
 
-    void reconstructPreview(std::vector<float>& preview_buffer, 
-                            int buffer_idx) override;
+    void reconstructPreview(int buffer_idx, std::vector<float>& preview_buffer) override;
 
     std::vector<float> fdk_weights();
 };

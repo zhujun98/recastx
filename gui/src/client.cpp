@@ -83,10 +83,8 @@ void Client::send(const Packet& packet) {
         memcpy(message.data(), membuf.buffer.get(), size);
         cmd_socket_.send(message, zmq::send_flags::none);
 
-#if (VERBOSITY >= 3)
-        spdlog::info("Published packet: 0x{0:x}",
-                     std::underlying_type<PacketDesc>::type(packet.desc()));
-#endif
+        spdlog::debug("Published packet: 0x{0:x}",
+                      std::underlying_type<PacketDesc>::type(packet.desc()));
 
     } catch (const std::exception& e) {
         spdlog::error("Failed publishing packet: {}", e.what());

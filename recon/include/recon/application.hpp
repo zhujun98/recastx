@@ -6,9 +6,7 @@
 #include <cstdint>
 #include <iostream>
 #include <optional>
-#include <set>
 #include <thread>
-#include <unordered_map>
 #include <vector>
 
 #include <spdlog/spdlog.h>
@@ -19,9 +17,7 @@ extern "C" {
 }
 
 #include "buffer.hpp"
-#include "phase.hpp"
-#include "filter.hpp"
-#include "reconstructor.hpp"
+#include "slice_mediator.hpp"
 #include "tomcat/tomcat.hpp"
 
 
@@ -30,39 +26,40 @@ namespace tomcat::recon {
 class DaqClient;
 class ZmqServer;
 
+class Filter;
+class Paganin;
+class Reconstructor;
+
+
 class Application {
 
-    int num_cols_;
-    int num_rows_;
-    int num_pixels_;
-    int num_angles_;
-    int preview_size_;
-    int slice_size_;
+    size_t num_cols_;
+    size_t num_rows_;
+    size_t num_pixels_;
+    size_t num_angles_;
 
     ProjectionGeometry proj_geom_;
     VolumeGeometry vol_geom_;
 
-    int num_darks_ = 1;
-    int num_flats_ = 1;
-    std::unordered_map<int, Orientation> slices_;
-    std::set<int> updated_slices_;
-    std::set<int> requested_slices_;
-    std::condition_variable slice_cv_;
-    std::mutex slice_mtx_;
+    MemoryBuffer<float, 3> raw_buffer_;
 
+    size_t num_darks_ = 1;
+    size_t num_flats_ = 1;
     std::vector<RawDtype> all_darks_;
     std::vector<RawDtype> all_flats_;
     std::vector<float> dark_avg_;
     std::vector<float> reciprocal_;
-    MemoryBuffer<float> buffer_;
-    TripleBuffer<float> sino_buffer_;
-    TripleBuffer<float> preview_buffer_;
-    std::unordered_map<int, std::vector<float>> slices_buffer_;
-    bool initialized_ = false;
-
-    int32_t received_darks_ = 0;
-    int32_t received_flats_ = 0;
+    size_t received_darks_ = 0;
+    size_t received_flats_ = 0;
     bool reciprocal_computed_ = false;
+
+    TripleVectorBuffer<float, 3> sino_buffer_;
+
+    SliceMediator slice_mediator_;
+
+    TripleVectorBuffer<float, 3> preview_buffer_;
+
+    bool initialized_ = false;
 
     std::unique_ptr<Paganin> paganin_;
     std::unique_ptr<Filter> filter_;
@@ -86,14 +83,11 @@ class Application {
 
 public:
 
-    explicit Application(int num_threads); 
+    Application(size_t raw_buffer_size, int num_threads); 
 
     ~Application();
 
-    void init(int num_cols, int num_rows, int num_angles,
-              int num_darks, int num_flats, 
-              int slice_size, int preview_size, 
-              int buffer_size);
+    void init(size_t num_cols, size_t num_rows, size_t num_angles, size_t num_darks, size_t num_flats);
 
     void initPaganin(const PaganinConfig& config, int num_cols, int num_rows);
 
@@ -115,31 +109,26 @@ public:
     void runForEver();
 
     void pushProjection(ProjectionType k, 
-                        int32_t proj_idx, 
-                        const std::array<int32_t, 2>& shape, 
+                        size_t proj_idx, 
+                        const std::array<size_t, 2>& shape, 
                         const char* data); 
 
-    void setSlice(int slice_id, const Orientation& orientation);
-    
-    void removeSlice(int slice_id);
- 
-    void removeAllSlices();
+    void setSlice(size_t timestamp, const Orientation& orientation);
 
-    std::optional<VolumeDataPacket> previewDataPacket(int timeout=-1);
+    std::optional<VolumeDataPacket> previewDataPacket(int timeout);
 
-    std::vector<SliceDataPacket> sliceDataPackets();
+    std::vector<SliceDataPacket> sliceDataPackets(int timeout);
 
-    std::optional<std::vector<SliceDataPacket>> requestedSliceDataPackets(int timeout=-1);
+    std::vector<SliceDataPacket> onDemandSliceDataPackets(int timeout);
 
     size_t bufferSize() const;
 
     // for unittest
 
-    const std::vector<RawDtype>& darks() const;
-    const std::vector<RawDtype>& flats() const;
-    const MemoryBuffer<float>& buffer() const;
-    const TripleBuffer<float>& sinoBuffer() const;
-
+    const std::vector<RawDtype>& darks() const { return all_darks_; }
+    const std::vector<RawDtype>& flats() const { return all_flats_; }
+    const MemoryBuffer<float, 3>& rawBuffer() const { return raw_buffer_; }
+    const TripleVectorBuffer<float, 3>& sinoBuffer() const { return sino_buffer_; }
 };
 
 } // tomcat::recon

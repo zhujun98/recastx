@@ -10,37 +10,35 @@ using namespace std::chrono_literals;
 #include "recon/utils.hpp"
 #include "recon/daq_client.hpp"
 #include "recon/zmq_server.hpp"
+#include "recon/phase.hpp"
+#include "recon/filter.hpp"
+#include "recon/reconstructor.hpp"
 
 namespace tomcat::recon {
 
 using namespace std::string_literals;
 
-Application::Application(int num_threads) : num_threads_(num_threads) {}
+Application::Application(size_t raw_buffer_size, int num_threads)
+     : raw_buffer_(raw_buffer_size), num_threads_(num_threads) {}
 
 Application::~Application() = default;
 
-void Application::init(int num_cols, int num_rows, int num_angles,
-                       int num_darks, int num_flats, 
-                       int slice_size, int preview_size, 
-                       int buffer_size) {
+void Application::init(size_t num_cols, size_t num_rows, size_t num_angles, 
+                       size_t num_darks, size_t num_flats) {
     num_cols_ = num_cols;
     num_rows_ = num_rows;
     num_pixels_ = num_rows_ * num_cols_;
     num_angles_ = num_angles;
-    slice_size_ = slice_size;
-    preview_size_ = preview_size;
     num_darks_ = num_darks;
     num_flats_ = num_flats;
 
-    auto num_pixels_t = static_cast<size_t>(num_pixels_);
-    all_darks_.resize(num_pixels_t * num_darks);
-    all_flats_.resize(num_pixels_t * num_flats);
-    dark_avg_.resize(num_pixels_t);
-    reciprocal_.resize(num_pixels_t, 1.0f);
+    all_darks_.resize(num_pixels_ * num_darks);
+    all_flats_.resize(num_pixels_ * num_flats);
+    dark_avg_.resize(num_pixels_);
+    reciprocal_.resize(num_pixels_, 1.0f);
 
-    buffer_.initialize(buffer_size, num_angles, num_pixels_t);
-    sino_buffer_.initialize(num_angles * num_pixels_t);
-    preview_buffer_.initialize(preview_size * preview_size * preview_size);
+    raw_buffer_.resize({num_angles, num_cols, num_rows});
+    sino_buffer_.resize({num_angles, num_cols, num_rows});
 
     initialized_ = true;
     spdlog::info("Initial parameters for real-time 3D tomographic reconstruction:");
@@ -49,14 +47,12 @@ void Application::init(int num_cols, int num_rows, int num_angles,
     spdlog::info("- Number of projection images per tomogram: {}", num_angles);
 }
 
-void Application::initPaganin(const PaganinConfig& config, 
-                              int num_cols,
-                              int num_rows) {
+void Application::initPaganin(const PaganinConfig& config, int num_cols, int num_rows) {
     if (!initialized_) throw std::runtime_error("Application not initialized!");
 
     paganin_ = std::make_unique<Paganin>(
         config.pixel_size, config.lambda, config.delta, config.beta, config.distance, 
-        &buffer_.front()[0], num_cols, num_rows);
+        &raw_buffer_.front()[0], num_cols, num_rows);
 }
 
 void Application::initFilter(const FilterConfig& config, int num_cols, int num_rows) {
@@ -64,13 +60,15 @@ void Application::initFilter(const FilterConfig& config, int num_cols, int num_r
 
     filter_ = std::make_unique<Filter>(
         config.name, config.gaussian_lowpass_filter, 
-        &buffer_.front()[0], num_cols, num_rows, num_threads_);
+        &raw_buffer_.front()[0], num_cols, num_rows, num_threads_);
 }
 
 void Application::initReconstructor(bool cone_beam,
                                     const ProjectionGeometry& proj_geom,
                                     const VolumeGeometry& slice_geom,
                                     const VolumeGeometry& preview_geom) {
+    preview_buffer_.resize({preview_geom.col_count, preview_geom.row_count, preview_geom.slice_count});
+    slice_mediator_.resize({slice_geom.col_count, slice_geom.row_count});
     if (cone_beam) {
         recon_ = std::make_unique<ConeBeamReconstructor>(proj_geom, slice_geom, preview_geom);
     } else {
@@ -93,7 +91,7 @@ void Application::startPreprocessing() {
     preproc_thread_ = std::thread([&] {
         oneapi::tbb::task_arena arena(num_threads_);
         while (true) {
-            buffer_.fetch();
+            raw_buffer_.fetch();
             spdlog::info("Processing projections ...");
             processProjections(arena);
         }
@@ -128,7 +126,7 @@ void Application::startReconstructing() {
     recon_thread_ = std::thread([&] {
 
 #if (VERBOSITY >= 1)
-        const float data_size = sino_buffer_.capacity() * sizeof(RawDtype) / (1024.f * 1024.f); // in MB
+        const float data_size = sino_buffer_.shape()[0] * sizeof(RawDtype) / (1024.f * 1024.f); // in MB
         auto start = std::chrono::steady_clock::now();
         size_t count = 0;
         float total_duration = 0.f;
@@ -138,27 +136,18 @@ void Application::startReconstructing() {
             {
                 std::unique_lock<std::mutex> lck(gpu_mutex_);
                 if (gpu_cv_.wait_for(lck, 10ms, [&] { return sino_uploaded_; })) {
-                    recon_->reconstructPreview(preview_buffer_.back(), gpu_buffer_index_);
-                } else {    
-                    std::lock_guard lk(slice_mtx_);
-                    for (auto slice_id : updated_slices_) {
-                        recon_->reconstructSlice(slices_buffer_[slice_id], slices_[slice_id], gpu_buffer_index_);
-                    }
-                    requested_slices_.clear(); // it could have not been consumed by the GUI.
-                    requested_slices_.swap(updated_slices_);
-                    slice_cv_.notify_one();
+                    recon_->reconstructPreview(gpu_buffer_index_, preview_buffer_.back());
+                } else {
+                    slice_mediator_.reconOnDemand(recon_.get(), gpu_buffer_index_);
                     continue;
                 }
 
-                std::lock_guard lk(slice_mtx_);
-                for (const auto& [slice_id, orientation] : slices_) {
-                    recon_->reconstructSlice(slices_buffer_[slice_id], orientation, gpu_buffer_index_);
-                }
-                updated_slices_.clear();
+                slice_mediator_.reconAll(recon_.get(), gpu_buffer_index_);
+
                 sino_uploaded_ = false;
             }
             preview_buffer_.prepare();
-
+ 
 #if (VERBOSITY >= 1)
             // The throughtput is measured in the last step of the pipeline because
             // data could be dropped beforehand.
@@ -193,11 +182,16 @@ void Application::runForEver() {
 
     daq_client_->start();
     zmq_server_->start();
+
+    // TODO: start the event loop in the main thread
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    }
 }
 
 void Application::pushProjection(ProjectionType k, 
-                                 int32_t proj_idx, 
-                                 const std::array<int32_t, 2>& shape, 
+                                 size_t proj_idx, 
+                                 const std::array<size_t, 2>& shape, 
                                  const char* data) {
     if (shape[0] != num_rows_ || shape[1] != num_cols_) {
         spdlog::error("Received projection with wrong shape. Actual: {} x {}, expected: {} x {}", 
@@ -218,7 +212,7 @@ void Application::pushProjection(ProjectionType k,
 
                 spdlog::info("Computing reciprocal for flat fielding ...");
                 utils::computeReciprocal(all_darks_, all_flats_, num_pixels_, reciprocal_, dark_avg_);
-                buffer_.reset();
+                raw_buffer_.reset();
 
 #if (VERBOSITY >= 1)
                 spdlog::info("Memory buffer reset!");
@@ -235,7 +229,7 @@ void Application::pushProjection(ProjectionType k,
             }
 
             // TODO: compute the average on the fly instead of storing the data in the buffer
-            buffer_.fill<RawDtype>(data, proj_idx / num_angles_, proj_idx % num_angles_);
+            raw_buffer_.fill<RawDtype>(data, proj_idx / num_angles_, proj_idx % num_angles_);
             break;
         }
         case ProjectionType::dark: {
@@ -268,86 +262,41 @@ void Application::pushProjection(ProjectionType k,
     }
 }
 
-void Application::setSlice(int slice_id, const Orientation& orientation) {
-    std::lock_guard lk(slice_mtx_);
-    if (slices_.find(slice_id) == slices_.end()) {
-        std::vector<float> slice_buffer(slice_size_ * slice_size_);
-        slices_buffer_[slice_id] = std::move(slice_buffer);
-
-#if (VERBOSITY >= 3)
-        spdlog::info("Slice {} added", slice_id);
-#endif
-
-    }
-
-    slices_[slice_id] = orientation;
-    updated_slices_.erase(slice_id);
-    updated_slices_.insert(slice_id);
-
-#if (VERBOSITY >= 3)
-    spdlog::info("Slice {} updated", slice_id);
-#endif
-
-}
-
-void Application::removeSlice(int slice_id) {
-    std::lock_guard lk(slice_mtx_);
-    slices_.erase(slice_id);
-    slices_buffer_.erase(slice_id);
-
-#if (VERBOSITY >= 3)
-        spdlog::info("Slice {} removed", slice_id);
-#endif
-
-}
-
-void Application::removeAllSlices() {
-    std::lock_guard lk(slice_mtx_);
-    slices_.clear();
-
-#if (VERBOSITY >= 3)
-    spdlog::info("All slices removed");
-#endif
-
+void Application::setSlice(size_t timestamp, const Orientation& orientation) {
+    slice_mediator_.insert(timestamp, orientation);
 }
 
 std::optional<VolumeDataPacket> Application::previewDataPacket(int timeout) { 
-    if(preview_buffer_.fetch(timeout)) {
-        return VolumeDataPacket({preview_size_, preview_size_, preview_size_}, 
-                                preview_buffer_.front());
+    if (preview_buffer_.fetch(timeout)) {
+        auto [x, y, z] = preview_buffer_.shape();
+        return VolumeDataPacket({x, y, z}, preview_buffer_.front());
     }
     return std::nullopt;
 }
 
-std::vector<SliceDataPacket> Application::sliceDataPackets() {
+std::vector<SliceDataPacket> Application::sliceDataPackets(int timeout) {
     std::vector<SliceDataPacket> ret;
-    {
-        std::lock_guard lk(slice_mtx_);
-        for (const auto& [slice_id, data] : slices_buffer_) {
-            ret.emplace_back(SliceDataPacket(slice_id, {slice_size_, slice_size_}, data));
+    auto& buffer = slice_mediator_.allSlices();
+    if (buffer.fetch(timeout)) {
+        auto [x, y] = buffer.shape();
+        for (auto& slice : buffer.front()) {
+            ret.emplace_back(SliceDataPacket(std::get<1>(slice), {x, y}, std::get<2>(slice)));
         }
-    }    
+    }
+
     return ret;
 }
 
-std::optional<std::vector<SliceDataPacket>> Application::requestedSliceDataPackets(int timeout) {
+std::vector<SliceDataPacket> Application::onDemandSliceDataPackets(int timeout) {
     std::vector<SliceDataPacket> ret;
-    {
-        std::unique_lock<std::mutex> lck(slice_mtx_);
-
-        if (timeout < 0) {
-            slice_cv_.wait(lck, [&] { return !requested_slices_.empty(); });
-        } else {
-            if (!(slice_cv_.wait_for(lck, timeout * 1ms, [&] { return !requested_slices_.empty(); }))) {
-                return std::nullopt;
+    auto& buffer = slice_mediator_.onDemandSlices();
+    if (buffer.fetch(timeout)) {
+        auto [x, y] = buffer.shape();
+        for (auto& slice : buffer.front()) {
+            if (std::get<0>(slice)) {
+                ret.emplace_back(SliceDataPacket(std::get<1>(slice), {x, y}, std::get<2>(slice)));
             }
         }
-
-        for (auto slice_id : requested_slices_) {
-            ret.emplace_back(SliceDataPacket(
-                slice_id, {slice_size_, slice_size_}, slices_buffer_[slice_id]));
-        }
-        requested_slices_.clear();
     }
     return ret;
 }
@@ -356,13 +305,16 @@ size_t Application::bufferSize() const { return num_angles_; }
 
 void Application::processProjections(oneapi::tbb::task_arena& arena) {
 
-int num_angles = static_cast<int>(buffer_.groupSize());
-int num_pixels = static_cast<size_t>(buffer_.chunkSize());
+    auto& shape = raw_buffer_.shape();
+    int num_angles = static_cast<int>(shape[0]);
+    int num_pixels = static_cast<int>(shape[1] * shape[2]);
+
 #if (VERBOSITY >= 2)
     auto start = std::chrono::steady_clock::now();
 #endif
 
-    auto projs = buffer_.front().data();
+    auto projs = raw_buffer_.front().data();
+
     using namespace oneapi;
     arena.execute([&]{
         tbb::parallel_for(tbb::blocked_range<int>(0, num_angles),
@@ -407,10 +359,5 @@ int num_pixels = static_cast<size_t>(buffer_.chunkSize());
     spdlog::info("[bench] Processing projections took {} ms", duration / 1000);
 #endif
 }
-
-const std::vector<RawDtype>& Application::darks() const { return all_darks_; }
-const std::vector<RawDtype>& Application::flats() const { return all_flats_; }
-const MemoryBuffer<float>& Application::buffer() const { return buffer_; }
-const TripleBuffer<float>& Application::sinoBuffer() const { return sino_buffer_; }
 
 } // tomcat::recon

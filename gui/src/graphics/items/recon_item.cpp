@@ -127,11 +127,12 @@ void ReconItem::renderIm() {
 
         ImGui::Begin("Statistics##ReconItem", NULL, ImGuiWindowFlags_NoDecoration);
 
-        ImPlot::BeginSubplots("##Histograms", 1, 3, ImVec2(-1.f, -1.f));
-        for (auto &[slice_id, slice]: slices_) {
-            const auto &data = slice->data();
+        ImPlot::BeginSubplots("##Histograms", 1, NUM_SLICES, ImVec2(-1.f, -1.f));
+        for (auto& slice: slices_) {
+            Slice* ptr = slice.second.get();
+            const auto &data = ptr->data();
             // FIXME: faster way to build the title?
-            if (ImPlot::BeginPlot(("Slice " + std::to_string(slice_id)).c_str(),
+            if (ImPlot::BeginPlot(("Slice " + std::to_string(ptr->id())).c_str(),
                                   ImVec2(-1.f, -1.f))) {
                 ImPlot::SetupAxes("Pixel value", "Density",
                                   ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
@@ -210,8 +211,6 @@ void ReconItem::renderGl(const glm::mat4& view,
 }
 
 void ReconItem::init() {
-    scene_.send(RemoveAllSlicesPacket());
-
     for (auto& slice : slices_) {
         scene_.send(SetSlicePacket(slice.first, slice.second->orientation3()));
     }
@@ -219,25 +218,27 @@ void ReconItem::init() {
 
 void ReconItem::setSliceData(std::vector<float>&& data,
                              const std::array<uint32_t, 2>& size,
-                             int slice_idx) {
-    Slice* slice;
-    if (slices_.find(slice_idx) != slices_.end()) {
-        slice = slices_[slice_idx].get();
+                             int32_t timestamp) {
+    size_t sid = timestamp % NUM_SLICES;
+    auto& slice = slices_[sid];
+    if (slice.first == timestamp) {
+        Slice* ptr = slice.second.get();
+        if (ptr == dragged_slice_) return;
+
+        // FIXME: replace uint32_t with size_t in Packet
+        ptr->setData(std::move(data), {size[0], size[1]});
+        spdlog::info("Set slice data {}", sid);
+        maybeUpdateMinMaxValues();
     } else {
-        std::cout << "Updating inactive slice: " << slice_idx << "\n";
-        return;
+        // Ignore outdated reconstructed slices.
+        spdlog::debug("Outdated slice received: {} ({})", sid, timestamp);
     }
-
-    if (slice == dragged_slice_) return;
-
-    // FIXME: replace uint32_t with size_t in Packet
-    slice->setData(std::move(data), {size[0], size[1]});
-    maybeUpdateMinMaxValues();
 }
 
 void ReconItem::setVolumeData(std::vector<float>&& data, const std::array<uint32_t, 3>& size) {
     // FIXME: replace uint32_t with size_t in Packet
     volume_->setData(std::move(data), {size[0], size[1], size[2]});
+    spdlog::info("Set volume data");
     maybeUpdateMinMaxValues();
 }
 
@@ -245,14 +246,12 @@ bool ReconItem::consume(const tomcat::PacketDataEvent &data) {
     switch (data.first) {
         case PacketDesc::slice_data: {
             auto packet = dynamic_cast<SliceDataPacket*>(data.second.get());
-            setSliceData(std::move(packet->data), packet->slice_size, packet->slice_id);
-            spdlog::info("Set slice data {}", packet->slice_id);
+            setSliceData(std::move(packet->data), packet->shape, packet->timestamp);
             return true;
         }
         case PacketDesc::volume_data: {
             auto packet = dynamic_cast<VolumeDataPacket*>(data.second.get());
-            setVolumeData(std::move(packet->data), packet->volume_size);
-            spdlog::info("Set volume data");
+            setVolumeData(std::move(packet->data), packet->shape);
             fps_counter_.update();
             return true;
         }
@@ -269,9 +268,7 @@ bool ReconItem::handleMouseButton(int button, int action) {
                 maybeSwitchDragMachine(DragType::translator);
                 dragged_slice_ = hovered_slice_;
 
-#if (VERBOSITY >= 4)
-                spdlog::info("Set dragged slice: {}", dragged_slice_->id());
-#endif
+                spdlog::debug("Set dragged slice: {}", dragged_slice_->id());
 
                 return true;
             }
@@ -280,16 +277,20 @@ bool ReconItem::handleMouseButton(int button, int action) {
                 maybeSwitchDragMachine(DragType::rotator);
                 dragged_slice_ = hovered_slice_;
 
-#if (VERBOSITY >= 4)
-                spdlog::info("Set dragged slice: {}", dragged_slice_->id());
-#endif
+                spdlog::debug("Set dragged slice: {}", dragged_slice_->id());
 
                 return true;
             }
         }
     } else if (action == GLFW_RELEASE) {
         if (dragged_slice_ != nullptr) {
-            auto packet = SetSlicePacket(dragged_slice_->id(), dragged_slice_->orientation3());
+            slices_[dragged_slice_->id()].first += NUM_SLICES;
+            auto packet = SetSlicePacket(slices_[dragged_slice_->id()].first,
+                                         dragged_slice_->orientation3());
+
+            spdlog::debug("Sent slice {} ({}) orientation update request",
+                          dragged_slice_->id(), slices_[dragged_slice_->id()].first);
+
             scene_.send(packet);
 
             dragged_slice_ = nullptr;
@@ -328,26 +329,26 @@ bool ReconItem::handleMouseMoved(float x, float y) {
 }
 
 void ReconItem::initSlices() {
-    for (int i = 0; i < 3; ++i) slices_[i] = std::make_unique<Slice>(i);
+    for (size_t i = 0; i < NUM_SLICES; ++i) slices_.emplace_back(i, std::make_unique<Slice>(i));
 
     resetSlices();
 }
 
 void ReconItem::resetSlices() {
     // slice along axis 0 = x
-    slices_[0]->setOrientation(glm::vec3(0.0f, -1.0f, -1.0f),
-                               glm::vec3(0.0f, 2.0f, 0.0f),
-                               glm::vec3(0.0f, 0.0f, 2.0f));
+    slices_[0].second->setOrientation(glm::vec3(0.0f, -1.0f, -1.0f),
+                                      glm::vec3(0.0f, 2.0f, 0.0f),
+                                      glm::vec3(0.0f, 0.0f, 2.0f));
 
     // slice along axis 1 = y
-    slices_[1]->setOrientation(glm::vec3(-1.0f, 0.0f, -1.0f),
-                               glm::vec3(2.0f, 0.0f, 0.0f),
-                               glm::vec3(0.0f, 0.0f, 2.0f));
+    slices_[1].second->setOrientation(glm::vec3(-1.0f, 0.0f, -1.0f),
+                                      glm::vec3(2.0f, 0.0f, 0.0f),
+                                      glm::vec3(0.0f, 0.0f, 2.0f));
 
     // slice along axis 2 = z
-    slices_[2]->setOrientation(glm::vec3(-1.0f, -1.0f, 0.0f),
-                               glm::vec3(2.0f, 0.0f, 0.0f),
-                               glm::vec3(0.0f, 2.0f, 0.0f));
+    slices_[2].second->setOrientation(glm::vec3(-1.0f, -1.0f, 0.0f),
+                                      glm::vec3(2.0f, 0.0f, 0.0f),
+                                      glm::vec3(0.0f, 2.0f, 0.0f));
 }
 
 void ReconItem::initVolume() {
@@ -358,22 +359,24 @@ void ReconItem::updateHoveringSlice(float x, float y) {
     auto inv_matrix = glm::inverse(matrix_);
     int slice_id = -1;
     float best_z = std::numeric_limits<float>::max();
-    for (auto& [sid, slice] : slices_) {
-        if (slice->inactive()) continue;
-        slice->setHovered(false);
-        auto maybe_point = intersectionPoint(inv_matrix, slice->orientation4(), glm::vec2(x, y));
+    for (auto& slice : slices_) {
+        Slice* ptr = slice.second.get();
+        if (ptr->inactive()) continue;
+        ptr->setHovered(false);
+        auto maybe_point = intersectionPoint(inv_matrix, ptr->orientation4(), glm::vec2(x, y));
         if (std::get<0>(maybe_point)) {
             auto z = std::get<1>(maybe_point);
             if (z < best_z) {
                 best_z = z;
-                slice_id = sid;
+                slice_id = ptr->id();
             }
         }
     }
 
     if (slice_id >= 0) {
-        slices_[slice_id]->setHovered(true);
-        hovered_slice_ = slices_[slice_id].get();
+        Slice* slice = slices_[slice_id].second.get();
+        slice->setHovered(true);
+        hovered_slice_ = slice;
     } else {
         hovered_slice_ = nullptr;
     }
@@ -417,10 +420,11 @@ void ReconItem::maybeUpdateMinMaxValues() {
     auto overall_min = std::numeric_limits<float>::max();
     auto overall_max = std::numeric_limits<float>::min();
 
-    for (auto&& [slice_idx, slice] : slices_) {
-        if (slice->empty()) continue;
+    for (auto& slice : slices_) {
+        Slice* ptr = slice.second.get();
+        if (ptr->empty()) continue;
 
-        auto [min_v, max_v] = slice->minMaxVals();
+        auto [min_v, max_v] = ptr->minMaxVals();
         overall_min = min_v < overall_min ? min_v : overall_min;
         overall_max = max_v > overall_max ? max_v : overall_max;
     }

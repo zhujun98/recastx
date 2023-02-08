@@ -70,7 +70,7 @@ class ReconItem : public GraphicsDataItem {
 
     friend class SliceRotator;
 
-    std::map<int, std::unique_ptr<Slice>> slices_;
+    std::vector<std::pair<int32_t, std::unique_ptr<Slice>>> slices_;
     std::unique_ptr<Volume> volume_;
 
     GLuint slice_vao_;
@@ -84,8 +84,6 @@ class ReconItem : public GraphicsDataItem {
     GLuint wireframe_vbo_;
     GLuint wireframe_ebo_;
     std::unique_ptr<ShaderProgram> wireframe_shader_;
-
-    int next_idx_ = 3;
 
     std::unique_ptr<DragMachine> drag_machine_;
     Slice* dragged_slice_ = nullptr;
@@ -154,10 +152,6 @@ public:
     void setDraggedSlice(Slice* slice) { dragged_slice_ = slice; }
 
     Slice* hoveredSlice() { return hovered_slice_; }
-
-    auto& slices() { return slices_; }
-
-    auto generate_slice_idx() { return next_idx_++; }
 };
 
 } // namespace tomcat::gui

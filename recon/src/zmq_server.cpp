@@ -44,26 +44,14 @@ void ZmqServer::start() {
             auto desc = ((PacketDesc*)update.data())[0];
             auto buffer = tomcat::memory_buffer(update.size(), (char*)update.data());
 
-#if (VERBOSITY >= 3)
-            spdlog::info("Received packet with descriptor: 0x{0:x}", 
-                         std::underlying_type<PacketDesc>::type(desc));
-#endif
+            spdlog::debug("Received packet with descriptor: 0x{0:x}", 
+                          std::underlying_type<PacketDesc>::type(desc));
 
             switch (desc) {
                 case PacketDesc::set_slice: {
                     auto packet = std::make_unique<SetSlicePacket>();
                     packet->deserialize(std::move(buffer));
-                    app_->setSlice(packet->slice_id, packet->orientation);
-                    break;
-                }
-                case PacketDesc::remove_slice: {
-                    auto packet = std::make_unique<RemoveSlicePacket>();
-                    packet->deserialize(std::move(buffer));
-                    app_->removeSlice(packet->slice_id);
-                    break;
-                }
-                case PacketDesc::remove_all_slices: {
-                    app_->removeAllSlices();
+                    app_->setSlice(packet->timestamp, packet->orientation);
                     break;
                 }
                 default: {
@@ -83,34 +71,30 @@ void ZmqServer::start() {
             //   the preview_data could always have value.
             auto preview_data = app_->previewDataPacket(0);
             if (preview_data) {
-                auto slice_data = app_->sliceDataPackets();
+                auto slice_data = app_->sliceDataPackets(-1);
 
                 std::lock_guard<std::mutex> lck(send_mtx_);
                 send(std::move(preview_data.value()));
 
-#if (VERBOSITY >= 3)
-                spdlog::info("Updated volume preview data sent");
-#endif
+                spdlog::debug("Preview data sent");
                 
                 for (const auto& packet : slice_data) {
                     send(std::move(packet));
 
-#if (VERBOSITY >= 3)
-                    spdlog::info("Updated slice data {} sent", packet.slice_id);
-#endif
+                    spdlog::debug("Slice data {} ({}) sent", 
+                                  packet.timestamp % NUM_SLICES, packet.timestamp);
 
                 }
             } else {
-                auto slice_data = app_->requestedSliceDataPackets(10);
+                auto slice_data = app_->onDemandSliceDataPackets(10);
 
-                if (slice_data) {
+                if (!slice_data.empty()) {
                     std::lock_guard<std::mutex> lck(send_mtx_);
-                    for (const auto& packet : slice_data.value()) {
+                    for (const auto& packet : slice_data) {
                         send(std::move(packet));
 
-#if (VERBOSITY >= 3)
-                    spdlog::info("Requested slice data {} sent", packet.slice_id);
-#endif
+                        spdlog::debug("On-demand slice data {} ({}) sent", 
+                                      packet.timestamp % NUM_SLICES, packet.timestamp);
 
                     }
                 }
