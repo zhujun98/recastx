@@ -293,7 +293,6 @@ std::vector<SliceDataPacket> Application::onDemandSliceDataPackets(int timeout) 
     if (buffer.fetch(timeout)) {
         auto [x, y] = buffer.shape();
         for (auto& slice : buffer.front()) {
-            std::cout << std::get<0>(slice) << std::endl;
             if (std::get<0>(slice)) {
                 ret.emplace_back(SliceDataPacket(std::get<1>(slice), {x, y}, std::get<2>(slice)));
             }
