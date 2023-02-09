@@ -62,6 +62,8 @@ int main(int argc, char** argv) {
          "detector width in pixels")
         ("rows", po::value<size_t>()->default_value(1200),
          "detector height in pixels")
+        ("downsample-col", po::value<size_t>()->default_value(1))
+        ("downsample-row", po::value<size_t>()->default_value(1))
         ("angles", po::value<size_t>()->default_value(128),
          "number of projections per scan")
         ("minx", po::value<float>(),
@@ -146,6 +148,8 @@ int main(int argc, char** argv) {
 
     auto num_cols = opts["cols"].as<size_t>();
     auto num_rows = opts["rows"].as<size_t>();
+    auto downsample_col = opts["downsample-col"].as<size_t>();
+    auto downsample_row = opts["downsample-row"].as<size_t>();
     auto num_angles = opts["angles"].as<size_t>();
     auto [min_x, max_x] = parseReconstructedVolumeBoundary(opts["minx"], opts["maxx"], num_cols);
     auto [min_y, max_y] = parseReconstructedVolumeBoundary(opts["miny"], opts["maxy"], num_cols);
@@ -167,7 +171,8 @@ int main(int argc, char** argv) {
 
     auto app = std::make_shared<Application>(raw_buffer_size, num_threads);
 
-    app->init(num_cols, num_rows, num_angles, num_darks, num_flats);
+    app->init(num_cols / downsample_col, num_rows / downsample_row, 
+              num_angles, num_darks, num_flats);
 
     if (retrieve_phase) app->initPaganin(
         {pixel_size, lambda, delta, beta, distance}, num_cols, num_rows);

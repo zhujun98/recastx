@@ -27,18 +27,15 @@ void Application::init(size_t num_cols, size_t num_rows, size_t num_angles,
                        size_t num_darks, size_t num_flats) {
     num_cols_ = num_cols;
     num_rows_ = num_rows;
-    num_pixels_ = num_rows_ * num_cols_;
     num_angles_ = num_angles;
-    num_darks_ = num_darks;
-    num_flats_ = num_flats;
 
-    all_darks_.resize(num_pixels_ * num_darks);
-    all_flats_.resize(num_pixels_ * num_flats);
-    dark_avg_.resize(num_pixels_);
-    reciprocal_.resize(num_pixels_, 1.0f);
+    darks_.resize({num_darks, num_cols_, num_rows_});
+    flats_.resize({num_flats, num_cols_, num_rows_});
+    dark_avg_.resize({num_cols_, num_rows_});
+    reciprocal_.resize({num_cols_, num_rows_});
 
-    raw_buffer_.resize({num_angles, num_cols, num_rows});
-    sino_buffer_.resize({num_angles, num_cols, num_rows});
+    raw_buffer_.resize({num_angles, num_cols_, num_rows_});
+    sino_buffer_.resize({num_angles, num_cols_, num_rows_});
 
     initialized_ = true;
     spdlog::info("Initial parameters for real-time 3D tomographic reconstruction:");
@@ -203,15 +200,16 @@ void Application::pushProjection(ProjectionType k,
 
     switch (k) {
         case ProjectionType::projection: {
-            if (received_darks_ > 0 && received_flats_ > 0) {
-                if (received_darks_ < num_darks_ || received_flats_ < num_flats_) {
-                    spdlog::warn("Computing reciprocal with less darks and/or flats than expected. "
-                                 "Received: {}/{}, Expected: {}/{} ...", 
-                                 received_darks_, received_flats_, num_darks_, num_flats_);
+            if (!darks_.empty() && !flats_.empty()) {
+                if (!darks_.full()) {
+                    spdlog::warn("Computing reciprocal with less darks than expected.");
+                }
+                if (!flats_.full()) {
+                    spdlog::warn("Computing reciprocal with less flats than expected.");
                 }
 
                 spdlog::info("Computing reciprocal for flat fielding ...");
-                utils::computeReciprocal(all_darks_, all_flats_, num_pixels_, reciprocal_, dark_avg_);
+                utils::computeReciprocal(darks_, flats_, reciprocal_, dark_avg_);
                 raw_buffer_.reset();
 
 #if (VERBOSITY >= 1)
@@ -219,8 +217,8 @@ void Application::pushProjection(ProjectionType k,
 #endif
 
                 reciprocal_computed_ = true;
-                received_darks_ = 0;
-                received_flats_ = 0;
+                darks_.reset();
+                flats_.reset();
             }
 
             if (!reciprocal_computed_) {
@@ -234,27 +232,12 @@ void Application::pushProjection(ProjectionType k,
         }
         case ProjectionType::dark: {
             reciprocal_computed_ = false;
-            ++received_darks_;
-            if (received_darks_ == num_darks_) {
-                spdlog::info("Received {} darks in total.", received_darks_);
-            } else if (received_darks_ > num_darks_) {
-                spdlog::warn("Received more darks than expected. New dark ignored!");
-                return;
-            }
-            spdlog::info("Received: {}", received_darks_);
-            memcpy(&all_darks_[(received_darks_ - 1) * num_pixels_], data, sizeof(RawDtype) * num_pixels_);
+            spdlog::info("Received {} darks in total.", darks_.push(data, shape));
             break;
         }
         case ProjectionType::flat: {
             reciprocal_computed_ = false;
-            ++received_flats_;
-            if (received_flats_ == num_flats_) {
-                spdlog::info("Received {} flats in total.", received_flats_);
-            } else if (received_flats_ > num_flats_) {
-                spdlog::warn("Received more flats than expected. New flat ignored!");
-                return;
-            }
-            memcpy(&all_flats_[(received_flats_ - 1) * num_pixels_], data, sizeof(RawDtype) * num_pixels_);
+            spdlog::info("Received {} flats in total.", flats_.push(data, shape));
             break;
         }
         default:
@@ -326,7 +309,7 @@ void Application::processProjections(oneapi::tbb::task_arena& arena) {
 
                 if (paganin_) paganin_->apply(p, i % num_threads_);
                 else
-                    utils::negativeLog(p, num_pixels_);
+                    utils::negativeLog(p, num_pixels);
 
                 filter_->apply(p, tbb::this_task_arena::current_thread_index());
 

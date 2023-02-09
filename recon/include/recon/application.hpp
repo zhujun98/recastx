@@ -16,6 +16,7 @@ extern "C" {
 #include <fftw3.h>
 }
 
+#include "tensor.hpp"
 #include "buffer.hpp"
 #include "slice_mediator.hpp"
 #include "tomcat/tomcat.hpp"
@@ -35,22 +36,14 @@ class Application {
 
     size_t num_cols_;
     size_t num_rows_;
-    size_t num_pixels_;
     size_t num_angles_;
-
-    ProjectionGeometry proj_geom_;
-    VolumeGeometry vol_geom_;
 
     MemoryBuffer<float, 3> raw_buffer_;
 
-    size_t num_darks_ = 1;
-    size_t num_flats_ = 1;
-    std::vector<RawDtype> all_darks_;
-    std::vector<RawDtype> all_flats_;
-    std::vector<float> dark_avg_;
-    std::vector<float> reciprocal_;
-    size_t received_darks_ = 0;
-    size_t received_flats_ = 0;
+    RawImageGroup darks_;
+    RawImageGroup flats_;
+    ImageData dark_avg_;
+    ImageData reciprocal_;
     bool reciprocal_computed_ = false;
 
     TripleVectorBuffer<float, 3> sino_buffer_;
@@ -87,7 +80,8 @@ public:
 
     ~Application();
 
-    void init(size_t num_cols, size_t num_rows, size_t num_angles, size_t num_darks, size_t num_flats);
+    void init(size_t num_cols, size_t num_rows, size_t num_angles, 
+              size_t num_darks, size_t num_flats);
 
     void initPaganin(const PaganinConfig& config, int num_cols, int num_rows);
 
@@ -125,8 +119,8 @@ public:
 
     // for unittest
 
-    const std::vector<RawDtype>& darks() const { return all_darks_; }
-    const std::vector<RawDtype>& flats() const { return all_flats_; }
+    const RawImageGroup& darks() const { return darks_; }
+    const RawImageGroup& flats() const { return flats_; }
     const MemoryBuffer<float, 3>& rawBuffer() const { return raw_buffer_; }
     const TripleVectorBuffer<float, 3>& sinoBuffer() const { return sino_buffer_; }
 };

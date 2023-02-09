@@ -11,21 +11,23 @@ using ::testing::Pointwise;
 using ::testing::FloatNear;
 
 TEST(TestUtils, TestComputeReciprocal) {
-    int pixels = 12;
-    std::vector<RawDtype> darks {
+    std::array<size_t, 2> shape {4, 3};
+    RawImageGroup darks({3, shape[0], shape[1]});
+    darks = {
         4, 1, 1, 2, 0, 9, 7, 4, 3, 8, 6, 8, 
         1, 7, 3, 0, 6, 6, 0, 8, 1, 8, 4, 2, 
         2, 4, 6, 0, 9, 5, 8, 3, 4, 2, 2, 0
     };
-    std::vector<RawDtype> flats {
+    RawImageGroup flats({3, shape[0], shape[1]});
+    flats = {
         1, 9, 5, 1, 7, 9, 0, 6, 7, 1, 5, 6, 
         2, 4, 8, 1, 3, 9, 5, 6, 1, 1, 1, 7, 
         9, 9, 4, 1, 6, 8, 6, 9, 2, 4, 9, 4
     };
-    std::vector<float> reciprocal(pixels);
-    std::vector<float> dark_avg(pixels);
+    ImageData reciprocal(shape);
+    ImageData dark_avg(shape);
 
-    utils::computeReciprocal(darks, flats, pixels, reciprocal, dark_avg);
+    utils::computeReciprocal(darks, flats, reciprocal, dark_avg);
 
     EXPECT_THAT(dark_avg, ElementsAreArray({
         2.33333333, 4.,        3.33333333,

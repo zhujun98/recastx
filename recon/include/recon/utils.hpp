@@ -20,6 +20,7 @@
 #include "astra/VolumeGeometry3D.h"
 
 #include "tomcat/tomcat.hpp"
+#include "tensor.hpp"
 
 namespace tomcat::recon::utils {
 
@@ -42,32 +43,19 @@ std::tuple<Eigen::Vector3f, Eigen::Matrix3f, Eigen::Vector3f>
 slice_transform(Eigen::Vector3f base, Eigen::Vector3f axis_1,
                 Eigen::Vector3f axis_2, float k);
 
-template<typename T>
-inline void averageImages(const std::vector<T>& images, 
-                          size_t pixels,
-                          std::vector<float>& ret) {
-    size_t n = images.size() / pixels;
-    for (size_t i = 0; i < pixels; ++i) {
-        float total = 0.0f;
-        for (size_t j = 0; j < n; ++j) {
-            total += static_cast<float>(images[pixels * j + i]);
-        }
-        ret[i] = total / n;
-    }
-}
-
-inline void computeReciprocal(const std::vector<RawDtype>& darks,
-                              const std::vector<RawDtype>& flats,
-                              size_t pixels,
-                              std::vector<float>& reciprocal,
-                              std::vector<float>& dark_avg) {
+inline void computeReciprocal(const RawImageGroup& darks,
+                              const RawImageGroup& flats,
+                              ImageData& reciprocal,
+                              ImageData& dark_avg) {
 #if (VERBOSITY >= 2)
     auto start = std::chrono::steady_clock::now();
 #endif
-    averageImages<RawDtype>(darks, pixels, dark_avg);
-    std::vector<float> flat_avg(dark_avg.size());
-    averageImages<RawDtype>(flats, pixels, flat_avg);
-    for (size_t i = 0; i < pixels; ++i) {
+    darks.average<float>(dark_avg);
+    auto flat_avg = flats.average<float>();
+    // averageImages<RawDtype>(darks, pixels, dark_avg);
+    // std::vector<float> flat_avg(dark_avg.size());
+    // averageImages<RawDtype>(flats, pixels, flat_avg);
+    for (size_t i = 0; i < reciprocal.shape()[0] * reciprocal.shape()[1]; ++i) {
         if (dark_avg[i] == flat_avg[i]) {
             reciprocal[i] = 1.0f;
         } else {
