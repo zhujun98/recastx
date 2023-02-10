@@ -8,5 +8,4 @@ dependencies:
   - spdlog=1.9.2
   - cppzmq=4.8.1
   - eigen=3.4.0
-  - xtensor=0.24.3
   - freetype=2.12.1

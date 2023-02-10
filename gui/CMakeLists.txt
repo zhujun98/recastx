@@ -6,8 +6,6 @@ message(STATUS "Found OpenGL at ${OPENGL_LIBRARIES}, ${OPENGL_INCLUDE_DIR}")
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 message(STATUS "Found Eigen3 ${Eigen3_VERSION}")
 
-find_package(xtensor 0.24.3 REQUIRED)
-
 # glm
 add_subdirectory(${PROJECT_SOURCE_DIR}/../ext/glm glm)
 
@@ -90,7 +88,6 @@ target_link_libraries(${TARGET_NAME}
                 ${FREETYPE_LIBRARIES}
                 pthread
                 Eigen3::Eigen
-                xtensor
                 Boost::program_options
                 spdlog::spdlog
                 tomcat

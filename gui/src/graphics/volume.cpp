@@ -1,6 +1,3 @@
-#include <xtensor/xadapt.hpp>
-#include <xtensor/xmath.hpp>
-
 #include "graphics/volume.hpp"
 
 namespace tomcat::gui {
@@ -25,7 +22,8 @@ void Volume::bind() const { texture_.bind(); }
 void Volume::unbind() const { texture_.unbind(); }
 
 void Volume::updateMinMaxVal() {
-    min_max_vals_ = xt::minmax(xt::adapt(data_, {data_.size()}))();
+    auto [vmin, vmax] = std::minmax_element(data_.begin(), data_.end());
+    min_max_vals_ = {*vmin, *vmax};
 }
 
 const std::array<float, 2>& Volume::minMaxVals() const { return min_max_vals_; }
