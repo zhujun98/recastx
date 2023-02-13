@@ -63,15 +63,27 @@ void DaqClient::start() {
                 spdlog::error("Unknown scan index: {}", scan_index);
                 continue;
             }
-            auto shape = meta["shape"];
 
-            socket_.recv(update, zmq::recv_flags::none);
+            size_t n_rows = meta["shape"][0];
+            size_t n_cols = meta["shape"][1];
+            if (initialized_) {
+                if (n_rows != num_rows_ || n_cols != num_cols_) {
+                    // monitor only
+                    spdlog::warn("Received image data with a different shape. Current: {} x {}, before: {} x {}", 
+                                 n_rows, n_cols, num_rows_, num_cols_);
+                    continue;
+                }
+            } else {
+                num_rows_ = n_rows;
+                num_cols_ = n_cols;
+                initialized_ = true;
+            }
 
             // TODO: too much information even if for debug only
             // spdlog::debug("Projection received: type = {0:d}, frame = {1:d}", scan_index, frame);
 
-            app_->pushProjection(
-                proj_type, frame, shape[0], shape[1], static_cast<char*>(update.data()));
+            socket_.recv(update, zmq::recv_flags::none);
+            app_->pushProjection(proj_type, frame, n_rows, n_cols, static_cast<char*>(update.data()));
 
 #if (VERBOSITY >= 1)
             if (proj_type == ProjectionType::projection) {

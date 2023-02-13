@@ -191,11 +191,7 @@ void Application::runForEver() {
 
 void Application::pushProjection(
         ProjectionType k, size_t proj_idx, size_t num_rows, size_t num_cols, const char* data) {
-    if (num_rows != num_rows_ || num_cols != num_cols_) {
-        spdlog::warn("Received projection with wrong shape. Actual: {} x {}, expected: {} x {}", 
-                      num_rows, num_cols, num_rows_, num_cols_);
-        return;
-    }
+
 
     switch (k) {
         case ProjectionType::projection: {

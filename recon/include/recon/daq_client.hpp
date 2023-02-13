@@ -21,6 +21,10 @@ class DaqClient {
 
     zmq::socket_type parseSocketType(const std::string& socket_type) const; 
 
+    bool initialized_ = false;
+    size_t num_rows_;
+    size_t num_cols_;
+
 public:
     DaqClient(const std::string& endpoint,
               const std::string& socket_type,
