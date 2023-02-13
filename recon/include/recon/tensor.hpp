@@ -9,6 +9,7 @@
 
 #include "tomcat/tomcat.hpp"
 
+
 namespace tomcat::recon {
 
 template<typename T, size_t N>
@@ -118,8 +119,33 @@ Tensor<R, N-1> Tensor<T, N>::average() const {
     return out;
 }
 
-using ImageData = Tensor<float, 2>;
+using ProImageData = Tensor<ProDtype, 2>;
 using RawImageData = Tensor<RawDtype, 2>;
+
+namespace details {
+
+template<typename T>
+inline void copyBuffer(T* dst, const char* src, size_t n) {
+    std::memcpy(dst, src, n * sizeof(T));
+}
+
+template<typename T>
+inline void copyBuffer(T* dst, const char* src, 
+                       const std::array<size_t, 2>& dst_shape, 
+                       const std::array<size_t, 2>& src_shape,
+                       const std::array<size_t, 2>& downsampling) {
+    for (size_t size = sizeof(T), 
+             rstep = downsampling[0] * size * src_shape[1], 
+             cstep = downsampling[1] * size, i = 0; i < dst_shape[0]; ++i) {
+        char* ptr = const_cast<char*>(src) + i * rstep;
+        for (size_t j = 0; j < dst_shape[1]; ++j) {
+            memcpy(dst++, ptr, size);
+            ptr += cstep;
+        }
+    }
+}
+
+} // details
 
 template<typename T>
 class ImageGroup : public Tensor<T, 3> {
@@ -148,7 +174,9 @@ public:
     using Tensor<T, 3>::operator=;
 
     size_t push(const char* buffer);
-    size_t push(const char* buffer, const std::array<size_t, 2>& shape);
+    size_t push(const char* buffer, 
+                const std::array<size_t, 2>& shape, 
+                const std::array<size_t, 2>& downsampling);
 
     void reset() { count_ = 0; }
 
@@ -163,19 +191,26 @@ ImageGroup<T>::ImageGroup(const ShapeType& shape) : Tensor<T, 3>(shape) {}
 
 template<typename T>
 size_t ImageGroup<T>::push(const char* buffer) {
-    size_t idx = count_++ % this->shape_[0];
-    size_t pixels = this->shape_[1] * this->shape_[2];
-    std::memcpy(&this->data_[idx * pixels], buffer, pixels * sizeof(T));
+    const size_t idx = count_++ % this->shape_[0];
+    const size_t pixels = this->shape_[1] * this->shape_[2];
+    details::copyBuffer(&this->data_[idx * pixels], buffer, pixels);
     return count_;
 }
 
 template<typename T>
-size_t ImageGroup<T>::push(const char* buffer, const std::array<size_t, 2>& shape) {
-    if (shape[0] == this->shape_[1] && shape[1] == this->shape_[2]) {
-        push(buffer);
-    } else {
-        push(buffer);
+size_t ImageGroup<T>::push(const char* buffer, 
+                           const std::array<size_t, 2>& shape, 
+                           const std::array<size_t, 2>& downsampling) {
+    size_t h = this->shape_[1];
+    size_t w = this->shape_[2];
+    if (downsampling[0] == 1 && downsampling[1] == 1) {
+        assert(h == shape[0] && w == shape[1]);
+        return push(buffer);
     }
+    
+    size_t idx = count_++ % this->shape_[0];
+    size_t pixels = w * h;
+    details::copyBuffer(&this->data_[idx * pixels], buffer, {h, w}, shape, downsampling);
     return count_;
 }
 

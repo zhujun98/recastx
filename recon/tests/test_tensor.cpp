@@ -86,6 +86,46 @@ TEST(TestImageGroup, TestPushToRaw) {
     ASSERT_FALSE(g1.full());
 }
 
+TEST(TestImageGroup, TestPushToRawWithDowmsampling) {
+    RawImageGroup g1({4, 2, 3});
+    using value_type = typename RawImageGroup::value_type;
+
+    value_type x1[20] = {
+        1, 2, 3, 4, 5,
+        2, 3, 4, 5, 6,
+        3, 4, 5, 6, 7,
+        4, 5, 6, 7, 8
+    };
+    g1.push(reinterpret_cast<char*>(x1), {4, 5}, {2, 2});
+
+    value_type x2[24] = {
+        1, 2, 3, 4, 5, 6,
+        2, 3, 4, 5, 6, 7,
+        3, 4, 5, 6, 7, 8,
+        4, 5, 6, 7, 8, 9
+    };
+    g1.push(reinterpret_cast<char*>(x2), {4, 6}, {2, 2});
+    
+    value_type x3[12] = {
+        1, 2, 3, 4, 5, 6,
+        2, 3, 4, 5, 6, 7
+    };
+    g1.push(reinterpret_cast<char*>(x3), {2, 6}, {1, 2});
+    
+    value_type x4[12] = {
+        1, 2, 3,
+        2, 3, 4,
+        3, 4, 5,
+        4, 5, 6
+    };
+    g1.push(reinterpret_cast<char*>(x4), {4, 3}, {2, 1});
+    
+    EXPECT_THAT(g1, ElementsAre(1, 3, 5, 3, 5, 7, 
+                                1, 3, 5, 3, 5, 7, 
+                                1, 3, 5, 2, 4, 6, 
+                                1, 2, 3, 3, 4, 5));
+}
+
 TEST(TestImageGroup, TestPushToPro) {
     ProImageGroup g1({2, 3, 2});
     ProImageGroup::value_type x[6] = {1, 2, 3, 4, 5, 6};

@@ -7,7 +7,7 @@ using namespace std::chrono_literals;
 #include <spdlog/spdlog.h>
 
 #include "recon/application.hpp"
-#include "recon/utils.hpp"
+#include "recon/preprocessing.hpp"
 #include "recon/daq_client.hpp"
 #include "recon/zmq_server.hpp"
 #include "recon/phase.hpp"
@@ -23,19 +23,22 @@ Application::Application(size_t raw_buffer_size, int num_threads)
 
 Application::~Application() = default;
 
-void Application::init(size_t num_cols, size_t num_rows, size_t num_angles, 
-                       size_t num_darks, size_t num_flats) {
-    num_cols_ = num_cols;
-    num_rows_ = num_rows;
+void Application::init(size_t num_rows, size_t num_cols, size_t num_angles, 
+                       size_t num_darks, size_t num_flats,
+                       size_t downsample_row, size_t downsample_col) {
+    num_rows_ = num_rows / downsample_row;
+    num_cols_ = num_cols / downsample_col;
     num_angles_ = num_angles;
+    downsample_row_ = downsample_row;
+    downsample_col_ = downsample_col;
 
-    darks_.resize({num_darks, num_cols_, num_rows_});
-    flats_.resize({num_flats, num_cols_, num_rows_});
-    dark_avg_.resize({num_cols_, num_rows_});
-    reciprocal_.resize({num_cols_, num_rows_});
+    darks_.resize({num_darks, num_rows_, num_cols_});
+    flats_.resize({num_flats, num_rows_, num_cols_});
+    dark_avg_.resize({num_rows_, num_cols_});
+    reciprocal_.resize({num_rows_, num_cols_});
 
-    raw_buffer_.resize({num_angles, num_cols_, num_rows_});
-    sino_buffer_.resize({num_angles, num_cols_, num_rows_});
+    raw_buffer_.resize({num_angles, num_rows_, num_cols_});
+    sino_buffer_.resize({num_angles, num_rows_, num_cols_});
 
     initialized_ = true;
     spdlog::info("Initial parameters for real-time 3D tomographic reconstruction:");
@@ -186,16 +189,12 @@ void Application::runForEver() {
     }
 }
 
-void Application::pushProjection(ProjectionType k, 
-                                 size_t proj_idx, 
-                                 const std::array<size_t, 2>& shape, 
-                                 const char* data) {
-    if (shape[0] != num_rows_ || shape[1] != num_cols_) {
-        spdlog::error("Received projection with wrong shape. Actual: {} x {}, expected: {} x {}", 
-                      shape[0], shape[1], num_rows_, num_cols_);
-        throw std::runtime_error(
-            "Received projection has a different shape than the one set by "
-            "the acquisition geometry");
+void Application::pushProjection(
+        ProjectionType k, size_t proj_idx, size_t num_rows, size_t num_cols, const char* data) {
+    if (num_rows != num_rows_ || num_cols != num_cols_) {
+        spdlog::warn("Received projection with wrong shape. Actual: {} x {}, expected: {} x {}", 
+                      num_rows, num_cols, num_rows_, num_cols_);
+        return;
     }
 
     switch (k) {
@@ -209,7 +208,7 @@ void Application::pushProjection(ProjectionType k,
                 }
 
                 spdlog::info("Computing reciprocal for flat fielding ...");
-                utils::computeReciprocal(darks_, flats_, reciprocal_, dark_avg_);
+                computeReciprocal(darks_, flats_, reciprocal_, dark_avg_);
                 raw_buffer_.reset();
 
 #if (VERBOSITY >= 1)
@@ -227,17 +226,20 @@ void Application::pushProjection(ProjectionType k,
             }
 
             // TODO: compute the average on the fly instead of storing the data in the buffer
-            raw_buffer_.fill<RawDtype>(data, proj_idx / num_angles_, proj_idx % num_angles_);
+            raw_buffer_.fill<RawDtype>(data, proj_idx / num_angles_, proj_idx % num_angles_, 
+                                       {num_rows, num_cols}, {downsample_row_, downsample_col_});
             break;
         }
         case ProjectionType::dark: {
             reciprocal_computed_ = false;
-            spdlog::info("Received {} darks in total.", darks_.push(data, shape));
+            spdlog::info("Received {} darks in total.", 
+                         darks_.push(data, {num_rows, num_cols}, {downsample_row_, downsample_col_}));
             break;
         }
         case ProjectionType::flat: {
             reciprocal_computed_ = false;
-            spdlog::info("Received {} flats in total.", flats_.push(data, shape));
+            spdlog::info("Received {} flats in total.", 
+                         flats_.push(data, {num_rows, num_cols}, {downsample_row_, downsample_col_}));
             break;
         }
         default:
@@ -305,11 +307,11 @@ void Application::processProjections(oneapi::tbb::task_arena& arena) {
             for (auto i = block.begin(); i != block.end(); ++i) {
                 float* p = &projs[i * num_pixels];
 
-                utils::flatField(p, num_pixels, dark_avg_, reciprocal_);
+                flatField(p, num_pixels, dark_avg_, reciprocal_);
 
                 if (paganin_) paganin_->apply(p, i % num_threads_);
                 else
-                    utils::negativeLog(p, num_pixels);
+                    negativeLog(p, num_pixels);
 
                 filter_->apply(p, tbb::this_task_arena::current_thread_index());
 

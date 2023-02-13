@@ -3,10 +3,9 @@
 
 #include <memory>
 #include <numeric>
+#include <type_traits>
 
 #include <Eigen/Eigen>
-#include <oneapi/tbb.h>
-#include <spdlog/spdlog.h>
 
 #ifndef ASTRA_CUDA
 #define ASTRA_CUDA
@@ -42,54 +41,6 @@ proj_to_vec(astra::CConeProjectionGeometry3D* cone_geom);
 std::tuple<Eigen::Vector3f, Eigen::Matrix3f, Eigen::Vector3f>
 slice_transform(Eigen::Vector3f base, Eigen::Vector3f axis_1,
                 Eigen::Vector3f axis_2, float k);
-
-inline void computeReciprocal(const RawImageGroup& darks,
-                              const RawImageGroup& flats,
-                              ImageData& reciprocal,
-                              ImageData& dark_avg) {
-#if (VERBOSITY >= 2)
-    auto start = std::chrono::steady_clock::now();
-#endif
-    darks.average<float>(dark_avg);
-    auto flat_avg = flats.average<float>();
-    // averageImages<RawDtype>(darks, pixels, dark_avg);
-    // std::vector<float> flat_avg(dark_avg.size());
-    // averageImages<RawDtype>(flats, pixels, flat_avg);
-    for (size_t i = 0; i < reciprocal.shape()[0] * reciprocal.shape()[1]; ++i) {
-        if (dark_avg[i] == flat_avg[i]) {
-            reciprocal[i] = 1.0f;
-        } else {
-            reciprocal[i] = 1.0f / (flat_avg[i] - dark_avg[i]);
-        }
-    }
-#if (VERBOSITY >= 2)
-    float duration = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now() -  start).count();
-    spdlog::info("[bench] Computing reciprocal took {} ms", duration/1000);
-#endif
-}
-
-inline void flatField(float* data, size_t size, const ImageData& dark, const ImageData& reciprocal) {
-    for (size_t i = 0; i < size; ++i) {
-        data[i] = (data[i] - dark[i]) * reciprocal[i];
-    } 
-}
-
-inline void negativeLog(float* data, size_t size) {
-    for (size_t i = 0; i < size; ++i) {
-        data[i] = data[i] <= 0.0f ? 0.0f : -std::log(data[i]);
-    }
-}
-
-inline std::vector<float> defaultAngles(int n) {
-    auto angles = std::vector<float>(n, 0.0f);
-    std::iota(angles.begin(), angles.end(), 0.0f);
-    std::transform(angles.begin(), angles.end(), angles.begin(),
-                   [n](auto x) { return (x * M_PI) / n; });
-    return angles;
-}
-
-
 
 } // tomcat::recon::utils
 

@@ -70,10 +70,8 @@ void DaqClient::start() {
             // TODO: too much information even if for debug only
             // spdlog::debug("Projection received: type = {0:d}, frame = {1:d}", scan_index, frame);
 
-            app_->pushProjection(proj_type,
-                                 frame,
-                                 {shape[0], shape[1]},
-                                 static_cast<char*>(update.data()));
+            app_->pushProjection(
+                proj_type, frame, shape[0], shape[1], static_cast<char*>(update.data()));
 
 #if (VERBOSITY >= 1)
             if (proj_type == ProjectionType::projection) {

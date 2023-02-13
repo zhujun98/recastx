@@ -6,7 +6,7 @@
 #include <gmock/gmock.h>
 
 #include "recon/application.hpp"
-#include "recon/utils.hpp"
+#include "recon/preprocessing.hpp"
 
 
 namespace tomcat::recon::test {
@@ -40,7 +40,7 @@ protected:
 
     Application app_;
 
-    AppTest() : angles_ {utils::defaultAngles(num_angles_)}, 
+    AppTest() : angles_ {defaultAngles(num_angles_)}, 
                 pixel_size_ {1.0f, 1.0f}, 
                 app_ {buffer_size_, threads_} {
     }
@@ -48,7 +48,7 @@ protected:
     ~AppTest() override = default;
 
     void SetUp() override { 
-        app_.init(num_cols_, num_rows_, num_angles_, num_darks_, num_flats_);
+        app_.init(num_rows_, num_cols_, num_angles_, num_darks_, num_flats_);
 
         app_.initFilter({filter_name_, gaussian_lowpass_filter_}, num_cols_, num_rows_);
 
@@ -73,7 +73,7 @@ protected:
     void pushDarks(int n) {
         std::vector<RawDtype> img(pixels_, 0);
         for (int i = 0; i < n; ++i) {
-            app_.pushProjection(ProjectionType::dark, i, {num_rows_, num_cols_}, 
+            app_.pushProjection(ProjectionType::dark, i, num_rows_, num_cols_, 
                                 reinterpret_cast<char*>(img.data()));
         }
     } 
@@ -81,7 +81,7 @@ protected:
     void pushFlats(int n) {
         std::vector<RawDtype> img(pixels_, 1);
         for (int i = 0; i < n; ++i) {
-            app_.pushProjection(ProjectionType::flat, i, {num_rows_, num_cols_}, 
+            app_.pushProjection(ProjectionType::flat, i, num_rows_, num_cols_, 
                                 reinterpret_cast<char*>(img.data()));
         }
     } 
@@ -98,7 +98,7 @@ protected:
             if (i % 2 == 1) {
                 for (size_t i = 0; i < img.size(); ++i) img[i] += 1;
             }
-            app_.pushProjection(ProjectionType::projection, i, {num_rows_, num_cols_}, 
+            app_.pushProjection(ProjectionType::projection, i, num_rows_, num_cols_, 
                                 reinterpret_cast<char*>(img.data()));
         }
     }
@@ -106,9 +106,10 @@ protected:
 
 TEST_F(AppTest, TestPushProjectionException) {
     std::vector<RawDtype> img(pixels_);
-    EXPECT_THROW(app_.pushProjection(
-        ProjectionType::dark, 0, {10, 10}, reinterpret_cast<char*>(img.data())), 
-        std::runtime_error);
+    app_.pushProjection(ProjectionType::dark, 0, num_rows_ + 1, num_cols_, 
+                        reinterpret_cast<char*>(img.data()));
+    app_.pushProjection(ProjectionType::dark, 0, num_rows_, num_cols_ + 1, 
+                        reinterpret_cast<char*>(img.data()));
 }
 
 TEST_F(AppTest, TestPushProjection) {

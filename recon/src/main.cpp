@@ -9,7 +9,7 @@
 
 #include "recon/application.hpp"
 #include "recon/reconstructor.hpp"
-#include "recon/utils.hpp"
+#include "recon/preprocessing.hpp"
 #include "tomcat/tomcat.hpp"
 
 namespace po = boost::program_options;
@@ -171,8 +171,7 @@ int main(int argc, char** argv) {
 
     auto app = std::make_shared<Application>(raw_buffer_size, num_threads);
 
-    app->init(num_cols / downsample_col, num_rows / downsample_row, 
-              num_angles, num_darks, num_flats);
+    app->init(num_rows, num_cols, num_angles, num_darks, num_flats, downsample_row, downsample_col);
 
     if (retrieve_phase) app->initPaganin(
         {pixel_size, lambda, delta, beta, distance}, num_cols, num_rows);
@@ -183,7 +182,7 @@ int main(int argc, char** argv) {
     float z0 = 0.5f * (max_z + min_z);
     app->initReconstructor(
         cone_beam, 
-        {num_cols, num_rows, 1.f, 1.f, utils::defaultAngles(num_angles), 0.0f, 0.0f}, 
+        {num_cols, num_rows, 1.f, 1.f, defaultAngles(num_angles), 0.0f, 0.0f}, 
         {slice_size, slice_size, 1, min_x, max_x, min_y, max_y, z0 - half_slice_height, z0 + half_slice_height},
         {preview_size, preview_size, preview_size, min_x, max_x, min_y, max_y, min_z, max_z}
     );

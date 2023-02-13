@@ -190,6 +190,37 @@ void SliceBuffer<T>::resize(const std::array<size_t, 2>& shape) {
     this->shape_ = shape;
 }
 
+namespace details {
+
+template<typename T, typename D>
+inline void copyBuffer(T* dst, const char* src, size_t n) {
+    D v;
+    for (size_t size = sizeof(D), i = 0; i < n; ++i) {
+        memcpy(&v, src, size);
+        src += size;
+        *(dst++) = static_cast<T>(v);
+    }
+}
+
+template<typename T, typename D>
+inline void copyBuffer(T* dst, const char* src,
+                       const std::array<size_t, 2>& dst_shape,
+                       const std::array<size_t, 2>& src_shape,
+                       const std::array<size_t, 2>& downsampling) {
+    D v;
+    for (size_t size = sizeof(D), 
+             rstep = downsampling[0] * size * src_shape[1], 
+             cstep = downsampling[1] * size, i = 0; i < dst_shape[0]; ++i) {
+        char* ptr = const_cast<char*>(src) + i * rstep;
+        for (size_t j = 0; j < dst_shape[1]; ++j) {
+            memcpy(&v, ptr, size);
+            ptr += cstep;
+            *(dst++) = static_cast<T>(v);
+        }
+    }
+}
+
+} // details
 
 template<typename T, size_t N>
 class MemoryBuffer {
@@ -227,6 +258,11 @@ class MemoryBuffer {
 
     template<typename D>
     void fill(const char* raw, size_t chunk_idx, size_t data_idx);
+
+    template<typename D>
+    void fill(const char* raw, size_t chunk_idx, size_t data_idx, 
+              const std::array<size_t, N-1>& shape, 
+              const std::array<size_t, N-1>& downsampling);
 
     bool fetch(int timeout = -1);
 
@@ -292,9 +328,19 @@ void MemoryBuffer<T, N>::reset() {
     }
 }
 
+
 template<typename T, size_t N>
 template<typename D>
 void MemoryBuffer<T, N>::fill(const char* raw, size_t chunk_idx, size_t data_idx) {
+    fill<D>(raw, chunk_idx, data_idx, {shape_[1], shape_[2]}, {1, 1});
+}
+
+
+template<typename T, size_t N>
+template<typename D>
+void MemoryBuffer<T, N>::fill(const char* raw, size_t chunk_idx, size_t data_idx, 
+                              const std::array<size_t, N-1>& shape, 
+                              const std::array<size_t, N-1>& downsampling) {
     std::lock_guard lk(mtx_);
 
     if (chunk_indices_.empty()) {
@@ -329,12 +375,15 @@ void MemoryBuffer<T, N>::fill(const char* raw, size_t chunk_idx, size_t data_idx
     size_t buffer_idx = map_[chunk_idx];
 
     float* data = buffer_[buffer_idx].data();
-    for (size_t data_size = chunk_size_ / shape_[0], 
-            i = data_idx * data_size; i < (data_idx + 1) * data_size; ++i) {
-        D v;
-        memcpy(&v, raw, sizeof(D));
-        raw += sizeof(D);
-        data[i] = static_cast<float>(v);
+    size_t data_size = std::accumulate(shape_.begin() + 1, shape_.end(), 1, std::multiplies<>());
+    if (std::all_of(downsampling.cbegin(), downsampling.cend(), [](size_t v) { return v == 1; })) {
+        details::copyBuffer<T, D>(
+            &data[data_idx * data_size], raw, data_size);
+    } else {
+        std::array<size_t, N-1> dst_shape;
+        std::copy(shape_.begin() + 1, shape_.end(), dst_shape.begin());
+        details::copyBuffer<T, D>(
+            &data[data_idx * data_size], raw, dst_shape, shape, downsampling);
     }
 
     ++counter_[buffer_idx];

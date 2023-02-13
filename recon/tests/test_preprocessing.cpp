@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include "recon/utils.hpp"
+#include "recon/preprocessing.hpp"
 
 
 namespace tomcat::recon::test {
@@ -24,10 +24,10 @@ TEST(TestUtils, TestComputeReciprocal) {
         2, 4, 8, 1, 3, 9, 5, 6, 1, 1, 1, 7, 
         9, 9, 4, 1, 6, 8, 6, 9, 2, 4, 9, 4
     };
-    ImageData reciprocal(shape);
-    ImageData dark_avg(shape);
+    ProImageData reciprocal(shape);
+    ProImageData dark_avg(shape);
 
-    utils::computeReciprocal(darks, flats, reciprocal, dark_avg);
+    computeReciprocal(darks, flats, reciprocal, dark_avg);
 
     EXPECT_THAT(dark_avg, ElementsAreArray({
         2.33333333, 4.,        3.33333333,
