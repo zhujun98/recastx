@@ -1,6 +1,6 @@
+#include <algorithm>
+
 #include <glm/gtc/type_ptr.hpp>
-#include <xtensor/xadapt.hpp>
-#include <xtensor/xmath.hpp>
 
 #include "graphics/slice.hpp"
 
@@ -70,7 +70,8 @@ const std::array<float, 2>& Slice::minMaxVals() const { return min_max_vals_; }
 const Slice::DataType& Slice::data() const { return data_; }
 
 void Slice::updateMinMaxVal() {
-    min_max_vals_ = xt::minmax(xt::adapt(data_, {data_.size()}))();
+    auto [vmin, vmax] = std::minmax_element(data_.begin(), data_.end());
+    min_max_vals_ = {*vmin, *vmax};
 }
 
 } // namespace tomcat::gui
