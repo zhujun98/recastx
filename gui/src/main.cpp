@@ -43,12 +43,13 @@ int main(int argc, char** argv) {
 
     auto& app = Application::instance();
 
-    Client client(opts["recon-host"].as<std::string>(), opts["recon-port"].as<int>());
-    Scene3d scene(&client);
+    DataClient data_client(opts["recon-host"].as<std::string>(), opts["recon-port"].as<int>());
+    CmdClient cmd_client(opts["recon-host"].as<std::string>(), opts["recon-port"].as<int>() + 1);
+    Scene3d scene(&cmd_client);
     app.setScene(&scene);
 
     scene.init();
-    client.start();
+    data_client.start();
 
     app.exec();
 

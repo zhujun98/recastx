@@ -29,7 +29,7 @@ class Scene3d : public Scene {
 
 public:
 
-    explicit Scene3d(Client* client);
+    explicit Scene3d(CmdClient* client);
 
     ~Scene3d() override;
 
