@@ -45,7 +45,7 @@ set(IMPLOT_SOURCE_FILES
 # build
 set(SOURCE_NAMES
         "src/application.cpp"
-        "src/client.cpp"
+        "src/zmq_client.cpp"
         "src/main.cpp"
         "src/math_common.cpp"
         "src/path.cpp"

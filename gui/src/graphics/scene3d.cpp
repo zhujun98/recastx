@@ -14,7 +14,7 @@
 
 namespace tomcat::gui {
 
-Scene3d::Scene3d(CmdClient* client)
+Scene3d::Scene3d(MessageClient* client)
         : Scene(client),
           viewport_(new Viewport()),
           viewport_icon_(new Viewport(false)),

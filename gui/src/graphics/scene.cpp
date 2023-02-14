@@ -9,7 +9,7 @@
 
 namespace tomcat::gui {
 
-Scene::Scene(CmdClient* client) : client_(client) {};
+Scene::Scene(MessageClient* client) : client_(client) {};
 
 Scene::~Scene() = default;
 
