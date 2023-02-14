@@ -72,7 +72,7 @@ conda activate tomcat-live-recon
 tomcat-live-recon --threads 32 --rows 800 --cols 384 --angles 400
 
 # Receiving the data stream from a DAQ node
-tomcat-live-recon --data-host xbl-daq-36 --threads 32 --rows 800 --cols 384 --angles 400
+tomcat-live-recon --daq-host xbl-daq-36 --threads 32 --rows 800 --cols 384 --angles 400
 ```
 
 For more information, type

@@ -3,7 +3,6 @@
 #include <numeric>
 #include <string>
 
-#include <zmq.hpp>
 #include <spdlog/spdlog.h>
 #include <boost/program_options.hpp>
 
@@ -40,7 +39,7 @@ int main(int argc, char** argv) {
     spdlog::set_level(spdlog::level::debug);
 #endif
 
-    using namespace tomcat::recon;
+    using namespace tomcat;
 
     po::options_description general_desc("General options");
     general_desc.add_options()
@@ -49,18 +48,17 @@ int main(int argc, char** argv) {
 
     po::options_description connection_desc("ZMQ options");
     connection_desc.add_options()
-        ("data-host", po::value<std::string>()->default_value("localhost"), 
-         "hostname of the data source server")
-        ("data-port", po::value<int>()->default_value(9667),
-         "ZMQ socket port of the data source server")
-        ("data-socket", po::value<std::string>()->default_value("pull"),
-         "ZMQ socket type of the data source server. Options: sub/pull")
-        ("gui-port", po::value<int>()->default_value(9970),
-         "First ZMQ socket port of the GUI server. "
+        ("daq-host", po::value<std::string>()->default_value("localhost"), 
+         "hostname of the DAQ server")
+        ("daq-port", po::value<int>()->default_value(9667),
+         "ZMQ socket port of the DAQ server")
+        ("daq-socket", po::value<std::string>()->default_value("pull"),
+         "ZMQ socket type of the DAQ server. Options: sub/pull")
+        ("data-port", po::value<int>()->default_value(9970),
+         "ZMQ socket port of the reconstruction data server. "
          "At TOMCAT, the valid port range is [9970, 9979]")
-        ("gui-port2", po::value<int>()->default_value(9970),
-         "Second ZMQ socket port of the GUI server. "
-         "If it is equal to the first one, it will be increased by 1. "
+        ("message-port", po::value<int>()->default_value(9971),
+         "ZMQ socket port of the reconstruction message server. "
          "At TOMCAT, the valid port range is [9970, 9979]")
     ;
 
@@ -153,12 +151,11 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    auto data_hostname = opts["data-host"].as<std::string>();
+    auto daq_hostname = opts["daq-host"].as<std::string>();
+    auto daq_port = opts["daq-port"].as<int>();
+    auto daq_socket_type = opts["daq-socket"].as<std::string>();
     auto data_port = opts["data-port"].as<int>();
-    auto data_socket_type = opts["data-socket"].as<std::string>();
-    auto gui_port = opts["gui-port"].as<int>();
-    auto gui_port2 = opts["gui-port2"].as<int>();
-    if (gui_port2 == gui_port) gui_port2 += 1;
+    auto message_port = opts["message-port"].as<int>();
 
     auto [downsample_row, downsample_col] = parseDownsampleFactor(
         opts["downsample-row"], opts["downsample-col"], opts["downsample"]);
@@ -183,27 +180,27 @@ int main(int argc, char** argv) {
     auto beta = opts["beta"].as<float>();
     auto distance = opts["distance"].as<float>();
 
-    auto app = std::make_shared<Application>(raw_buffer_size, num_threads);
+    DaqClientConfig daq_client_cfg {daq_hostname, daq_port, daq_socket_type};
+    ZmqServerConfig zmq_server_cfg {data_port, message_port};
+    recon::Application app(raw_buffer_size, num_threads, daq_client_cfg, zmq_server_cfg);
 
-    app->init(num_rows, num_cols, num_angles, num_darks, num_flats, downsample_row, downsample_col);
+    app.init(num_rows, num_cols, num_angles, num_darks, num_flats, downsample_row, downsample_col);
 
-    if (retrieve_phase) app->initPaganin(
+    if (retrieve_phase) app.initPaganin(
         {pixel_size, lambda, delta, beta, distance}, num_cols, num_rows);
 
-    app->initFilter({filter_name, gaussian_lowpass_filter}, num_cols, num_rows);
+    app.initFilter({filter_name, gaussian_lowpass_filter}, num_cols, num_rows);
 
     float half_slice_height = 0.5f * (max_z - min_z) / preview_size;
     float z0 = 0.5f * (max_z + min_z);
-    app->initReconstructor(
+    app.initReconstructor(
         cone_beam, 
-        {num_cols, num_rows, 1.f, 1.f, defaultAngles(num_angles), 0.0f, 0.0f}, 
+        {num_cols, num_rows, 1.f, 1.f, recon::defaultAngles(num_angles), 0.0f, 0.0f}, 
         {slice_size, slice_size, 1, min_x, max_x, min_y, max_y, z0 - half_slice_height, z0 + half_slice_height},
         {preview_size, preview_size, preview_size, min_x, max_x, min_y, max_y, min_z, max_z}
     );
-    
-    app->initConnection({data_hostname, data_port, data_socket_type}, {gui_port, gui_port2});
 
-    app->runForEver();
+    app.runForEver();
 
     return 0;
 }

@@ -20,12 +20,11 @@ extern "C" {
 #include "tensor.hpp"
 #include "buffer.hpp"
 #include "slice_mediator.hpp"
+#include "daq_client.hpp"
+#include "zmq_server.hpp"
 
 
 namespace tomcat::recon {
-
-class DaqClient;
-class ZmqServer;
 
 class Filter;
 class Paganin;
@@ -73,14 +72,18 @@ class Application {
 
     int num_threads_;
 
-    std::unique_ptr<DaqClient> daq_client_;
-    std::unique_ptr<ZmqServer> zmq_server_;
+    DaqClient daq_client_;
+    DataServer data_server_;
+    MessageServer msg_server_;
 
     void processProjections(oneapi::tbb::task_arena& arena);
 
 public:
 
-    Application(size_t raw_buffer_size, int num_threads); 
+    Application(size_t raw_buffer_size, 
+                int num_threads, 
+                const DaqClientConfig& client_config, 
+                const ZmqServerConfig& server_config); 
 
     ~Application();
 
@@ -96,8 +99,6 @@ public:
                            const ProjectionGeometry& proj_geom,
                            const VolumeGeometry& slice_geom,
                            const VolumeGeometry& preview_geom);
-
-    void initConnection(const DaqClientConfig& client_config, const ZmqServerConfig& server_config);
 
     void startPreprocessing();
 
