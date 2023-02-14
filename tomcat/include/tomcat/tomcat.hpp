@@ -17,9 +17,7 @@ namespace tomcat {
     enum class ProjectionType : int32_t { dark = 0, flat = 1, projection = 2, unknown = 99 };
 
     using RawDtype = uint16_t;
-
-    using RawImageData = std::vector<RawDtype>;
-    using ImageData = std::vector<float>;
+    using ProDtype = float;
 
     struct DaqClientConfig {
         std::string hostname;

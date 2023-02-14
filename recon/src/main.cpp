@@ -9,7 +9,7 @@
 
 #include "recon/application.hpp"
 #include "recon/reconstructor.hpp"
-#include "recon/utils.hpp"
+#include "recon/preprocessing.hpp"
 #include "tomcat/tomcat.hpp"
 
 namespace po = boost::program_options;
@@ -22,6 +22,15 @@ std::pair<float, float> parseReconstructedVolumeBoundary(
     if (min_v >= max_v) throw std::invalid_argument(
         "Minimum of volume coordinate must be smaller than maximum of volume coordinate");
     return {min_v, max_v};
+}
+
+std::pair<size_t, size_t> parseDownsampleFactor(
+        const po::variable_value& downsample_row, 
+        const po::variable_value& downsample_col, 
+        const po::variable_value& downsample) {
+    size_t row = downsample_row.empty() ? downsample.as<size_t>() : downsample_row.as<size_t>();
+    size_t col = downsample_col.empty() ? downsample.as<size_t>() : downsample_col.as<size_t>();
+    return {row, col};
 }
 
 int main(int argc, char** argv) {
@@ -62,6 +71,13 @@ int main(int argc, char** argv) {
          "detector width in pixels")
         ("rows", po::value<size_t>()->default_value(1200),
          "detector height in pixels")
+        ("downsample", po::value<size_t>()->default_value(1),
+         "downsampling factor along both the row and the column. It will be "
+         "overwirtten if 'downsample-col' or 'downsample-row' is given")
+        ("downsample-col", po::value<size_t>(),
+         "downsampling factor along the column")
+        ("downsample-row", po::value<size_t>(),
+         "downsampling factor along the row")
         ("angles", po::value<size_t>()->default_value(128),
          "number of projections per scan")
         ("minx", po::value<float>(),
@@ -144,8 +160,10 @@ int main(int argc, char** argv) {
     auto gui_port2 = opts["gui-port2"].as<int>();
     if (gui_port2 == gui_port) gui_port2 += 1;
 
-    auto num_cols = opts["cols"].as<size_t>();
-    auto num_rows = opts["rows"].as<size_t>();
+    auto [downsample_row, downsample_col] = parseDownsampleFactor(
+        opts["downsample-row"], opts["downsample-col"], opts["downsample"]);
+    auto num_rows = opts["rows"].as<size_t>() / downsample_row;
+    auto num_cols = opts["cols"].as<size_t>() / downsample_col;
     auto num_angles = opts["angles"].as<size_t>();
     auto [min_x, max_x] = parseReconstructedVolumeBoundary(opts["minx"], opts["maxx"], num_cols);
     auto [min_y, max_y] = parseReconstructedVolumeBoundary(opts["miny"], opts["maxy"], num_cols);
@@ -167,7 +185,7 @@ int main(int argc, char** argv) {
 
     auto app = std::make_shared<Application>(raw_buffer_size, num_threads);
 
-    app->init(num_cols, num_rows, num_angles, num_darks, num_flats);
+    app->init(num_rows, num_cols, num_angles, num_darks, num_flats, downsample_row, downsample_col);
 
     if (retrieve_phase) app->initPaganin(
         {pixel_size, lambda, delta, beta, distance}, num_cols, num_rows);
@@ -178,7 +196,7 @@ int main(int argc, char** argv) {
     float z0 = 0.5f * (max_z + min_z);
     app->initReconstructor(
         cone_beam, 
-        {num_cols, num_rows, 1.f, 1.f, utils::defaultAngles(num_angles), 0.0f, 0.0f}, 
+        {num_cols, num_rows, 1.f, 1.f, defaultAngles(num_angles), 0.0f, 0.0f}, 
         {slice_size, slice_size, 1, min_x, max_x, min_y, max_y, z0 - half_slice_height, z0 + half_slice_height},
         {preview_size, preview_size, preview_size, min_x, max_x, min_y, max_y, min_z, max_z}
     );

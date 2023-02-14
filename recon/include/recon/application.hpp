@@ -16,9 +16,10 @@ extern "C" {
 #include <fftw3.h>
 }
 
+#include "tomcat/tomcat.hpp"
+#include "tensor.hpp"
 #include "buffer.hpp"
 #include "slice_mediator.hpp"
-#include "tomcat/tomcat.hpp"
 
 
 namespace tomcat::recon {
@@ -33,31 +34,27 @@ class Reconstructor;
 
 class Application {
 
-    size_t num_cols_;
     size_t num_rows_;
-    size_t num_pixels_;
+    size_t num_cols_;
     size_t num_angles_;
 
-    ProjectionGeometry proj_geom_;
-    VolumeGeometry vol_geom_;
+    size_t downsample_row_;
+    size_t downsample_col_;
 
-    MemoryBuffer<float, 3> raw_buffer_;
+    // Why did I choose ProDtype over RawDtype?
+    MemoryBuffer<ProDtype, 3> raw_buffer_;
 
-    size_t num_darks_ = 1;
-    size_t num_flats_ = 1;
-    std::vector<RawDtype> all_darks_;
-    std::vector<RawDtype> all_flats_;
-    std::vector<float> dark_avg_;
-    std::vector<float> reciprocal_;
-    size_t received_darks_ = 0;
-    size_t received_flats_ = 0;
+    RawImageGroup darks_;
+    RawImageGroup flats_;
+    ProImageData dark_avg_;
+    ProImageData reciprocal_;
     bool reciprocal_computed_ = false;
 
-    TripleVectorBuffer<float, 3> sino_buffer_;
+    TripleVectorBuffer<ProDtype, 3> sino_buffer_;
 
     SliceMediator slice_mediator_;
 
-    TripleVectorBuffer<float, 3> preview_buffer_;
+    TripleVectorBuffer<ProDtype, 3> preview_buffer_;
 
     bool initialized_ = false;
 
@@ -87,7 +84,9 @@ public:
 
     ~Application();
 
-    void init(size_t num_cols, size_t num_rows, size_t num_angles, size_t num_darks, size_t num_flats);
+    void init(size_t num_rows, size_t num_cols, size_t num_angles, 
+              size_t num_darks, size_t num_flats, 
+              size_t downsample_row = 1, size_t downsample_col = 1);
 
     void initPaganin(const PaganinConfig& config, int num_cols, int num_rows);
 
@@ -108,10 +107,8 @@ public:
 
     void runForEver();
 
-    void pushProjection(ProjectionType k, 
-                        size_t proj_idx, 
-                        const std::array<size_t, 2>& shape, 
-                        const char* data); 
+    void pushProjection(
+        ProjectionType k, size_t proj_idx, size_t num_rows, size_t num_cols, const char* data); 
 
     void setSlice(size_t timestamp, const Orientation& orientation);
 
@@ -125,8 +122,8 @@ public:
 
     // for unittest
 
-    const std::vector<RawDtype>& darks() const { return all_darks_; }
-    const std::vector<RawDtype>& flats() const { return all_flats_; }
+    const RawImageGroup& darks() const { return darks_; }
+    const RawImageGroup& flats() const { return flats_; }
     const MemoryBuffer<float, 3>& rawBuffer() const { return raw_buffer_; }
     const TripleVectorBuffer<float, 3>& sinoBuffer() const { return sino_buffer_; }
 };

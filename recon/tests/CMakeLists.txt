@@ -33,10 +33,12 @@ find_package(Threads REQUIRED)
 add_executable(test_recon
     main.cpp
     test_buffer.cpp
+    test_tensor.cpp
     test_filter.cpp
-    test_utils.cpp
+    test_preprocessing.cpp
     test_slicemediator.cpp
-    test_app.cpp)
+    test_application.cpp
+)
 target_include_directories(test_recon
     PRIVATE
         "../include"
