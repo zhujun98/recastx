@@ -1,5 +1,5 @@
-#ifndef GUI_CLIENT_H
-#define GUI_CLIENT_H
+#ifndef GUI_ZMQCLIENT_H
+#define GUI_ZMQCLIENT_H
 
 #include <cstring>
 #include <map>
@@ -33,19 +33,20 @@ public:
     void start();
 };
 
-class CmdClient {
+class MessageClient {
+
     zmq::context_t context_;
     zmq::socket_t socket_;
 
 public:
 
-    explicit CmdClient(const std::string& hostname, int port);
+    explicit MessageClient(const std::string& hostname, int port);
 
-    ~CmdClient();
+    ~MessageClient();
 
     void send(const Packet& packet);
 };
 
 }  // namespace tomcat::gui
 
-#endif //GUI_CLIENT_H
+#endif //GUI_ZMQCLIENT_H

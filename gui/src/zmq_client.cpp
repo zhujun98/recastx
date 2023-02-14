@@ -4,7 +4,7 @@
 #include <zmq.hpp>
 #include <spdlog/spdlog.h>
 
-#include "client.hpp"
+#include "zmq_client.hpp"
 #include "tomcat/tomcat.hpp"
 
 
@@ -18,7 +18,7 @@ DataClient::DataClient(const std::string& hostname, int port)
     std::string endpoint = "tcp://"s + hostname + ":"s + std::to_string(port);
     socket_.connect(endpoint);
 
-    spdlog::info("Connecting to the reconstruction server: {}", endpoint);
+    spdlog::info("Connecting to the reconstruction data server: {}", endpoint);
 }
 
 DataClient::~DataClient() {
@@ -68,20 +68,20 @@ void DataClient::start() {
 std::queue<PacketDataEvent>& DataClient::packets() { return packets_; }
 
 
-CmdClient::CmdClient(const std::string &hostname, int port)
+MessageClient::MessageClient(const std::string &hostname, int port)
         : context_(1), socket_(context_, ZMQ_PAIR) {
 
     std::string endpoint = "tcp://"s + hostname + ":"s + std::to_string(port);
     socket_.connect(endpoint);
 
-    spdlog::info("Connecting to the reconstruction server: {}", endpoint);
+    spdlog::info("Connecting to the reconstruction message server: {}", endpoint);
 }
 
-CmdClient::~CmdClient() {
+MessageClient::~MessageClient() {
     socket_.set(zmq::sockopt::linger, 200);
 };
 
-void CmdClient::send(const Packet& packet) {
+void MessageClient::send(const Packet& packet) {
     try {
         auto size = packet.size();
         zmq::message_t message(size);

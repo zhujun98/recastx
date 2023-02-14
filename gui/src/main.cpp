@@ -10,7 +10,7 @@
 
 #include "application.hpp"
 #include "graphics/scene3d.hpp"
-#include "client.hpp"
+#include "zmq_client.hpp"
 
 int main(int argc, char** argv) {
 
@@ -27,9 +27,10 @@ int main(int argc, char** argv) {
         ("help,h", "print help message")
         ("recon-host", po::value<std::string>()->default_value("localhost"),
          "hostname of the reconstruction server")
-        ("recon-port", po::value<int>()->default_value(9970),
-         "First ZMQ socket port of the GUI server. The second port has an increment of 1. "
-         "The valid port range is [9970, 9979]")
+        ("data-port", po::value<int>()->default_value(9970),
+         "ZMQ socket port of the reconstruction data server. ")
+        ("message-port", po::value<int>()->default_value(9971),
+         "ZMQ socket port of the reconstruction message server. ")
     ;
 
     po::variables_map opts;
@@ -43,9 +44,9 @@ int main(int argc, char** argv) {
 
     auto& app = Application::instance();
 
-    DataClient data_client(opts["recon-host"].as<std::string>(), opts["recon-port"].as<int>());
-    CmdClient cmd_client(opts["recon-host"].as<std::string>(), opts["recon-port"].as<int>() + 1);
-    Scene3d scene(&cmd_client);
+    DataClient data_client(opts["recon-host"].as<std::string>(), opts["data-port"].as<int>());
+    MessageClient msg_client(opts["recon-host"].as<std::string>(), opts["message-port"].as<int>());
+    Scene3d scene(&msg_client);
     app.setScene(&scene);
 
     scene.init();
