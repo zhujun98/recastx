@@ -12,35 +12,27 @@ namespace tomcat::gui {
 
 using namespace std::string_literals;
 
-Client::Client(const std::string& hostname, int port)
-      : context_(1),
-        data_socket_(context_, ZMQ_REQ),
-        cmd_socket_(context_, ZMQ_PAIR) {
+DataClient::DataClient(const std::string& hostname, int port)
+      : context_(1), socket_(context_, ZMQ_REQ) {
 
-    // Caveat: sequence
-    std::string cmd_endpoint = "tcp://"s + hostname + ":"s + std::to_string(port + 1);
-    cmd_socket_.connect(cmd_endpoint);
+    std::string endpoint = "tcp://"s + hostname + ":"s + std::to_string(port);
+    socket_.connect(endpoint);
 
-    std::string data_endpoint = "tcp://"s + hostname + ":"s + std::to_string(port);
-    data_socket_.connect(data_endpoint);
-
-    spdlog::info("Connecting to the reconstruction server: {}, {}",
-                 data_endpoint, cmd_endpoint);
+    spdlog::info("Connecting to the reconstruction server: {}", endpoint);
 }
 
-Client::~Client() {
-    data_socket_.set(zmq::sockopt::linger, 200);
-    cmd_socket_.set(zmq::sockopt::linger, 200);
+DataClient::~DataClient() {
+    socket_.set(zmq::sockopt::linger, 200);
 };
 
-void Client::start() {
+void DataClient::start() {
     thread_ = std::thread([&]() {
         while (true) {
             zmq::message_t reply;
 
             try {
-                data_socket_.send(zmq::str_buffer("ready"), zmq::send_flags::none);
-                auto recv_ret = data_socket_.recv(reply, zmq::recv_flags::none);
+                socket_.send(zmq::str_buffer("ready"), zmq::send_flags::none);
+                auto recv_ret = socket_.recv(reply, zmq::recv_flags::none);
             } catch (const zmq::error_t& e) {
                 if (e.num() != ETERM) throw;
                 break;
@@ -73,15 +65,29 @@ void Client::start() {
     thread_.detach();
 }
 
-std::queue<PacketDataEvent>& Client::packets() { return packets_; }
+std::queue<PacketDataEvent>& DataClient::packets() { return packets_; }
 
-void Client::send(const Packet& packet) {
+
+CmdClient::CmdClient(const std::string &hostname, int port)
+        : context_(1), socket_(context_, ZMQ_PAIR) {
+
+    std::string endpoint = "tcp://"s + hostname + ":"s + std::to_string(port);
+    socket_.connect(endpoint);
+
+    spdlog::info("Connecting to the reconstruction server: {}", endpoint);
+}
+
+CmdClient::~CmdClient() {
+    socket_.set(zmq::sockopt::linger, 200);
+};
+
+void CmdClient::send(const Packet& packet) {
     try {
         auto size = packet.size();
         zmq::message_t message(size);
         auto membuf = packet.serialize(size);
         memcpy(message.data(), membuf.buffer.get(), size);
-        cmd_socket_.send(message, zmq::send_flags::none);
+        socket_.send(message, zmq::send_flags::none);
 
         spdlog::debug("Published packet: 0x{0:x}",
                       std::underlying_type<PacketDesc>::type(packet.desc()));

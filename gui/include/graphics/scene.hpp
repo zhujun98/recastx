@@ -9,11 +9,11 @@
 #include <GL/gl3w.h>
 #include <glm/glm.hpp>
 
+#include "client.hpp"
 #include "graphics/items/graphics_item.hpp"
 #include "graphics/graph_node.hpp"
 #include "graphics/viewport.hpp"
 #include "ticker.hpp"
-#include "client.hpp"
 
 namespace tomcat::gui {
 
@@ -30,7 +30,7 @@ protected:
 
     std::unique_ptr<ShaderProgram> program_;
     std::unique_ptr<Camera> camera_;
-    Client* client_;
+    CmdClient* client_;
 
     std::vector<GraphicsItem*> items_;
     std::vector<GraphicsDataItem*> data_items_;
@@ -44,7 +44,7 @@ protected:
 
   public:
 
-    explicit Scene(Client* client);
+    explicit Scene(CmdClient* client);
 
     ~Scene() override;
 

@@ -9,7 +9,7 @@
 
 namespace tomcat::gui {
 
-Scene::Scene(Client* client) : client_(client) {};
+Scene::Scene(CmdClient* client) : client_(client) {};
 
 Scene::~Scene() = default;
 
@@ -79,7 +79,7 @@ bool Scene::handleKey(int key, int action, int mods) {
 }
 
 void Scene::tick(double /*time_elapsed*/) {
-    auto& packets = Client::packets();
+    auto& packets = DataClient::packets();
     while (!packets.empty()) {
         auto data = std::move(packets.front());
         packets.pop();

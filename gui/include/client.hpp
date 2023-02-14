@@ -13,27 +13,37 @@
 
 namespace tomcat::gui {
 
-class Client {
+class DataClient {
 
     std::thread thread_;
 
+    zmq::context_t context_;
+    zmq::socket_t socket_;
+
     inline static std::queue<PacketDataEvent> packets_;
 
-    zmq::context_t context_;
-    zmq::socket_t data_socket_;
-    zmq::socket_t cmd_socket_;
+public:
 
-  public:
+    explicit DataClient(const std::string& hostname, int port);
 
-    explicit Client(const std::string& hostname, int port);
-
-    ~Client();
-
-    void send(const Packet& packet);
-
-    void start();
+    ~DataClient();
 
     static std::queue<PacketDataEvent>& packets();
+
+    void start();
+};
+
+class CmdClient {
+    zmq::context_t context_;
+    zmq::socket_t socket_;
+
+public:
+
+    explicit CmdClient(const std::string& hostname, int port);
+
+    ~CmdClient();
+
+    void send(const Packet& packet);
 };
 
 }  // namespace tomcat::gui
