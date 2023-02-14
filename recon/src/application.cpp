@@ -26,8 +26,8 @@ Application::~Application() = default;
 void Application::init(size_t num_rows, size_t num_cols, size_t num_angles, 
                        size_t num_darks, size_t num_flats,
                        size_t downsample_row, size_t downsample_col) {
-    num_rows_ = num_rows / downsample_row;
-    num_cols_ = num_cols / downsample_col;
+    num_rows_ = num_rows;
+    num_cols_ = num_cols;
     num_angles_ = num_angles;
     downsample_row_ = downsample_row;
     downsample_col_ = downsample_col;

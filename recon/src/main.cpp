@@ -146,10 +146,10 @@ int main(int argc, char** argv) {
     auto gui_port2 = opts["gui-port2"].as<int>();
     if (gui_port2 == gui_port) gui_port2 += 1;
 
-    auto num_cols = opts["cols"].as<size_t>();
-    auto num_rows = opts["rows"].as<size_t>();
     auto downsample_col = opts["downsample-col"].as<size_t>();
     auto downsample_row = opts["downsample-row"].as<size_t>();
+    auto num_cols = opts["cols"].as<size_t>() / downsample_col;
+    auto num_rows = opts["rows"].as<size_t>() / downsample_row;
     auto num_angles = opts["angles"].as<size_t>();
     auto [min_x, max_x] = parseReconstructedVolumeBoundary(opts["minx"], opts["maxx"], num_cols);
     auto [min_y, max_y] = parseReconstructedVolumeBoundary(opts["miny"], opts["maxy"], num_cols);

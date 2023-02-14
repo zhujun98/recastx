@@ -37,7 +37,7 @@ add_executable(test_recon
     test_filter.cpp
     test_preprocessing.cpp
     test_slicemediator.cpp
-    test_app.cpp
+    test_application.cpp
 )
 target_include_directories(test_recon
     PRIVATE

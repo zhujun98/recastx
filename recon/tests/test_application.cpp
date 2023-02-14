@@ -14,7 +14,7 @@ namespace tomcat::recon::test {
 using ::testing::Pointwise;
 using ::testing::FloatNear;
 
-class AppTest : public testing::Test {
+class ApplicationTest : public testing::Test {
 
 protected:
 
@@ -40,12 +40,12 @@ protected:
 
     Application app_;
 
-    AppTest() : angles_ {defaultAngles(num_angles_)}, 
+    ApplicationTest() : angles_ {defaultAngles(num_angles_)}, 
                 pixel_size_ {1.0f, 1.0f}, 
                 app_ {buffer_size_, threads_} {
     }
 
-    ~AppTest() override = default;
+    ~ApplicationTest() override = default;
 
     void SetUp() override { 
         app_.init(num_rows_, num_cols_, num_angles_, num_darks_, num_flats_);
@@ -104,7 +104,7 @@ protected:
     }
 };
 
-TEST_F(AppTest, TestPushProjectionException) {
+TEST_F(ApplicationTest, TestPushProjectionException) {
     std::vector<RawDtype> img(pixels_);
     // undefined behaviors
     app_.pushProjection(ProjectionType::dark, 0, num_rows_ + 1, num_cols_, 
@@ -113,7 +113,7 @@ TEST_F(AppTest, TestPushProjectionException) {
                         reinterpret_cast<char*>(img.data()));
 }
 
-TEST_F(AppTest, TestPushProjection) {
+TEST_F(ApplicationTest, TestPushProjection) {
     pushDarks(num_darks_);
     pushFlats(num_flats_);
 
@@ -143,7 +143,7 @@ TEST_F(AppTest, TestPushProjection) {
                                             -0.028346f, -0.080572f, -0.066762f, -0.086848f, 0.262528f}));
 }
 
-TEST_F(AppTest, TestMemoryBufferReset) {
+TEST_F(ApplicationTest, TestMemoryBufferReset) {
     pushDarks(num_darks_);
     pushFlats(num_flats_);
     pushProjection(0, 1);
@@ -157,7 +157,7 @@ TEST_F(AppTest, TestMemoryBufferReset) {
     EXPECT_EQ(app_.rawBuffer().occupied(), 1);
 }
 
-TEST_F(AppTest, TestPushProjectionUnordered) {
+TEST_F(ApplicationTest, TestPushProjectionUnordered) {
     pushDarks(num_darks_);
     pushFlats(num_flats_);
 
@@ -194,16 +194,16 @@ TEST_F(AppTest, TestPushProjectionUnordered) {
     pushProjection(0, 1);
 }
 
-TEST_F(AppTest, TestUploading) {
+TEST_F(ApplicationTest, TestUploading) {
     app_.startUploading();
 }
 
-TEST_F(AppTest, TestReconstructing) {
+TEST_F(ApplicationTest, TestReconstructing) {
     app_.startUploading();
     app_.startReconstructing();
 }
 
-TEST_F(AppTest, TestWithPagagin) {
+TEST_F(ApplicationTest, TestWithPagagin) {
     float pixel_size = 1.0f;
     float lambda = 1.23984193e-9f;
     float delta = 1.e-8f;
