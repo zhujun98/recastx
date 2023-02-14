@@ -24,6 +24,15 @@ std::pair<float, float> parseReconstructedVolumeBoundary(
     return {min_v, max_v};
 }
 
+std::pair<size_t, size_t> parseDownsampleFactor(
+        const po::variable_value& downsample_row, 
+        const po::variable_value& downsample_col, 
+        const po::variable_value& downsample) {
+    size_t row = downsample_row.empty() ? downsample.as<size_t>() : downsample_row.as<size_t>();
+    size_t col = downsample_col.empty() ? downsample.as<size_t>() : downsample_col.as<size_t>();
+    return {row, col};
+}
+
 int main(int argc, char** argv) {
 
     spdlog::set_pattern("[%Y-%m-%d %T.%e] [%^%l%$] %v");
@@ -62,8 +71,13 @@ int main(int argc, char** argv) {
          "detector width in pixels")
         ("rows", po::value<size_t>()->default_value(1200),
          "detector height in pixels")
-        ("downsample-col", po::value<size_t>()->default_value(1))
-        ("downsample-row", po::value<size_t>()->default_value(1))
+        ("downsample", po::value<size_t>()->default_value(1),
+         "downsampling factor along both the row and the column. It will be "
+         "overwirtten if 'downsample-col' or 'downsample-row' is given")
+        ("downsample-col", po::value<size_t>(),
+         "downsampling factor along the column")
+        ("downsample-row", po::value<size_t>(),
+         "downsampling factor along the row")
         ("angles", po::value<size_t>()->default_value(128),
          "number of projections per scan")
         ("minx", po::value<float>(),
@@ -146,10 +160,10 @@ int main(int argc, char** argv) {
     auto gui_port2 = opts["gui-port2"].as<int>();
     if (gui_port2 == gui_port) gui_port2 += 1;
 
-    auto downsample_col = opts["downsample-col"].as<size_t>();
-    auto downsample_row = opts["downsample-row"].as<size_t>();
-    auto num_cols = opts["cols"].as<size_t>() / downsample_col;
+    auto [downsample_row, downsample_col] = parseDownsampleFactor(
+        opts["downsample-row"], opts["downsample-col"], opts["downsample"]);
     auto num_rows = opts["rows"].as<size_t>() / downsample_row;
+    auto num_cols = opts["cols"].as<size_t>() / downsample_col;
     auto num_angles = opts["angles"].as<size_t>();
     auto [min_x, max_x] = parseReconstructedVolumeBoundary(opts["minx"], opts["maxx"], num_cols);
     auto [min_y, max_y] = parseReconstructedVolumeBoundary(opts["miny"], opts["maxy"], num_cols);
