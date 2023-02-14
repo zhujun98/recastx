@@ -38,11 +38,14 @@ protected:
     const std::vector<float> angles_;
     const std::array<float, 2> pixel_size_;
 
+    const DaqClientConfig client_cfg {"localhost", 12345, "pull"};
+    const ZmqServerConfig server_cfg {12346, 12347};
+
     Application app_;
 
     ApplicationTest() : angles_ {defaultAngles(num_angles_)}, 
                 pixel_size_ {1.0f, 1.0f}, 
-                app_ {buffer_size_, threads_} {
+                app_ {buffer_size_, threads_, client_cfg, server_cfg} {
     }
 
     ~ApplicationTest() override = default;

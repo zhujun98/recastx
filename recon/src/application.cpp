@@ -18,8 +18,16 @@ namespace tomcat::recon {
 
 using namespace std::string_literals;
 
-Application::Application(size_t raw_buffer_size, int num_threads)
-     : raw_buffer_(raw_buffer_size), num_threads_(num_threads) {}
+Application::Application(size_t raw_buffer_size, int num_threads, 
+                         const DaqClientConfig& client_config, 
+                         const ZmqServerConfig& server_config)
+     : raw_buffer_(raw_buffer_size), 
+       num_threads_(num_threads),
+       daq_client_("tcp://"s + client_config.hostname + ":"s + std::to_string(client_config.port),
+                   client_config.socket_type,
+                   this),
+       data_server_(server_config.data_port, this),
+       msg_server_(server_config.message_port, this) {}
 
 Application::~Application() = default;
 
@@ -74,17 +82,6 @@ void Application::initReconstructor(bool cone_beam,
     } else {
         recon_ = std::make_unique<ParallelBeamReconstructor>(proj_geom, slice_geom, preview_geom);
     }
-}
-
-void Application::initConnection(const DaqClientConfig& client_config, 
-                                 const ZmqServerConfig& server_config) {
-    daq_client_ = std::make_unique<DaqClient>(
-        "tcp://"s + client_config.hostname + ":"s + std::to_string(client_config.port),
-        client_config.socket_type,
-        this);
-
-    zmq_server_ = std::make_unique<ZmqServer>(
-        server_config.data_port, server_config.message_port, this);
 }
 
 void Application::startPreprocessing() {
@@ -180,8 +177,9 @@ void Application::runForEver() {
     startUploading();
     startReconstructing();
 
-    daq_client_->start();
-    zmq_server_->start();
+    daq_client_.start();
+    data_server_.start();
+    msg_server_.start();
 
     // TODO: start the event loop in the main thread
     while (true) {

@@ -8,63 +8,29 @@ namespace tomcat::recon {
 
 using namespace std::string_literals;
 
-ZmqServer::ZmqServer(int data_port, int message_port, Application* app)
-    : context_(1), 
-      data_socket_(context_, ZMQ_REP),
-      cmd_socket_(context_, ZMQ_PAIR),
-      app_(app) {
-    using namespace std::chrono_literals;
+DataServer::DataServer(int port, Application* app)
+    : context_(1), socket_(context_, ZMQ_REP), app_(app) {
 
-    data_socket_.bind("tcp://*:"s + std::to_string(data_port));
-    cmd_socket_.bind("tcp://*:"s + std::to_string(message_port));
+    socket_.bind("tcp://*:"s + std::to_string(port));
 
-    spdlog::info("Waiting for connections from the GUI client. Ports: {}, {}", 
-                 data_port, message_port);
+    spdlog::info("Waiting for connections from the data client: {}", port);
 }
 
-ZmqServer::~ZmqServer() = default; 
+DataServer::~DataServer() = default; 
 
-void ZmqServer::send(const Packet& packet) {
-    
+void DataServer::send(const Packet& packet) {
     zmq::message_t msg;
-    data_socket_.recv(msg, zmq::recv_flags::none);
+    socket_.recv(msg, zmq::recv_flags::none);
     auto request = std::string(static_cast<char*>(msg.data()), msg.size());
     if (request == "ready") {
-        packet.send(data_socket_);
+        packet.send(socket_);
     } else {
         spdlog::warn("Unknown request received: {}", request);
     }
 }
 
-void ZmqServer::start() {
-    cmd_thread_ = std::thread([&] {
-        while (true) {
-            zmq::message_t update;
-            cmd_socket_.recv(update, zmq::recv_flags::none);
-            auto desc = ((PacketDesc*)update.data())[0];
-            auto buffer = tomcat::memory_buffer(update.size(), (char*)update.data());
-
-            spdlog::debug("Received packet with descriptor: 0x{0:x}", 
-                          std::underlying_type<PacketDesc>::type(desc));
-
-            switch (desc) {
-                case PacketDesc::set_slice: {
-                    auto packet = std::make_unique<SetSlicePacket>();
-                    packet->deserialize(std::move(buffer));
-                    app_->setSlice(packet->timestamp, packet->orientation);
-                    break;
-                }
-                default: {
-                    spdlog::warn("Unrecognized packet with descriptor 0x{0:x}", 
-                                 std::underlying_type<PacketDesc>::type(desc));
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                    break;
-                }
-            }
-        }
-    });
-
-    data_thread_ = std::thread([&] {
+void DataServer::start() {
+    thread_ = std::thread([&] {
         while (true) {
             // - Do not block because slice request needs to be responsive
             // - If the number of the logical threads are more than the number of the physical threads, 
@@ -102,8 +68,50 @@ void ZmqServer::start() {
         }
     });
 
-    cmd_thread_.detach();
-    data_thread_.detach();
+    thread_.detach();
+}
+
+
+MessageServer::MessageServer(int port, Application* app)
+    : context_(1), socket_(context_, ZMQ_PAIR), app_(app) {
+    using namespace std::chrono_literals;
+
+    socket_.bind("tcp://*:"s + std::to_string(port));
+
+    spdlog::info("Waiting for the connection from the message client: {}", port);
+}
+
+MessageServer::~MessageServer() = default; 
+
+void MessageServer::start() {
+    thread_ = std::thread([&] {
+        while (true) {
+            zmq::message_t update;
+            socket_.recv(update, zmq::recv_flags::none);
+            auto desc = ((PacketDesc*)update.data())[0];
+            auto buffer = tomcat::memory_buffer(update.size(), (char*)update.data());
+
+            spdlog::debug("Received packet with descriptor: 0x{0:x}", 
+                          std::underlying_type<PacketDesc>::type(desc));
+
+            switch (desc) {
+                case PacketDesc::set_slice: {
+                    auto packet = std::make_unique<SetSlicePacket>();
+                    packet->deserialize(std::move(buffer));
+                    app_->setSlice(packet->timestamp, packet->orientation);
+                    break;
+                }
+                default: {
+                    spdlog::warn("Unrecognized packet with descriptor 0x{0:x}", 
+                                 std::underlying_type<PacketDesc>::type(desc));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                    break;
+                }
+            }
+        }
+    });
+
+    thread_.detach();
 }
 
 } // tomcat::recon
