@@ -1,0 +1,23 @@
+syntax = "proto3";
+package recon;
+
+message SliceDataPacket {
+  int64 timestamp = 1;
+  int32 x = 2;
+  int32 y = 3;
+  bytes data = 4;
+
+}
+
+message VolumeDataPacket {
+  int64 timestamp = 1;
+  int32 x = 2;
+  int32 y = 3;
+  int32 z = 4;
+  bytes data = 5;
+}
+
+message SetSlicePacket {
+  int64 timestamp = 1;
+  repeated float orientation = 2;
+}

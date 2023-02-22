@@ -35,6 +35,8 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 find_package(Boost 1.61 COMPONENTS program_options REQUIRED)
 
+find_package(Protobuf 3.21 REQUIRED)
+
 find_package(spdlog REQUIRED)
 
 add_subdirectory(tomcat)

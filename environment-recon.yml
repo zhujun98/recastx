@@ -13,3 +13,4 @@ dependencies:
   - tbb-devel=2021.7
   - nlohmann_json=3.11.2
   - libastra=2.1.0
+  - libprotobuf=3.21.12

@@ -5,6 +5,7 @@
 #include <spdlog/spdlog.h>
 
 #include "zmq_client.hpp"
+#include "slice.pb.h"
 #include "tomcat/tomcat.hpp"
 
 
