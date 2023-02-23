@@ -1,0 +1,30 @@
+syntax = "proto3";
+package tomcat;
+
+message SliceDataPacket {
+  uint64 timestamp = 1;
+  uint32 x = 2;
+  uint32 y = 3;
+  bytes data = 4;
+
+}
+
+message VolumeDataPacket {
+  uint64 timestamp = 1;
+  uint32 x = 2;
+  uint32 y = 3;
+  uint32 z = 4;
+  bytes data = 5;
+}
+
+message ReconDataPacket {
+  oneof data {
+      VolumeDataPacket volume_data = 1;
+      SliceDataPacket slice_data = 2;
+  }
+}
+
+// message SetSlicePacket {
+//   uint64 timestamp = 1;
+//   repeated float orientation = 2;
+// }

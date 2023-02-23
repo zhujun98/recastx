@@ -3,6 +3,7 @@
 #include "recon/zmq_server.hpp"
 #include "recon/application.hpp"
 
+#include "tomcat/tomcat.hpp"
 
 namespace tomcat::recon {
 
@@ -16,18 +17,7 @@ DataServer::DataServer(int port, Application* app)
     spdlog::info("Waiting for connections from the data client: {}", port);
 }
 
-DataServer::~DataServer() = default; 
-
-void DataServer::send(const Packet& packet) {
-    zmq::message_t msg;
-    socket_.recv(msg, zmq::recv_flags::none);
-    auto request = std::string(static_cast<char*>(msg.data()), msg.size());
-    if (request == "ready") {
-        packet.send(socket_);
-    } else {
-        spdlog::warn("Unknown request received: {}", request);
-    }
-}
+DataServer::~DataServer() = default;
 
 void DataServer::start() {
     thread_ = std::thread([&] {
@@ -40,16 +30,13 @@ void DataServer::start() {
                 auto slice_data = app_->sliceDataPackets(-1);
 
                 std::lock_guard<std::mutex> lck(send_mtx_);
-                send(std::move(preview_data.value()));
 
-                spdlog::debug("Preview data sent");
+                send(preview_data.value());
                 
                 for (const auto& packet : slice_data) {
-                    send(std::move(packet));
-
-                    spdlog::debug("Slice data {} ({}) sent", 
-                                  packet.timestamp % NUM_SLICES, packet.timestamp);
-
+                    send(packet);
+                    auto ts = packet.slice_data().timestamp();
+                    spdlog::debug("Slice data {} ({}) sent", ts % NUM_SLICES, ts);
                 }
             } else {
                 auto slice_data = app_->onDemandSliceDataPackets(10);
@@ -57,11 +44,10 @@ void DataServer::start() {
                 if (!slice_data.empty()) {
                     std::lock_guard<std::mutex> lck(send_mtx_);
                     for (const auto& packet : slice_data) {
-                        send(std::move(packet));
-
+                        send(packet);
+                        auto ts = packet.slice_data().timestamp();
                         spdlog::debug("On-demand slice data {} ({}) sent", 
-                                      packet.timestamp % NUM_SLICES, packet.timestamp);
-
+                                      ts % NUM_SLICES, ts);
                     }
                 }
             }

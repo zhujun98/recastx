@@ -22,6 +22,7 @@ extern "C" {
 #include "slice_mediator.hpp"
 #include "daq_client.hpp"
 #include "zmq_server.hpp"
+#include "reconstruction.pb.h"
 
 
 namespace tomcat::recon {
@@ -113,11 +114,11 @@ public:
 
     void setSlice(size_t timestamp, const Orientation& orientation);
 
-    std::optional<VolumeDataPacket> previewDataPacket(int timeout);
+    std::optional<ReconDataPacket> previewDataPacket(int timeout);
 
-    std::vector<SliceDataPacket> sliceDataPackets(int timeout);
+    std::vector<ReconDataPacket> sliceDataPackets(int timeout);
 
-    std::vector<SliceDataPacket> onDemandSliceDataPackets(int timeout);
+    std::vector<ReconDataPacket> onDemandSliceDataPackets(int timeout);
 
     size_t bufferSize() const;
 
