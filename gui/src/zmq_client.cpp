@@ -5,7 +5,7 @@
 #include <spdlog/spdlog.h>
 
 #include "zmq_client.hpp"
-#include "slice.pb.h"
+#include "reconstruction.pb.h"
 #include "tomcat/tomcat.hpp"
 
 
@@ -39,34 +39,16 @@ void DataClient::start() {
                 break;
             }
 
-            auto desc = ((PacketDesc*)reply.data())[0];
-            auto buffer = tomcat::memory_buffer(reply.size(), (char*)reply.data());
-            switch (desc) {
-                case PacketDesc::slice_data: {
-                    auto packet = std::make_unique<SliceDataPacket>();
-                    packet->deserialize(std::move(buffer));
-                    packets_.push({desc, std::move(packet)});
-                    break;
-                }
-                case PacketDesc::volume_data: {
-                    auto packet = std::make_unique<VolumeDataPacket>();
-                    packet->deserialize(std::move(buffer));
-                    packets_.push({desc, std::move(packet)});
-                    break;
-                }
-                default: {
-                    spdlog::warn("Unknown package descriptor: 0x{0:x}",
-                                 std::underlying_type<PacketDesc>::type(desc));
-                    break;
-                }
-            }
+            ReconDataPacket packet;
+            packet.ParseFromArray(reply.data(), static_cast<int>(reply.size()));
+            packets_.push(std::move(packet));
         }
     });
 
     thread_.detach();
 }
 
-std::queue<PacketDataEvent>& DataClient::packets() { return packets_; }
+std::queue<ReconDataPacket>& DataClient::packets() { return packets_; }
 
 
 MessageClient::MessageClient(const std::string &hostname, int port)

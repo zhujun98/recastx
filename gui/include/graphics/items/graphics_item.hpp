@@ -11,7 +11,7 @@
 #include "graphics/graph_node.hpp"
 #include "input_handler.hpp"
 #include "ticker.hpp"
-#include "tomcat/tomcat.hpp"
+#include "reconstruction.pb.h"
 
 namespace tomcat::gui {
 
@@ -57,7 +57,7 @@ public:
 
     ~GraphicsDataItem() override;
 
-    virtual bool consume(const PacketDataEvent& data) = 0;
+    virtual bool consume(const ReconDataPacket& packet) = 0;
 };
 
 } // tomcat::gui

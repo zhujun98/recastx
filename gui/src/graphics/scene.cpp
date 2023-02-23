@@ -84,13 +84,16 @@ void Scene::tick(double /*time_elapsed*/) {
         auto data = std::move(packets.front());
         packets.pop();
 
-        bool valid = false;
+        bool consumed = false;
         for (auto& item : data_items_) {
-            if (item->consume(data)) valid = true;
+            if (item->consume(data)) {
+                consumed = true;
+                break;
+            };
         }
-        if (!valid) {
-            spdlog::warn("Unknown package descriptor: 0x{0:x}",
-                         std::underlying_type<PacketDesc>::type(data.first));
+
+        if (!consumed) {
+            spdlog::warn("ReconDataPacket ignored!");
         }
     }
 }

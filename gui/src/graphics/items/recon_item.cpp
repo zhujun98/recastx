@@ -216,17 +216,19 @@ void ReconItem::init() {
     }
 }
 
-void ReconItem::setSliceData(std::vector<float>&& data,
+void ReconItem::setSliceData(const std::string& data,
                              const std::array<uint32_t, 2>& size,
-                             int32_t timestamp) {
+                             uint64_t timestamp) {
     size_t sid = timestamp % NUM_SLICES;
     auto& slice = slices_[sid];
     if (slice.first == timestamp) {
         Slice* ptr = slice.second.get();
         if (ptr == dragged_slice_) return;
 
-        // FIXME: replace uint32_t with size_t in Packet
-        ptr->setData(std::move(data), {size[0], size[1]});
+        Slice::DataType slice_data(size[0] * size[1]);
+        std::memcpy(slice_data.data(), data.data(), data.size());
+        assert(data.size() == slice_data.size() * sizeof(Slice::DataType::value_type));
+        ptr->setData(std::move(slice_data), {size[0], size[1]});
         spdlog::info("Set slice data {}", sid);
         maybeUpdateMinMaxValues();
     } else {
@@ -235,30 +237,30 @@ void ReconItem::setSliceData(std::vector<float>&& data,
     }
 }
 
-void ReconItem::setVolumeData(std::vector<float>&& data, const std::array<uint32_t, 3>& size) {
-    // FIXME: replace uint32_t with size_t in Packet
-    volume_->setData(std::move(data), {size[0], size[1], size[2]});
+void ReconItem::setVolumeData(const std::string& data, const std::array<uint32_t, 3>& size) {
+    Volume::DataType volume_data(size[0] * size[1] * size[2]);
+    std::memcpy(volume_data.data(), data.data(), data.size());
+    assert(data.size() == volume_data.size() * sizeof(Volume::DataType::value_type));
+    volume_->setData(std::move(volume_data), {size[0], size[1], size[2]});
     spdlog::info("Set volume data");
     maybeUpdateMinMaxValues();
 }
 
-bool ReconItem::consume(const tomcat::PacketDataEvent &data) {
-    switch (data.first) {
-        case PacketDesc::slice_data: {
-            auto packet = dynamic_cast<SliceDataPacket*>(data.second.get());
-            setSliceData(std::move(packet->data), packet->shape, packet->timestamp);
-            return true;
-        }
-        case PacketDesc::volume_data: {
-            auto packet = dynamic_cast<VolumeDataPacket*>(data.second.get());
-            setVolumeData(std::move(packet->data), packet->shape);
-            fps_counter_.update();
-            return true;
-        }
-        default: {
-            return false;
-        }
+bool ReconItem::consume(const tomcat::ReconDataPacket &packet) {
+    if (packet.has_slice_data()) {
+        auto& data = packet.slice_data();
+        setSliceData(data.data(), {data.x(), data.y()}, data.timestamp());
+        return true;
     }
+
+    if (packet.has_volume_data()) {
+        auto& data = packet.volume_data();
+        setVolumeData(data.data(), {data.x(), data.y(), data.z()});
+        fps_counter_.update();
+        return true;
+    }
+
+    return false;
 }
 
 bool ReconItem::handleMouseButton(int button, int action) {

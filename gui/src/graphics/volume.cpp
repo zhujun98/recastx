@@ -10,12 +10,15 @@ Volume::Volume() : size_({128, 128, 128}) {
 Volume::~Volume() = default;
 
 void Volume::setData(DataType&& data, const SizeType& size) {
-    data_ = data;
+    data_ = std::move(data);
     size_ = size;
 
     updateMinMaxVal();
 
-    texture_.setData(data_, size_[0], size_[1], size_[2]);
+    texture_.setData(data_,
+                     static_cast<int>(size_[0]),
+                     static_cast<int>(size_[1]),
+                     static_cast<int>(size_[2]));
 }
 
 void Volume::bind() const { texture_.bind(); }

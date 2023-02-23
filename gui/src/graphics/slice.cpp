@@ -13,12 +13,12 @@ Slice::~Slice() = default;
 int Slice::id() const { return id_; }
 
 void Slice::setData(DataType&& data, const SizeType& size) {
-    data_ = data;
+    data_ = std::move(data);
     size_ = size;
 
     updateMinMaxVal();
 
-    texture_.setData(data_, size_[0], size_[1]);
+    texture_.setData(data_, static_cast<int>(size_[0]), static_cast<int>(size_[1]));
 }
 
 void Slice::bind() const { texture_.bind(); }
