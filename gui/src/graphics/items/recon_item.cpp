@@ -15,6 +15,7 @@
 #include "graphics/camera3d.hpp"
 #include "graphics/primitives.hpp"
 #include "graphics/style.hpp"
+#include "encoder.hpp"
 
 namespace tomcat::gui {
 
@@ -212,7 +213,7 @@ void ReconItem::renderGl(const glm::mat4& view,
 
 void ReconItem::init() {
     for (auto& slice : slices_) {
-        scene_.send(SetSlicePacket(slice.first, slice.second->orientation3()));
+        scene_.send(createSetSlicePacket(slice.first, slice.second->orientation3()));
     }
 }
 
@@ -287,8 +288,8 @@ bool ReconItem::handleMouseButton(int button, int action) {
     } else if (action == GLFW_RELEASE) {
         if (dragged_slice_ != nullptr) {
             slices_[dragged_slice_->id()].first += NUM_SLICES;
-            auto packet = SetSlicePacket(slices_[dragged_slice_->id()].first,
-                                         dragged_slice_->orientation3());
+            auto packet = createSetSlicePacket(slices_[dragged_slice_->id()].first,
+                                               dragged_slice_->orientation3());
 
             spdlog::debug("Sent slice {} ({}) orientation update request",
                           dragged_slice_->id(), slices_[dragged_slice_->id()].first);

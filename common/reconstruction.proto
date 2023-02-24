@@ -17,12 +17,18 @@ message VolumeDataPacket {
 
 message ReconDataPacket {
   oneof data {
-      VolumeDataPacket volume = 1;
-      SliceDataPacket slice = 2;
+    VolumeDataPacket volume = 1;
+    SliceDataPacket slice = 2;
   }
 }
 
-// message SetSlicePacket {
-//   uint64 timestamp = 1;
-//   repeated float orientation = 2;
-// }
+message SetSlicePacket {
+  uint64 timestamp = 1;
+  repeated float orientation = 2;
+}
+
+message ReconRequestPacket {
+  oneof request {
+    SetSlicePacket set_slice = 1;
+  }
+}

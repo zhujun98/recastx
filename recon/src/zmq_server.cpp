@@ -74,25 +74,21 @@ void MessageServer::start() {
         while (true) {
             zmq::message_t update;
             socket_.recv(update, zmq::recv_flags::none);
-            auto desc = ((PacketDesc*)update.data())[0];
-            auto buffer = tomcat::memory_buffer(update.size(), (char*)update.data());
 
-            spdlog::debug("Received packet with descriptor: 0x{0:x}", 
-                          std::underlying_type<PacketDesc>::type(desc));
+            ReconRequestPacket packet;
+            packet.ParseFromArray(update.data(), static_cast<int>(update.size()));
 
-            switch (desc) {
-                case PacketDesc::set_slice: {
-                    auto packet = std::make_unique<SetSlicePacket>();
-                    packet->deserialize(std::move(buffer));
-                    app_->setSlice(packet->timestamp, packet->orientation);
-                    break;
-                }
-                default: {
-                    spdlog::warn("Unrecognized packet with descriptor 0x{0:x}", 
-                                 std::underlying_type<PacketDesc>::type(desc));
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                    break;
-                }
+            spdlog::debug("Received packet");
+
+            if (packet.has_set_slice()) {
+                auto& request = packet.set_slice();
+                Orientation orient;
+                std::copy(request.orientation().begin(), request.orientation().end(), orient.begin());
+                app_->setSlice(request.timestamp(), orient);
+            } else {
+                spdlog::warn("Unknown or empty packet received");
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                break;
             }
         }
     });

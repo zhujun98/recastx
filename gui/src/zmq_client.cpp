@@ -64,16 +64,14 @@ MessageClient::~MessageClient() {
     socket_.set(zmq::sockopt::linger, 200);
 };
 
-void MessageClient::send(const Packet& packet) {
+void MessageClient::send(const ReconRequestPacket& packet) {
     try {
-        auto size = packet.size();
-        zmq::message_t message(size);
-        auto membuf = packet.serialize(size);
-        memcpy(message.data(), membuf.buffer.get(), size);
-        socket_.send(message, zmq::send_flags::none);
+        std::string encoded;
+        packet.SerializeToString(&encoded);
 
-        spdlog::debug("Published packet: 0x{0:x}",
-                      std::underlying_type<PacketDesc>::type(packet.desc()));
+        socket_.send(zmq::buffer(std::move(encoded)), zmq::send_flags::none);
+
+        spdlog::debug("Published packet");
 
     } catch (const std::exception& e) {
         spdlog::error("Failed publishing packet: {}", e.what());

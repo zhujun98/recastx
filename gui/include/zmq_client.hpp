@@ -45,7 +45,7 @@ public:
 
     ~MessageClient();
 
-    void send(const Packet& packet);
+    void send(const ReconRequestPacket& packet);
 };
 
 }  // namespace tomcat::gui
