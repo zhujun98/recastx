@@ -35,7 +35,7 @@ void DataServer::start() {
                 
                 for (const auto& packet : slice_data) {
                     send(packet);
-                    auto ts = packet.slice_data().timestamp();
+                    auto ts = packet.slice().timestamp();
                     spdlog::debug("Slice data {} ({}) sent", ts % NUM_SLICES, ts);
                 }
             } else {
@@ -45,7 +45,7 @@ void DataServer::start() {
                     std::lock_guard<std::mutex> lck(send_mtx_);
                     for (const auto& packet : slice_data) {
                         send(packet);
-                        auto ts = packet.slice_data().timestamp();
+                        auto ts = packet.slice().timestamp();
                         spdlog::debug("On-demand slice data {} ({}) sent", 
                                       ts % NUM_SLICES, ts);
                     }

@@ -1,3 +1,6 @@
+#ifndef RECON_SLICEMEDIATOR_H
+#define RECON_SLICEMEDIATOR_H
+
 #include <map>
 #include <unordered_set>
 
@@ -47,3 +50,5 @@ public:
 };
 
 } // tomcat::recon
+
+#endif // RECON_SLICEMEDIATOR_H

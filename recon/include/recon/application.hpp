@@ -17,12 +17,12 @@ extern "C" {
 }
 
 #include "tomcat/tomcat.hpp"
-#include "tensor.hpp"
 #include "buffer.hpp"
-#include "slice_mediator.hpp"
 #include "daq_client.hpp"
-#include "zmq_server.hpp"
 #include "reconstruction.pb.h"
+#include "slice_mediator.hpp"
+#include "tensor.hpp"
+#include "zmq_server.hpp"
 
 
 namespace tomcat::recon {

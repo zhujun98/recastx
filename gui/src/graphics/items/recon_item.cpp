@@ -247,15 +247,15 @@ void ReconItem::setVolumeData(const std::string& data, const std::array<uint32_t
 }
 
 bool ReconItem::consume(const tomcat::ReconDataPacket &packet) {
-    if (packet.has_slice_data()) {
-        auto& data = packet.slice_data();
-        setSliceData(data.data(), {data.x(), data.y()}, data.timestamp());
+    if (packet.has_slice()) {
+        auto& data = packet.slice();
+        setSliceData(data.data(), {data.row_count(), data.col_count()}, data.timestamp());
         return true;
     }
 
-    if (packet.has_volume_data()) {
-        auto& data = packet.volume_data();
-        setVolumeData(data.data(), {data.x(), data.y(), data.z()});
+    if (packet.has_volume()) {
+        auto& data = packet.volume();
+        setVolumeData(data.data(), {data.row_count(), data.col_count(), data.slice_count()});
         fps_counter_.update();
         return true;
     }

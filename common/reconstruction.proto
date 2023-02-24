@@ -2,25 +2,23 @@ syntax = "proto3";
 package tomcat;
 
 message SliceDataPacket {
-  uint64 timestamp = 1;
-  uint32 x = 2;
-  uint32 y = 3;
-  bytes data = 4;
-
+  bytes data = 1;
+  uint32 col_count = 2;
+  uint32 row_count = 3;
+  uint64 timestamp = 4;
 }
 
 message VolumeDataPacket {
-  uint64 timestamp = 1;
-  uint32 x = 2;
-  uint32 y = 3;
-  uint32 z = 4;
-  bytes data = 5;
+  bytes data = 1;
+  uint32 col_count = 2;
+  uint32 row_count = 3;
+  uint32 slice_count = 4;
 }
 
 message ReconDataPacket {
   oneof data {
-      VolumeDataPacket volume_data = 1;
-      SliceDataPacket slice_data = 2;
+      VolumeDataPacket volume = 1;
+      SliceDataPacket slice = 2;
   }
 }
 

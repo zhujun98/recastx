@@ -7,12 +7,13 @@ using namespace std::chrono_literals;
 #include <spdlog/spdlog.h>
 
 #include "recon/application.hpp"
-#include "recon/preprocessing.hpp"
 #include "recon/daq_client.hpp"
-#include "recon/zmq_server.hpp"
-#include "recon/phase.hpp"
+#include "recon/encoder.hpp"
 #include "recon/filter.hpp"
+#include "recon/phase.hpp"
+#include "recon/preprocessing.hpp"
 #include "recon/reconstructor.hpp"
+#include "recon/zmq_server.hpp"
 
 namespace tomcat::recon {
 
@@ -248,8 +249,7 @@ void Application::setSlice(size_t timestamp, const Orientation& orientation) {
 std::optional<ReconDataPacket> Application::previewDataPacket(int timeout) { 
     if (preview_buffer_.fetch(timeout)) {
         auto [x, y, z] = preview_buffer_.shape();
-        ReconDataPacket packet;
-        return packet;
+        return createVolumeDataPacket(preview_buffer_.front(), x, y, z);
     }
     return std::nullopt;
 }
@@ -260,8 +260,8 @@ std::vector<ReconDataPacket> Application::sliceDataPackets(int timeout) {
     if (buffer.fetch(timeout)) {
         auto [x, y] = buffer.shape();
         for (auto& slice : buffer.front()) {
-            ret.emplace_back(ReconDataPacket());
-            // ret.emplace_back(SliceDataPacket(std::get<1>(slice), {x, y}, std::get<2>(slice)));
+            ret.emplace_back(createSliceDataPacket(
+                std::get<2>(slice), x, y, std::get<1>(slice)));
         }
     }
 
@@ -275,8 +275,8 @@ std::vector<ReconDataPacket> Application::onDemandSliceDataPackets(int timeout) 
         auto [x, y] = buffer.shape();
         for (auto& slice : buffer.front()) {
             if (std::get<0>(slice)) {
-               ret.emplace_back(ReconDataPacket());
-            //    ret.emplace_back(SliceDataPacket(std::get<1>(slice), {x, y}, std::get<2>(slice)));
+                ret.emplace_back(createSliceDataPacket(
+                    std::get<2>(slice), x, y, std::get<1>(slice)));
             }
         }
     }
