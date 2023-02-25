@@ -43,7 +43,7 @@ target_include_directories(${RECON_LIB}
         PUBLIC
                 ${CMAKE_CURRENT_BINARY_DIR}
                 ${CMAKE_CURRENT_LIST_DIR}/include
-                "../common/include"
+                ${CMAKE_CURRENT_LIST_DIR}/../common/include
         )
 
 target_link_libraries(${RECON_LIB}

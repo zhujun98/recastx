@@ -30,22 +30,40 @@ set(GMOCK_INCLUDE_DIRS "${gmock_SOURCE_DIR}/include")
 
 find_package(Threads REQUIRED)
 
-add_executable(test_recon
-    main.cpp
-    test_buffer.cpp
-    test_tensor.cpp
-    test_filter.cpp
-    test_preprocessing.cpp
-    test_slicemediator.cpp
-    test_application.cpp
-)
+set(UNITTESTS test_buffer.cpp 
+              test_tensor.cpp
+              test_filter.cpp
+              test_preprocessing.cpp
+              test_slicemediator.cpp
+              test_application.cpp
+              )
+
+foreach(filename IN LISTS UNITTESTS)
+    get_filename_component(filename ${filename} NAME)
+    string(REPLACE ".cpp" "" targetname ${filename})
+    add_executable(${targetname} main.cpp ${filename})
+    target_include_directories(${targetname}
+        PRIVATE
+            ${GTEST_INCLUDE_DIRS}
+            ${GMOCK_INCLUDE_DIRS}
+            )
+    target_link_libraries(${targetname}
+        PRIVATE
+            ${RECON_LIB}
+            gtest
+            pthread
+            )
+endforeach()
+
+add_executable(test_recon main.cpp ${UNITTESTS})
 target_include_directories(test_recon
     PRIVATE
-        "../include"
         ${GTEST_INCLUDE_DIRS} 
-        ${GMOCK_INCLUDE_DIRS})
+        ${GMOCK_INCLUDE_DIRS}
+        )
 target_link_libraries(test_recon
     PRIVATE
         ${RECON_LIB}
         gtest
-        pthread)
+        pthread
+    )
