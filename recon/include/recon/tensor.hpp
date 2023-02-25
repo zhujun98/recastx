@@ -68,7 +68,7 @@ public:
     iterator end() { return data_.end(); }
     const_iterator end() const { return data_.end(); }
 
-    const std::array<size_t, N>& shape() { return shape_; }
+    const ShapeType& shape() { return shape_; }
 
     size_t size() const { return data_.size(); }
 };
