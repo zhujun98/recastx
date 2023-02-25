@@ -9,7 +9,7 @@
 #include "recon/application.hpp"
 #include "recon/reconstructor.hpp"
 #include "recon/preprocessing.hpp"
-#include "tomcat/tomcat.hpp"
+#include "common/config.hpp"
 
 namespace po = boost::program_options;
 

@@ -28,7 +28,7 @@ public:
                   const glm::mat4& projection,
                   const RenderParams& params) override;
 
-    bool consume(const PacketDataEvent& data) override;
+    bool consume(const ReconDataPacket& data) override;
 };
 
 }

@@ -4,10 +4,11 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <cstring>
 #include <numeric>
 #include <unordered_set>
 
-#include "tomcat/tomcat.hpp"
+#include "common/config.hpp"
 
 
 namespace tomcat::recon {

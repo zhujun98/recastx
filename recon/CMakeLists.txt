@@ -19,7 +19,7 @@ set_target_properties(
         INTERFACE_COMPILE_DEFINITIONS "ASTRA_CUDA")
 set(ASTRA_INCLUDE_DIR ${CMAKE_PREFIX_PATH}/include)
 
-set(SOURCES
+set(RECON_SOURCES
         "src/utils.cpp"
         "src/filter.cpp"
         "src/phase.cpp"
@@ -30,26 +30,34 @@ set(SOURCES
         "src/application.cpp"
 )
 
+set(PROTOS "${CMAKE_CURRENT_LIST_DIR}/../common/reconstruction.proto")
+protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTOS})
+list(APPEND RECON_SOURCES ${PROTO_SRCS} ${PROTO_HDRS})
+
 set(RECON_LIB lib-tomcat-live-recon)
-add_library(${RECON_LIB} ${SOURCES})
+add_library(${RECON_LIB} ${RECON_SOURCES})
 
 target_include_directories(${RECON_LIB}
         PRIVATE
                 ${ASTRA_INCLUDE_DIR}
         PUBLIC
-                ${CMAKE_CURRENT_LIST_DIR}/include)
+                ${CMAKE_CURRENT_BINARY_DIR}
+                ${CMAKE_CURRENT_LIST_DIR}/include
+                "../common/include"
+        )
 
 target_link_libraries(${RECON_LIB}
-        PUBLIC 
-                tomcat
-                spdlog::spdlog
-                Eigen3::Eigen
-                astra-toolbox
         PRIVATE
                 nlohmann_json::nlohmann_json
                 spdlog::spdlog
                 TBB::tbb
                 ${FFTW_FLOAT_LIB}
+                protobuf::libprotobuf
+        PUBLIC 
+                cppzmq
+                spdlog::spdlog
+                Eigen3::Eigen
+                astra-toolbox
         )
 
 target_compile_options(${RECON_LIB}

@@ -5,7 +5,7 @@
 
 #include <spdlog/spdlog.h>
 
-#include "tomcat/tomcat.hpp"
+#include "common/config.hpp"
 #include "tensor.hpp"
 
 namespace tomcat::recon {

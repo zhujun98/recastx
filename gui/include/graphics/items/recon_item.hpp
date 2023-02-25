@@ -70,7 +70,7 @@ class ReconItem : public GraphicsDataItem {
 
     friend class SliceRotator;
 
-    std::vector<std::pair<int32_t, std::unique_ptr<Slice>>> slices_;
+    std::vector<std::pair<uint64_t, std::unique_ptr<Slice>>> slices_;
     std::unique_ptr<Volume> volume_;
 
     GLuint slice_vao_;
@@ -135,14 +135,14 @@ public:
 
     void init() override;
 
-    void setSliceData(std::vector<float>&& data,
+    void setSliceData(const std::string& data,
                       const std::array<uint32_t, 2>& size,
-                      int slice_idx);
+                      uint64_t timestamp);
 
-    void setVolumeData(std::vector<float>&& data,
+    void setVolumeData(const std::string& data,
                        const std::array<uint32_t, 3>& volume_size);
 
-    bool consume(const PacketDataEvent& data) override;
+    bool consume(const ReconDataPacket& packet) override;
 
     bool handleMouseButton(int button, int action) override;
 

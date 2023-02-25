@@ -8,8 +8,6 @@
 
 #include <zmq.hpp>
 
-#include "tomcat/tomcat.hpp"
-
 
 namespace tomcat::recon {
 
@@ -32,10 +30,26 @@ public:
 
     ~DataServer();
 
-    void send(const tomcat::Packet& packet);
+    template<typename T>
+    void send(const T& data);
 
     void start();
 };
+
+template<typename T>
+void DataServer::send(const T& packet) {
+    std::string encoded;
+    packet.SerializeToString(&encoded);
+
+    zmq::message_t msg;
+    socket_.recv(msg, zmq::recv_flags::none);
+    auto request = std::string(static_cast<char*>(msg.data()), msg.size());
+    if (request == "ready") {
+        socket_.send(zmq::buffer(std::move(encoded)), zmq::send_flags::none);
+    } else {
+        spdlog::warn("Unknown request received: {}", request);
+    }
+}
 
 
 class MessageServer {

@@ -8,13 +8,14 @@
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 #include <implot.h>
-#include <tomcat/tomcat.hpp>
+#include "common/config.hpp"
 
 #include "graphics/items/recon_item.hpp"
 #include "graphics/aesthetics.hpp"
 #include "graphics/camera3d.hpp"
 #include "graphics/primitives.hpp"
 #include "graphics/style.hpp"
+#include "encoder.hpp"
 
 namespace tomcat::gui {
 
@@ -212,21 +213,23 @@ void ReconItem::renderGl(const glm::mat4& view,
 
 void ReconItem::init() {
     for (auto& slice : slices_) {
-        scene_.send(SetSlicePacket(slice.first, slice.second->orientation3()));
+        scene_.send(createSetSlicePacket(slice.first, slice.second->orientation3()));
     }
 }
 
-void ReconItem::setSliceData(std::vector<float>&& data,
+void ReconItem::setSliceData(const std::string& data,
                              const std::array<uint32_t, 2>& size,
-                             int32_t timestamp) {
+                             uint64_t timestamp) {
     size_t sid = timestamp % NUM_SLICES;
     auto& slice = slices_[sid];
     if (slice.first == timestamp) {
         Slice* ptr = slice.second.get();
         if (ptr == dragged_slice_) return;
 
-        // FIXME: replace uint32_t with size_t in Packet
-        ptr->setData(std::move(data), {size[0], size[1]});
+        Slice::DataType slice_data(size[0] * size[1]);
+        std::memcpy(slice_data.data(), data.data(), data.size());
+        assert(data.size() == slice_data.size() * sizeof(Slice::DataType::value_type));
+        ptr->setData(std::move(slice_data), {size[0], size[1]});
         spdlog::info("Set slice data {}", sid);
         maybeUpdateMinMaxValues();
     } else {
@@ -235,30 +238,30 @@ void ReconItem::setSliceData(std::vector<float>&& data,
     }
 }
 
-void ReconItem::setVolumeData(std::vector<float>&& data, const std::array<uint32_t, 3>& size) {
-    // FIXME: replace uint32_t with size_t in Packet
-    volume_->setData(std::move(data), {size[0], size[1], size[2]});
+void ReconItem::setVolumeData(const std::string& data, const std::array<uint32_t, 3>& size) {
+    Volume::DataType volume_data(size[0] * size[1] * size[2]);
+    std::memcpy(volume_data.data(), data.data(), data.size());
+    assert(data.size() == volume_data.size() * sizeof(Volume::DataType::value_type));
+    volume_->setData(std::move(volume_data), {size[0], size[1], size[2]});
     spdlog::info("Set volume data");
     maybeUpdateMinMaxValues();
 }
 
-bool ReconItem::consume(const tomcat::PacketDataEvent &data) {
-    switch (data.first) {
-        case PacketDesc::slice_data: {
-            auto packet = dynamic_cast<SliceDataPacket*>(data.second.get());
-            setSliceData(std::move(packet->data), packet->shape, packet->timestamp);
-            return true;
-        }
-        case PacketDesc::volume_data: {
-            auto packet = dynamic_cast<VolumeDataPacket*>(data.second.get());
-            setVolumeData(std::move(packet->data), packet->shape);
-            fps_counter_.update();
-            return true;
-        }
-        default: {
-            return false;
-        }
+bool ReconItem::consume(const tomcat::ReconDataPacket &packet) {
+    if (packet.has_slice()) {
+        auto& data = packet.slice();
+        setSliceData(data.data(), {data.row_count(), data.col_count()}, data.timestamp());
+        return true;
     }
+
+    if (packet.has_volume()) {
+        auto& data = packet.volume();
+        setVolumeData(data.data(), {data.row_count(), data.col_count(), data.slice_count()});
+        fps_counter_.update();
+        return true;
+    }
+
+    return false;
 }
 
 bool ReconItem::handleMouseButton(int button, int action) {
@@ -285,8 +288,8 @@ bool ReconItem::handleMouseButton(int button, int action) {
     } else if (action == GLFW_RELEASE) {
         if (dragged_slice_ != nullptr) {
             slices_[dragged_slice_->id()].first += NUM_SLICES;
-            auto packet = SetSlicePacket(slices_[dragged_slice_->id()].first,
-                                         dragged_slice_->orientation3());
+            auto packet = createSetSlicePacket(slices_[dragged_slice_->id()].first,
+                                               dragged_slice_->orientation3());
 
             spdlog::debug("Sent slice {} ({}) orientation update request",
                           dragged_slice_->id(), slices_[dragged_slice_->id()].first);

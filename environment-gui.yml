@@ -3,9 +3,10 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - cmake>=3.16
+  - cmake>=3.24
   - boost=1.80.0
   - spdlog=1.9.2
   - cppzmq=4.8.1
   - eigen=3.4.0
   - freetype=2.12.1
+  - libprotobuf=3.21.10

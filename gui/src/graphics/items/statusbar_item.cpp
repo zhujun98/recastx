@@ -51,7 +51,7 @@ void StatusbarItem::renderGl(const glm::mat4& /*view*/,
                              const glm::mat4& /*projection*/,
                              const RenderParams& /*params*/) {}
 
-bool StatusbarItem::consume(const tomcat::PacketDataEvent& /*data*/) {
+bool StatusbarItem::consume(const tomcat::ReconDataPacket& /*data*/) {
     return true;
 }
 

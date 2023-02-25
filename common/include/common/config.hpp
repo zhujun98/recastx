@@ -1,18 +1,11 @@
 #ifndef TOMCAT_H
 #define TOMCAT_H
 
-#include "packets.hpp"
-#include "packets/reconstruction_packets.hpp"
-#include "packets/control_packets.hpp"
-
 namespace tomcat {
 
     constexpr size_t NUM_SLICES = 3;
 
-    using PacketDataEvent = std::pair<PacketDesc, std::unique_ptr<Packet>>;
-
     using Orientation = std::array<float, 9>;
-    using SliceData = std::pair<std::array<int32_t, 2>, std::vector<float>>;
 
     enum class ProjectionType : int32_t { dark = 0, flat = 1, projection = 2, unknown = 99 };
 

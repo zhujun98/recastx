@@ -9,7 +9,7 @@
 
 #include <zmq.hpp>
 
-#include "tomcat/tomcat.hpp"
+#include "reconstruction.pb.h"
 
 namespace tomcat::gui {
 
@@ -20,7 +20,7 @@ class DataClient {
     zmq::context_t context_;
     zmq::socket_t socket_;
 
-    inline static std::queue<PacketDataEvent> packets_;
+    inline static std::queue<ReconDataPacket> packets_;
 
 public:
 
@@ -28,7 +28,7 @@ public:
 
     ~DataClient();
 
-    static std::queue<PacketDataEvent>& packets();
+    static std::queue<ReconDataPacket>& packets();
 
     void start();
 };
@@ -44,7 +44,7 @@ public:
 
     ~MessageClient();
 
-    void send(const Packet& packet);
+    void send(const ReconRequestPacket& packet);
 };
 
 }  // namespace tomcat::gui
