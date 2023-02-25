@@ -19,7 +19,7 @@
 #include "astra/ParallelVecProjectionGeometry3D.h"
 #include "astra/VolumeGeometry3D.h"
 
-#include "tomcat/tomcat.hpp"
+#include "common/config.hpp"
 
 namespace tomcat::recon {
 

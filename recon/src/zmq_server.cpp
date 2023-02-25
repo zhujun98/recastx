@@ -3,7 +3,7 @@
 #include "recon/zmq_server.hpp"
 #include "recon/application.hpp"
 
-#include "tomcat/tomcat.hpp"
+#include "common/config.hpp"
 
 namespace tomcat::recon {
 

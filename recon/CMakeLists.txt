@@ -42,7 +42,9 @@ target_include_directories(${RECON_LIB}
                 ${ASTRA_INCLUDE_DIR}
         PUBLIC
                 ${CMAKE_CURRENT_BINARY_DIR}
-                ${CMAKE_CURRENT_LIST_DIR}/include)
+                ${CMAKE_CURRENT_LIST_DIR}/include
+                "../common/include"
+        )
 
 target_link_libraries(${RECON_LIB}
         PRIVATE
@@ -52,7 +54,7 @@ target_link_libraries(${RECON_LIB}
                 ${FFTW_FLOAT_LIB}
                 protobuf::libprotobuf
         PUBLIC 
-                tomcat
+                cppzmq
                 spdlog::spdlog
                 Eigen3::Eigen
                 astra-toolbox

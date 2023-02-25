@@ -9,7 +9,6 @@
 
 #include <zmq.hpp>
 
-#include "tomcat/tomcat.hpp"
 #include "reconstruction.pb.h"
 
 namespace tomcat::gui {

@@ -16,7 +16,7 @@ extern "C" {
 #include <fftw3.h>
 }
 
-#include "tomcat/tomcat.hpp"
+#include "common/config.hpp"
 #include "buffer.hpp"
 #include "daq_client.hpp"
 #include "reconstruction.pb.h"

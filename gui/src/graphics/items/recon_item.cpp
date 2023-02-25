@@ -8,7 +8,7 @@
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 #include <implot.h>
-#include <tomcat/tomcat.hpp>
+#include "common/config.hpp"
 
 #include "graphics/items/recon_item.hpp"
 #include "graphics/aesthetics.hpp"

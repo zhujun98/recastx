@@ -78,6 +78,7 @@ set(TARGET_NAME tomcat-live-gui)
 add_executable(${TARGET_NAME} ${GUI_SOURCES})
 target_include_directories(${TARGET_NAME}
         PRIVATE include
+                "../common/include"
                 ${FREETYPE_INCLUDE_DIRS}
                 ${IMGUI_DIR}
                 ${IMGUI_DIR}/backends
@@ -95,8 +96,8 @@ target_link_libraries(${TARGET_NAME}
                 Eigen3::Eigen
                 Boost::program_options
                 spdlog::spdlog
-                tomcat
                 protobuf::libprotobuf
+                cppzmq
         )
 
 if (NOT APPLE)

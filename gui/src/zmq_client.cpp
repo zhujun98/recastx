@@ -5,8 +5,7 @@
 #include <spdlog/spdlog.h>
 
 #include "zmq_client.hpp"
-#include "reconstruction.pb.h"
-#include "tomcat/tomcat.hpp"
+#include "common/config.hpp"
 
 
 namespace tomcat::gui {

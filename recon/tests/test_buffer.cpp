@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include "tomcat/tomcat.hpp"
+#include "common/config.hpp"
 #include "recon/buffer.hpp"
 
 namespace tomcat::recon::test {
