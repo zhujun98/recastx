@@ -1,5 +1,5 @@
-#ifndef SLICERECON_TENSOR_H
-#define SLICERECON_TENSOR_H
+#ifndef RECON_TENSOR_H
+#define RECON_TENSOR_H
 
 #include <algorithm>
 #include <array>
@@ -220,4 +220,4 @@ using RawImageGroup = ImageGroup<RawDtype>;
 
 } // tomcat::recon
 
-#endif // SLICERECON_TENSOR_H
+#endif // RECON_TENSOR_H

@@ -1,5 +1,5 @@
-#ifndef SLICERECON_BUFFER_H
-#define SLICERECON_BUFFER_H
+#ifndef RECON_BUFFER_H
+#define RECON_BUFFER_H
 
 #include <cassert>
 #include <chrono>
@@ -433,4 +433,4 @@ bool MemoryBuffer<T, N>::fetch(int timeout) {
 
 } // tomcat::recon
 
-#endif // SLICERECON_BUFFER_H
+#endif // RECON_BUFFER_H

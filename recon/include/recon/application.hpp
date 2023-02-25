@@ -1,5 +1,5 @@
-#ifndef SLICERECON_APPLICATION_H
-#define SLICERECON_APPLICATION_H
+#ifndef RECON_APPLICATION_H
+#define RECON_APPLICATION_H
 
 #include <complex>
 #include <condition_variable>
@@ -132,4 +132,4 @@ public:
 
 } // tomcat::recon
 
-#endif // SLICERECON_APPLICATION_H
+#endif // RECON_APPLICATION_H

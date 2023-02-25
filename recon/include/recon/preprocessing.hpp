@@ -1,5 +1,5 @@
-#ifndef SLICERECON_PREPROCESSING_H
-#define SLICERECON_PREPROCESSING_H
+#ifndef RECON_PREPROCESSING_H
+#define RECON_PREPROCESSING_H
 
 #include <vector>
 
@@ -58,4 +58,4 @@ inline std::vector<float> defaultAngles(int n) {
 
 } // tomcat::recon
 
-#endif // SLICERECON_PREPROCESSING_H
+#endif // RECON_PREPROCESSING_H

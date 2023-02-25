@@ -1,5 +1,5 @@
-#ifndef SLICERECON_FILTER_H
-#define SLICERECON_FILTER_H
+#ifndef RECON_FILTER_H
+#define RECON_FILTER_H
 
 #include <complex>
 #include <vector>
@@ -45,4 +45,4 @@ class Filter {
 
 } // tomcat::recon
 
-#endif // SLICERECON_FILTER_H
+#endif // RECON_FILTER_H
