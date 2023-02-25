@@ -31,26 +31,53 @@ public:
     using iterator = typename std::vector<T>::iterator;
     using const_iterator = typename std::vector<T>::const_iterator;
 
-    Tensor() = default;
-    explicit Tensor(const ShapeType& shape);
+    Tensor() {
+        shape_.fill(0);
+    };
+
+    explicit Tensor(const ShapeType& shape)
+        : shape_(shape), 
+          data_(std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>())) {}
+;
 
     virtual ~Tensor() = default; 
 
     Tensor(const Tensor& other) = default;
     Tensor& operator=(const Tensor& other) = default;
 
-    Tensor(Tensor&& other) = default;
-    Tensor& operator=(Tensor&& other) = default;
+    Tensor(Tensor&& other) noexcept
+            : shape_(other.shape_), data_(std::move(other.data_)) {
+        other.shape_.fill(0);
+    }
 
-    Tensor& operator=(std::initializer_list<T> ilist); 
+    Tensor& operator=(Tensor&& other) noexcept {
+        shape_ = other.shape_;
+        data_.swap(other.data_);
+        other.shape_.fill(0);
+        other.data_.clear();
+        other.data_.shrink_to_fit();
+        return *this;
+    }
 
-    void resize(const ShapeType& shape);
+    virtual Tensor& operator=(std::initializer_list<T> ilist) {
+        std::copy(ilist.begin(), ilist.end(), data_.begin());
+        return *this;
+    } 
 
-    void resize(const ShapeType& shape, T value);
+    void reshape(const ShapeType& shape) {
+        data_.resize(std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>()));
+        shape_ = shape;
+    }
 
+    void reshape(const ShapeType& shape, T value) {
+        data_.resize(std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>()), value);
+    }
+
+    // FIXME: specialize for N == 1
     template<typename R = T>
     void average(Tensor<R, N-1>& out) const;
 
+    // FIXME: specialize for N == 1
     template<typename R = T>
     Tensor<R, N-1> average() const;
 
@@ -72,28 +99,6 @@ public:
 
     size_t size() const { return data_.size(); }
 };
-
-template<typename T, size_t N>
-Tensor<T, N>::Tensor(const ShapeType& shape)
-    : shape_(shape), 
-      data_(std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>())) {}
-
-template<typename T, size_t N>
-Tensor<T, N>& Tensor<T, N>::operator=(std::initializer_list<T> ilist) {
-    data_ = ilist;
-    return *this;
-}
-
-template<typename T, size_t N>
-void Tensor<T, N>::resize(const ShapeType& shape) {
-    data_.resize(std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>()));
-    shape_ = shape;
-}
-
-template<typename T, size_t N>
-void Tensor<T, N>::resize(const ShapeType& shape, T value) {
-    data_.resize(std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>()), value);
-}
 
 template<typename T, size_t N>
 template<typename R>
@@ -162,17 +167,30 @@ private:
 public:
 
     ImageGroup() = default;
-    explicit ImageGroup(const ShapeType& shape);
+    explicit ImageGroup(const ShapeType& shape) : Tensor<T, 3>(shape) {};
 
     ~ImageGroup() override = default; 
 
     ImageGroup(const ImageGroup& other) = default;
     ImageGroup& operator=(const ImageGroup& other) = default;
 
-    ImageGroup(ImageGroup&& other) = default;
-    ImageGroup& operator=(ImageGroup&& other) = default;
+    ImageGroup(ImageGroup&& other)
+             : Tensor<T, 3>(std::move(other)), count_(other.count_) {
+        other.count_ = 0;
+    }
 
-    using Tensor<T, 3>::operator=;
+    ImageGroup& operator=(ImageGroup&& other) {
+        Tensor<T, 3>::operator=(std::move(other));
+        count_ = other.count_;
+        other.count_ = 0;
+        return *this;
+    }
+
+    ImageGroup& operator=(std::initializer_list<T> ilist) override {
+        Tensor<T, 3>::operator=(ilist);
+        count_ = this->shape_[0];
+        return *this;
+    }
 
     size_t push(const char* buffer);
     size_t push(const char* buffer, 
@@ -186,9 +204,6 @@ public:
     bool empty() const { return count_ == 0; }
 
 };
-
-template<typename T>
-ImageGroup<T>::ImageGroup(const ShapeType& shape) : Tensor<T, 3>(shape) {}
 
 template<typename T>
 size_t ImageGroup<T>::push(const char* buffer) {

@@ -41,10 +41,10 @@ void Application::init(size_t num_rows, size_t num_cols, size_t num_angles,
     downsample_row_ = downsample_row;
     downsample_col_ = downsample_col;
 
-    darks_.resize({num_darks, num_rows_, num_cols_});
-    flats_.resize({num_flats, num_rows_, num_cols_});
-    dark_avg_.resize({num_rows_, num_cols_});
-    reciprocal_.resize({num_rows_, num_cols_});
+    darks_.reshape({num_darks, num_rows_, num_cols_});
+    flats_.reshape({num_flats, num_rows_, num_cols_});
+    dark_avg_.reshape({num_rows_, num_cols_});
+    reciprocal_.reshape({num_rows_, num_cols_});
 
     raw_buffer_.resize({num_angles, num_rows_, num_cols_});
     sino_buffer_.resize({num_angles, num_rows_, num_cols_});
