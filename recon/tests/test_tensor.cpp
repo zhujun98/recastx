@@ -9,21 +9,77 @@ namespace tomcat::recon::test {
 
 using ::testing::ElementsAre;
 
-TEST(TestTensor, TestGeneral) {
-    Tensor<float, 2> t2({3, 2});
-    std::fill(t2.begin(), t2.begin() + 3, 1);
-    std::fill(t2.begin() + 3, t2.end(), 2);
-    EXPECT_THAT(t2, ElementsAre(1, 1, 1, 2, 2, 2));
-    ASSERT_THAT(t2.shape(), ElementsAre(3, 2));
-    ASSERT_EQ(t2.size(), 6);
+TEST(TestTensor, TestConstructor) {
+    {
+        Tensor<float, 1> t1f({3});
+        EXPECT_THAT(t1f.shape(), ElementsAre(3));
+        EXPECT_EQ(t1f.size(), 3);
+    }
+    {
+        Tensor<float, 2> t2f({3, 2});
+        EXPECT_THAT(t2f.shape(), ElementsAre(3, 2));
+        EXPECT_EQ(t2f.size(), 6);
 
-    t2.resize({1, 4});
-    EXPECT_THAT(t2, ElementsAre(1, 1, 1, 2));
-    ASSERT_THAT(t2.shape(), ElementsAre(1, 4));
-    ASSERT_EQ(t2.size(), 4);
+        t2f = {1, 1, 1, 2, 2, 2};
 
-    t2.resize({2, 3}, 6);
-    EXPECT_THAT(t2, ElementsAre(1, 1, 1, 2, 6, 6));
+        Tensor<float, 2> t2f_c(t2f);
+        ASSERT_THAT(t2f_c.shape(), ElementsAre(3, 2));
+        EXPECT_THAT(t2f_c, ElementsAre(1, 1, 1, 2, 2, 2));
+
+        Tensor<float, 2> t2f_c2;
+        t2f_c2 = t2f;
+        ASSERT_THAT(t2f_c2.shape(), ElementsAre(3, 2));
+        EXPECT_THAT(t2f_c2, ElementsAre(1, 1, 1, 2, 2, 2));
+
+        Tensor<float, 2> t2f_m(std::move(t2f));
+        ASSERT_THAT(t2f_m.shape(), ElementsAre(3, 2));
+        EXPECT_THAT(t2f_m, ElementsAre(1, 1, 1, 2, 2, 2));
+        ASSERT_THAT(t2f.shape(), ElementsAre(0, 0));
+        EXPECT_THAT(t2f, ElementsAre());
+
+        Tensor<float, 2> t2f_m2(t2f_m);
+        t2f_m2 = std::move(t2f_m);
+        ASSERT_THAT(t2f_m2.shape(), ElementsAre(3, 2));
+        EXPECT_THAT(t2f_m2, ElementsAre(1, 1, 1, 2, 2, 2));
+        ASSERT_THAT(t2f_m.shape(), ElementsAre(0, 0));
+        EXPECT_THAT(t2f_m, ElementsAre());
+    }
+}
+
+TEST(TestTensor, TestAssignment) {
+    {
+        Tensor<float, 1> t1f({3});
+        t1f = {1, 2, 3};
+        EXPECT_THAT(t1f, ElementsAre(1, 2, 3));
+    }
+    {
+        Tensor<float, 2> t2f({3, 2});
+        t2f = {1, 1, 1, 2, 2, 2};
+        EXPECT_THAT(t2f, ElementsAre(1, 1, 1, 2, 2, 2));
+        EXPECT_THAT(t2f.shape(), ElementsAre(3, 2));
+
+        // t2f = {1, 1, 1, 2, 2, 2, 2}; // segfault
+
+        t2f = {1, 1, 1, 3, 3};
+        EXPECT_THAT(t2f, ElementsAre(1, 1, 1, 3, 3, 2));
+    }
+    {
+        Tensor<float, 2> t2f;
+        EXPECT_THAT(t2f.shape(), ElementsAre(0, 0));
+        // t2f = {1, 2, 3}; // segfault because shape is (0, 0)
+    }
+}
+
+TEST(TensorTest, TestReshape) {
+    Tensor<float, 2> t2f({3, 2});
+    t2f = {1, 1, 1, 2, 2, 2};
+    t2f.reshape({1, 4});
+    EXPECT_THAT(t2f, ElementsAre(1, 1, 1, 2));
+    ASSERT_THAT(t2f.shape(), ElementsAre(1, 4));
+    ASSERT_EQ(t2f.size(), 4);
+
+    t2f.reshape({2, 3}, 6);
+    EXPECT_THAT(t2f, ElementsAre(1, 1, 1, 2, 6, 6));
 }
 
 TEST(TestTensor, TestAverage) {
@@ -39,13 +95,27 @@ TEST(TestTensor, TestAverage) {
     EXPECT_THAT(ret3, ElementsAre(1.5, 1.5, 1.5, 1.5, 1.5, 1.5));
 }
 
-TEST(TestImageGroup, TestGeneral) {
-    RawImageGroup g1({2, 3, 1});
+TEST(TestImageGroup, TestConstructor) {
+    RawImageGroup g1({1, 3, 2});
     ASSERT_TRUE(g1.empty());
     ASSERT_FALSE(g1.full());
 
     g1 = {1, 1, 1, 1, 1, 1};
     EXPECT_THAT(g1, ElementsAre(1, 1, 1, 1, 1, 1));
+    ASSERT_TRUE(g1.full());
+
+    RawImageGroup g1_m(std::move(g1));
+    EXPECT_THAT(g1_m, ElementsAre(1, 1, 1, 1, 1, 1));
+    ASSERT_TRUE(g1_m.full());
+    EXPECT_THAT(g1, ElementsAre());
+    ASSERT_TRUE(g1.empty());
+
+    RawImageGroup g1_m2(g1_m);
+    g1_m2 = std::move(g1_m);
+    EXPECT_THAT(g1_m2, ElementsAre(1, 1, 1, 1, 1, 1));
+    ASSERT_TRUE(g1_m2.full());
+    EXPECT_THAT(g1_m, ElementsAre());
+    ASSERT_TRUE(g1_m.empty());  
 }
 
 TEST(TestImageGroup, TestPushToRaw) {
@@ -81,6 +151,7 @@ TEST(TestImageGroup, TestPushToRaw) {
                                     3, 3, 3, 3, 3, 3));
     }
 
+    // test reset
     g1.reset();
     ASSERT_TRUE(g1.empty());
     ASSERT_FALSE(g1.full());
