@@ -1,5 +1,5 @@
-#ifndef SLICERECON_UTILS_H
-#define SLICERECON_UTILS_H
+#ifndef RECON_UTILS_H
+#define RECON_UTILS_H
 
 #include <memory>
 #include <numeric>
@@ -44,4 +44,4 @@ slice_transform(Eigen::Vector3f base, Eigen::Vector3f axis_1,
 
 } // tomcat::recon::utils
 
-#endif // SLICERECON_UTILS_H
+#endif // RECON_UTILS_H

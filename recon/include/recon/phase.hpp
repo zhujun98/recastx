@@ -1,5 +1,5 @@
-#ifndef SLICERECON_PHASE_H
-#define SLICERECON_PHASE_H
+#ifndef RECON_PHASE_H
+#define RECON_PHASE_H
 
 #include <complex>
 #include <vector>
@@ -39,4 +39,4 @@ class Paganin {
 
 } // tomcat::recon
 
-#endif // SLICERECON_PHASE_H
+#endif // RECON_PHASE_H

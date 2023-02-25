@@ -1,5 +1,5 @@
-#ifndef SLICERECON_ZMQSERVER_H
-#define SLICERECON_ZMQSERVER_H
+#ifndef RECON_ZMQSERVER_H
+#define RECON_ZMQSERVER_H
 
 #include <array>
 #include <mutex>
@@ -73,4 +73,4 @@ public:
 
 } // tomcat::recon
 
-#endif // SLICERECON_ZMQSERVER_H
+#endif // RECON_ZMQSERVER_H

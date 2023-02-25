@@ -1,5 +1,5 @@
-#ifndef SLICERECON_TENSOR_H
-#define SLICERECON_TENSOR_H
+#ifndef RECON_TENSOR_H
+#define RECON_TENSOR_H
 
 #include <algorithm>
 #include <array>
@@ -68,7 +68,7 @@ public:
     iterator end() { return data_.end(); }
     const_iterator end() const { return data_.end(); }
 
-    const std::array<size_t, N>& shape() { return shape_; }
+    const ShapeType& shape() { return shape_; }
 
     size_t size() const { return data_.size(); }
 };
@@ -220,4 +220,4 @@ using RawImageGroup = ImageGroup<RawDtype>;
 
 } // tomcat::recon
 
-#endif // SLICERECON_TENSOR_H
+#endif // RECON_TENSOR_H

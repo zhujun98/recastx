@@ -1,5 +1,5 @@
-#ifndef SLICERECON_RECONSTRUCTOR_H
-#define SLICERECON_RECONSTRUCTOR_H
+#ifndef RECON_RECONSTRUCTOR_H
+#define RECON_RECONSTRUCTOR_H
 
 #include <memory>
 #include <variant>
@@ -105,4 +105,4 @@ public:
 
 } // tomcat::recon
 
-#endif // SLICERECON_RECONSTRUCTOR_H
+#endif // RECON_RECONSTRUCTOR_H
