@@ -3,7 +3,7 @@
 
 namespace tomcat {
 
-    constexpr size_t NUM_SLICES = 3;
+    constexpr size_t MAX_NUM_SLICES = 3;
 
     using Orientation = std::array<float, 9>;
 

@@ -128,7 +128,7 @@ void ReconItem::renderIm() {
 
         ImGui::Begin("Statistics##ReconItem", NULL, ImGuiWindowFlags_NoDecoration);
 
-        ImPlot::BeginSubplots("##Histograms", 1, NUM_SLICES, ImVec2(-1.f, -1.f));
+        ImPlot::BeginSubplots("##Histograms", 1, MAX_NUM_SLICES, ImVec2(-1.f, -1.f));
         for (auto& slice: slices_) {
             Slice* ptr = slice.second.get();
             const auto &data = ptr->data();
@@ -220,7 +220,7 @@ void ReconItem::init() {
 void ReconItem::setSliceData(const std::string& data,
                              const std::array<uint32_t, 2>& size,
                              uint64_t timestamp) {
-    size_t sid = timestamp % NUM_SLICES;
+    size_t sid = timestamp % MAX_NUM_SLICES;
     auto& slice = slices_[sid];
     if (slice.first == timestamp) {
         Slice* ptr = slice.second.get();
@@ -287,7 +287,7 @@ bool ReconItem::handleMouseButton(int button, int action) {
         }
     } else if (action == GLFW_RELEASE) {
         if (dragged_slice_ != nullptr) {
-            slices_[dragged_slice_->id()].first += NUM_SLICES;
+            slices_[dragged_slice_->id()].first += MAX_NUM_SLICES;
             auto packet = createSetSlicePacket(slices_[dragged_slice_->id()].first,
                                                dragged_slice_->orientation3());
 
@@ -332,7 +332,7 @@ bool ReconItem::handleMouseMoved(float x, float y) {
 }
 
 void ReconItem::initSlices() {
-    for (size_t i = 0; i < NUM_SLICES; ++i) slices_.emplace_back(i, std::make_unique<Slice>(i));
+    for (size_t i = 0; i < MAX_NUM_SLICES; ++i) slices_.emplace_back(i, std::make_unique<Slice>(i));
 
     resetSlices();
 }

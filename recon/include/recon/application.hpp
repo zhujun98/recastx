@@ -50,11 +50,11 @@ class Application {
     ProImageData reciprocal_;
     bool reciprocal_computed_ = false;
 
-    TripleVectorBuffer<ProDtype, 3> sino_buffer_;
+    TripleTensorBuffer<ProDtype, 3> sino_buffer_;
 
     SliceMediator slice_mediator_;
 
-    TripleVectorBuffer<ProDtype, 3> preview_buffer_;
+    TripleTensorBuffer<ProDtype, 3> preview_buffer_;
 
     bool initialized_ = false;
 
@@ -127,7 +127,7 @@ public:
     const RawImageGroup& darks() const { return darks_; }
     const RawImageGroup& flats() const { return flats_; }
     const MemoryBuffer<float, 3>& rawBuffer() const { return raw_buffer_; }
-    const TripleVectorBuffer<float, 3>& sinoBuffer() const { return sino_buffer_; }
+    const TripleTensorBuffer<float, 3>& sinoBuffer() const { return sino_buffer_; }
 };
 
 } // tomcat::recon

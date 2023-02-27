@@ -20,6 +20,7 @@
 #include "astra/VolumeGeometry3D.h"
 
 #include "common/config.hpp"
+#include "tensor.hpp"
 
 namespace tomcat::recon {
 
@@ -55,11 +56,11 @@ public:
 
     virtual ~Reconstructor();
 
-    virtual void reconstructSlice(Orientation x, int buffer_idx, std::vector<float>& slice_buffer) = 0;
+    virtual void reconstructSlice(Orientation x, int buffer_idx, Tensor<float, 2>& buffer) = 0;
 
-    virtual void reconstructPreview(int buffer_idx, std::vector<float>& preview_buffer) = 0;
+    virtual void reconstructPreview(int buffer_idx, Tensor<float, 3>& buffer) = 0;
 
-    void uploadSinograms(int buffer_idx, const std::vector<float>& sino, int begin, int end);
+    void uploadSinograms(int buffer_idx, const float* data, int begin, int end);
 };
 
 class ParallelBeamReconstructor : public Reconstructor {
@@ -76,9 +77,9 @@ public:
                               VolumeGeometry preview_geom);
     // FIXME ~solver clean up
 
-    void reconstructSlice(Orientation x, int buffer_idx, std::vector<float>& slice_buffer) override;
+    void reconstructSlice(Orientation x, int buffer_idx, Tensor<float, 2>& buffer) override;
 
-    void reconstructPreview(int buffer_idx, std::vector<float>& preview_buffer) override;
+    void reconstructPreview(int buffer_idx, Tensor<float, 3>& buffer) override;
 
 };
 
@@ -96,9 +97,9 @@ public:
                           VolumeGeometry preview_geom);
     // FIXME ~solver clean up
 
-    void reconstructSlice(Orientation x, int buffer_idx, std::vector<float>& slice_buffer) override;
+    void reconstructSlice(Orientation x, int buffer_idx, Tensor<float, 2>& buffer) override;
 
-    void reconstructPreview(int buffer_idx, std::vector<float>& preview_buffer) override;
+    void reconstructPreview(int buffer_idx, Tensor<float, 3>& buffer) override;
 
     std::vector<float> fdk_weights();
 };

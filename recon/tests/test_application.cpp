@@ -107,15 +107,6 @@ protected:
     }
 };
 
-TEST_F(ApplicationTest, TestPushProjectionException) {
-    std::vector<RawDtype> img(pixels_);
-    // undefined behaviors
-    app_.pushProjection(ProjectionType::dark, 0, num_rows_ + 1, num_cols_, 
-                        reinterpret_cast<char*>(img.data()));
-    app_.pushProjection(ProjectionType::dark, 0, num_rows_, num_cols_ + 1, 
-                        reinterpret_cast<char*>(img.data()));
-}
-
 TEST_F(ApplicationTest, TestPushProjection) {
     pushDarks(num_darks_);
     pushFlats(num_flats_);

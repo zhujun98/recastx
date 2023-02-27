@@ -4,17 +4,17 @@
 #include <cassert>
 #include <chrono>
 #include <condition_variable>
+#include <map>
 #include <numeric>
 #include <queue>
 #include <thread>
 #include <type_traits>
-#include <unordered_map>
-#include <unordered_set>
 using namespace std::chrono_literals;
 
 #include <spdlog/spdlog.h>
 
 #include "common/config.hpp"
+#include "tensor.hpp"
 
 namespace tomcat::recon {
 
@@ -23,22 +23,23 @@ class TripleBufferInterface {
 
 public:
 
-    using DataType = T;
+    using BufferType = T;
 
 private:
 
     bool is_ready_ = false;
-    std::mutex mtx_;
     std::condition_variable cv_;
 
 protected:
+
+    std::mutex mtx_;
 
     T back_;
     T ready_;
     T front_;
 
     // Something beyond the normal swap might be needed.
-    virtual void swap(T& v1, T& v2) = 0;
+    virtual void swap(BufferType& v1, BufferType& v2) noexcept = 0;
 
 public:
 
@@ -90,104 +91,95 @@ void TripleBufferInterface<T>::prepare() {
 
 
 template<typename T, size_t N>
-class TripleContainerBuffer : public TripleBufferInterface<T> {
+class TripleTensorBuffer : public TripleBufferInterface<Tensor<T, N>> {
 
 public:
 
-    using DataType = T;
-    using ValueType = typename T::value_type;
+    using BufferType = Tensor<T, N>;
+    using ValueType = typename BufferType::ValueType;
+    using ShapeType = typename BufferType::ShapeType;
 
 protected:
 
-    std::array<size_t, N> shape_;
-
-    void swap(T& c1, T& c2) override { c1.swap(c2); }
+    void swap(BufferType& c1, BufferType& c2) noexcept override { c1.swap(c2); }
 
 public:
 
-    TripleContainerBuffer() = default;
-    ~TripleContainerBuffer() override = default;
+    TripleTensorBuffer() = default;
+    ~TripleTensorBuffer() override = default;
 
-    virtual void resize(const std::array<size_t, N>& shape);
-
-    size_t chunkSize() const { return this->back_.size(); }
-
-    const std::array<size_t, N>& shape() const { return shape_; }
+    virtual void reshape(const ShapeType& shape);
 };
 
 template<typename T, size_t N>
-void TripleContainerBuffer<T, N>::resize(const std::array<size_t, N>& shape) {
-    size_t chunk_size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<size_t>());
-
-    this->back_.resize(chunk_size);
-    this->ready_.resize(chunk_size);
-    this->front_.resize(chunk_size);
-
-    shape_ = shape;
+void TripleTensorBuffer<T, N>::reshape(const ShapeType& shape) {
+    std::lock_guard(this->mtx_);
+    this->back_.reshape(shape);
+    this->ready_.reshape(shape);
+    this->front_.reshape(shape);
 }
 
 
-template<typename T, size_t N>
-using TripleVectorBuffer = TripleContainerBuffer<std::vector<T>, N>;
-
-
 template<typename T>
-class SliceBuffer : public TripleBufferInterface<std::vector<std::tuple<bool, size_t, std::vector<T>>>> {
+class SliceBuffer : public TripleBufferInterface<std::map<size_t, std::tuple<bool, size_t, Tensor<T, 2>>>> {
 
 public:
 
-    using DataType = std::vector<std::tuple<bool, size_t, std::vector<T>>>;
-    using ValueType = typename DataType::value_type;
+    using BufferType = std::map<size_t, std::tuple<bool, size_t, Tensor<T, 2>>>;
+    using ValueType = typename BufferType::value_type;
+    using SliceType = Tensor<T, 2>;
+    using ShapeType = typename SliceType::ShapeType;
 
 private:
 
-    std::array<size_t, 2> shape_;
-
     bool on_demand_;
+
+    ShapeType shape_;
 
 protected:
 
-    void swap(DataType& v1, DataType& v2) override {
+    void swap(BufferType& v1, BufferType& v2) noexcept override {
         v1.swap(v2);
         if (on_demand_) {
-            for (auto& v : v2) std::get<0>(v) = false;
+            for ([[maybe_unused]] auto& [k, v] : v2) std::get<0>(v) = false;
         }
     }
 
 public:
 
-    SliceBuffer(size_t capacity, bool on_demand = false);
+    SliceBuffer(bool on_demand = false) : on_demand_(on_demand), shape_{0, 0} {}
     
     ~SliceBuffer() override = default;
 
-    void resize(const std::array<size_t, 2>& shape);
+    bool insert(size_t index);
 
-    size_t capacity() const { return this->back_.size(); }
+    void reshape(const ShapeType& shape);
 
-    size_t chunkSize() const { return std::get<2>(this->back_[0]).size(); }   
+    const ShapeType& shape() const { return shape_; }
 
-    const std::array<size_t, 2>& shape() const { return shape_; }
+    size_t size() const { return this->back_.size(); }
+
+    bool onDemand() const { return on_demand_; }
 };
 
 template<typename T>
-SliceBuffer<T>::SliceBuffer(size_t capacity, bool on_demand) : 
-        TripleBufferInterface<DataType>(), on_demand_(on_demand) {
-    for (size_t i = 0; i < capacity; ++i) {
-        this->back_.emplace_back(!on_demand, 0, std::vector<T>());
-        this->ready_.emplace_back(!on_demand, 0, std::vector<T>());
-        this->front_.emplace_back(!on_demand, 0, std::vector<T>());
-    }
+bool SliceBuffer<T>::insert(size_t index) {
+    std::lock_guard lk(this->mtx_);
+    auto [it1, success1] = this->back_.insert({index, {!on_demand_, 0, SliceType(shape_)}});
+    [[maybe_unused]] auto [it2, success2] = this->ready_.insert({index, {!on_demand_, 0, SliceType(shape_)}});
+    [[maybe_unused]] auto [it3, success3] = this->front_.insert({index, {!on_demand_, 0, SliceType(shape_)}});
+    assert(success1 == success2);
+    assert(success1 == success3);
+    return success1;
 }
 
 template<typename T>
-void SliceBuffer<T>::resize(const std::array<size_t, 2>& shape) {
-    size_t chunk_size = shape[0] * shape[1];
-
-    for (auto& v : this->back_) std::get<2>(v).resize(chunk_size);
-    for (auto& v : this->ready_) std::get<2>(v).resize(chunk_size);
-    for (auto& v : this->front_) std::get<2>(v).resize(chunk_size);
-
-    this->shape_ = shape;
+void SliceBuffer<T>::reshape(const ShapeType& shape) {
+    std::lock_guard lk(this->mtx_);
+    for (auto& [k, v] : this->back_) std::get<2>(v).reshape(shape);
+    for (auto& [k, v] : this->ready_) std::get<2>(v).reshape(shape);
+    for (auto& [k, v] : this->front_) std::get<2>(v).reshape(shape);
+    shape_ = shape;
 }
 
 namespace details {

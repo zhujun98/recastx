@@ -47,7 +47,7 @@ void Application::init(size_t num_rows, size_t num_cols, size_t num_angles,
     reciprocal_.reshape({num_rows_, num_cols_});
 
     raw_buffer_.resize({num_angles, num_rows_, num_cols_});
-    sino_buffer_.resize({num_angles, num_rows_, num_cols_});
+    sino_buffer_.reshape({num_angles, num_rows_, num_cols_});
 
     initialized_ = true;
     spdlog::info("Initial parameters for real-time 3D tomographic reconstruction:");
@@ -76,8 +76,8 @@ void Application::initReconstructor(bool cone_beam,
                                     const ProjectionGeometry& proj_geom,
                                     const VolumeGeometry& slice_geom,
                                     const VolumeGeometry& preview_geom) {
-    preview_buffer_.resize({preview_geom.col_count, preview_geom.row_count, preview_geom.slice_count});
-    slice_mediator_.resize({slice_geom.col_count, slice_geom.row_count});
+    preview_buffer_.reshape({preview_geom.col_count, preview_geom.row_count, preview_geom.slice_count});
+    slice_mediator_.reshape({slice_geom.col_count, slice_geom.row_count});
     if (cone_beam) {
         recon_ = std::make_unique<ConeBeamReconstructor>(proj_geom, slice_geom, preview_geom);
     } else {
@@ -105,7 +105,7 @@ void Application::startUploading() {
 
             spdlog::info("Uploading sinograms to GPU ...");
             recon_->uploadSinograms(
-                1 - gpu_buffer_index_, sino_buffer_.front(), 0, num_angles_ - 1);
+                1 - gpu_buffer_index_, sino_buffer_.front().data(), 0, num_angles_ - 1);
 
             {
                 std::lock_guard<std::mutex> lck(gpu_mutex_);
@@ -124,7 +124,7 @@ void Application::startReconstructing() {
     recon_thread_ = std::thread([&] {
 
 #if (VERBOSITY >= 1)
-        const float data_size = sino_buffer_.shape()[0] * sizeof(RawDtype) / (1024.f * 1024.f); // in MB
+        const float data_size = sino_buffer_.front().shape()[0] * sizeof(RawDtype) / (1024.f * 1024.f); // in MB
         auto start = std::chrono::steady_clock::now();
         size_t count = 0;
         float total_duration = 0.f;
@@ -243,13 +243,14 @@ void Application::pushProjection(
 }
 
 void Application::setSlice(size_t timestamp, const Orientation& orientation) {
-    slice_mediator_.insert(timestamp, orientation);
+    slice_mediator_.update(timestamp, orientation);
 }
 
 std::optional<ReconDataPacket> Application::previewDataPacket(int timeout) { 
     if (preview_buffer_.fetch(timeout)) {
-        auto [x, y, z] = preview_buffer_.shape();
-        return createVolumeDataPacket(preview_buffer_.front(), x, y, z);
+        auto& data = preview_buffer_.front();
+        auto [x, y, z] = data.shape();
+        return createVolumeDataPacket(data, x, y, z);
     }
     return std::nullopt;
 }
@@ -258,13 +259,12 @@ std::vector<ReconDataPacket> Application::sliceDataPackets(int timeout) {
     std::vector<ReconDataPacket> ret;
     auto& buffer = slice_mediator_.allSlices();
     if (buffer.fetch(timeout)) {
-        auto [x, y] = buffer.shape();
-        for (auto& slice : buffer.front()) {
-            ret.emplace_back(createSliceDataPacket(
-                std::get<2>(slice), x, y, std::get<1>(slice)));
+        for (auto& [k, slice] : buffer.front()) {
+            auto& data = std::get<2>(slice);
+            auto [x, y] = data.shape();
+            ret.emplace_back(createSliceDataPacket(data, x, y, std::get<1>(slice)));
         }
     }
-
     return ret;
 }
 
@@ -272,11 +272,11 @@ std::vector<ReconDataPacket> Application::onDemandSliceDataPackets(int timeout) 
     std::vector<ReconDataPacket> ret;
     auto& buffer = slice_mediator_.onDemandSlices();
     if (buffer.fetch(timeout)) {
-        auto [x, y] = buffer.shape();
-        for (auto& slice : buffer.front()) {
+        for (auto& [k, slice] : buffer.front()) {
             if (std::get<0>(slice)) {
-                ret.emplace_back(createSliceDataPacket(
-                    std::get<2>(slice), x, y, std::get<1>(slice)));
+                auto& data = std::get<2>(slice);
+                auto& shape = data.shape();
+                ret.emplace_back(createSliceDataPacket(data, shape[0], shape[1], std::get<1>(slice)));
             }
         }
     }

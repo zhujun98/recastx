@@ -6,20 +6,28 @@
 
 namespace tomcat::recon {
 
-SliceMediator::SliceMediator() : all_slices_(NUM_SLICES), ondemand_slices_(NUM_SLICES, true) {}
+SliceMediator::SliceMediator() : ondemand_slices_(true) {}
 
 SliceMediator::~SliceMediator() = default;
 
-void SliceMediator::resize(const std::array<size_t, 2>& shape) {
-    all_slices_.resize(shape);
-    ondemand_slices_.resize(shape);
+void SliceMediator::reshape(const SliceBufferType::ShapeType& shape) {
+    all_slices_.reshape(shape);
+    ondemand_slices_.reshape(shape);
 }
 
-void SliceMediator::insert(size_t timestamp, const Orientation& orientation) {
+void SliceMediator::update(size_t timestamp, const Orientation& orientation) {
     std::lock_guard<std::mutex> lck(mtx_);
-    size_t sid = timestamp % NUM_SLICES;
-    params_[sid] = std::make_pair(timestamp, orientation);
+    size_t sid = timestamp % MAX_NUM_SLICES;
+    auto [it, inserted] = params_.insert_or_assign(sid, std::make_pair(timestamp, orientation));
+    if (inserted) {
+        [[maybe_unused]] bool success1 = all_slices_.insert(sid);
+        assert(inserted == success1);
+        [[maybe_unused]] bool success2 = ondemand_slices_.insert(sid);
+        assert(inserted == success2);
+    }
     updated_.insert(sid);
+
+    assert(all_slices_.size() <= MAX_NUM_SLICES);
     spdlog::debug("Orientation of slice {} ({}) updated", sid, timestamp);
 }
 
@@ -27,7 +35,6 @@ void SliceMediator::reconAll(Reconstructor* recon, int gpu_buffer_index) {
     {
         std::lock_guard<std::mutex> lck(mtx_);
 
-        assert(params_.size() == NUM_SLICES);
         for (const auto& [sid, param] : params_) {
             auto& slice = all_slices_.back()[sid];
             recon->reconstructSlice(param.second, gpu_buffer_index, std::get<2>(slice));

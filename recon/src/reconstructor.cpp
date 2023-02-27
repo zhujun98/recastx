@@ -69,14 +69,14 @@ Reconstructor::~Reconstructor() {
 }
 
 void Reconstructor::uploadSinograms(int buffer_idx, 
-                                    const std::vector<float>& sino, 
+                                    const float* data,
                                     int begin, 
                                     int end) {
 #if (VERBOSITY >= 2)
     auto start = std::chrono::steady_clock::now();
 #endif
 
-    astra::uploadMultipleProjections(proj_data_[buffer_idx].get(), &sino[0], begin, end);
+    astra::uploadMultipleProjections(proj_data_[buffer_idx].get(), data, begin, end);
 
 #if (VERBOSITY >= 2)
     float duration = std::chrono::duration_cast<std::chrono::microseconds>(
@@ -156,7 +156,7 @@ ParallelBeamReconstructor::ParallelBeamReconstructor(ProjectionGeometry proj_geo
 }
 
 void ParallelBeamReconstructor::reconstructSlice(
-    Orientation x, int buffer_idx, std::vector<float>& slice_buffer) {
+        Orientation x, int buffer_idx, Tensor<float, 2>& buffer) {
 
 #if (VERBOSITY >= 2)
     auto start = std::chrono::steady_clock::now();
@@ -198,7 +198,7 @@ void ParallelBeamReconstructor::reconstructSlice(
 
     unsigned int n = vol_geom_slice_->getGridColCount();
     auto pos = astraCUDA3d::SSubDimensions3D{n, n, 1, n, n, n, 1, 0, 0, 0};
-    astraCUDA3d::copyFromGPUMemory(slice_buffer.data(), vol_mem_slice_, pos);
+    astraCUDA3d::copyFromGPUMemory(buffer.data(), vol_mem_slice_, pos);
 
 #if (VERBOSITY >= 2)
     float duration = std::chrono::duration_cast<std::chrono::microseconds>(
@@ -211,7 +211,7 @@ void ParallelBeamReconstructor::reconstructSlice(
 
 }
 
-void ParallelBeamReconstructor::reconstructPreview(int buffer_idx, std::vector<float>& preview_buffer) {
+void ParallelBeamReconstructor::reconstructPreview(int buffer_idx, Tensor<float, 3>& buffer) {
 
 #if (VERBOSITY >= 2)
     auto start = std::chrono::steady_clock::now();
@@ -222,12 +222,12 @@ void ParallelBeamReconstructor::reconstructPreview(int buffer_idx, std::vector<f
 
     unsigned int n = vol_geom_preview_->getGridRowCount();
     auto pos = astraCUDA3d::SSubDimensions3D{n, n, n, n, n, n, n, 0, 0, 0};
-    astraCUDA3d::copyFromGPUMemory(preview_buffer.data(), vol_mem_preview_, pos);
+    astraCUDA3d::copyFromGPUMemory(buffer.data(), vol_mem_preview_, pos);
 
     float factor = n / (float)proj_geom_preview_->getDetectorColCount();
     // FIXME: why cubic? 
     float scale = factor * factor * factor;
-    for (auto& x : preview_buffer) x *= scale;
+    for (auto& x : buffer) x *= scale;
 
 #if (VERBOSITY >= 2)
     float duration = std::chrono::duration_cast<std::chrono::microseconds>(
@@ -297,8 +297,7 @@ ConeBeamReconstructor::ConeBeamReconstructor(ProjectionGeometry proj_geom,
     }
 }
 
-void ConeBeamReconstructor::reconstructSlice(
-        Orientation x, int buffer_idx, std::vector<float>& slice_buffer) {
+void ConeBeamReconstructor::reconstructSlice(Orientation x, int buffer_idx, Tensor<float, 2>& buffer) {
     auto k = vol_geom_slice_->getWindowMaxX();
 
     auto [delta, rot, scale] = utils::slice_transform(
@@ -336,16 +335,16 @@ void ConeBeamReconstructor::reconstructSlice(
 
     unsigned int n = vol_geom_slice_->getGridColCount();
     auto pos = astraCUDA3d::SSubDimensions3D{n, n, 1, n, n, n, 1, 0, 0, 0};
-    astraCUDA3d::copyFromGPUMemory(slice_buffer.data(), vol_mem_slice_, pos);
+    astraCUDA3d::copyFromGPUMemory(buffer.data(), vol_mem_slice_, pos);
 }
 
-void ConeBeamReconstructor::reconstructPreview(int buffer_idx, std::vector<float>& preview_buffer) {
+void ConeBeamReconstructor::reconstructPreview(int buffer_idx, Tensor<float, 3>& buffer) {
     proj_data_[buffer_idx]->changeGeometry(proj_geom_preview_.get());
     algo_preview_[buffer_idx]->run();
 
     unsigned int n = vol_geom_preview_->getGridColCount();
     auto pos = astraCUDA3d::SSubDimensions3D{n, n, n, n, n, n, n, 0, 0, 0};
-    astraCUDA3d::copyFromGPUMemory(preview_buffer.data(), vol_mem_preview_, pos);
+    astraCUDA3d::copyFromGPUMemory(buffer.data(), vol_mem_preview_, pos);
 }
 
 std::vector<float> ConeBeamReconstructor::fdk_weights() {
