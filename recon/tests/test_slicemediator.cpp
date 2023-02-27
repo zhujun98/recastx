@@ -8,7 +8,9 @@ namespace tomcat::recon::test {
 TEST(SliceMediatorTest, TestUpdate) {
     SliceMediator mediator;
     auto& all = mediator.allSlices();
+    ASSERT_FALSE(all.onDemand());
     auto& on_demand = mediator.onDemandSlices();
+    ASSERT_TRUE(on_demand.onDemand());
     auto& params = mediator.params();
 
     ASSERT_EQ(all.size(), 0);

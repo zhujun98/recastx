@@ -47,6 +47,8 @@ TEST(TripleTensorBufferTest, TestPrepareAndFetch) {
 
 TEST(SliceBufferTest, TestNonOnDemand) {
     SliceBuffer<float> sbf;
+    ASSERT_FALSE(sbf.onDemand());
+
     sbf.insert(1);
     ASSERT_EQ(sbf.size(), 1);
     std::array<size_t, 2> shape {3, 5};
@@ -70,6 +72,8 @@ TEST(SliceBufferTest, TestNonOnDemand) {
 
 TEST(SliceBufferTest, TestOnDemand) {
     SliceBuffer<float> sbf(true);
+    ASSERT_TRUE(sbf.onDemand());
+
     std::array<size_t, 2> shape;
     sbf.reshape(shape);
     sbf.insert(0);

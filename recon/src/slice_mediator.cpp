@@ -6,7 +6,7 @@
 
 namespace tomcat::recon {
 
-SliceMediator::SliceMediator() = default;
+SliceMediator::SliceMediator() : ondemand_slices_(true) {}
 
 SliceMediator::~SliceMediator() = default;
 

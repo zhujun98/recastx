@@ -158,6 +158,8 @@ public:
     const ShapeType& shape() const { return shape_; }
 
     size_t size() const { return this->back_.size(); }
+
+    bool onDemand() const { return on_demand_; }
 };
 
 template<typename T>
