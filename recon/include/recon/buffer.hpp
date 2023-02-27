@@ -4,12 +4,11 @@
 #include <cassert>
 #include <chrono>
 #include <condition_variable>
+#include <map>
 #include <numeric>
 #include <queue>
 #include <thread>
 #include <type_traits>
-#include <unordered_map>
-#include <unordered_set>
 using namespace std::chrono_literals;
 
 #include <spdlog/spdlog.h>
@@ -29,10 +28,11 @@ public:
 private:
 
     bool is_ready_ = false;
-    std::mutex mtx_;
     std::condition_variable cv_;
 
 protected:
+
+    std::mutex mtx_;
 
     T back_;
     T ready_;
@@ -113,6 +113,7 @@ public:
 
 template<typename T, size_t N>
 void TripleTensorBuffer<T, N>::reshape(const ShapeType& shape) {
+    std::lock_guard(this->mtx_);
     this->back_.reshape(shape);
     this->ready_.reshape(shape);
     this->front_.reshape(shape);
@@ -120,12 +121,12 @@ void TripleTensorBuffer<T, N>::reshape(const ShapeType& shape) {
 
 
 template<typename T>
-class SliceBuffer : public TripleBufferInterface<std::vector<std::tuple<bool, size_t, Tensor<T, 2>>>> {
+class SliceBuffer : public TripleBufferInterface<std::map<size_t, std::tuple<bool, size_t, Tensor<T, 2>>>> {
 
 public:
 
     using ValueType = std::tuple<bool, size_t, Tensor<T, 2>>; 
-    using BufferType = std::vector<ValueType>;
+    using BufferType = std::map<size_t, ValueType>;
     using DataType = Tensor<T, 2>;
     using ShapeType = typename DataType::ShapeType;
 
@@ -133,40 +134,49 @@ private:
 
     bool on_demand_;
 
+    ShapeType shape_;
+
 protected:
 
     void swap(BufferType& v1, BufferType& v2) noexcept override {
         v1.swap(v2);
         if (on_demand_) {
-            for (auto& v : v2) std::get<0>(v) = false;
+            for ([[maybe_unused]] auto& [k, v] : v2) std::get<0>(v) = false;
         }
     }
 
 public:
 
-    SliceBuffer(size_t capacity, bool on_demand = false);
+    SliceBuffer(bool on_demand = false) : on_demand_(on_demand), shape_{0, 0} {}
     
     ~SliceBuffer() override = default;
 
+    bool insert(size_t index);
+
     void reshape(const ShapeType& shape);
+
+    const ShapeType& shape() const { return shape_; }
+
+    size_t size() const { return this->back_.size(); }
 };
 
 template<typename T>
-SliceBuffer<T>::SliceBuffer(size_t capacity, bool on_demand) : 
-        TripleBufferInterface<BufferType>(), on_demand_(on_demand) {
-    assert(capacity > 0);
-    for (size_t i = 0; i < capacity; ++i) {
-        this->back_.emplace_back(!on_demand, 0, DataType());
-        this->ready_.emplace_back(!on_demand, 0, DataType());
-        this->front_.emplace_back(!on_demand, 0, DataType());
-    }
+bool SliceBuffer<T>::insert(size_t index) {
+    std::lock_guard lk(this->mtx_);
+    auto [it1, success1] = this->back_.insert({index, {!on_demand_, 0, DataType(shape_)}});
+    [[maybe_unused]] auto [it2, success2] = this->ready_.insert({index, {!on_demand_, 0, DataType(shape_)}});
+    [[maybe_unused]] auto [it3, success3] = this->front_.insert({index, {!on_demand_, 0, DataType(shape_)}});
+    assert(success1 == success2);
+    assert(success1 == success3);
+    return success1;
 }
 
 template<typename T>
 void SliceBuffer<T>::reshape(const ShapeType& shape) {
-    for (auto& v : this->back_) std::get<2>(v).reshape(shape);
-    for (auto& v : this->ready_) std::get<2>(v).reshape(shape);
-    for (auto& v : this->front_) std::get<2>(v).reshape(shape);
+    for (auto& [k, v] : this->back_) std::get<2>(v).reshape(shape);
+    for (auto& [k, v] : this->ready_) std::get<2>(v).reshape(shape);
+    for (auto& [k, v] : this->front_) std::get<2>(v).reshape(shape);
+    shape_ = shape;
 }
 
 namespace details {

@@ -17,14 +17,14 @@ class SliceMediator {
 
 public:
 
-    using DataType = typename SliceBuffer<float>::DataType;
-    using ValueType = typename SliceBuffer<float>::ValueType;
+    using SliceBufferType = SliceBuffer<float>;
+    using ParamType = std::map<size_t, std::pair<size_t, Orientation>>;
 
 protected:
 
-    std::map<size_t, std::pair<size_t, Orientation>> params_;
-    SliceBuffer<float> all_slices_;
-    SliceBuffer<float> ondemand_slices_;
+    ParamType params_;
+    SliceBufferType all_slices_;
+    SliceBufferType ondemand_slices_;
     std::unordered_set<size_t> updated_;
 
     std::mutex mtx_;
@@ -41,18 +41,19 @@ public:
     SliceMediator(SliceMediator&& other) noexcept = delete;
     SliceMediator& operator=(SliceMediator&& other) noexcept = delete;
 
-    void reshape(const std::array<size_t, 2>& shape);
+    void reshape(const SliceBufferType::ShapeType& shape);
 
-    void insert(size_t timestamp, const Orientation& orientation);
+    void update(size_t timestamp, const Orientation& orientation);
 
     void reconAll(Reconstructor* recon, int gpu_buffer_index);
 
     void reconOnDemand(Reconstructor* recon, int gpu_buffer_index);
 
-    SliceBuffer<float>& allSlices() { return all_slices_; }
+    SliceBufferType& allSlices() { return all_slices_; }
 
-    SliceBuffer<float>& onDemandSlices() { return ondemand_slices_; }
+    SliceBufferType& onDemandSlices() { return ondemand_slices_; }
 
+    const ParamType& params() const { return params_; }
 };
 
 } // tomcat::recon

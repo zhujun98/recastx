@@ -36,7 +36,7 @@ void DataServer::start() {
                 for (const auto& packet : slice_data) {
                     send(packet);
                     auto ts = packet.slice().timestamp();
-                    spdlog::debug("Slice data {} ({}) sent", ts % NUM_SLICES, ts);
+                    spdlog::debug("Slice data {} ({}) sent", ts % MAX_NUM_SLICES, ts);
                 }
             } else {
                 auto slice_data = app_->onDemandSliceDataPackets(10);
@@ -47,7 +47,7 @@ void DataServer::start() {
                         send(packet);
                         auto ts = packet.slice().timestamp();
                         spdlog::debug("On-demand slice data {} ({}) sent", 
-                                      ts % NUM_SLICES, ts);
+                                      ts % MAX_NUM_SLICES, ts);
                     }
                 }
             }

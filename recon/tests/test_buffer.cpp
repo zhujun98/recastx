@@ -46,41 +46,51 @@ TEST(TripleTensorBufferTest, TestPrepareAndFetch) {
 
 
 TEST(SliceBufferTest, TestNonOnDemand) {
-    int num_slices = 10;
-    SliceBuffer<float> sbf(num_slices);
-    sbf.reshape({3, 5});
-    
-    for (auto& slice : sbf.back()) {
+    SliceBuffer<float> sbf;
+    sbf.insert(1);
+    ASSERT_EQ(sbf.size(), 1);
+    std::array<size_t, 2> shape {3, 5};
+    sbf.reshape(shape);
+    ASSERT_TRUE(sbf.insert(4));
+    ASSERT_EQ(sbf.size(), 2);
+    ASSERT_FALSE(sbf.insert(4));
+    ASSERT_EQ(sbf.size(), 2);
+
+    for (auto& [k, slice] : sbf.back()) {
         ASSERT_TRUE(std::get<0>(slice));
-        EXPECT_THAT(std::get<2>(slice).shape(), ElementsAre(3, 5));
+        ASSERT_EQ(std::get<2>(slice).shape(), shape);
     }
+    ASSERT_EQ(sbf.shape(), shape);
 
     sbf.prepare();
-    for (auto& slice : sbf.back()) ASSERT_TRUE(std::get<0>(slice));
+    for (auto& [k, slice] : sbf.back()) ASSERT_TRUE(std::get<0>(slice));
     sbf.fetch();
-    for (auto& slice : sbf.front()) ASSERT_TRUE(std::get<0>(slice));
+    for (auto& [k, slice] : sbf.front()) ASSERT_TRUE(std::get<0>(slice));
 }
 
 TEST(SliceBufferTest, TestOnDemand) {
-    int num_slices = 3;
-    SliceBuffer<float> sbf(num_slices, true);
-    sbf.reshape({5, 6});
+    SliceBuffer<float> sbf(true);
+    std::array<size_t, 2> shape;
+    sbf.reshape(shape);
+    sbf.insert(0);
+    sbf.insert(1);
+    sbf.insert(2);
 
-    for (auto& slice : sbf.back()) {
+    for (auto& [k, slice] : sbf.back()) {
         ASSERT_FALSE(std::get<0>(slice));
-        EXPECT_THAT(std::get<2>(slice).shape(), ElementsAre(5, 6));
+        ASSERT_EQ(std::get<2>(slice).shape(), shape);
         std::get<0>(slice) = true;
     }
 
     sbf.prepare();
     sbf.fetch();
-    for (auto& slice : sbf.front()) ASSERT_TRUE(std::get<0>(slice));
+    for (auto& [k, slice] : sbf.front()) ASSERT_TRUE(std::get<0>(slice));
 
     sbf.prepare();
     sbf.fetch();
     // "ready" status reset
-    for (auto& slice : sbf.ready()) ASSERT_FALSE(std::get<0>(slice));
-    for (auto& slice : sbf.front()) ASSERT_FALSE(std::get<0>(slice));
+    for (auto& [k, slice] : sbf.ready()) ASSERT_FALSE(std::get<0>(slice));
+    for (auto& [k, slice] : sbf.front()) ASSERT_FALSE(std::get<0>(slice));
 }
 
 

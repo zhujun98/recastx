@@ -243,7 +243,7 @@ void Application::pushProjection(
 }
 
 void Application::setSlice(size_t timestamp, const Orientation& orientation) {
-    slice_mediator_.insert(timestamp, orientation);
+    slice_mediator_.update(timestamp, orientation);
 }
 
 std::optional<ReconDataPacket> Application::previewDataPacket(int timeout) { 
@@ -259,7 +259,7 @@ std::vector<ReconDataPacket> Application::sliceDataPackets(int timeout) {
     std::vector<ReconDataPacket> ret;
     auto& buffer = slice_mediator_.allSlices();
     if (buffer.fetch(timeout)) {
-        for (auto& slice : buffer.front()) {
+        for (auto& [k, slice] : buffer.front()) {
             auto& data = std::get<2>(slice);
             auto [x, y] = data.shape();
             ret.emplace_back(createSliceDataPacket(data, x, y, std::get<1>(slice)));
@@ -272,7 +272,7 @@ std::vector<ReconDataPacket> Application::onDemandSliceDataPackets(int timeout) 
     std::vector<ReconDataPacket> ret;
     auto& buffer = slice_mediator_.onDemandSlices();
     if (buffer.fetch(timeout)) {
-        for (auto& slice : buffer.front()) {
+        for (auto& [k, slice] : buffer.front()) {
             if (std::get<0>(slice)) {
                 auto& data = std::get<2>(slice);
                 auto& shape = data.shape();
