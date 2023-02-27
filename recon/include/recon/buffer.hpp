@@ -125,10 +125,10 @@ class SliceBuffer : public TripleBufferInterface<std::map<size_t, std::tuple<boo
 
 public:
 
-    using ValueType = std::tuple<bool, size_t, Tensor<T, 2>>; 
-    using BufferType = std::map<size_t, ValueType>;
-    using DataType = Tensor<T, 2>;
-    using ShapeType = typename DataType::ShapeType;
+    using BufferType = std::map<size_t, std::tuple<bool, size_t, Tensor<T, 2>>>;
+    using ValueType = typename BufferType::value_type;
+    using SliceType = Tensor<T, 2>;
+    using ShapeType = typename SliceType::ShapeType;
 
 private:
 
@@ -165,9 +165,9 @@ public:
 template<typename T>
 bool SliceBuffer<T>::insert(size_t index) {
     std::lock_guard lk(this->mtx_);
-    auto [it1, success1] = this->back_.insert({index, {!on_demand_, 0, DataType(shape_)}});
-    [[maybe_unused]] auto [it2, success2] = this->ready_.insert({index, {!on_demand_, 0, DataType(shape_)}});
-    [[maybe_unused]] auto [it3, success3] = this->front_.insert({index, {!on_demand_, 0, DataType(shape_)}});
+    auto [it1, success1] = this->back_.insert({index, {!on_demand_, 0, SliceType(shape_)}});
+    [[maybe_unused]] auto [it2, success2] = this->ready_.insert({index, {!on_demand_, 0, SliceType(shape_)}});
+    [[maybe_unused]] auto [it3, success3] = this->front_.insert({index, {!on_demand_, 0, SliceType(shape_)}});
     assert(success1 == success2);
     assert(success1 == success3);
     return success1;
@@ -175,6 +175,7 @@ bool SliceBuffer<T>::insert(size_t index) {
 
 template<typename T>
 void SliceBuffer<T>::reshape(const ShapeType& shape) {
+    std::lock_guard lk(this->mtx_);
     for (auto& [k, v] : this->back_) std::get<2>(v).reshape(shape);
     for (auto& [k, v] : this->ready_) std::get<2>(v).reshape(shape);
     for (auto& [k, v] : this->front_) std::get<2>(v).reshape(shape);
