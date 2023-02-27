@@ -16,70 +16,71 @@ std::vector<char> _produceRawData(std::vector<RawDtype>&& data) {
     return raw;
 }
 
-class TripleVectorBufferTest : public testing::Test {
-
-protected:
-
-    std::array<size_t, 3> shape {2, 5, 4};
-
-    TripleVectorBuffer<float, 3> buffer_;
-
-    TripleVectorBufferTest() {
-        buffer_.resize(shape);
-    }
-
-    ~TripleVectorBufferTest() override = default;
-};
-
-TEST_F(TripleVectorBufferTest, TestConstructors) {
-    bool can_copy = std::is_copy_constructible_v<TripleVectorBuffer<float, 2>>;
+TEST(TripleTensorBufferTest, TestConstructor) {
+    bool can_copy = std::is_copy_constructible_v<TripleTensorBuffer<float, 2>>;
     ASSERT_FALSE(can_copy);
-    bool can_move = std::is_move_constructible_v<TripleVectorBuffer<float, 2>>;
+    bool can_move = std::is_move_constructible_v<TripleTensorBuffer<float, 2>>;
     ASSERT_FALSE(can_move);
 }
 
-TEST_F(TripleVectorBufferTest, TestGeneral) {
-    EXPECT_THAT(buffer_.shape(), ElementsAre(2, 5, 4));
-    EXPECT_EQ(buffer_.chunkSize(), 2 * 5 * 4);
+TEST(TripleTensorBufferTest, TestPrepareAndFetch) {
+    TripleTensorBuffer<float, 2> b2f;
+    b2f.reshape({3, 2});
 
-    std::vector<float> data1 {1.f, 2.f};
-    std::vector<float> data2 {3.f, 4.f};
-    std::vector<float> data3 {5.f, 6.f};
+    std::initializer_list<float> data1 {1.f, 2.f, 1.f, 2.f, 1.f, 2.f};
+    std::initializer_list<float> data2 {3.f, 4.f, 3.f, 4.f, 3.f, 4.f};
     
-    buffer_.back() = data1;
-    buffer_.prepare();
-    EXPECT_THAT(buffer_.ready(), Pointwise(FloatNear(1e-6), data1));
-    ASSERT_TRUE(buffer_.fetch());
-    EXPECT_THAT(buffer_.front(), Pointwise(FloatNear(1e-6), data1));
+    b2f.back() = data1;
+    b2f.prepare();
+    EXPECT_THAT(b2f.ready(), Pointwise(FloatNear(1e-6), data1));
+    ASSERT_TRUE(b2f.fetch());
+    EXPECT_THAT(b2f.front(), Pointwise(FloatNear(1e-6), data1));
 
-    ASSERT_FALSE(buffer_.fetch(0)); // test timeout
-    ASSERT_FALSE(buffer_.fetch(1)); // test timeout
+    ASSERT_FALSE(b2f.fetch(0)); // test timeout
+    ASSERT_FALSE(b2f.fetch(1)); // test timeout
 
-    buffer_.back() = data2;
-    buffer_.prepare();
-
-    buffer_.back() = data3;
+    b2f.back() = data2;
+    b2f.prepare();
+    EXPECT_THAT(b2f.ready(), Pointwise(FloatNear(1e-6), data2));
 }
 
 
-class SliceBufferTest : public testing::Test {
-
-protected:
-
-    const size_t capacity_;
-    const std::array<size_t, 2> shape_;
-
-    SliceBuffer<float> buffer_;
-
-    SliceBufferTest() : capacity_(4), shape_ {3, 5}, buffer_{capacity_} {
-        buffer_.resize(shape_);
+TEST(SliceBufferTest, TestNonOnDemand) {
+    int num_slices = 10;
+    SliceBuffer<float> sbf(num_slices);
+    sbf.reshape({3, 5});
+    
+    for (auto& slice : sbf.back()) {
+        ASSERT_TRUE(std::get<0>(slice));
+        EXPECT_THAT(std::get<2>(slice).shape(), ElementsAre(3, 5));
     }
-};
 
-TEST_F(SliceBufferTest, TestGeneral) {
-    ASSERT_EQ(buffer_.capacity(), capacity_);
-    ASSERT_EQ(buffer_.chunkSize(), shape_[0] * shape_[1]);
-    EXPECT_THAT(buffer_.shape(), ElementsAre(3, 5)); 
+    sbf.prepare();
+    for (auto& slice : sbf.back()) ASSERT_TRUE(std::get<0>(slice));
+    sbf.fetch();
+    for (auto& slice : sbf.front()) ASSERT_TRUE(std::get<0>(slice));
+}
+
+TEST(SliceBufferTest, TestOnDemand) {
+    int num_slices = 3;
+    SliceBuffer<float> sbf(num_slices, true);
+    sbf.reshape({5, 6});
+
+    for (auto& slice : sbf.back()) {
+        ASSERT_FALSE(std::get<0>(slice));
+        EXPECT_THAT(std::get<2>(slice).shape(), ElementsAre(5, 6));
+        std::get<0>(slice) = true;
+    }
+
+    sbf.prepare();
+    sbf.fetch();
+    for (auto& slice : sbf.front()) ASSERT_TRUE(std::get<0>(slice));
+
+    sbf.prepare();
+    sbf.fetch();
+    // "ready" status reset
+    for (auto& slice : sbf.ready()) ASSERT_FALSE(std::get<0>(slice));
+    for (auto& slice : sbf.front()) ASSERT_FALSE(std::get<0>(slice));
 }
 
 

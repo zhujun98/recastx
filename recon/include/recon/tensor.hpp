@@ -19,6 +19,7 @@ class Tensor {
 public:
 
     using ShapeType = std::array<size_t, N>;
+    using ValueType = T;
 
 protected:
 
@@ -63,6 +64,11 @@ public:
         std::copy(ilist.begin(), ilist.end(), data_.begin());
         return *this;
     } 
+
+    void swap(Tensor& other) noexcept {
+        data_.swap(other.data_);
+        shape_.swap(other.shape_);
+    }
 
     void reshape(const ShapeType& shape) {
         data_.resize(std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>()));
@@ -159,6 +165,7 @@ class ImageGroup : public Tensor<T, 3> {
 public:
 
     using typename Tensor<T, 3>::ShapeType;
+    using typename Tensor<T, 3>::ValueType;
 
 private:
 
