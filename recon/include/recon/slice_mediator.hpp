@@ -35,7 +35,13 @@ public:
 
     ~SliceMediator();
 
-    void resize(const std::array<size_t, 2>& shape);
+    SliceMediator(const SliceMediator& other) = delete;
+    SliceMediator& operator=(const SliceMediator& other) = delete;
+
+    SliceMediator(SliceMediator&& other) noexcept = delete;
+    SliceMediator& operator=(SliceMediator&& other) noexcept = delete;
+
+    void reshape(const std::array<size_t, 2>& shape);
 
     void insert(size_t timestamp, const Orientation& orientation);
 

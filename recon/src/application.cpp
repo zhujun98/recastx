@@ -77,7 +77,7 @@ void Application::initReconstructor(bool cone_beam,
                                     const VolumeGeometry& slice_geom,
                                     const VolumeGeometry& preview_geom) {
     preview_buffer_.resize({preview_geom.col_count, preview_geom.row_count, preview_geom.slice_count});
-    slice_mediator_.resize({slice_geom.col_count, slice_geom.row_count});
+    slice_mediator_.reshape({slice_geom.col_count, slice_geom.row_count});
     if (cone_beam) {
         recon_ = std::make_unique<ConeBeamReconstructor>(proj_geom, slice_geom, preview_geom);
     } else {

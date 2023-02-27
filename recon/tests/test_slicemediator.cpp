@@ -14,7 +14,7 @@ protected:
     SliceMediator mediator_;
 
     SliceMediatorTest() : slice_size_{6}, mediator_{} {
-        mediator_.resize({slice_size_, slice_size_});
+        mediator_.reshape({slice_size_, slice_size_});
     }
 
 };

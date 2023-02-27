@@ -10,7 +10,7 @@ SliceMediator::SliceMediator() : all_slices_(NUM_SLICES), ondemand_slices_(NUM_S
 
 SliceMediator::~SliceMediator() = default;
 
-void SliceMediator::resize(const std::array<size_t, 2>& shape) {
+void SliceMediator::reshape(const std::array<size_t, 2>& shape) {
     all_slices_.resize(shape);
     ondemand_slices_.resize(shape);
 }
