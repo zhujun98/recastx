@@ -32,7 +32,7 @@ void DataClient::start() {
 
             try {
                 socket_.send(zmq::str_buffer("ready"), zmq::send_flags::none);
-                auto recv_ret = socket_.recv(reply, zmq::recv_flags::none);
+                [[maybe_unused]] auto recv_ret = socket_.recv(reply, zmq::recv_flags::none);
             } catch (const zmq::error_t& e) {
                 if (e.num() != ETERM) throw;
                 break;
