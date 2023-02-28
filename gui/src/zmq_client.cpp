@@ -5,7 +5,6 @@
 #include <spdlog/spdlog.h>
 
 #include "zmq_client.hpp"
-#include "common/config.hpp"
 
 
 namespace tomcat::gui {
@@ -31,7 +30,7 @@ void DataClient::start() {
             zmq::message_t reply;
 
             try {
-                socket_.send(zmq::str_buffer("ready"), zmq::send_flags::none);
+                socket_.send(zmq::str_buffer("GUIReady"), zmq::send_flags::none);
                 [[maybe_unused]] auto recv_ret = socket_.recv(reply, zmq::recv_flags::none);
             } catch (const zmq::error_t& e) {
                 if (e.num() != ETERM) throw;
