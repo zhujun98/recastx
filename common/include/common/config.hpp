@@ -1,5 +1,5 @@
-#ifndef TOMCAT_H
-#define TOMCAT_H
+#ifndef COMMON_CONFIG_H
+#define COMMON_CONFIG_H
 
 namespace tomcat {
 
@@ -60,4 +60,4 @@ namespace tomcat {
 
 } // tomcat
 
-#endif // TOMCAT_H
+#endif // COMMON_CONFIG_H

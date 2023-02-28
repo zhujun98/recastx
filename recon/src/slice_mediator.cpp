@@ -1,5 +1,6 @@
 #include <cassert>
 
+#include "common/utils.hpp"
 #include "recon/slice_mediator.hpp"
 #include "recon/reconstructor.hpp"
 
@@ -17,7 +18,7 @@ void SliceMediator::reshape(const SliceBufferType::ShapeType& shape) {
 
 void SliceMediator::update(size_t timestamp, const Orientation& orientation) {
     std::lock_guard<std::mutex> lck(mtx_);
-    size_t sid = timestamp % MAX_NUM_SLICES;
+    size_t sid = sliceIdFromTimestamp(timestamp);
     auto [it, inserted] = params_.insert_or_assign(sid, std::make_pair(timestamp, orientation));
     if (inserted) {
         [[maybe_unused]] bool success1 = all_slices_.insert(sid);
