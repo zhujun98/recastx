@@ -1,13 +1,18 @@
 #ifndef COMMON_CONFIG_H
 #define COMMON_CONFIG_H
 
+#include <array>
+#include <string>
+#include <vector>
+
+
 namespace tomcat {
 
     constexpr size_t MAX_NUM_SLICES = 3;
 
     using Orientation = std::array<float, 9>;
 
-    enum class ProjectionType : int32_t { dark = 0, flat = 1, projection = 2, unknown = 99 };
+    enum class ProjectionType : int { dark = 0, flat = 1, projection = 2, unknown = 99 };
 
     using RawDtype = uint16_t;
     using ProDtype = float;
