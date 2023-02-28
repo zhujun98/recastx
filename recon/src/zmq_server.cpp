@@ -3,7 +3,7 @@
 #include "recon/zmq_server.hpp"
 #include "recon/application.hpp"
 
-#include "common/config.hpp"
+#include "common/utils.hpp"
 
 namespace tomcat::recon {
 
@@ -36,7 +36,7 @@ void DataServer::start() {
                 for (const auto& packet : slice_data) {
                     send(packet);
                     auto ts = packet.slice().timestamp();
-                    spdlog::debug("Slice data {} ({}) sent", ts % MAX_NUM_SLICES, ts);
+                    spdlog::debug("Slice data {} ({}) sent", sliceIdFromTimestamp(ts), ts);
                 }
             } else {
                 auto slice_data = app_->onDemandSliceDataPackets(10);
@@ -47,7 +47,7 @@ void DataServer::start() {
                         send(packet);
                         auto ts = packet.slice().timestamp();
                         spdlog::debug("On-demand slice data {} ({}) sent", 
-                                      ts % MAX_NUM_SLICES, ts);
+                                      sliceIdFromTimestamp(ts), ts);
                     }
                 }
             }

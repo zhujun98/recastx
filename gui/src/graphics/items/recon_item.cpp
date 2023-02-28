@@ -8,8 +8,8 @@
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 #include <implot.h>
-#include "common/config.hpp"
 
+#include "common/utils.hpp"
 #include "graphics/items/recon_item.hpp"
 #include "graphics/aesthetics.hpp"
 #include "graphics/camera3d.hpp"
@@ -220,7 +220,7 @@ void ReconItem::init() {
 void ReconItem::setSliceData(const std::string& data,
                              const std::array<uint32_t, 2>& size,
                              uint64_t timestamp) {
-    size_t sid = timestamp % MAX_NUM_SLICES;
+    size_t sid = sliceIdFromTimestamp(timestamp);
     auto& slice = slices_[sid];
     if (slice.first == timestamp) {
         Slice* ptr = slice.second.get();

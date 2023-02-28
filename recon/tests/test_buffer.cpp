@@ -74,7 +74,7 @@ TEST(SliceBufferTest, TestOnDemand) {
     SliceBuffer<float> sbf(true);
     ASSERT_TRUE(sbf.onDemand());
 
-    std::array<size_t, 2> shape;
+    std::array<size_t, 2> shape {5, 6};
     sbf.reshape(shape);
     sbf.insert(0);
     sbf.insert(1);

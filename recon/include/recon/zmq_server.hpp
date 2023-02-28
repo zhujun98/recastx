@@ -44,7 +44,7 @@ void DataServer::send(const T& packet) {
     zmq::message_t msg;
     socket_.recv(msg, zmq::recv_flags::none);
     auto request = std::string(static_cast<char*>(msg.data()), msg.size());
-    if (request == "ready") {
+    if (request == "GUIReady") {
         socket_.send(zmq::buffer(std::move(encoded)), zmq::send_flags::none);
     } else {
         spdlog::warn("Unknown request received: {}", request);
