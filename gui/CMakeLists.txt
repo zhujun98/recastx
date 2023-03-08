@@ -64,6 +64,8 @@ set(GUI_SOURCES
         "src/graphics/items/axiscube_item.cpp"
         "src/graphics/items/graphics_item.cpp"
         "src/graphics/items/icon_item.cpp"
+        "src/graphics/items/logging_item.cpp"
+        "src/graphics/items/projection_item.cpp"
         "src/graphics/items/recon_item.cpp"
         "src/graphics/items/statusbar_item.cpp"
         ${IMGUI_SOURCE_FILES}

@@ -10,6 +10,8 @@ struct Style {
     static constexpr float ICON_HEIGHT = 0.10f;
     static constexpr float ICON_WIDTH = 0.20f;
     static constexpr float LEFT_PANEL_WIDTH = 0.20f;
+    static constexpr float STATUS_BAR_WIDTH = 0.30f;
+    static constexpr float LOGGING_WIDTH = 0.46f;
     static constexpr float TOP_PANEL_HEIGHT = 0.15f;
     static constexpr float BOTTOM_PANEL_HEIGHT = 0.15f;
 

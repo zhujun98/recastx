@@ -98,6 +98,8 @@ void ReconItem::onWindowSizeChanged(int width, int height) {
 }
 
 void ReconItem::renderIm() {
+    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "RECONSTRUCTION");
+
     auto& cmd = Colormap::data();
     if (ImGui::BeginCombo("Colormap##Widget", cmd.GetName(cm_.get()))) {
         for (auto idx : Colormap::options()) {
