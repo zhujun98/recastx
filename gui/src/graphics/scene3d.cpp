@@ -11,6 +11,7 @@
 #include "graphics/items/icon_item.hpp"
 #include "graphics/items/projection_item.hpp"
 #include "graphics/items/statusbar_item.hpp"
+#include "graphics/items/logging_item.hpp"
 #include "graphics/items/recon_item.hpp"
 
 namespace tomcat::gui {
@@ -25,6 +26,7 @@ Scene3d::Scene3d(MessageClient* client)
           projection_item_(new ProjectionItem(*this)),
           recon_item_(new ReconItem(*this)),
           statusbar_item_(new StatusbarItem(*this)),
+          logging_item_(new LoggingItem(*this)),
           axiscube_item_(new AxiscubeItem(*this)) {
     camera_ = std::make_unique<Camera>();
 }
@@ -88,6 +90,7 @@ void Scene3d::render() {
     recon_item_->renderIm();
     ImGui::Separator();
     statusbar_item_->renderIm();
+    logging_item_->renderIm();
 
     ImGui::End();
 
