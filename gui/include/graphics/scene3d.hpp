@@ -11,6 +11,7 @@ namespace tomcat::gui {
 class AxiscubeItem;
 class AxesItem;
 class IconItem;
+class ProjectionItem;
 class ReconItem;
 class StatusbarItem;
 
@@ -22,6 +23,7 @@ class Scene3d : public Scene {
 
     std::unique_ptr<AxesItem> axes_item_;
     std::unique_ptr<IconItem> icon_item_;
+    std::unique_ptr<ProjectionItem> projection_item_;
     std::unique_ptr<ReconItem> recon_item_;
     std::unique_ptr<StatusbarItem> statusbar_item_;
 

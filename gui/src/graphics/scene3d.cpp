@@ -9,6 +9,7 @@
 #include "graphics/items/axiscube_item.hpp"
 #include "graphics/items/axes_item.hpp"
 #include "graphics/items/icon_item.hpp"
+#include "graphics/items/projection_item.hpp"
 #include "graphics/items/statusbar_item.hpp"
 #include "graphics/items/recon_item.hpp"
 
@@ -21,6 +22,7 @@ Scene3d::Scene3d(MessageClient* client)
           viewport_axiscube_(new Viewport(false)),
           axes_item_(new AxesItem(*this)),
           icon_item_(new IconItem(*this)),
+          projection_item_(new ProjectionItem(*this)),
           recon_item_(new ReconItem(*this)),
           statusbar_item_(new StatusbarItem(*this)),
           axiscube_item_(new AxiscubeItem(*this)) {
@@ -61,6 +63,7 @@ void Scene3d::render() {
     // 2/3 of the space for widget and 1/3 for labels
     ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.65f);
 
+    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "CAMERA");
     ImGui::Checkbox("Fix camera", &fixed_camera_);
     if (ImGui::Button("X-Y")) {
         camera_->setTopView();
@@ -79,6 +82,8 @@ void Scene3d::render() {
     }
 
     axes_item_->renderIm();
+    ImGui::Separator();
+    projection_item_->renderIm();
     ImGui::Separator();
     recon_item_->renderIm();
     ImGui::Separator();
