@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cassert>
 
 #include <glm/gtc/constants.hpp>
 #include <glm/gtx/rotate_vector.hpp>
@@ -334,12 +335,16 @@ bool ReconItem::handleMouseMoved(float x, float y) {
 }
 
 void ReconItem::initSlices() {
-    for (size_t i = 0; i < MAX_NUM_SLICES; ++i) slices_.emplace_back(i, std::make_unique<Slice>(i));
+    slices_.clear();
+    for (size_t i = 0; i < MAX_NUM_SLICES; ++i)
+        slices_.emplace_back(i, std::make_unique<Slice>(i));
 
     resetSlices();
 }
 
 void ReconItem::resetSlices() {
+    assert(slices_.size() == MAX_NUM_SLICES);
+
     // slice along axis 0 = x
     slices_[0].second->setOrientation(glm::vec3(0.0f, -1.0f, -1.0f),
                                       glm::vec3(0.0f, 2.0f, 0.0f),
