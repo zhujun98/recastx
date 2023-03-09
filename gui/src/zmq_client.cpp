@@ -21,6 +21,7 @@ DataClient::DataClient(const std::string& hostname, int port)
 
 DataClient::~DataClient() {
     socket_.set(zmq::sockopt::linger, 200);
+    context_.shutdown();
 };
 
 void DataClient::start() {
@@ -59,6 +60,7 @@ MessageClient::MessageClient(const std::string &hostname, int port)
 
 MessageClient::~MessageClient() {
     socket_.set(zmq::sockopt::linger, 200);
+    context_.shutdown();
 };
 
 void MessageClient::send(const ReconRequestPacket& packet) {
