@@ -35,9 +35,9 @@ void LoggingItem::renderIm() {
         ImGui::Combo("Log levels", &current_level_, log_levels_.data(), log_levels_.size());
         ImGui::PopItemWidth();
         ImGui::SameLine();
-        bool clear_text = ImGui::Button("Clear");
-        ImGui::SameLine();
         filter_.Draw("Filter", -200.f);
+        ImGui::SameLine();
+        bool clear_text = ImGui::Button("Clear");
 
         ImGui::BeginChild("scrolling", ImVec2(0, 0), false,
                           ImGuiWindowFlags_HorizontalScrollbar);
