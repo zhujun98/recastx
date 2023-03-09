@@ -21,10 +21,6 @@ class Scene;
 
 class GraphicsItem : public GraphNode, public InputHandler {
 
-public:
-
-    using RenderParams = std::unordered_map<std::string, std::any>;
-
 protected:
 
     Scene& scene_;
@@ -35,11 +31,7 @@ public:
 
     ~GraphicsItem() override;
 
-    virtual void renderIm() = 0;
-
-    virtual void renderGl(const glm::mat4& view,
-                          const glm::mat4& projection,
-                          const RenderParams& params) = 0;
+    virtual void renderIm() {};
 
     virtual void init();
 
@@ -49,15 +41,24 @@ public:
 };
 
 
-class GraphicsDataItem : public GraphicsItem {
+class GraphicsDataItem {
 
 public:
 
-    explicit GraphicsDataItem(Scene& scene);
-
-    ~GraphicsDataItem() override;
-
     virtual bool consume(const ReconDataPacket& packet) = 0;
+};
+
+class GraphicsGLItem {
+
+public:
+
+    using RenderParams = std::unordered_map<std::string, std::any>;
+
+public:
+
+    virtual void renderGl(const glm::mat4& view,
+                          const glm::mat4& projection,
+                          const RenderParams& params) = 0;
 };
 
 } // tomcat::gui

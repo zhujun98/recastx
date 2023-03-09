@@ -5,7 +5,7 @@
 
 namespace tomcat::gui {
 
-class ProjectionItem : public GraphicsDataItem {
+class ProjectionItem : public GraphicsItem {
 
     int downsampling_factor_ = 1;
 
@@ -19,12 +19,6 @@ public:
     ~ProjectionItem() override;
 
     void renderIm() override;
-
-    void renderGl(const glm::mat4& view,
-                  const glm::mat4& projection,
-                  const RenderParams& params) override;
-
-    bool consume(const ReconDataPacket& packet) override;
 };
 
 } // tomcat::gui

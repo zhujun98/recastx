@@ -2,10 +2,9 @@
 #include <type_traits>
 
 #include <zmq.hpp>
-#include <spdlog/spdlog.h>
 
 #include "zmq_client.hpp"
-
+#include "logger.hpp"
 
 namespace tomcat::gui {
 
@@ -17,7 +16,7 @@ DataClient::DataClient(const std::string& hostname, int port)
     std::string endpoint = "tcp://"s + hostname + ":"s + std::to_string(port);
     socket_.connect(endpoint);
 
-    spdlog::info("Connecting to the reconstruction data server: {}", endpoint);
+    log::info("Connecting to the reconstruction data server: {}", endpoint);
 }
 
 DataClient::~DataClient() {
@@ -55,7 +54,7 @@ MessageClient::MessageClient(const std::string &hostname, int port)
     std::string endpoint = "tcp://"s + hostname + ":"s + std::to_string(port);
     socket_.connect(endpoint);
 
-    spdlog::info("Connecting to the reconstruction message server: {}", endpoint);
+    log::info("Connecting to the reconstruction message server: {}", endpoint);
 }
 
 MessageClient::~MessageClient() {
@@ -69,10 +68,10 @@ void MessageClient::send(const ReconRequestPacket& packet) {
 
         socket_.send(zmq::buffer(std::move(encoded)), zmq::send_flags::none);
 
-        spdlog::debug("Published packet");
+        log::debug("Published packet");
 
     } catch (const std::exception& e) {
-        spdlog::error("Failed publishing packet: {}", e.what());
+        log::error("Failed publishing packet: {}", e.what());
     }
 }
 

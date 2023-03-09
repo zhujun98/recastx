@@ -11,7 +11,7 @@ namespace tomcat::gui {
 class GlyphRenderer;
 class Scene;
 
-class AxiscubeItem : public GraphicsItem {
+class AxiscubeItem : public GraphicsItem, public GraphicsGLItem {
 
     GLuint vao_;
     GLuint vbo_;

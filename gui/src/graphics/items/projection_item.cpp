@@ -5,15 +5,14 @@
 
 namespace tomcat::gui {
 
-ProjectionItem::ProjectionItem(Scene& scene)
-        : GraphicsDataItem(scene) {
+ProjectionItem::ProjectionItem(Scene& scene) : GraphicsItem(scene) {
     scene.addItem(this);
 }
 
 ProjectionItem::~ProjectionItem() = default;
 
 void ProjectionItem::renderIm() {
-
+    ImGui::Separator();
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "PROJECTION");
 
     // Projection downsampling
@@ -35,14 +34,6 @@ void ProjectionItem::renderIm() {
     // Projection center adjustment
     ImGui::DragFloat("X offset", &x_offset_, 1, -50, 50, "%.1f");
     ImGui::DragFloat("Y offset", &y_offset_, 1, -50, 50, "%.1f");
-}
-
-void ProjectionItem::renderGl(const glm::mat4& /*view*/,
-                              const glm::mat4& /*projection*/,
-                              const RenderParams& /*params*/) {}
-
-bool ProjectionItem::consume(const ReconDataPacket& packet) {
-    return true;
 }
 
 } // tomcat::gui

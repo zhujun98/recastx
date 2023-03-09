@@ -13,12 +13,10 @@
 #include "zmq_client.hpp"
 
 int main(int argc, char** argv) {
-
     spdlog::set_pattern("[%Y-%m-%d %T.%e] [%^%l%$] %v");
 #ifndef NDEBUG
     spdlog::set_level(spdlog::level::debug);
 #endif
-
     using namespace tomcat::gui;
     namespace po = boost::program_options;
 
@@ -44,9 +42,10 @@ int main(int argc, char** argv) {
 
     auto& app = Application::instance();
 
+    Scene3d scene;
     DataClient data_client(opts["recon-host"].as<std::string>(), opts["data-port"].as<int>());
     MessageClient msg_client(opts["recon-host"].as<std::string>(), opts["message-port"].as<int>());
-    Scene3d scene(&msg_client);
+    scene.setClient(&msg_client);
     app.setScene(&scene);
 
     scene.init();

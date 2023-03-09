@@ -11,7 +11,7 @@ namespace tomcat::gui {
 class GlyphRenderer;
 class Scene;
 
-class IconItem : public GraphicsItem {
+class IconItem : public GraphicsItem, GraphicsGLItem {
 
     std::unique_ptr<ShaderProgram> glyph_shader_;
     std::unique_ptr<GlyphRenderer> glyph_renderer_;

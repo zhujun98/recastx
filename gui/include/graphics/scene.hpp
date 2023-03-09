@@ -44,9 +44,11 @@ protected:
 
   public:
 
-    explicit Scene(MessageClient* client);
+    explicit Scene();
 
     ~Scene() override;
+
+    void setClient(MessageClient* client) { client_ = client; }
 
     virtual void onFrameBufferSizeChanged(int width, int height) = 0;
 
