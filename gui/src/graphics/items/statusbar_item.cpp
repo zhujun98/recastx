@@ -6,8 +6,7 @@
 
 namespace tomcat::gui {
 
-StatusbarItem::StatusbarItem(Scene& scene)
-        : GraphicsDataItem(scene) {
+StatusbarItem::StatusbarItem(Scene& scene) : GraphicsItem(scene) {
     scene.addItem(this);
 }
 
@@ -44,14 +43,6 @@ void StatusbarItem::renderIm() {
 
         ImGui::PopStyleColor();
     }
-}
-
-void StatusbarItem::renderGl(const glm::mat4& /*view*/,
-                             const glm::mat4& /*projection*/,
-                             const RenderParams& /*params*/) {}
-
-bool StatusbarItem::consume(const tomcat::ReconDataPacket& /*data*/) {
-    return true;
 }
 
 } // namespace tomcat::gui

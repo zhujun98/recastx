@@ -21,7 +21,7 @@ namespace tomcat::gui {
 
 class FpsCounter;
 
-class ReconItem : public GraphicsDataItem {
+class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDataItem {
 
     enum class DragType : int { none, rotator, translator};
 

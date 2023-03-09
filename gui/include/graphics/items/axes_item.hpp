@@ -10,7 +10,7 @@ namespace tomcat::gui {
 
 class Scene;
 
-class AxesItem : public GraphicsItem {
+class AxesItem : public GraphicsItem, public GraphicsGLItem {
 
     GLuint vao_;
     GLuint vbo_;

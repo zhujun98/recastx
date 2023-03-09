@@ -84,9 +84,7 @@ void Scene3d::render() {
     }
 
     axes_item_->renderIm();
-    ImGui::Separator();
     projection_item_->renderIm();
-    ImGui::Separator();
     recon_item_->renderIm();
     ImGui::Separator();
     statusbar_item_->renderIm();
@@ -95,13 +93,12 @@ void Scene3d::render() {
     ImGui::End();
 
     viewport_->use();
-    GraphicsItem::RenderParams params;
+    GraphicsGLItem::RenderParams params;
     params["distance"] = camera_->distance();
     const auto& view = camera_->matrix();
     const auto& projection = viewport_->projection();
     axes_item_->renderGl(view, projection, params);
     recon_item_->renderGl(view, projection, params);
-    statusbar_item_->renderGl(view, projection, params);
 
     viewport_icon_->use();
     params["aspectRatio"] = viewport_icon_->aspectRatio();

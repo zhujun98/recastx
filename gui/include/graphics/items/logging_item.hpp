@@ -8,7 +8,7 @@
 
 namespace tomcat::gui {
 
-class LoggingItem : public GraphicsDataItem {
+class LoggingItem : public GraphicsItem {
 
     ImVec2 pos_;
     ImVec2 size_;
@@ -30,12 +30,6 @@ public:
     void onWindowSizeChanged(int width, int height) override;
 
     void renderIm() override;
-
-    void renderGl(const glm::mat4& view,
-                  const glm::mat4& projection,
-                  const RenderParams& params) override;
-
-    bool consume(const ReconDataPacket& packet) override;
 
     void clear();
 };

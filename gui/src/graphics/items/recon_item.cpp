@@ -19,7 +19,7 @@
 
 namespace tomcat::gui {
 
-ReconItem::ReconItem(Scene& scene) : GraphicsDataItem(scene) {
+ReconItem::ReconItem(Scene& scene) : GraphicsItem(scene) {
     scene.addItem(this);
 
     glGenVertexArrays(1, &slice_vao_);
@@ -98,6 +98,7 @@ void ReconItem::onWindowSizeChanged(int width, int height) {
 }
 
 void ReconItem::renderIm() {
+    ImGui::Separator();
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "RECONSTRUCTION");
 
     auto& cmd = Colormap::data();

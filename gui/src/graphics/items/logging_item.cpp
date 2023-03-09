@@ -7,7 +7,7 @@
 namespace tomcat::gui {
 
 LoggingItem::LoggingItem(Scene& scene) :
-        GraphicsDataItem(scene),
+        GraphicsItem(scene),
         log_levels_({"Debug", "Info" ,"Warn", "Error"}){
     scene.addItem(this);
 
@@ -63,10 +63,6 @@ void LoggingItem::renderIm() {
     }
 }
 
-void LoggingItem::renderGl(const glm::mat4& /*view*/,
-                           const glm::mat4& /*projection*/,
-                           const RenderParams& /*params*/) {}
-
 void LoggingItem::onWindowSizeChanged(int width, int height) {
     size_ = {
         Style::LOGGING_WIDTH * (float)width, (float)height
@@ -76,10 +72,6 @@ void LoggingItem::onWindowSizeChanged(int width, int height) {
         (3 * Style::MARGIN + Style::LEFT_PANEL_WIDTH + Style::STATUS_BAR_WIDTH) * (float)width,
         (1.f - Style::BOTTOM_PANEL_HEIGHT - Style::MARGIN) * (float)(height)
     };
-}
-
-bool LoggingItem::consume(const ReconDataPacket& packet) {
-    return true;
 }
 
 void LoggingItem::clear() {

@@ -13,11 +13,4 @@ void GraphicsItem::init() {}
 
 void GraphicsItem::onWindowSizeChanged(int /*width*/, int /*height*/) {}
 
-// class GraphicsDataItem
-
-GraphicsDataItem::GraphicsDataItem(Scene &scene)
-    : GraphicsItem(scene) {}
-
-GraphicsDataItem::~GraphicsDataItem() = default;
-
 } // namespace tomcat::gui

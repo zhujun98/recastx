@@ -7,7 +7,7 @@ namespace tomcat::gui {
 
 class Scene;
 
-class StatusbarItem : public GraphicsDataItem {
+class StatusbarItem : public GraphicsItem {
 
     ImVec2 pos_;
     ImVec2 size_;
@@ -23,12 +23,6 @@ public:
     void onWindowSizeChanged(int width, int height) override;
 
     void renderIm() override;
-
-    void renderGl(const glm::mat4& view,
-                  const glm::mat4& projection,
-                  const RenderParams& params) override;
-
-    bool consume(const ReconDataPacket& data) override;
 };
 
 }
