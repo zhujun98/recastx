@@ -1,7 +1,5 @@
 #include <iostream>
 
-#include <spdlog/spdlog.h>
-
 #include <glm/gtc/constants.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <GL/gl3w.h>
@@ -16,6 +14,7 @@
 #include "graphics/primitives.hpp"
 #include "graphics/style.hpp"
 #include "encoder.hpp"
+#include "logger.hpp"
 
 namespace tomcat::gui {
 
@@ -233,11 +232,11 @@ void ReconItem::setSliceData(const std::string& data,
         std::memcpy(slice_data.data(), data.data(), data.size());
         assert(data.size() == slice_data.size() * sizeof(Slice::DataType::value_type));
         ptr->setData(std::move(slice_data), {size[0], size[1]});
-        spdlog::info("Set slice data {}", sid);
+        log::info("Set slice data {}", sid);
         maybeUpdateMinMaxValues();
     } else {
         // Ignore outdated reconstructed slices.
-        spdlog::debug("Outdated slice received: {} ({})", sid, timestamp);
+        log::debug("Outdated slice received: {} ({})", sid, timestamp);
     }
 }
 
@@ -246,7 +245,7 @@ void ReconItem::setVolumeData(const std::string& data, const std::array<uint32_t
     std::memcpy(volume_data.data(), data.data(), data.size());
     assert(data.size() == volume_data.size() * sizeof(Volume::DataType::value_type));
     volume_->setData(std::move(volume_data), {size[0], size[1], size[2]});
-    spdlog::info("Set volume data");
+    log::info("Set volume data");
     maybeUpdateMinMaxValues();
 }
 
@@ -274,7 +273,7 @@ bool ReconItem::handleMouseButton(int button, int action) {
                 maybeSwitchDragMachine(DragType::translator);
                 dragged_slice_ = hovered_slice_;
 
-                spdlog::debug("Set dragged slice: {}", dragged_slice_->id());
+                log::debug("Set dragged slice: {}", dragged_slice_->id());
 
                 return true;
             }
@@ -283,7 +282,7 @@ bool ReconItem::handleMouseButton(int button, int action) {
                 maybeSwitchDragMachine(DragType::rotator);
                 dragged_slice_ = hovered_slice_;
 
-                spdlog::debug("Set dragged slice: {}", dragged_slice_->id());
+                log::debug("Set dragged slice: {}", dragged_slice_->id());
 
                 return true;
             }
@@ -294,8 +293,8 @@ bool ReconItem::handleMouseButton(int button, int action) {
             auto packet = createSetSlicePacket(slices_[dragged_slice_->id()].first,
                                                dragged_slice_->orientation3());
 
-            spdlog::debug("Sent slice {} ({}) orientation update request",
-                          dragged_slice_->id(), slices_[dragged_slice_->id()].first);
+            log::debug("Sent slice {} ({}) orientation update request",
+                       dragged_slice_->id(), slices_[dragged_slice_->id()].first);
 
             scene_.send(packet);
 

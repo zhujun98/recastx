@@ -14,12 +14,13 @@ StatusbarItem::~StatusbarItem() = default;
 
 void StatusbarItem::onWindowSizeChanged(int width, int height) {
     size_ = {
-        Style::STATUS_BAR_WIDTH * (float)width, (float)height
+        Style::STATUS_BAR_WIDTH * (float)width,
+        Style::STATUS_BAR_HEIGHT * (float)height
     };
 
     pos_ = {
         (2.f * Style::MARGIN + Style::LEFT_PANEL_WIDTH) * (float)width,
-        (1.f - Style::BOTTOM_PANEL_HEIGHT - Style::MARGIN) * (float)(height)
+        (1.f - Style::STATUS_BAR_HEIGHT - Style::MARGIN) * (float)(height)
     };
 }
 

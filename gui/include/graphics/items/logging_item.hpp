@@ -1,10 +1,10 @@
 #ifndef GUI_LOGGINGITEM_HPP
 #define GUI_LOGGINGITEM_HPP
 
-#include <string>
 #include <vector>
 
 #include "graphics/items/graphics_item.hpp"
+#include "logger.hpp"
 
 namespace tomcat::gui {
 
@@ -18,8 +18,18 @@ class LoggingItem : public GraphicsItem {
     std::vector<const char*> log_levels_;
     int current_level_;
 
-    std::vector<std::string> buf_;
+    GuiLogger::BufferType buf_;
     ImGuiTextFilter filter_;
+
+    inline static constexpr std::string_view level_names[] = {
+            "[trace]", "[debug]", "[info]", "[warning]", "[error]"
+    };
+
+    static void print(spdlog::level::level_enum level, const char* s, const char* e) {
+        ImGui::TextUnformatted(level_names[static_cast<int>(level)].data());
+        ImGui::SameLine();
+        ImGui::TextUnformatted(s, e);
+    }
 
 public:
 
