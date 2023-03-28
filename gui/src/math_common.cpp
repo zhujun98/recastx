@@ -2,7 +2,7 @@
 
 #include "math_common.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 glm::mat4 create_orientation_matrix(glm::vec3 base, glm::vec3 x, glm::vec3 y) {
     float orientation_matrix[16] = {x.x,  y.x,  base.x, 0.0f,  // 1
@@ -13,4 +13,4 @@ glm::mat4 create_orientation_matrix(glm::vec3 base, glm::vec3 x, glm::vec3 y) {
     return glm::transpose(glm::make_mat4(orientation_matrix));
 }
 
-} // namespace tomcat::gui
+} // namespace recastx::gui

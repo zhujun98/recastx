@@ -5,7 +5,7 @@
 #include <iostream>
 #include "utils.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 std::vector<uint32_t> pack(const std::vector<float> &data,
                            float min_value, float max_value) {
@@ -86,4 +86,4 @@ void FpsCounter::update() {
     return fps_;
 }
 
-} // namespace tomcat::gui
+} // namespace recastx::gui

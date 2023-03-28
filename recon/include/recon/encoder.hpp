@@ -5,7 +5,7 @@
 #include "slice_mediator.hpp"
 #include "reconstruction.pb.h"
 
-namespace tomcat::recon {
+namespace recastx::recon {
 
 template<typename T>
 inline ReconDataPacket createSliceDataPacket(const T& data, uint32_t x, uint32_t y, uint64_t timestamp) {
@@ -31,6 +31,6 @@ inline ReconDataPacket createVolumeDataPacket(const T& data, uint32_t x, uint32_
     return packet;
 }
 
-} // tomcat::recon
+} // namespace recastx::recon
 
 #endif // RECON_ENCODER_H

@@ -1,7 +1,7 @@
 #include "recon/filter.hpp"
 #include <iostream>
 
-namespace tomcat::recon {
+namespace recastx::recon {
 
 Filter::Filter(const std::string& filter_name, 
                bool gaussian_lowpass_filter,
@@ -102,4 +102,4 @@ std::vector<float> Filter::gaussian(int n, float sigma) {
     return result;
 }
 
-} // tomcat::recon
+} // namespace recastx::recon

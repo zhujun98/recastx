@@ -7,7 +7,7 @@
 #include "graphics/shader_program.hpp"
 #include "graphics/style.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 Scene::Scene() = default;
 
@@ -98,4 +98,4 @@ void Scene::tick(double /*time_elapsed*/) {
     }
 }
 
-}  // tomcat::gui
+}  // namespace recastx::gui

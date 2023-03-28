@@ -8,7 +8,7 @@
 #include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 std::vector<uint32_t> pack(const std::vector<float>& data,
                            float min_value = 1.0f, float max_value = -1.0f);
@@ -49,6 +49,6 @@ public:
     [[nodiscard]] double frameRate();
 };
 
-} // tomcat::gui
+} // namespace recastx::gui
 
 #endif //GUI_UTILS_H

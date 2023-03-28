@@ -6,7 +6,7 @@
 #include <vector>
 
 
-namespace tomcat {
+namespace recastx {
 
     constexpr size_t MAX_NUM_SLICES = 3;
 
@@ -63,6 +63,6 @@ namespace tomcat {
         float max_z; // maximum z coordinates
     };
 
-} // tomcat
+} // namespace recastx
 
 #endif // COMMON_CONFIG_H

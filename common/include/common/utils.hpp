@@ -3,12 +3,12 @@
 
 #include "config.hpp"
 
-namespace tomcat {
+namespace recastx {
 
 inline size_t sliceIdFromTimestamp(size_t ts) {
     return ts % MAX_NUM_SLICES; 
 }
 
-} // tomcat
+} // namespace recastx
 
 #endif // COMMON_UTILS_H

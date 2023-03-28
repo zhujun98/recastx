@@ -6,7 +6,7 @@
 #include "zmq_client.hpp"
 #include "logger.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 using namespace std::string_literals;
 
@@ -77,4 +77,4 @@ void MessageClient::send(const ReconRequestPacket& packet) {
     }
 }
 
-} // namespace tomcat::gui
+} // namespace recastx::gui

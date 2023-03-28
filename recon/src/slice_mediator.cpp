@@ -5,7 +5,7 @@
 #include "recon/reconstructor.hpp"
 
 
-namespace tomcat::recon {
+namespace recastx::recon {
 
 SliceMediator::SliceMediator() : ondemand_slices_(true) {}
 
@@ -68,4 +68,4 @@ void SliceMediator::reconOnDemand(Reconstructor* recon, int gpu_buffer_index) {
     }
 }
 
-} // tomcat::recon
+} // namespace recastx::recon

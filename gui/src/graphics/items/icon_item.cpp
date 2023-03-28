@@ -7,7 +7,7 @@
 #include "graphics/glyph_renderer.hpp"
 #include "graphics/scene.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 IconItem::IconItem(Scene &scene)
         : GraphicsItem(scene),
@@ -49,4 +49,4 @@ void IconItem::renderGl(const glm::mat4& /*view*/,
     glDisable(GL_BLEND);
 }
 
-} // tomcat::gui
+} // namespace recastx::gui

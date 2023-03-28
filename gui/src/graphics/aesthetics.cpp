@@ -1,6 +1,6 @@
 #include "graphics/aesthetics.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 const std::set<ImPlotColormap> Colormap::options_ {
     static_cast<ImPlotColormap>(ImPlotColormap_::ImPlotColormap_Viridis), // 4
@@ -54,4 +54,4 @@ void Colormap::set(ImPlotColormap idx) {
     }
 }
 
-} // namespace tomcat::gui
+} // namespace recastx::gui

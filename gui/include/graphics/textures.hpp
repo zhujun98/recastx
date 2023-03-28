@@ -10,7 +10,7 @@
 #include <GL/gl3w.h>
 #include <glm/glm.hpp>
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 namespace detail {
 
@@ -267,6 +267,6 @@ public:
     }
 };
 
-}  // namespace tomcat::gui
+}  // namespace recastx::gui
 
 #endif // GUI_TEXTURES_H

@@ -15,7 +15,7 @@ using namespace std::chrono_literals;
 #include "recon/reconstructor.hpp"
 #include "recon/zmq_server.hpp"
 
-namespace tomcat::recon {
+namespace recastx::recon {
 
 using namespace std::string_literals;
 
@@ -342,4 +342,4 @@ void Application::processProjections(oneapi::tbb::task_arena& arena) {
 #endif
 }
 
-} // tomcat::recon
+} // namespace recastx::recon

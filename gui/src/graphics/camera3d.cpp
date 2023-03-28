@@ -3,7 +3,7 @@
 
 #include "graphics/camera3d.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 Camera::Camera() : target_( {0.f, 0.f, 0.f}) {
     setPerspectiveView();
@@ -126,4 +126,4 @@ void Camera::adjustYaw(float offset) {
     rotation_ = glm::rotate(offset, up_) * rotation_;
 }
 
-} // tomcat::gui
+} // namespace recastx::gui

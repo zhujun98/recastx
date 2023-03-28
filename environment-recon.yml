@@ -1,4 +1,4 @@
-name: tomcat-live-recon
+name: recastx-recon
 channels:
   - conda-forge
   - defaults

@@ -8,7 +8,7 @@
 #include "graphics/primitives.hpp"
 #include "graphics/scene.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 AxiscubeItem::AxiscubeItem(Scene &scene)
         : GraphicsItem(scene),
@@ -80,4 +80,4 @@ void AxiscubeItem::renderGl(const glm::mat4& view,
     glDisable(GL_DEPTH_TEST);
 }
 
-} // tomcat::gui
+} // namespace recastx::gui

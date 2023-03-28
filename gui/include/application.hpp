@@ -12,7 +12,7 @@
 
 struct GLFWwindow;
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 class Scene3d;
 
@@ -23,7 +23,7 @@ class Application {
 
     int width_ = 1440;
     int height_ = 1080;
-    const std::string title_ = "TOMCAT 3D Live Reconstruction";
+    const std::string title_ = "RECASTX - Quasi-3D Real-time Tomographic Reconstruction";
 
     ImVec4 bg_color_ = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
 
@@ -66,6 +66,6 @@ public:
     void exec();
 };
 
-}  // namespace tomcat::gui
+}  // namespace recastx::gui
 
 #endif // GUI_APPLICATION_H

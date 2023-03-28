@@ -17,7 +17,7 @@
 #include "graphics/volume.hpp"
 #include "utils.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 class FpsCounter;
 
@@ -154,6 +154,6 @@ public:
     Slice* hoveredSlice() { return hovered_slice_; }
 };
 
-} // namespace tomcat::gui
+} // namespace recastx::gui
 
 #endif // GUI_RECONITEM_H

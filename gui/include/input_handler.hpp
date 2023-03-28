@@ -1,7 +1,7 @@
 #ifndef GUI_INPUTHANDLER_H
 #define GUI_INPUTHANDLER_H
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 class InputHandler {
   public:
@@ -12,6 +12,6 @@ class InputHandler {
     virtual bool handleChar(unsigned int /* c */) { return false; }
 };
 
-} // namespace tomcat::gui
+} // namespace recastx::gui
 
 #endif // GUI_INPUTHANDLER_H

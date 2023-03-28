@@ -1,6 +1,6 @@
 #include "graphics/graph_node.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 GraphNode::GraphNode() : parent_(nullptr) {};
 
@@ -12,4 +12,4 @@ GraphNode* GraphNode::parent() const { return parent_; }
 
 void GraphNode::appendChildNode(GraphNode* node) { children_.push_back(node); }
 
-} // namespace tomcat::gui
+} // namespace recastx::gui

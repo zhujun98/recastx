@@ -9,7 +9,7 @@
 #include "graphics/scene3d.hpp"
 #include "graphics/style.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 namespace detail {
 
@@ -198,4 +198,4 @@ std::array<float, 2> Application::normalizeCursorPos(GLFWwindow* window, double 
     return {static_cast<float>(xpos), static_cast<float>(ypos)};
 }
 
-} // namespace tomcat::gui
+} // namespace recastx::gui

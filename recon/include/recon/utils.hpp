@@ -21,7 +21,7 @@
 #include "common/config.hpp"
 #include "tensor.hpp"
 
-namespace tomcat::recon::utils {
+namespace recastx::recon::utils {
 
 std::unique_ptr<astra::CParallelVecProjectionGeometry3D>
 parallel_beam_to_vec(astra::CParallelProjectionGeometry3D* parallel_geom);
@@ -42,6 +42,6 @@ std::tuple<Eigen::Vector3f, Eigen::Matrix3f, Eigen::Vector3f>
 slice_transform(Eigen::Vector3f base, Eigen::Vector3f axis_1,
                 Eigen::Vector3f axis_2, float k);
 
-} // tomcat::recon::utils
+} // namespace recastx::recon::utils
 
 #endif // RECON_UTILS_H

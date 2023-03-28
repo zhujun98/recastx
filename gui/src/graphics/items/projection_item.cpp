@@ -3,7 +3,7 @@
 #include "graphics/items/projection_item.hpp"
 #include "graphics/scene.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 ProjectionItem::ProjectionItem(Scene& scene) : GraphicsItem(scene) {
     scene.addItem(this);
@@ -36,4 +36,4 @@ void ProjectionItem::renderIm() {
     ImGui::DragFloat("Y offset", &y_offset_, 1, -50, 50, "%.1f");
 }
 
-} // tomcat::gui
+} // namespace recastx::gui

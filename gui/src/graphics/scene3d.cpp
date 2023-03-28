@@ -14,7 +14,7 @@
 #include "graphics/items/logging_item.hpp"
 #include "graphics/items/recon_item.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 Scene3d::Scene3d()
         : Scene(),
@@ -109,4 +109,4 @@ void Scene3d::render() {
     axiscube_item_->renderGl(view, viewport_axiscube_->projection(), params);
 }
 
-} // tomcat::gui
+} // namespace recastx::gui

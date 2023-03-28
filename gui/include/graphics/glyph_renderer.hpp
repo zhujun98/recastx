@@ -7,7 +7,7 @@
 #include <GL/gl3w.h>
 #include <glm/glm.hpp>
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 class GlyphRenderer {
 
@@ -73,6 +73,6 @@ public:
     void render(const std::string &text, float x, float y, float sx, float sy);
 };
 
-}  // namespace tomcat::gui
+}  // namespace recastx::gui
 
 #endif //GUI_GLYPHRENDERER_H

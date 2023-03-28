@@ -1,7 +1,7 @@
 #include "recon/phase.hpp"
 
 
-namespace tomcat::recon {
+namespace recastx::recon {
 
 namespace details {
 
@@ -82,4 +82,4 @@ void Paganin::apply(float* data, int idx) {
     }
 }
 
-}; // tomcat::recon
+}; // namespace recastx::recon

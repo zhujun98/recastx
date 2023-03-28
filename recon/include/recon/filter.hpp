@@ -8,7 +8,7 @@ extern "C" {
 #include <fftw3.h>
 }
 
-namespace tomcat::recon {
+namespace recastx::recon {
 
 class Filter {
     std::vector<std::vector<std::complex<float>>> freq_;
@@ -43,6 +43,6 @@ class Filter {
     static std::vector<float> gaussian(int n, float sigma);
 };
 
-} // tomcat::recon
+} // namespace recastx::recon
 
 #endif // RECON_FILTER_H

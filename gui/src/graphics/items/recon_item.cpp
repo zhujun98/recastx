@@ -17,7 +17,7 @@
 #include "encoder.hpp"
 #include "logger.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 ReconItem::ReconItem(Scene& scene) : GraphicsItem(scene) {
     scene.addItem(this);
@@ -250,7 +250,7 @@ void ReconItem::setVolumeData(const std::string& data, const std::array<uint32_t
     maybeUpdateMinMaxValues();
 }
 
-bool ReconItem::consume(const tomcat::ReconDataPacket &packet) {
+bool ReconItem::consume(const ReconDataPacket &packet) {
     if (packet.has_slice()) {
         auto& data = packet.slice();
         setSliceData(data.data(), {data.row_count(), data.col_count()}, data.timestamp());
@@ -576,4 +576,4 @@ void ReconItem::SliceRotator::onDrag(const glm::vec2& delta) {
     slice->setOrientation(a, b - a, c - a);
 }
 
-} // tomcat::gui
+} // namespace recastx::gui

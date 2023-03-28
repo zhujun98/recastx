@@ -8,7 +8,7 @@
 #include "buffer.hpp"
 
 
-namespace tomcat::recon {
+namespace recastx::recon {
 
 class Reconstructor;
 
@@ -56,6 +56,6 @@ public:
     const ParamType& params() const { return params_; }
 };
 
-} // tomcat::recon
+} // namespace recastx::recon
 
 #endif // RECON_SLICEMEDIATOR_H

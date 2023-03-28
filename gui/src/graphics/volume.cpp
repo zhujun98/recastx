@@ -1,6 +1,6 @@
 #include "graphics/volume.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 Volume::Volume() : size_({128, 128, 128}) {
     DataType data(size_[0] * size_[1] * size_[2], 0);
@@ -31,4 +31,4 @@ void Volume::updateMinMaxVal() {
 
 const std::array<float, 2>& Volume::minMaxVals() const { return min_max_vals_; }
 
-} // namespace tomcat::gui
+} // namespace recastx::gui

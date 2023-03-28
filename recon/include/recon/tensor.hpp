@@ -11,7 +11,7 @@
 #include "common/config.hpp"
 
 
-namespace tomcat::recon {
+namespace recastx::recon {
 
 template<typename T, size_t N>
 class Tensor {
@@ -240,6 +240,6 @@ size_t ImageGroup<T>::push(const char* buffer,
 using ProImageGroup = ImageGroup<ProDtype>;
 using RawImageGroup = ImageGroup<RawDtype>;
 
-} // tomcat::recon
+} // namespace recastx::recon
 
 #endif // RECON_TENSOR_H

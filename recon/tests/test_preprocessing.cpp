@@ -4,7 +4,7 @@
 #include "recon/preprocessing.hpp"
 
 
-namespace tomcat::recon::test {
+namespace recastx::recon::test {
 
 using ::testing::ElementsAreArray;
 using ::testing::Pointwise;
@@ -41,4 +41,4 @@ TEST(TestUtils, TestComputeReciprocal) {
         -0.25,       1.,         0.42857143}));
 }
 
-} // tomcat::recon::test
+} // namespace recastx::recon::test

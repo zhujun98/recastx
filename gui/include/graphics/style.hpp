@@ -3,7 +3,7 @@
 
 #include <imgui.h>
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 struct Style {
     static constexpr float MARGIN = 0.01f;
@@ -33,6 +33,6 @@ struct Style {
 
 };
 
-} // namespace tomcat::gui
+} // namespace recastx::gui
 
 #endif //GUI_STYLE_HPP

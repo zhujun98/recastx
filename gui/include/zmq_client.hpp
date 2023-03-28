@@ -11,7 +11,7 @@
 
 #include "reconstruction.pb.h"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 class DataClient {
 
@@ -47,6 +47,6 @@ public:
     void send(const ReconRequestPacket& packet);
 };
 
-}  // namespace tomcat::gui
+}  // namespace recastx::gui
 
 #endif //GUI_ZMQCLIENT_H

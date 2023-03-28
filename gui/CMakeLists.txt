@@ -1,4 +1,4 @@
-project(tomcat-live-gui LANGUAGES C CXX)
+project(recastx-gui LANGUAGES C CXX)
 
 include(FindOpenGL)
 message(STATUS "Found OpenGL at ${OPENGL_LIBRARIES}, ${OPENGL_INCLUDE_DIR}")
@@ -76,7 +76,7 @@ set(GUI_SOURCES
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ../common/reconstruction.proto)
 list(APPEND GUI_SOURCES ${PROTO_SRCS} ${PROTO_HDRS})
 
-set(TARGET_NAME tomcat-live-gui)
+set(TARGET_NAME recastx-gui)
 add_executable(${TARGET_NAME} ${GUI_SOURCES})
 target_include_directories(${TARGET_NAME}
         PRIVATE include

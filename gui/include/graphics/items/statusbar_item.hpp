@@ -3,7 +3,7 @@
 
 #include "graphics/items/graphics_item.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 class Scene;
 

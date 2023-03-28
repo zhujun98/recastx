@@ -16,7 +16,7 @@ using namespace std::chrono_literals;
 #include "common/config.hpp"
 #include "tensor.hpp"
 
-namespace tomcat::recon {
+namespace recastx::recon {
 
 template<typename T>
 class TripleBufferInterface {
@@ -423,6 +423,6 @@ bool MemoryBuffer<T, N>::fetch(int timeout) {
     return true;
 }
 
-} // tomcat::recon
+} // namespace recastx::recon
 
 #endif // RECON_BUFFER_H

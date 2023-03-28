@@ -5,7 +5,7 @@
 #include "recon/application.hpp"
 
 
-namespace tomcat::recon {
+namespace recastx::recon {
 
 using namespace std::string_literals;
 
@@ -111,4 +111,4 @@ zmq::socket_type DaqClient::parseSocketType(const std::string& socket_type) cons
     throw std::invalid_argument("Unsupported socket type: "s + socket_type); 
 }
 
-} // tomcat::recon
+} // namespace recastx::recon

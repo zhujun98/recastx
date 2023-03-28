@@ -1,4 +1,4 @@
-project(tomcat-live-recon LANGUAGES CXX)
+project(recastx-recon LANGUAGES CXX)
 
 # Caveat: sequence
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -34,7 +34,7 @@ set(PROTOS "${CMAKE_CURRENT_LIST_DIR}/../common/reconstruction.proto")
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTOS})
 list(APPEND RECON_SOURCES ${PROTO_SRCS} ${PROTO_HDRS})
 
-set(RECON_LIB lib-tomcat-live-recon)
+set(RECON_LIB lib-recastx-recon)
 add_library(${RECON_LIB} ${RECON_SOURCES})
 
 target_include_directories(${RECON_LIB}
@@ -69,7 +69,7 @@ if (BUILD_TEST)
     add_subdirectory(tests)
 endif()
 
-set(EXEC_NAME "tomcat-live-recon")
+set(EXEC_NAME "recastx-recon")
 add_executable(${EXEC_NAME} "src/main.cpp")
 target_link_libraries(${EXEC_NAME} PUBLIC ${RECON_LIB} Boost::program_options)
 

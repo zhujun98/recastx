@@ -10,7 +10,7 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/details/synchronous_factory.h>
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 namespace details {
 
@@ -98,6 +98,6 @@ inline void error(Args &&... args) {
 
 } // log
 
-} // tomcat::gui
+} // namespace recastx::gui
 
 #endif //TOMCAT_LOGGER_HPP

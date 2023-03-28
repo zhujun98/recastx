@@ -5,7 +5,7 @@
 
 #include "textures.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 class Volume {
 
@@ -40,6 +40,6 @@ public:
 };
 
 
-} // namespace tomcat::gui
+} // namespace recastx::gui
 
 #endif // GUI_VOLUME_H

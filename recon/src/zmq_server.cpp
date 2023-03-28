@@ -5,7 +5,7 @@
 
 #include "common/utils.hpp"
 
-namespace tomcat::recon {
+namespace recastx::recon {
 
 using namespace std::string_literals;
 
@@ -96,4 +96,4 @@ void MessageServer::start() {
     thread_.detach();
 }
 
-} // tomcat::recon
+} // namespace recastx::recon

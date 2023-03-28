@@ -8,7 +8,7 @@ extern "C" {
 #include <fftw3.h>
 }
 
-namespace tomcat::recon {
+namespace recastx::recon {
 
 namespace details {
     std::vector<float> paganinFilter(
@@ -37,6 +37,6 @@ class Paganin {
 
 };
 
-} // tomcat::recon
+} // namespace recastx::recon
 
 #endif // RECON_PHASE_H

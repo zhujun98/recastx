@@ -6,7 +6,7 @@
 
 #include <zmq.hpp>
 
-namespace tomcat::recon {
+namespace recastx::recon {
 
 class Application;
 
@@ -36,6 +36,6 @@ public:
 };
 
 
-} // tomcat::recon
+} // namespace recastx::recon
 
 #endif // RECON_DAQCLIENT_H
