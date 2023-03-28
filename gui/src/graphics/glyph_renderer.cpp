@@ -5,7 +5,7 @@
 
 #include "graphics/glyph_renderer.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 GlyphRenderer::GlyphRenderer() {
     glGenVertexArrays(1, &vao_);
@@ -123,4 +123,4 @@ void GlyphRenderer::render(const std::string& text, float x, float y, float sx, 
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-}  // namespace tomcat::gui
+}  // namespace recastx::gui

@@ -9,7 +9,7 @@
 #include "recon/preprocessing.hpp"
 
 
-namespace tomcat::recon::test {
+namespace recastx::recon::test {
 
 using ::testing::Pointwise;
 using ::testing::FloatNear;
@@ -211,4 +211,4 @@ TEST_F(ApplicationTest, TestWithPagagin) {
     // pushProjection(0, num_angles_);
 }
 
-} // tomcat::recon::test
+} // namespace recastx::recon::test

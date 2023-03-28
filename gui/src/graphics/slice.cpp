@@ -4,7 +4,7 @@
 
 #include "graphics/slice.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 Slice::Slice(int slice_id) : id_(slice_id) {}
 
@@ -74,4 +74,4 @@ void Slice::updateMinMaxVal() {
     min_max_vals_ = {*vmin, *vmax};
 }
 
-} // namespace tomcat::gui
+} // namespace recastx::gui

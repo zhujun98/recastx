@@ -25,7 +25,7 @@ extern "C" {
 #include "zmq_server.hpp"
 
 
-namespace tomcat::recon {
+namespace recastx::recon {
 
 class Filter;
 class Paganin;
@@ -130,6 +130,6 @@ public:
     const TripleTensorBuffer<float, 3>& sinoBuffer() const { return sino_buffer_; }
 };
 
-} // tomcat::recon
+} // namespace recastx::recon
 
 #endif // RECON_APPLICATION_H

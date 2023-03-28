@@ -1,7 +1,7 @@
 #include "graphics/items/graphics_item.hpp"
 #include "graphics/scene.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 // class GraphicsItem
 
@@ -13,4 +13,4 @@ void GraphicsItem::init() {}
 
 void GraphicsItem::onWindowSizeChanged(int /*width*/, int /*height*/) {}
 
-} // namespace tomcat::gui
+} // namespace recastx::gui

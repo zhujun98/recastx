@@ -13,7 +13,7 @@
 #include "ticker.hpp"
 #include "reconstruction.pb.h"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 class Camera;
 class Viewport;
@@ -61,6 +61,6 @@ public:
                           const RenderParams& params) = 0;
 };
 
-} // tomcat::gui
+} // namespace recastx::gui
 
 #endif // GUI_SCENEITEM_H

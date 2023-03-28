@@ -22,7 +22,7 @@
 #include "common/config.hpp"
 #include "tensor.hpp"
 
-namespace tomcat::recon {
+namespace recastx::recon {
 
 namespace details {
     std::string astraInfo(const astra::CConeVecProjectionGeometry3D& x);
@@ -104,6 +104,6 @@ public:
     std::vector<float> fdk_weights();
 };
 
-} // tomcat::recon
+} // namespace recastx::recon
 
 #endif // RECON_RECONSTRUCTOR_H

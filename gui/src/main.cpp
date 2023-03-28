@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
 #ifndef NDEBUG
     spdlog::set_level(spdlog::level::debug);
 #endif
-    using namespace tomcat::gui;
+    using namespace recastx::gui;
     namespace po = boost::program_options;
 
     po::options_description desc("Options");

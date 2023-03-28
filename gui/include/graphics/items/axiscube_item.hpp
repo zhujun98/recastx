@@ -6,7 +6,7 @@
 #include "graphics/items/graphics_item.hpp"
 #include "graphics/shader_program.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 class GlyphRenderer;
 class Scene;
@@ -36,6 +36,6 @@ public:
                   const RenderParams& params) override;
 };
 
-}  // namespace tomcat::gui
+}  // namespace recastx::gui
 
 #endif // GUI_AXISCUBEITEM_H

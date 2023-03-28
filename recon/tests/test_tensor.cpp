@@ -5,7 +5,7 @@
 
 #include "recon/tensor.hpp"
 
-namespace tomcat::recon::test {
+namespace recastx::recon::test {
 
 using ::testing::ElementsAre;
 

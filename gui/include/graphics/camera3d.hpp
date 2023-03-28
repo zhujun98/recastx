@@ -14,7 +14,7 @@
 #include "path.hpp"
 #include "ticker.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 class Camera : public InputHandler {
 
@@ -60,6 +60,6 @@ class Camera : public InputHandler {
     void setPerspectiveView();
 };
 
-} // namespace tomcat::gui
+} // namespace recastx::gui
 
 #endif // GUI_CAMERA3D_H

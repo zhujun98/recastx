@@ -2,7 +2,7 @@
 
 #include "recon/utils.hpp"
 
-namespace tomcat::recon::utils {
+namespace recastx::recon::utils {
 
 std::unique_ptr<astra::CParallelVecProjectionGeometry3D>
 parallel_beam_to_vec(astra::CParallelProjectionGeometry3D* parallel_geom) {
@@ -173,4 +173,4 @@ slice_transform(Eigen::Vector3f base, Eigen::Vector3f axis_1,
     return {-delta, rot, {1.0f, 1.0f, 1.0f}};
 }
 
-} // tomcat::recon::util
+} // namespace recastx::recon::util

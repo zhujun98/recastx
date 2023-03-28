@@ -4,7 +4,7 @@
 #include "common/config.hpp"
 #include "recon/buffer.hpp"
 
-namespace tomcat::recon::test {
+namespace recastx::recon::test {
 
 using ::testing::Pointwise;
 using ::testing::FloatNear;
@@ -202,4 +202,4 @@ TEST_F(MemoryBufferTest, TestSameDataReceivedRepeatedly) {
     }
 }
 
-} // tomcat::recon::test
+} // namespace recastx::recon::test

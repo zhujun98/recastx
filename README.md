@@ -12,11 +12,11 @@ module load gcc/9.3.0
 On the GPU node `x02da-gpu-1`
 
 ```sh
-cd /afs/psi.ch/project/TOMCAT_dev/tomcat-live
+cd /afs/psi.ch/project/TOMCAT_dev/recastx
 git clone --recursive <repo>
 
 conda env create -f environment-recon.yml
-conda activate tomcat-live-recon
+conda activate recastx-recon
 
 mkdir build && cd build
 cmake .. -DCMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"} \
@@ -29,11 +29,11 @@ make -j12 && make install
 On the graphics workstation `x02da-gws-3`
 
 ```sh
-cd /afs/psi.ch/project/TOMCAT_dev/tomcat-live
+cd /afs/psi.ch/project/TOMCAT_dev/recastx
 git clone --recursive <repo>
 
 conda env create -f environment-gui.yml
-conda activate tomcat-live-gui
+conda activate recastx-gui
 
 mkdir build-gui && cd build-gui
 cmake .. -DCMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"} \
@@ -47,14 +47,14 @@ make -j12 && make install
 
 Log in (no ssh) onto the graphics workstation `x02da-gws-3` and open a terminal
 ```sh
-conda activate tomcat-live-gui
-tomcat-live-gui --recon-host x02da-gpu-1
+conda activate recastx-gui
+recastx-gui --recon-host x02da-gpu-1
 ```
 
 Or on the Ra cluster, you can only run the OpenGL GUI inside a [NoMachine](https://www.psi.ch/en/photon-science-data-services/remote-interactive-access
 ) client by
 ```sh
-vglrun tomcat-live-gui --recon-host x02da-gpu-1
+vglrun recastx-gui --recon-host x02da-gpu-1
 ```
 **Note**: there is still a problem of linking the OpenGL GUI on Ra.
 
@@ -66,18 +66,18 @@ ssh -L 9970:localhost:9970 -L 9971:localhost:9971 x02da-gpu-1
 ### Step 2: Start the reconstruction server
 
 ```sh
-conda activate tomcat-live-recon
+conda activate recastx-recon
 
 # Receiving the data stream and running the GUI both locally
-tomcat-live-recon --threads 32 --rows 800 --cols 384 --angles 400
+recastx-recon --threads 32 --rows 800 --cols 384 --angles 400
 
 # Receiving the data stream from a DAQ node
-tomcat-live-recon --daq-host xbl-daq-36 --threads 32 --rows 800 --cols 384 --angles 400
+recastx-recon --daq-host xbl-daq-36 --threads 32 --rows 800 --cols 384 --angles 400
 ```
 
 For more information, type
 ```sh
-tomcat-live-recon -h
+recastx-recon -h
 ```
 
 ### Step 3: Stream the data

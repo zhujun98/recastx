@@ -15,7 +15,7 @@
 #include "graphics/viewport.hpp"
 #include "ticker.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 class ShaderProgram;
 class Camera;
@@ -84,6 +84,6 @@ protected:
     }
 };
 
-}  // namespace tomcat::gui
+}  // namespace recastx::gui
 
 #endif // GUI_SCENES_SCENE_H

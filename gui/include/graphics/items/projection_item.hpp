@@ -3,7 +3,7 @@
 
 #include "graphics/items/graphics_item.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 class ProjectionItem : public GraphicsItem {
 
@@ -21,6 +21,6 @@ public:
     void renderIm() override;
 };
 
-} // tomcat::gui
+} // namespace recastx::gui
 
 #endif //GUI_PROJECTIONITEM_HPP

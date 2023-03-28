@@ -6,7 +6,7 @@
 #include "graphics/items/graphics_item.hpp"
 #include "logger.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 class LoggingItem : public GraphicsItem {
 
@@ -44,6 +44,6 @@ public:
     void clear();
 };
 
-} // tomcat::gui
+} // namespace recastx::gui
 
 #endif //GUI_LOGGINGITEM_HPP

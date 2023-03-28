@@ -6,7 +6,7 @@
 #include "graphics/scene.hpp"
 #include "graphics/camera3d.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 class AxiscubeItem;
 class AxesItem;
@@ -44,6 +44,6 @@ public:
     void render() override;
 };
 
-}  // namespace tomcat::gui
+}  // namespace recastx::gui
 
 #endif // GUI_SCENE3D_H

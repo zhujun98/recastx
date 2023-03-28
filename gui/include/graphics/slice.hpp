@@ -9,7 +9,7 @@
 
 #include "textures.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 class Slice {
 
@@ -69,6 +69,6 @@ class Slice {
     [[nodiscard]] const std::array<float, 2>& minMaxVals() const;
 };
 
-} // namespace tomcat::gui
+} // namespace recastx::gui
 
 #endif // GUI_SLICE_H

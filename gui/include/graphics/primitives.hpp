@@ -3,7 +3,7 @@
 
 #include <GL/gl3w.h>
 
-namespace tomcat::gui::primitives {
+namespace recastx::gui::primitives {
 
 inline constexpr GLfloat line[] = {
         0.0f, 0.0f, 0.0f,
@@ -84,6 +84,6 @@ inline constexpr GLuint wireframe_cube_indices[] = {
         5, 4, 5, 0, 4, 7, 7, 0, 6, 5, 1, 0,
         3, 4, 2, 7, 6, 3, 6, 1, 3, 2, 2, 1};
 
-} // namespace tomcat::gui
+} // namespace recastx::gui
 
 #endif // GUI_PRIMITIVES_H

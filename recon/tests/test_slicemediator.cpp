@@ -3,7 +3,7 @@
 
 #include "recon/slice_mediator.hpp"
 
-namespace tomcat::recon::test {
+namespace recastx::recon::test {
 
 TEST(SliceMediatorTest, TestUpdate) {
     SliceMediator mediator;
@@ -42,4 +42,4 @@ TEST(SliceMediatorTest, TestUpdate) {
     ASSERT_EQ(params.at(0).second, orient2);
 }
 
-} // tomcat::recon::test
+} // namespace recastx::recon::test

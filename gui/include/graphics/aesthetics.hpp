@@ -11,7 +11,7 @@
 
 #include "textures.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 class Colormap {
 
@@ -42,7 +42,7 @@ public:
     void set(ImPlotColormap idx);
 };
 
-} // namespace tomcat::gui
+} // namespace recastx::gui
 
 
 #endif //GUI_AESTHETICS_H

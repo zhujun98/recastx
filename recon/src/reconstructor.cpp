@@ -3,7 +3,7 @@
 #include "recon/reconstructor.hpp"
 #include "recon/utils.hpp"
 
-namespace tomcat::recon {
+namespace recastx::recon {
 
 namespace details {
 
@@ -378,4 +378,4 @@ std::vector<float> ConeBeamReconstructor::fdk_weights() {
     return result;
 }
 
-} // tomcat::recon
+} // namespace recastx::recon

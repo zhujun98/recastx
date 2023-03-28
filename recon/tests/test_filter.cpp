@@ -5,7 +5,7 @@
 
 #include "recon/filter.hpp"
 
-namespace tomcat::recon::test {
+namespace recastx::recon::test {
 
 using ::testing::Pointwise;
 using ::testing::FloatNear;
@@ -88,4 +88,4 @@ TEST_F(FilterTest, TestShepp) {
                            0.41235096f, -1.32173338f, 0.944262f, 1.10916587f, -1.14404545f}));
 }
 
-} // tomcat::recon::test
+} // namespace recastx::recon::test

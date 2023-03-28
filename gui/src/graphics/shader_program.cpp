@@ -4,7 +4,7 @@
 
 #include "graphics/shader_program.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 ShaderProgram::ShaderProgram(const char* vcode, const char* fcode) {
     compileShaderProgram(vcode, fcode);
@@ -114,4 +114,4 @@ void ShaderProgram::compileShaderProgram(const char* vcode, const char* fcode) {
     glDeleteShader(fragment);
 }
 
-} // namespace tomcat::gui
+} // namespace recastx::gui

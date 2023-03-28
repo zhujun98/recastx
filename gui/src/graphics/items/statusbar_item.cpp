@@ -4,7 +4,7 @@
 #include "graphics/scene.hpp"
 #include "graphics/style.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 StatusbarItem::StatusbarItem(Scene& scene) : GraphicsItem(scene) {
     scene.addItem(this);
@@ -46,4 +46,4 @@ void StatusbarItem::renderIm() {
     }
 }
 
-} // namespace tomcat::gui
+} // namespace recastx::gui

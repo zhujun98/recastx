@@ -8,7 +8,7 @@
 #include <Eigen/Dense>
 #include <glm/glm.hpp>
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 enum class bdry_cond : int {
     zero,
@@ -141,4 +141,4 @@ class Path3 {
 
 std::ostream& operator<<(std::ostream& out, Path3 const& p);
 
-} // namespace tomcat::gui
+} // namespace recastx::gui

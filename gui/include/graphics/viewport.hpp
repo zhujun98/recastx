@@ -5,7 +5,7 @@
 
 #include <glm/glm.hpp>
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 class Viewport {
 
@@ -39,6 +39,6 @@ public:
     void use() const;
 };
 
-} // namespace tomcat::gui
+} // namespace recastx::gui
 
 #endif //GUI_VIEWPORT_H

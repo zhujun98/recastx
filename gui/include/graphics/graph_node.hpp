@@ -5,7 +5,7 @@
 
 #include <glm/glm.hpp>
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 class GraphNode {
 
@@ -24,6 +24,6 @@ public:
     void appendChildNode(GraphNode* node);
 };
 
-} // namespace tomcat::gui
+} // namespace recastx::gui
 
 #endif //GUI_GRAPHNODE_H

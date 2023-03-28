@@ -7,7 +7,7 @@
 #include "graphics/primitives.hpp"
 #include "graphics/scene.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 AxesItem::AxesItem(Scene &scene) : GraphicsItem(scene) {
     scene.addItem(this);
@@ -55,4 +55,4 @@ void AxesItem::renderGl(const glm::mat4& view,
     glDrawArrays(GL_LINES, 0, 6);
 }
 
-} // tomcat::gui
+} // namespace recastx::gui

@@ -6,7 +6,7 @@
 
 #include "logger.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 LoggingItem::LoggingItem(Scene& scene) :
         GraphicsItem(scene),
@@ -86,4 +86,4 @@ void LoggingItem::clear() {
     buf_.clear();
 }
 
-} // tomcat::gui
+} // namespace recastx::gui

@@ -8,7 +8,7 @@
 #include "common/config.hpp"
 #include "tensor.hpp"
 
-namespace tomcat::recon {
+namespace recastx::recon {
 
 inline void computeReciprocal(const RawImageGroup& darks,
                               const RawImageGroup& flats,
@@ -56,6 +56,6 @@ inline std::vector<float> defaultAngles(int n) {
     return angles;
 }
 
-} // tomcat::recon
+} // namespace recastx::recon
 
 #endif // RECON_PREPROCESSING_H

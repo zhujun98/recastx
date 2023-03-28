@@ -1,4 +1,4 @@
-name: tomcat-live-gui
+name: recastx-gui
 channels:
   - conda-forge
   - defaults

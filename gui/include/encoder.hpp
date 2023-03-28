@@ -3,7 +3,7 @@
 
 #include "reconstruction.pb.h"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 template<typename T>
 inline ReconRequestPacket createSetSlicePacket(uint64_t timestamp, const T& orientation) {
@@ -14,6 +14,6 @@ inline ReconRequestPacket createSetSlicePacket(uint64_t timestamp, const T& orie
     return packet;
 }
 
-} // tomcat::gui
+} // namespace recastx::gui
 
 #endif //GUI_ENCODER_H

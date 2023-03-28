@@ -3,7 +3,7 @@
 
 #include "graphics/viewport.hpp"
 
-namespace tomcat::gui {
+namespace recastx::gui {
 
 Viewport::Viewport(bool perspective, float near, float far)
     : perspective_(perspective), near_(near), far_(far) {};
@@ -35,4 +35,4 @@ void Viewport::use() const {
 }
 
 
-} // namespace tomcat::gui
+} // namespace recastx::gui
