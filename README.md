@@ -1,4 +1,17 @@
-# TOMCAT-LIVE
+# RECAST-X
+
+**REC**onstruction of **A**rbitrary **S**lices in **T**omography - e**X**treme
+
+---
+
+
+
+This project was developed based on a successful proof-of-principle test [1] using [RECAST3D](https://github.com/cicwi/RECAST3D.git) in 2019 at the 
+[TOMCAT](https://www.psi.ch/en/sls/tomcat), [Swiss Light Source](https://www.psi.ch/en/sls).
+
+*References*
+
+[1] Buurlage, JW., Marone, F., Pelt, D.M. et al. Real-time reconstruction and visualisation towards dynamic feedback control during time-resolved tomography experiments at TOMCAT. Sci Rep 9, 18379 (2019). https://doi.org/10.1038/s41598-019-54647-4
 
 ## Installation
 
@@ -41,7 +54,7 @@ cmake .. -DCMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"} \
 make -j12 && make install
 ```
 
-## Running
+## Running at TOMCAT
 
 ### Step 1: Start the GUI 
 
@@ -95,3 +108,8 @@ foamstream-tomcat --rows 800 --cols 384 --projections 10000
 ```
 
 **Option2**: On the DAQ node:
+
+
+## Running at other facilities
+
+**TBD**: a data adaptor should be needed
