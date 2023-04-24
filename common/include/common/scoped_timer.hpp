@@ -25,7 +25,7 @@ public:
         auto stop = ClockType::now();
         auto dt = std::chrono::duration_cast<std::chrono::microseconds>(stop - start_).count();
 
-        spdlog::info("[{}] {} took {} ms", topic_, description_, dt);
+        spdlog::info("[{}] {} took {} ms", topic_, description_, dt / 1000.);
     }
 
     ScopedTimer(const ScopedTimer&) = delete;
