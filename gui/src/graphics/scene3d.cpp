@@ -57,6 +57,16 @@ void Scene3d::onFrameBufferSizeChanged(int width, int height) {
                            h);
 }
 
+void Scene3d::onStartProcessing() {
+    processing_ = true;
+    for (auto item : items_) item->onStartProcessing();
+}
+
+void Scene3d::onStopProcessing() {
+    processing_ = false;
+    for (auto item : items_) item->onStopProcessing();
+}
+
 void Scene3d::render() {
     ImGui::SetNextWindowPos(pos_);
     ImGui::SetNextWindowSize(size_);
@@ -64,6 +74,22 @@ void Scene3d::render() {
     ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoResize);
     // 2/3 of the space for widget and 1/3 for labels
     ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.65f);
+
+    ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.3f, 0.6f, 0.6f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.3f, 0.7f, 0.7f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.3f, 0.8f, 0.8f));
+    ImGui::BeginDisabled(processing_);
+    if (ImGui::Button("Start")) onStartProcessing();
+    ImGui::EndDisabled();
+    ImGui::PopStyleColor(3);
+    ImGui::SameLine();
+    ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.0f, 0.6f, 0.6f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.0f, 0.7f, 0.7f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.0f, 0.8f, 0.8f));
+    ImGui::BeginDisabled(!processing_);
+    if (ImGui::Button("Stop")) onStopProcessing();
+    ImGui::EndDisabled();
+    ImGui::PopStyleColor(3);
 
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "CAMERA");
     ImGui::Checkbox("Fix camera", &fixed_camera_);

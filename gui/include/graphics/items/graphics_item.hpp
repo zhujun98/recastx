@@ -25,6 +25,8 @@ protected:
 
     Scene& scene_;
 
+    bool processing_ = false;
+
 public:
 
     explicit GraphicsItem(Scene& scene);
@@ -36,6 +38,9 @@ public:
     virtual void init();
 
     virtual void onWindowSizeChanged(int width, int height);
+
+    virtual void onStartProcessing() { processing_ = true; }
+    virtual void onStopProcessing() { processing_ = false; }
 
     [[nodiscard]] Scene& scene() const { return scene_; }
 };

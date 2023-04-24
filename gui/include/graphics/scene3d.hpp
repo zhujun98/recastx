@@ -31,6 +31,12 @@ class Scene3d : public Scene {
 
     std::unique_ptr<AxiscubeItem> axiscube_item_;
 
+    bool processing_ = false;
+
+    void onStartProcessing();
+
+    void onStopProcessing();
+
 public:
 
     explicit Scene3d();

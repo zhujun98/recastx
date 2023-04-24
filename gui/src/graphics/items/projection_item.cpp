@@ -20,6 +20,7 @@ void ProjectionItem::renderIm() {
     ImGui::Text("Downsampling factor:");
     ImGui::SameLine();
 
+    ImGui::BeginDisabled(processing_);
     float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
     if (ImGui::ArrowButton("##left", ImGuiDir_Left)) {
         if (downsampling_factor_ > 1) downsampling_factor_--;
@@ -28,12 +29,15 @@ void ProjectionItem::renderIm() {
     if (ImGui::ArrowButton("##right", ImGuiDir_Right)) {
         if (downsampling_factor_ < 10) downsampling_factor_++;
     }
+    ImGui::EndDisabled();
     ImGui::SameLine();
     ImGui::Text("%d", downsampling_factor_);
 
     // Projection center adjustment
+    ImGui::BeginDisabled(processing_);
     ImGui::DragFloat("X offset", &x_offset_, 1, -50, 50, "%.1f");
     ImGui::DragFloat("Y offset", &y_offset_, 1, -50, 50, "%.1f");
+    ImGui::EndDisabled();
 }
 
 } // namespace recastx::gui
