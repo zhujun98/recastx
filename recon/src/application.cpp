@@ -14,6 +14,7 @@ using namespace std::chrono_literals;
 #include "recon/preprocessing.hpp"
 #include "recon/reconstructor.hpp"
 #include "recon/zmq_server.hpp"
+#include "common/scoped_timer.hpp"
 
 namespace recastx::recon {
 
@@ -292,7 +293,7 @@ void Application::processProjections(oneapi::tbb::task_arena& arena) {
     int num_pixels = static_cast<int>(shape[1] * shape[2]);
 
 #if (VERBOSITY >= 2)
-    auto start = std::chrono::steady_clock::now();
+    ScopedTimer timer("Bench", "Processing projections");
 #endif
 
     auto projs = raw_buffer_.front().data();
@@ -334,12 +335,6 @@ void Application::processProjections(oneapi::tbb::task_arena& arena) {
     });
 
     sino_buffer_.prepare();
-
-#if (VERBOSITY >= 2)
-    float duration = std::chrono::duration_cast<std::chrono::microseconds>(
-    std::chrono::steady_clock::now() -  start).count();
-    spdlog::info("[bench] Processing projections took {} ms", duration / 1000);
-#endif
 }
 
 } // namespace recastx::recon

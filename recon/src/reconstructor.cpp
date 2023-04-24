@@ -2,6 +2,7 @@
 
 #include "recon/reconstructor.hpp"
 #include "recon/utils.hpp"
+#include "common/scoped_timer.hpp"
 
 namespace recastx::recon {
 
@@ -73,16 +74,10 @@ void Reconstructor::uploadSinograms(int buffer_idx,
                                     int begin, 
                                     int end) {
 #if (VERBOSITY >= 2)
-    auto start = std::chrono::steady_clock::now();
+    ScopedTimer timer("Bench", "Uploading sinograms to GPU");
 #endif
 
     astra::uploadMultipleProjections(proj_data_[buffer_idx].get(), data, begin, end);
-
-#if (VERBOSITY >= 2)
-    float duration = std::chrono::duration_cast<std::chrono::microseconds>(
-    std::chrono::steady_clock::now() -  start).count();
-    spdlog::info("[bench] Uploading sinograms to GPU took {} ms", duration / 1000);
-#endif
 }
 
 std::unique_ptr<astra::CVolumeGeometry3D>
@@ -159,7 +154,7 @@ void ParallelBeamReconstructor::reconstructSlice(
         Orientation x, int buffer_idx, Tensor<float, 2>& buffer) {
 
 #if (VERBOSITY >= 2)
-    auto start = std::chrono::steady_clock::now();
+    ScopedTimer timer("Bench", "Reconstructing slice");
 #endif
 
     auto k = vol_geom_slice_->getWindowMaxX();
@@ -199,22 +194,12 @@ void ParallelBeamReconstructor::reconstructSlice(
     unsigned int n = vol_geom_slice_->getGridColCount();
     auto pos = astraCUDA3d::SSubDimensions3D{n, n, 1, n, n, n, 1, 0, 0, 0};
     astraCUDA3d::copyFromGPUMemory(buffer.data(), vol_mem_slice_, pos);
-
-#if (VERBOSITY >= 2)
-    float duration = std::chrono::duration_cast<std::chrono::microseconds>(
-    std::chrono::steady_clock::now() -  start).count();
-    spdlog::info("[bench] Reconstructing slices "
-                 "([{:.2f}, {:.2f}, {:.2f}], [{:.2f}, {:.2f}, {:.2f}], [{:.2f}, {:.2f}, {:.2f}])"
-                 " from buffer {} took {} ms",
-                 x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], buffer_idx, duration / 1000);
-#endif
-
 }
 
 void ParallelBeamReconstructor::reconstructPreview(int buffer_idx, Tensor<float, 3>& buffer) {
 
 #if (VERBOSITY >= 2)
-    auto start = std::chrono::steady_clock::now();
+    ScopedTimer timer("Bench", "Reconstructing preview");
 #endif
 
     proj_data_[buffer_idx]->changeGeometry(proj_geom_preview_.get());
@@ -228,12 +213,6 @@ void ParallelBeamReconstructor::reconstructPreview(int buffer_idx, Tensor<float,
     // FIXME: why cubic? 
     float scale = factor * factor * factor;
     for (auto& x : buffer) x *= scale;
-
-#if (VERBOSITY >= 2)
-    float duration = std::chrono::duration_cast<std::chrono::microseconds>(
-    std::chrono::steady_clock::now() -  start).count();
-    spdlog::info("[bench] Reconstructing preview took {} ms", duration / 1000);
-#endif
 }
 
 // class ConeBeamReconstructor
