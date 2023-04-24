@@ -6,6 +6,7 @@
 #include <spdlog/spdlog.h>
 
 #include "common/config.hpp"
+#include "common/scoped_timer.hpp"
 #include "tensor.hpp"
 
 namespace recastx::recon {
@@ -15,8 +16,9 @@ inline void computeReciprocal(const RawImageGroup& darks,
                               ProImageData& reciprocal,
                               ProImageData& dark_avg) {
 #if (VERBOSITY >= 2)
-    auto start = std::chrono::steady_clock::now();
+    ScopedTimer timer("Bench", "Computing reciprocal");
 #endif
+
     darks.average<float>(dark_avg);
     auto flat_avg = flats.average<float>();
     for (size_t i = 0; i < reciprocal.shape()[0] * reciprocal.shape()[1]; ++i) {
@@ -26,11 +28,6 @@ inline void computeReciprocal(const RawImageGroup& darks,
             reciprocal[i] = 1.0f / (flat_avg[i] - dark_avg[i]);
         }
     }
-#if (VERBOSITY >= 2)
-    float duration = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now() -  start).count();
-    spdlog::info("[bench] Computing reciprocal took {} ms", duration/1000);
-#endif
 }
 
 inline void flatField(float* data, 

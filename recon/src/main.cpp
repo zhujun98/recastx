@@ -39,8 +39,6 @@ int main(int argc, char** argv) {
     spdlog::set_level(spdlog::level::debug);
 #endif
 
-    using namespace tomcat;
-
     po::options_description general_desc("General options");
     general_desc.add_options()
         ("help,h", "print help message")
