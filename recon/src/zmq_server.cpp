@@ -88,7 +88,7 @@ void MessageServer::start() {
             } else {
                 spdlog::warn("Unknown or empty packet received");
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                break;
+                continue;
             }
         }
     });
