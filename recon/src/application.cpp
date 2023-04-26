@@ -247,6 +247,12 @@ void Application::setSlice(size_t timestamp, const Orientation& orientation) {
     slice_mediator_.update(timestamp, orientation);
 }
 
+void Application::onStateChanged(StatePacket_State state) {
+    state_ = state;
+    daq_client_.setState(state);
+}
+
+
 std::optional<ReconDataPacket> Application::previewDataPacket(int timeout) { 
     if (preview_buffer_.fetch(timeout)) {
         auto& data = preview_buffer_.front();

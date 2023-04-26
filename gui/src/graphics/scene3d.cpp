@@ -13,6 +13,7 @@
 #include "graphics/items/statusbar_item.hpp"
 #include "graphics/items/logging_item.hpp"
 #include "graphics/items/recon_item.hpp"
+#include "encoder.hpp"
 
 namespace recastx::gui {
 
@@ -57,14 +58,10 @@ void Scene3d::onFrameBufferSizeChanged(int width, int height) {
                            h);
 }
 
-void Scene3d::onStartProcessing() {
-    processing_ = true;
-    for (auto item : items_) item->onStartProcessing();
-}
-
-void Scene3d::onStopProcessing() {
-    processing_ = false;
-    for (auto item : items_) item->onStopProcessing();
+void Scene3d::onStateChanged(StatePacket_State state) {
+    state_ = state;
+    for (auto item : items_) item->setState(state);
+    send(createSetStatePacket(state));
 }
 
 void Scene3d::render() {
@@ -78,16 +75,16 @@ void Scene3d::render() {
     ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.3f, 0.6f, 0.6f));
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.3f, 0.7f, 0.7f));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.3f, 0.8f, 0.8f));
-    ImGui::BeginDisabled(processing_);
-    if (ImGui::Button("Start")) onStartProcessing();
+    ImGui::BeginDisabled(state_ == StatePacket_State::StatePacket_State_PROCESSING);
+    if (ImGui::Button("Start")) onStateChanged(StatePacket_State::StatePacket_State_PROCESSING);
     ImGui::EndDisabled();
     ImGui::PopStyleColor(3);
     ImGui::SameLine();
     ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.0f, 0.6f, 0.6f));
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.0f, 0.7f, 0.7f));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.0f, 0.8f, 0.8f));
-    ImGui::BeginDisabled(!processing_);
-    if (ImGui::Button("Stop")) onStopProcessing();
+    ImGui::BeginDisabled(state_ != StatePacket_State::StatePacket_State_PROCESSING);
+    if (ImGui::Button("Stop")) onStateChanged(StatePacket_State::StatePacket_State_READY);
     ImGui::EndDisabled();
     ImGui::PopStyleColor(3);
 

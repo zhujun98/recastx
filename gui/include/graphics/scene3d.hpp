@@ -5,6 +5,7 @@
 
 #include "graphics/scene.hpp"
 #include "graphics/camera3d.hpp"
+#include "state.pb.h"
 
 namespace recastx::gui {
 
@@ -31,11 +32,9 @@ class Scene3d : public Scene {
 
     std::unique_ptr<AxiscubeItem> axiscube_item_;
 
-    bool processing_ = false;
+    StatePacket_State state_;
 
-    void onStartProcessing();
-
-    void onStopProcessing();
+    void onStateChanged(StatePacket_State state);
 
 public:
 

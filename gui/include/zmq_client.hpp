@@ -9,6 +9,7 @@
 
 #include <zmq.hpp>
 
+#include "logger.hpp"
 #include "reconstruction.pb.h"
 
 namespace recastx::gui {
@@ -44,8 +45,23 @@ public:
 
     ~MessageClient();
 
-    void send(const ReconRequestPacket& packet);
+    template<typename T>
+    void send(T&& packet);
 };
+
+template<typename T>
+void MessageClient::send(T&& packet) {
+    try {
+        std::string encoded;
+        packet.SerializeToString(&encoded);
+
+        socket_.send(zmq::buffer(std::move(encoded)), zmq::send_flags::none);
+
+        log::debug("Published packet");
+    } catch (const std::exception& e) {
+        log::error("Failed publishing packet: {}", e.what());
+    }
+}
 
 }  // namespace recastx::gui
 

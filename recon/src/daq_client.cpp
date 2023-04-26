@@ -53,6 +53,10 @@ void DaqClient::start() {
 
         zmq::message_t update;
         while (true) {
+            if (state_ != StatePacket_State::StatePacket_State_PROCESSING) {
+                std::this_thread::sleep_for(100ms);
+            }
+
             socket_.recv(update, zmq::recv_flags::none);
 
             auto meta = nlohmann::json::parse(std::string((char*)update.data(), update.size()));
@@ -104,6 +108,8 @@ void DaqClient::start() {
 
     thread_.detach();
 }
+
+void DaqClient::setState(StatePacket_State state) { state_ = state; }
 
 zmq::socket_type DaqClient::parseSocketType(const std::string& socket_type) const {
     if (socket_type.compare("pull") == 0) return zmq::socket_type::pull;
