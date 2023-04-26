@@ -12,6 +12,7 @@
 #include "input_handler.hpp"
 #include "ticker.hpp"
 #include "reconstruction.pb.h"
+#include "state.pb.h"
 
 namespace recastx::gui {
 
@@ -25,6 +26,8 @@ protected:
 
     Scene& scene_;
 
+    StatePacket_State state_;
+
 public:
 
     explicit GraphicsItem(Scene& scene);
@@ -36,6 +39,8 @@ public:
     virtual void init();
 
     virtual void onWindowSizeChanged(int width, int height);
+
+    virtual void setState(StatePacket_State state) { state_ = state; }
 
     [[nodiscard]] Scene& scene() const { return scene_; }
 };

@@ -30,7 +30,9 @@ set(RECON_SOURCES
         "src/application.cpp"
 )
 
-set(PROTOS "${CMAKE_CURRENT_LIST_DIR}/../common/reconstruction.proto")
+set(PROTOS "${CMAKE_CURRENT_LIST_DIR}/../common/reconstruction.proto"
+           "${CMAKE_CURRENT_LIST_DIR}/../common/state.proto"
+           "${CMAKE_CURRENT_LIST_DIR}/../common/message.proto")
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTOS})
 list(APPEND RECON_SOURCES ${PROTO_SRCS} ${PROTO_HDRS})
 

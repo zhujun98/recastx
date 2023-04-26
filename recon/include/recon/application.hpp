@@ -21,6 +21,7 @@ extern "C" {
 #include "daq_client.hpp"
 #include "reconstruction.pb.h"
 #include "slice_mediator.hpp"
+#include "state.pb.h"
 #include "tensor.hpp"
 #include "zmq_server.hpp"
 
@@ -73,6 +74,8 @@ class Application {
 
     int num_threads_;
 
+    StatePacket_State state_;
+
     DaqClient daq_client_;
     DataServer data_server_;
     MessageServer msg_server_;
@@ -113,6 +116,8 @@ public:
         ProjectionType k, size_t proj_idx, size_t num_rows, size_t num_cols, const char* data); 
 
     void setSlice(size_t timestamp, const Orientation& orientation);
+
+    void onStateChanged(StatePacket_State state);
 
     std::optional<ReconDataPacket> previewDataPacket(int timeout);
 

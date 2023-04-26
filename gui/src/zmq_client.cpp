@@ -1,10 +1,8 @@
 #include <thread>
-#include <type_traits>
 
 #include <zmq.hpp>
 
 #include "zmq_client.hpp"
-#include "logger.hpp"
 
 namespace recastx::gui {
 
@@ -62,19 +60,5 @@ MessageClient::~MessageClient() {
     socket_.set(zmq::sockopt::linger, 200);
     context_.shutdown();
 };
-
-void MessageClient::send(const ReconRequestPacket& packet) {
-    try {
-        std::string encoded;
-        packet.SerializeToString(&encoded);
-
-        socket_.send(zmq::buffer(std::move(encoded)), zmq::send_flags::none);
-
-        log::debug("Published packet");
-
-    } catch (const std::exception& e) {
-        log::error("Failed publishing packet: {}", e.what());
-    }
-}
 
 } // namespace recastx::gui

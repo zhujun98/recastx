@@ -73,7 +73,10 @@ set(GUI_SOURCES
         ${GL3W_BUILD_DIR}/src/gl3w.c
         )
 
-protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ../common/reconstruction.proto)
+protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS
+        ../common/reconstruction.proto
+        ../common/state.proto
+        ../common/message.proto)
 list(APPEND GUI_SOURCES ${PROTO_SRCS} ${PROTO_HDRS})
 
 set(TARGET_NAME recastx-gui)

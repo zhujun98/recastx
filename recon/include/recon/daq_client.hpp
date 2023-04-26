@@ -6,6 +6,8 @@
 
 #include <zmq.hpp>
 
+#include "state.pb.h"
+
 namespace recastx::recon {
 
 class Application;
@@ -25,7 +27,10 @@ class DaqClient {
     size_t num_rows_;
     size_t num_cols_;
 
+    StatePacket_State state_;
+
 public:
+
     DaqClient(const std::string& endpoint,
               const std::string& socket_type,
               Application* app);
@@ -33,6 +38,8 @@ public:
     ~DaqClient();
 
     void start();
+
+    void setState(StatePacket_State state);
 };
 
 

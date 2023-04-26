@@ -1,6 +1,5 @@
 #include <algorithm>
 
-#include <spdlog/spdlog.h>
 #include <glm/glm.hpp>
 
 #include "graphics/scene3d.hpp"
@@ -13,6 +12,8 @@
 #include "graphics/items/statusbar_item.hpp"
 #include "graphics/items/logging_item.hpp"
 #include "graphics/items/recon_item.hpp"
+#include "encoder.hpp"
+#include "logger.hpp"
 
 namespace recastx::gui {
 
@@ -57,6 +58,18 @@ void Scene3d::onFrameBufferSizeChanged(int width, int height) {
                            h);
 }
 
+void Scene3d::onStateChanged(StatePacket_State state) {
+    state_ = state;
+    if (state == StatePacket_State::StatePacket_State_PROCESSING) {
+        log::info("Start processing ...");
+    } else if (state == StatePacket_State::StatePacket_State_READY) {
+        log::info("Stop processing ...");
+    }
+
+    for (auto item : items_) item->setState(state);
+    send(createSetStatePacket(state));
+}
+
 void Scene3d::render() {
     ImGui::SetNextWindowPos(pos_);
     ImGui::SetNextWindowSize(size_);
@@ -64,6 +77,22 @@ void Scene3d::render() {
     ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoResize);
     // 2/3 of the space for widget and 1/3 for labels
     ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.65f);
+
+    ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.3f, 0.6f, 0.6f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.3f, 0.7f, 0.7f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.3f, 0.8f, 0.8f));
+    ImGui::BeginDisabled(state_ == StatePacket_State::StatePacket_State_PROCESSING);
+    if (ImGui::Button("Process")) onStateChanged(StatePacket_State::StatePacket_State_PROCESSING);
+    ImGui::EndDisabled();
+    ImGui::PopStyleColor(3);
+    ImGui::SameLine();
+    ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.0f, 0.6f, 0.6f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.0f, 0.7f, 0.7f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.0f, 0.8f, 0.8f));
+    ImGui::BeginDisabled(state_ != StatePacket_State::StatePacket_State_PROCESSING);
+    if (ImGui::Button("Stop")) onStateChanged(StatePacket_State::StatePacket_State_READY);
+    ImGui::EndDisabled();
+    ImGui::PopStyleColor(3);
 
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "CAMERA");
     ImGui::Checkbox("Fix camera", &fixed_camera_);

@@ -4,6 +4,7 @@
 #include "recon/application.hpp"
 
 #include "common/utils.hpp"
+#include "message.pb.h"
 
 namespace recastx::recon {
 
@@ -75,21 +76,33 @@ void MessageServer::start() {
             zmq::message_t update;
             socket_.recv(update, zmq::recv_flags::none);
 
-            ReconRequestPacket packet;
-            packet.ParseFromArray(update.data(), static_cast<int>(update.size()));
+            Message msg;
+            msg.ParseFromArray(update.data(), static_cast<int>(update.size()));
 
             spdlog::debug("Received packet");
 
-            if (packet.has_set_slice()) {
-                auto& request = packet.set_slice();
-                Orientation orient;
-                std::copy(request.orientation().begin(), request.orientation().end(), orient.begin());
-                app_->setSlice(request.timestamp(), orient);
-            } else {
-                spdlog::warn("Unknown or empty packet received");
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                break;
+            if (msg.has_recon()) {
+                auto& request = msg.recon();
+
+                if (request.has_set_slice()) {
+                    auto& packet = request.set_slice();
+                    Orientation orient;
+                    std::copy(packet.orientation().begin(), packet.orientation().end(), orient.begin());
+                    app_->setSlice(packet.timestamp(), orient);
+
+                    continue;
+                }
             }
+            
+            if (msg.has_state()) {
+                auto& packet = msg.state();
+                app_->onStateChanged(packet.state());
+
+                continue;
+            }
+
+            spdlog::warn("Unknown or empty packet received");
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     });
 

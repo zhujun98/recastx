@@ -1,0 +1,12 @@
+syntax = "proto3";
+package recastx;
+
+message StatePacket {
+    enum State {
+        INIT = 0;
+        READY = 1;
+        PROCESSING = 2;
+    }
+
+    State state = 1;
+}
