@@ -73,8 +73,8 @@ class ParallelBeamReconstructor : public Reconstructor {
 
 public:
 
-    ParallelBeamReconstructor(ProjectionGeometry proj_geom, VolumeGeometry slice_geom,
-                              VolumeGeometry preview_geom);
+    ParallelBeamReconstructor(size_t col_count, size_t row_count, ProjectionGeometry proj_geom, 
+                              VolumeGeometry slice_geom, VolumeGeometry preview_geom);
     // FIXME ~solver clean up
 
     void reconstructSlice(Orientation x, int buffer_idx, Tensor<float, 2>& buffer) override;
@@ -92,9 +92,8 @@ class ConeBeamReconstructor : public Reconstructor {
 
 public:
 
-    ConeBeamReconstructor(ProjectionGeometry proj_geom, 
-                          VolumeGeometry slice_geom,
-                          VolumeGeometry preview_geom);
+    ConeBeamReconstructor(size_t col_count, size_t row_count, ProjectionGeometry proj_geom, 
+                          VolumeGeometry slice_geom, VolumeGeometry preview_geom);
     // FIXME ~solver clean up
 
     void reconstructSlice(Orientation x, int buffer_idx, Tensor<float, 2>& buffer) override;

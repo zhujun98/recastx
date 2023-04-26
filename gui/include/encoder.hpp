@@ -21,6 +21,15 @@ inline Message createSetStatePacket(StatePacket_State state) {
     return msg;
 }
 
+inline Message createSetImageProcParamPacket(uint32_t downsampling_col,
+                                             uint32_t downsampling_row) {
+    Message msg;
+    auto packet = msg.mutable_param()->mutable_image_proc();
+    packet->set_downsampling_col(downsampling_col);
+    packet->set_downsampling_row(downsampling_row);
+    return msg;
+}
+
 } // namespace recastx::gui
 
 #endif //GUI_ENCODER_H

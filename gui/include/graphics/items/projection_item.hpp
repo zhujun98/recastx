@@ -7,10 +7,13 @@ namespace recastx::gui {
 
 class ProjectionItem : public GraphicsItem {
 
-    int downsampling_factor_ = 1;
+    int downsampling_col_ = 1;
+    int downsampling_row_ = 1;
 
     float x_offset_ = 0.f;
     float y_offset_ = 0.f;
+
+    void setImageProcParameter();
 
 public:
 

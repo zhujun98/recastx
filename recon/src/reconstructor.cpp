@@ -96,21 +96,20 @@ Reconstructor::makeVolumeGeometryMemHandle(const VolumeGeometry& geom) {
 
 // class ParallelBeamReconstructor
 
-ParallelBeamReconstructor::ParallelBeamReconstructor(ProjectionGeometry proj_geom, 
+ParallelBeamReconstructor::ParallelBeamReconstructor(size_t col_count, size_t row_count,
+                                                     ProjectionGeometry proj_geom, 
                                                      VolumeGeometry slice_geom,
                                                      VolumeGeometry preview_geom)
         : Reconstructor(slice_geom, preview_geom) {
-    int num_angles = static_cast<int>(proj_geom.angles.size());
-    int num_rows = proj_geom.row_count;
-    int num_cols = proj_geom.col_count;
     float det_width = proj_geom.pixel_width;
     float det_height = proj_geom.pixel_height;
     auto angles = proj_geom.angles;
+    int num_angles = static_cast<int>(angles.size());
 
     bool vec_geometry = false;
     if (!vec_geometry) {
         auto proj_geom = astra::CParallelProjectionGeometry3D(
-            num_angles, num_rows, num_cols, det_width, det_height, angles.data());
+            num_angles, row_count, col_count, det_width, det_height, angles.data());
 
         proj_geom_slice_ = utils::proj_to_vec(&proj_geom);
         proj_geom_preview_ = utils::proj_to_vec(&proj_geom);
@@ -119,9 +118,9 @@ ParallelBeamReconstructor::ParallelBeamReconstructor(ProjectionGeometry proj_geo
         auto par_projs = utils::list_to_par_projections(angles);
 
         proj_geom_slice_ = std::make_unique<astra::CParallelVecProjectionGeometry3D>(
-            num_angles, num_rows, num_cols, par_projs.data());
+            num_angles, row_count, col_count, par_projs.data());
         proj_geom_preview_ = std::make_unique<astra::CParallelVecProjectionGeometry3D>(
-            num_angles, num_rows, num_cols, par_projs.data());
+            num_angles, row_count, col_count, par_projs.data());
     }
 
     spdlog::info("- Slice projection geometry: {}", details::astraInfo(*proj_geom_slice_));
@@ -133,13 +132,13 @@ ParallelBeamReconstructor::ParallelBeamReconstructor(ProjectionGeometry proj_geo
     original_vectors_ = vectors_;
     vec_buf_ = vectors_;
 
-    auto zeros = std::vector<float>(num_angles * num_cols * num_rows, 0.0f);
+    auto zeros = std::vector<float>(num_angles * col_count * row_count, 0.0f);
 
     // Projection data and back projection algorithm
     projector_ = std::make_unique<astra::CCudaProjector3D>();
     for (int i = 0; i < 2; ++i) {
         gpu_mem_proj_.push_back(astraCUDA3d::createProjectionArrayHandle(
-            zeros.data(), num_cols, num_angles, num_rows));
+            zeros.data(), col_count, num_angles, row_count));
         proj_data_.push_back(std::make_unique<astra::CFloat32ProjectionData3DGPU>(
             proj_geom_slice_.get(), gpu_mem_proj_[0]));
 
@@ -217,16 +216,15 @@ void ParallelBeamReconstructor::reconstructPreview(int buffer_idx, Tensor<float,
 
 // class ConeBeamReconstructor
 
-ConeBeamReconstructor::ConeBeamReconstructor(ProjectionGeometry proj_geom, 
+ConeBeamReconstructor::ConeBeamReconstructor(size_t col_count, size_t row_count,
+                                             ProjectionGeometry proj_geom, 
                                              VolumeGeometry slice_geom,
                                              VolumeGeometry preview_geom)
         : Reconstructor(slice_geom, preview_geom) {
-    int num_angles = static_cast<int>(proj_geom.angles.size());
-    int num_rows = proj_geom.row_count;
-    int num_cols = proj_geom.col_count;
     float det_width = proj_geom.pixel_width;
     float det_height = proj_geom.pixel_height;
     auto angles = proj_geom.angles;
+    int num_angles = static_cast<int>(angles.size());
     float src2origin = proj_geom.source2origin;
     float origin2det = proj_geom.origin2detector;
 
@@ -234,17 +232,17 @@ ConeBeamReconstructor::ConeBeamReconstructor(ProjectionGeometry proj_geom,
     if (!vec_geometry) {
         // TODO: should detector_size be (Height, Width)?
         auto proj_geom = astra::CConeProjectionGeometry3D(
-            num_angles, num_rows, num_cols, det_width, det_height, angles.data(), src2origin, origin2det);
+            num_angles, row_count, col_count, det_width, det_height, angles.data(), src2origin, origin2det);
 
         proj_geom_slice_ = utils::proj_to_vec(&proj_geom);
         proj_geom_preview_ = utils::proj_to_vec(&proj_geom);
     } else {
-        auto cone_projs = utils::list_to_cone_projections(num_rows, num_cols, angles);
+        auto cone_projs = utils::list_to_cone_projections(row_count, col_count, angles);
 
         proj_geom_slice_ = std::make_unique<astra::CConeVecProjectionGeometry3D>(
-            num_angles, num_rows, num_cols, cone_projs.data());
+            num_angles, row_count, col_count, cone_projs.data());
         proj_geom_preview_ = std::make_unique<astra::CConeVecProjectionGeometry3D>(
-            num_angles, num_rows, num_cols, cone_projs.data());
+            num_angles, row_count, col_count, cone_projs.data());
     }
     
     spdlog::info("- Slice projection geometry: {}", details::astraInfo(*proj_geom_slice_));
@@ -255,12 +253,12 @@ ConeBeamReconstructor::ConeBeamReconstructor(ProjectionGeometry proj_geom,
 
     vec_buf_ = vectors_;
 
-    auto zeros = std::vector<float>(num_angles * num_cols * num_rows, 0.0f);
+    auto zeros = std::vector<float>(num_angles * col_count * row_count, 0.0f);
 
     // Projection data
     for (int i = 0; i < 2; ++i) {
         gpu_mem_proj_.push_back(astraCUDA3d::createProjectionArrayHandle(
-            zeros.data(), num_cols, num_angles, num_rows));
+            zeros.data(), col_count, num_angles, row_count));
         proj_data_.push_back(std::make_unique<astra::CFloat32ProjectionData3DGPU>(
             proj_geom_slice_.get(), gpu_mem_proj_[0]));
     }

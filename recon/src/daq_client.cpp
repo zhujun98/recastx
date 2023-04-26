@@ -47,7 +47,7 @@ void DaqClient::start() {
     thread_ = std::thread([&] {
 
 #if (VERBOSITY >= 1)
-        int monitor_every = app_->bufferSize();
+        int monitor_every = app_->numAngles();
         int msg_counter = 0;
 #endif
 

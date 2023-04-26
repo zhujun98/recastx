@@ -74,6 +74,7 @@ set(GUI_SOURCES
         )
 
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS
+        ../common/parameter.proto
         ../common/reconstruction.proto
         ../common/state.proto
         ../common/message.proto)

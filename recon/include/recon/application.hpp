@@ -32,15 +32,23 @@ class Filter;
 class Paganin;
 class Reconstructor;
 
+namespace details {
+
+inline std::pair<float, float> parseReconstructedVolumeBoundary(
+        const std::optional<float>& min_val, const std::optional<float>& max_val, int size) {
+    float min_v = min_val.value_or(- size / 2.f);
+    float max_v = max_val.value_or(size / 2.f);
+    if (min_v >= max_v) throw std::invalid_argument(
+        "Minimum of volume coordinate must be smaller than maximum of volume coordinate");
+    return {min_v, max_v};
+}
+
+} // details
 
 class Application {
 
-    size_t num_rows_;
-    size_t num_cols_;
-    size_t num_angles_;
-
-    size_t downsample_row_;
-    size_t downsample_col_;
+    ImageProcParams imageproc_params_;
+    FlatFieldCorrectionParams flatfield_params_;
 
     // Why did I choose ProDtype over RawDtype?
     MemoryBuffer<ProDtype, 3> raw_buffer_;
@@ -59,8 +67,23 @@ class Application {
 
     bool initialized_ = false;
 
+    std::optional<PaganinConfig> paganin_cfg_;
     std::unique_ptr<Paganin> paganin_;
+    
+    FilterConfig filter_cfg_;
     std::unique_ptr<Filter> filter_;
+
+    std::optional<size_t> slice_size_;
+    std::optional<size_t> preview_size_;
+    std::optional<float> min_x_;
+    std::optional<float> max_x_;
+    std::optional<float> min_y_;
+    std::optional<float> max_y_;
+    std::optional<float> min_z_;
+    std::optional<float> max_z_;
+    ProjectionGeometry proj_geom_;
+    VolumeGeometry slice_geom_;
+    VolumeGeometry preview_geom_;
     std::unique_ptr<Reconstructor> recon_;
 
     std::thread preproc_thread_;
@@ -80,6 +103,12 @@ class Application {
     DataServer data_server_;
     MessageServer msg_server_;
 
+    std::array<size_t, 2> imageSize() const;
+
+    void initPaganin(size_t col_count, size_t row_count);
+    void initFilter(size_t col_count, size_t row_count);
+    void initReconstructor(size_t col_count, size_t row_count);
+
     void processProjections(oneapi::tbb::task_arena& arena);
 
 public:
@@ -91,18 +120,33 @@ public:
 
     ~Application();
 
-    void init(size_t num_rows, size_t num_cols, size_t num_angles, 
-              size_t num_darks, size_t num_flats, 
-              size_t downsample_row = 1, size_t downsample_col = 1);
+    void init();
 
-    void initPaganin(const PaganinConfig& config, int num_cols, int num_rows);
+    template<typename ...Ts>
+    void setFlatFieldCorrectionParams(Ts... args) {
+        flatfield_params_ = {std::forward<Ts>(args)...};
+    }
 
-    void initFilter(const FilterConfig& config, int num_cols, int num_rows);
+    template<typename ...Ts>
+    void setImageProcParams(Ts... args) {
+        initialized_ = false;
+        imageproc_params_ = {std::forward<Ts>(args)...}; 
+    }
 
-    void initReconstructor(bool cone_beam,
-                           const ProjectionGeometry& proj_geom,
-                           const VolumeGeometry& slice_geom,
-                           const VolumeGeometry& preview_geom);
+    template<typename ...Ts>
+    void setPaganinParams(Ts... args) { paganin_cfg_ = {std::forward<Ts>(args)...}; }
+
+    template<typename ...Ts>
+    void setFilterParams(Ts... args) { filter_cfg_ = {std::forward<Ts>(args)...}; }
+
+    void setProjectionGeometry(BeamShape beam_shape, size_t col_count, size_t row_count,
+                               float pixel_width, float pixel_height, 
+                               float src2origin, float origin2det, size_t num_angles);
+
+    void setReconGeometry(std::optional<size_t> slice_size, std::optional<size_t> preview_size, 
+                          std::optional<float> min_x, std::optional<float> max_x, 
+                          std::optional<float> min_y, std::optional<float> max_y, 
+                          std::optional<float> min_z, std::optional<float> max_z);
 
     void startPreprocessing();
 
@@ -125,7 +169,7 @@ public:
 
     std::vector<ReconDataPacket> onDemandSliceDataPackets(int timeout);
 
-    size_t bufferSize() const;
+    size_t numAngles() const { return proj_geom_.angles.size(); };
 
     // for unittest
 
