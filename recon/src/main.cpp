@@ -178,7 +178,7 @@ int main(int argc, char** argv) {
     auto beta = opts["beta"].as<float>();
     auto distance = opts["distance"].as<float>();
 
-    recastx::DaqClientConfig daq_client_cfg {daq_hostname, daq_port, daq_socket_type};
+    recastx::DaqClientConfig daq_client_cfg {daq_port, daq_hostname, daq_socket_type};
     recastx::ZmqServerConfig zmq_server_cfg {data_port, message_port};
     recastx::recon::Application app(raw_buffer_size, num_threads, daq_client_cfg, zmq_server_cfg);
 
@@ -187,13 +187,13 @@ int main(int argc, char** argv) {
     if (retrieve_phase) app.initPaganin(
         {pixel_size, lambda, delta, beta, distance}, num_cols, num_rows);
 
-    app.initFilter({filter_name, gaussian_lowpass_filter}, num_cols, num_rows);
+    app.initFilter({gaussian_lowpass_filter, filter_name}, num_cols, num_rows);
 
     float half_slice_height = 0.5f * (max_z - min_z) / preview_size;
     float z0 = 0.5f * (max_z + min_z);
     app.initReconstructor(
         cone_beam, 
-        {num_cols, num_rows, 1.f, 1.f, recastx::recon::defaultAngles(num_angles), 0.0f, 0.0f}, 
+        {num_cols, num_rows, 1.f, 1.f, 0.0f, 0.0f, recastx::recon::defaultAngles(num_angles)},
         {slice_size, slice_size, 1, min_x, max_x, min_y, max_y, z0 - half_slice_height, z0 + half_slice_height},
         {preview_size, preview_size, preview_size, min_x, max_x, min_y, max_y, min_z, max_z}
     );

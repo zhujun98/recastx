@@ -38,7 +38,7 @@ protected:
     const std::vector<float> angles_;
     const std::array<float, 2> pixel_size_;
 
-    const DaqClientConfig client_cfg {"localhost", 12345, "pull"};
+    const DaqClientConfig client_cfg {12345, "localhost", "pull"};
     const ZmqServerConfig server_cfg {12346, 12347};
 
     Application app_;
@@ -53,7 +53,7 @@ protected:
     void SetUp() override { 
         app_.init(num_rows_, num_cols_, num_angles_, num_darks_, num_flats_);
 
-        app_.initFilter({filter_name_, gaussian_lowpass_filter_}, num_cols_, num_rows_);
+        app_.initFilter({gaussian_lowpass_filter_, filter_name_}, num_cols_, num_rows_);
 
         float min_x = -(num_cols_ / 2.f);
         float max_x =  num_cols_ / 2.f;
@@ -65,7 +65,7 @@ protected:
         float half_slice_height = 0.5f * (max_z - min_z) / preview_size_;
         app_.initReconstructor(
             false, 
-            {num_cols_, num_rows_, pixel_size_[0], pixel_size_[1], angles_, src2origin, origin2det}, 
+            {num_cols_, num_rows_, pixel_size_[0], pixel_size_[1], src2origin, origin2det, angles_},
             {slice_size_, slice_size_, 1, min_x, max_x, min_y, max_y, z0 - half_slice_height, z0 + half_slice_height},
             {preview_size_, preview_size_, preview_size_, min_x, max_x, min_y, max_y, min_z, max_z}
         );
