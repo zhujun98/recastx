@@ -1,6 +1,5 @@
 #include <algorithm>
 
-#include <spdlog/spdlog.h>
 #include <glm/glm.hpp>
 
 #include "graphics/scene3d.hpp"
@@ -14,6 +13,7 @@
 #include "graphics/items/logging_item.hpp"
 #include "graphics/items/recon_item.hpp"
 #include "encoder.hpp"
+#include "logger.hpp"
 
 namespace recastx::gui {
 
@@ -60,6 +60,12 @@ void Scene3d::onFrameBufferSizeChanged(int width, int height) {
 
 void Scene3d::onStateChanged(StatePacket_State state) {
     state_ = state;
+    if (state == StatePacket_State::StatePacket_State_PROCESSING) {
+        log::info("Start processing ...");
+    } else if (state == StatePacket_State::StatePacket_State_READY) {
+        log::info("Stop processing ...");
+    }
+
     for (auto item : items_) item->setState(state);
     send(createSetStatePacket(state));
 }
@@ -76,7 +82,7 @@ void Scene3d::render() {
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.3f, 0.7f, 0.7f));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.3f, 0.8f, 0.8f));
     ImGui::BeginDisabled(state_ == StatePacket_State::StatePacket_State_PROCESSING);
-    if (ImGui::Button("Start")) onStateChanged(StatePacket_State::StatePacket_State_PROCESSING);
+    if (ImGui::Button("Process")) onStateChanged(StatePacket_State::StatePacket_State_PROCESSING);
     ImGui::EndDisabled();
     ImGui::PopStyleColor(3);
     ImGui::SameLine();
