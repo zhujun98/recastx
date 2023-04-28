@@ -86,12 +86,8 @@ class Application {
     VolumeGeometry preview_geom_;
     std::unique_ptr<Reconstructor> recon_;
 
-    std::thread preproc_thread_;
-
     int gpu_buffer_index_ = 0;
     bool sino_uploaded_ = false;
-    std::thread upload_thread_;
-    std::thread recon_thread_;
     std::condition_variable gpu_cv_;
     std::mutex gpu_mutex_;
 

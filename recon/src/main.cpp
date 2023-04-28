@@ -185,8 +185,9 @@ int main(int argc, char** argv) {
     app.setProjectionGeometry(cone_beam ? recastx::BeamShape::CONE : recastx::BeamShape::PARALELL, 
                               num_cols, num_rows, 1.0f, 1.0f, 0.0f, 0.0f, num_angles);
     app.setReconGeometry(slice_size, preview_size, minx, maxx, miny, maxy, minz, maxz);
-    app.init();
 
+    app.init();
+    
     app.runForEver();
 
     return 0;

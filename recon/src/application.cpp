@@ -91,7 +91,7 @@ void Application::setReconGeometry(std::optional<size_t> slice_size, std::option
 }
 
 void Application::startPreprocessing() {
-    preproc_thread_ = std::thread([&] {
+    auto t = std::thread([&] {
         oneapi::tbb::task_arena arena(num_threads_);
         while (true) {
             raw_buffer_.fetch();
@@ -100,11 +100,11 @@ void Application::startPreprocessing() {
         }
     });
 
-    preproc_thread_.detach();
+    t.detach();
 }
 
 void Application::startUploading() {
-    upload_thread_ = std::thread([&] {
+    auto t = std::thread([&] {
 
         size_t num_angles = proj_geom_.angles.size();
         while (true) {
@@ -123,12 +123,12 @@ void Application::startUploading() {
         }
     });
 
-    upload_thread_.detach();
+    t.detach();
 }
 
 void Application::startReconstructing() {
 
-    recon_thread_ = std::thread([&] {
+    auto t = std::thread([&] {
 
 #if (VERBOSITY >= 1)
         const float data_size = sino_buffer_.front().shape()[0] * sizeof(RawDtype) / (1024.f * 1024.f); // in MB
@@ -177,7 +177,7 @@ void Application::startReconstructing() {
         }
     });
 
-    recon_thread_.detach();
+    t.detach();
 }
 
 void Application::runForEver() {

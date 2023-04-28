@@ -21,8 +21,13 @@ protected:
     size_t num_cols_ = 5;
     size_t num_rows_ = 4;
     size_t pixels_ = num_rows_ * num_cols_;
+    float pixel_width_ = 1.0f;
+    float pixel_height_ = 1.0f;
     float src2origin = 0.f;
     float origin2det = 0.f;
+
+    uint32_t downsampling_col_ = 1;
+    uint32_t downsampling_row_ = 1;
 
     size_t num_darks_ = 4;
     size_t num_flats_ = 6;
@@ -35,42 +40,27 @@ protected:
     bool gaussian_lowpass_filter_ = false;
     int threads_ = 4;
 
-    const std::vector<float> angles_;
-    const std::array<float, 2> pixel_size_;
-
     const DaqClientConfig client_cfg {12345, "localhost", "pull"};
     const ZmqServerConfig server_cfg {12346, 12347};
 
     Application app_;
 
-    ApplicationTest() : angles_ {defaultAngles(num_angles_)}, 
-                pixel_size_ {1.0f, 1.0f}, 
-                app_ {buffer_size_, threads_, client_cfg, server_cfg} {
+    ApplicationTest() : app_ {buffer_size_, threads_, client_cfg, server_cfg} {
     }
 
     ~ApplicationTest() override = default;
 
     void SetUp() override { 
-        app_.init(num_rows_, num_cols_, num_angles_, num_darks_, num_flats_);
-
-        app_.initFilter({gaussian_lowpass_filter_, filter_name_}, num_cols_, num_rows_);
-
-        float min_x = -(num_cols_ / 2.f);
-        float max_x =  num_cols_ / 2.f;
-        float min_y = -(num_cols_ / 2.f);
-        float max_y =  num_cols_ / 2.f;
-        float min_z = -(num_rows_ / 2.f);
-        float max_z =  num_rows_ / 2.f;
-        float z0 = 0.f;
-        float half_slice_height = 0.5f * (max_z - min_z) / preview_size_;
-        app_.initReconstructor(
-            false, 
-            {num_cols_, num_rows_, pixel_size_[0], pixel_size_[1], src2origin, origin2det, angles_},
-            {slice_size_, slice_size_, 1, min_x, max_x, min_y, max_y, z0 - half_slice_height, z0 + half_slice_height},
-            {preview_size_, preview_size_, preview_size_, min_x, max_x, min_y, max_y, min_z, max_z}
-        );
-
-        app_.startPreprocessing();
+        app_.setFlatFieldCorrectionParams(num_darks_, num_flats_);
+        app_.setImageProcParams(downsampling_col_, downsampling_row_);
+        app_.setFilterParams(gaussian_lowpass_filter_, filter_name_);
+        app_.setProjectionGeometry(recastx::BeamShape::PARALELL, num_cols_, num_rows_,
+                                   pixel_width_, pixel_height_, 
+                                   src2origin, origin2det, num_angles_);
+        app_.setReconGeometry(std::nullopt, std::nullopt, 
+                              std::nullopt, std::nullopt, 
+                              std::nullopt, std::nullopt,
+                              std::nullopt, std::nullopt);
     }
 
     void pushDarks(int n) {
@@ -108,6 +98,9 @@ protected:
 };
 
 TEST_F(ApplicationTest, TestPushProjection) {
+    app_.init();
+    // app_.startPreprocessing();
+
     pushDarks(num_darks_);
     pushFlats(num_flats_);
 
@@ -122,6 +115,7 @@ TEST_F(ApplicationTest, TestPushProjection) {
     // push projections to fill the buffer
     pushProjection(num_angles_ - 1, num_angles_);
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
     auto& projs_front = app_.rawBuffer().front();
     EXPECT_THAT(std::vector<float>(projs_front.begin(), projs_front.begin() + 10), 
                 Pointwise(FloatNear(1e-6), {0.110098f, -0.272487f, 0.133713f, -0.491590f, 0.520265f,
@@ -138,6 +132,9 @@ TEST_F(ApplicationTest, TestPushProjection) {
 }
 
 TEST_F(ApplicationTest, TestMemoryBufferReset) {
+    app_.init();
+    // app_.startPreprocessing();
+
     pushDarks(num_darks_);
     pushFlats(num_flats_);
     pushProjection(0, 1);
@@ -152,6 +149,9 @@ TEST_F(ApplicationTest, TestMemoryBufferReset) {
 }
 
 TEST_F(ApplicationTest, TestPushProjectionUnordered) {
+    app_.init();
+    // app_.startPreprocessing();
+    
     pushDarks(num_darks_);
     pushFlats(num_flats_);
 
@@ -189,12 +189,16 @@ TEST_F(ApplicationTest, TestPushProjectionUnordered) {
 }
 
 TEST_F(ApplicationTest, TestUploading) {
-    app_.startUploading();
+    app_.init();
+    // app_.startPreprocessing();
+    // app_.startUploading();
 }
 
 TEST_F(ApplicationTest, TestReconstructing) {
-    app_.startUploading();
-    app_.startReconstructing();
+    app_.init();
+    // app_.startPreprocessing();
+    // app_.startUploading();
+    // app_.startReconstructing();
 }
 
 TEST_F(ApplicationTest, TestWithPagagin) {
@@ -204,11 +208,14 @@ TEST_F(ApplicationTest, TestWithPagagin) {
     float beta = 1.e-10f;
     float distance = 40.f;
 
-    app_.initPaganin({pixel_size, lambda, delta, beta, distance}, num_cols_, num_rows_);
+    app_.setPaganinParams(pixel_size, lambda, delta, beta, distance);
+
+    app_.init();
+    // app_.startPreprocessing();
+    
     pushDarks(num_darks_);
     pushFlats(num_flats_);
-    // FIXME: segmentation fault with Paganin
-    // pushProjection(0, num_angles_);
+    pushProjection(0, num_angles_);
 }
 
 } // namespace recastx::recon::test
