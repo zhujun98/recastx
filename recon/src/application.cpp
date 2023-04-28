@@ -36,7 +36,10 @@ Application::~Application() = default;
 void Application::init() {
     if (initialized_) return;
     
-    auto [col_count, row_count] = imageSize();
+    uint32_t downsampling_col = imageproc_params_.downsampling_col;
+    uint32_t downsampling_row = imageproc_params_.downsampling_row;
+    size_t col_count = proj_geom_.col_count / downsampling_col;
+    size_t row_count = proj_geom_.row_count / downsampling_row;
 
     size_t num_darks = flatfield_params_.num_darks;
     size_t num_flats = flatfield_params_.num_flats;
@@ -54,11 +57,15 @@ void Application::init() {
     initFilter(col_count, row_count);
     initReconstructor(col_count, row_count);
 
+    raw_buffer_.reset();
+
     initialized_ = true;
     spdlog::info("Initial parameters for real-time 3D tomographic reconstruction:");
     spdlog::info("- Number of required dark images: {}", num_darks);
     spdlog::info("- Number of required flat images: {}", num_flats);
     spdlog::info("- Number of projection images per tomogram: {}", num_angles);
+    spdlog::info("- Projection image size: {} ({}) x {} ({})", 
+                 col_count, downsampling_col, row_count, downsampling_row);
 }
 
 void Application::setProjectionGeometry(BeamShape beam_shape, size_t col_count, size_t row_count,
@@ -384,12 +391,6 @@ void Application::initReconstructor(size_t col_count, size_t row_count) {
     } else {
         recon_ = std::make_unique<ParallelBeamReconstructor>(col_count, row_count, proj_geom_, slice_geom_, preview_geom_);
     }
-}
-
-std::array<size_t, 2> Application::imageSize() const {
-    uint32_t downsampling_col = imageproc_params_.downsampling_col;
-    uint32_t downsampling_row = imageproc_params_.downsampling_row;
-    return {proj_geom_.col_count / downsampling_col, proj_geom_.row_count / downsampling_row};
 }
 
 } // namespace recastx::recon

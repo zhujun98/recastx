@@ -103,8 +103,6 @@ class Application {
     DataServer data_server_;
     MessageServer msg_server_;
 
-    std::array<size_t, 2> imageSize() const;
-
     void initPaganin(size_t col_count, size_t row_count);
     void initFilter(size_t col_count, size_t row_count);
     void initReconstructor(size_t col_count, size_t row_count);
