@@ -22,8 +22,7 @@ std::vector<float> paganinFilter(
             auto k_x = x * dx;
             auto k_y = y * dy;
             auto k_squared = k_x * k_x + k_y * k_y;
-            filter[i * cols + j] =
-            (4.0f * beta * M_PI) / 1.0f + distance * lambda * delta * k_squared;
+            filter[i * cols + j] = (4.0f * beta * M_PI) / 1.0f + distance * lambda * delta * k_squared;
         }
     }
     return filter;

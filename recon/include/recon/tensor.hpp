@@ -101,7 +101,7 @@ public:
     iterator end() { return data_.end(); }
     const_iterator end() const { return data_.end(); }
 
-    const ShapeType& shape() { return shape_; }
+    const ShapeType& shape() const { return shape_; }
 
     size_t size() const { return data_.size(); }
 };

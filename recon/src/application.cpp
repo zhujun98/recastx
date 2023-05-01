@@ -52,14 +52,12 @@ void Application::init() {
     dark_avg_.reshape({row_count, col_count});
     reciprocal_.reshape({row_count, col_count});
 
-    raw_buffer_.resize({num_angles, row_count, col_count});
+    raw_buffer_.reshape({num_angles, row_count, col_count});
     sino_buffer_.reshape({num_angles, row_count, col_count});
 
     initPaganin(col_count, row_count);
     initFilter(col_count, row_count);
     initReconstructor(col_count, row_count);
-
-    raw_buffer_.reset();
 
     initialized_ = true;
     spdlog::info("Initial parameters for real-time 3D tomographic reconstruction:");
