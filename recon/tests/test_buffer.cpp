@@ -108,14 +108,13 @@ protected:
     MemoryBuffer<float, 3> buffer_ {capacity_};
 
     void SetUp() override {
-        buffer_.resize(shape_);
+        buffer_.reshape(shape_);
     }
 };
 
 TEST_F(MemoryBufferTest, TestGeneral) {
 
     ASSERT_EQ(buffer_.capacity(), capacity_);
-    ASSERT_EQ(buffer_.chunkSize(), shape_[0] * shape_[1] * shape_[2]);
 
     ASSERT_EQ(buffer_.occupied(), 0);
     EXPECT_THROW(buffer_.ready(), std::out_of_range);
@@ -202,4 +201,26 @@ TEST_F(MemoryBufferTest, TestSameDataReceivedRepeatedly) {
     }
 }
 
+TEST_F(MemoryBufferTest, TestReshape) {
+    for (size_t j = 0; j < shape_[0]; ++j) {
+        buffer_.fill<RawDtype>(_produceRawData({1, 2, 3, 4, 5, 6}).data(), 0, j); 
+    }
+    ASSERT_EQ(buffer_.occupied(), 1);
+    EXPECT_THAT(buffer_.shape(), ElementsAre(4, 2, 3));
+
+    // expand
+    std::array<size_t, 3> new_shape {4, 3, 4};
+    buffer_.reshape(new_shape);
+    ASSERT_EQ(buffer_.occupied(), 0);
+    EXPECT_THAT(buffer_.shape(), ElementsAre(4, 3, 4));
+    for (size_t j = 0; j < new_shape[0]; ++j) {
+        buffer_.fill<RawDtype>(_produceRawData({1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6}).data(), 0, j); 
+    }
+    ASSERT_EQ(buffer_.occupied(), 1);
+
+    // shrink
+    buffer_.reshape(shape_);
+    ASSERT_EQ(buffer_.occupied(), 0);
+    EXPECT_THAT(buffer_.shape(), ElementsAre(4, 2, 3));
+}
 } // namespace recastx::recon::test

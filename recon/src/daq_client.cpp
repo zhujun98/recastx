@@ -1,3 +1,5 @@
+#include <chrono>
+
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 
@@ -40,24 +42,29 @@ DaqClient::DaqClient(const std::string& endpoint,
 }
 
 DaqClient::~DaqClient() {
+    running_ = false;
     socket_.set(zmq::sockopt::linger, 200);
 }
 
 void DaqClient::start() {
-    thread_ = std::thread([&] {
+    if (running_) {
+        throw std::runtime_error("Cannot start a DaqClient twice!");
+    }
+
+    running_ = true;
+    auto t = std::thread([&] {
 
 #if (VERBOSITY >= 1)
-        int monitor_every = app_->bufferSize();
+        int monitor_every = app_->numAngles();
         int msg_counter = 0;
 #endif
 
         zmq::message_t update;
-        while (true) {
-            if (state_ != StatePacket_State::StatePacket_State_PROCESSING) {
-                std::this_thread::sleep_for(100ms);
+        while (running_) {
+            if (!acquiring_ || !socket_.recv(update, zmq::recv_flags::dontwait).has_value()) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                continue;
             }
-
-            socket_.recv(update, zmq::recv_flags::none);
 
             auto meta = nlohmann::json::parse(std::string((char*)update.data(), update.size()));
             size_t frame = meta["frame"];
@@ -106,10 +113,16 @@ void DaqClient::start() {
         }
     });
 
-    thread_.detach();
+    t.detach();
 }
 
-void DaqClient::setState(StatePacket_State state) { state_ = state; }
+void DaqClient::startAcquiring() {
+    acquiring_ = true;
+}
+
+void DaqClient::stopAcquiring() {
+    acquiring_ = false;
+}
 
 zmq::socket_type DaqClient::parseSocketType(const std::string& socket_type) const {
     if (socket_type.compare("pull") == 0) return zmq::socket_type::pull;

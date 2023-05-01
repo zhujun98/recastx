@@ -101,6 +101,17 @@ void MessageServer::start() {
                 continue;
             }
 
+            if (msg.has_param()) {
+                auto& request = msg.param();
+
+                if (request.has_image_proc()) {
+                    auto& packet = request.image_proc();
+                    app_->setImageProcParams(packet.downsampling_col(),
+                                             packet.downsampling_row());
+                }
+                continue;
+            }
+
             spdlog::warn("Unknown or empty packet received");
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }

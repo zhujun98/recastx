@@ -9,7 +9,6 @@
 #include <queue>
 #include <thread>
 #include <type_traits>
-using namespace std::chrono_literals;
 
 #include <spdlog/spdlog.h>
 
@@ -66,6 +65,8 @@ public:
 
 template<typename T>
 bool TripleBufferInterface<T>::fetch(int timeout) {
+    using namespace std::chrono_literals;
+
     std::unique_lock lk(mtx_);
     if (timeout < 0) {
         cv_.wait(lk, [this] { return is_ready_; });
@@ -217,17 +218,21 @@ inline void copyBuffer(T* dst, const char* src,
 template<typename T, size_t N>
 class MemoryBuffer {
 
+public:
+
+    using BufferType = Tensor<T, N>;
+
+private:
+
     std::queue<size_t> chunk_indices_;
     std::unordered_map<size_t, size_t> map_;
 
-    std::vector<T> front_;
-    std::deque<std::vector<T>> buffer_;
+    BufferType front_;
+    std::deque<BufferType> buffer_;
     std::queue<size_t> unoccupied_;
     std::vector<size_t> counter_;
 
     size_t capacity_ = 0;
-    size_t chunk_size_ = 0;
-    std::array<size_t, N> shape_;
 
 #if (VERBOSITY >= 2)
     size_t data_received_ = 0;
@@ -244,7 +249,7 @@ class MemoryBuffer {
     explicit MemoryBuffer(size_t capacity);
     ~MemoryBuffer() = default;
 
-    void resize(const std::array<size_t, N>& shape);
+    void reshape(const std::array<size_t, N>& shape);
 
     void reset();
 
@@ -253,25 +258,29 @@ class MemoryBuffer {
 
     template<typename D>
     void fill(const char* raw, size_t chunk_idx, size_t data_idx, 
-              const std::array<size_t, N-1>& shape, 
+              const std::array<size_t, N-1>& src_shape, 
               const std::array<size_t, N-1>& downsampling);
 
     bool fetch(int timeout = -1);
 
-    std::vector<T>& front() { return front_; }
-    std::vector<T>& back() { return buffer_[map_.at(chunk_indices_.front())]; }
+    BufferType& front() { return front_; }
+    BufferType& back() { return buffer_[map_.at(chunk_indices_.front())]; }
 
-    const std::vector<T>& front() const { return front_; }
-    const std::vector<T>& ready() const { return buffer_[map_.at(chunk_indices_.front())]; }
-    const std::vector<T>& back() const { return buffer_[map_.at(chunk_indices_.front())]; }
+    const BufferType& front() const { return front_; }
+    const BufferType& ready() const { return buffer_[map_.at(chunk_indices_.front())]; }
+    const BufferType& back() const { return buffer_[map_.at(chunk_indices_.front())]; }
 
-    size_t capacity() const { assert(this->capacity_ == buffer_.size()); return this->capacity_; }
+    size_t capacity() const { 
+        assert(this->capacity_ == buffer_.size());
+        return this->capacity_;
+    }
 
-    size_t occupied() const { return this->capacity_ - unoccupied_.size(); }
+    size_t occupied() const { 
+        assert(this->capacity_ >= unoccupied_.size());
+        return this->capacity_ - unoccupied_.size();
+    }
 
-    size_t chunkSize() const { return chunk_size_; }
-
-    const std::array<size_t, N>& shape() const { return shape_; }
+    const std::array<size_t, N>& shape() const { return front_.shape(); }
 };
 
 template<typename T, size_t N>
@@ -288,20 +297,20 @@ void MemoryBuffer<T, N>::pop() {
 }
 
 template<typename T, size_t N>
-MemoryBuffer<T, N>::MemoryBuffer(size_t capacity) : capacity_(capacity) {}
-
-template<typename T, size_t N>
-void MemoryBuffer<T, N>::resize(const std::array<size_t, N>& shape) {
-    size_t chunk_size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>());
+MemoryBuffer<T, N>::MemoryBuffer(size_t capacity) : capacity_(capacity) {
     for (size_t i = 0; i < capacity_; ++i) {
-        buffer_.emplace_back(std::vector<T>(chunk_size, 0));
+        buffer_.push_back(BufferType {});
         counter_.push_back(0);
         unoccupied_.push(i);
     }
-    front_.resize(chunk_size);
+}
 
-    chunk_size_ = chunk_size;
-    shape_ = shape;
+template<typename T, size_t N>
+void MemoryBuffer<T, N>::reshape(const std::array<size_t, N>& shape) {
+    reset();
+
+    for (size_t i = 0; i < capacity_; ++i) buffer_[i].reshape(shape);
+    front_.reshape(shape);
 }
 
 template<typename T, size_t N>
@@ -314,7 +323,7 @@ void MemoryBuffer<T, N>::reset() {
     data_received_ = 0;
 #endif
 
-    for (size_t i = 0; i < buffer_.size(); ++i) {
+    for (size_t i = 0; i < capacity_; ++i) {
         counter_[i] = 0;
         unoccupied_.push(i);
     }
@@ -324,14 +333,15 @@ void MemoryBuffer<T, N>::reset() {
 template<typename T, size_t N>
 template<typename D>
 void MemoryBuffer<T, N>::fill(const char* raw, size_t chunk_idx, size_t data_idx) {
-    fill<D>(raw, chunk_idx, data_idx, {shape_[1], shape_[2]}, {1, 1});
+    auto& shape = front_.shape();
+    fill<D>(raw, chunk_idx, data_idx, {shape[1], shape[2]}, {1, 1});
 }
 
 
 template<typename T, size_t N>
 template<typename D>
 void MemoryBuffer<T, N>::fill(const char* raw, size_t chunk_idx, size_t data_idx, 
-                              const std::array<size_t, N-1>& shape, 
+                              const std::array<size_t, N-1>& src_shape, 
                               const std::array<size_t, N-1>& downsampling) {
     std::lock_guard lk(mtx_);
 
@@ -367,21 +377,22 @@ void MemoryBuffer<T, N>::fill(const char* raw, size_t chunk_idx, size_t data_idx
     size_t buffer_idx = map_[chunk_idx];
 
     float* data = buffer_[buffer_idx].data();
-    size_t data_size = std::accumulate(shape_.begin() + 1, shape_.end(), 1, std::multiplies<>());
+    std::array<size_t, N-1> dst_shape;
+    auto& buffer_shape = front_.shape();
+    std::copy(buffer_shape.begin() + 1, buffer_shape.end(), dst_shape.begin());
+    size_t data_size = std::accumulate(dst_shape.begin(), dst_shape.end(), 1, std::multiplies<>());
     if (std::all_of(downsampling.cbegin(), downsampling.cend(), [](size_t v) { return v == 1; })) {
         details::copyBuffer<T, D>(
             &data[data_idx * data_size], raw, data_size);
     } else {
-        std::array<size_t, N-1> dst_shape;
-        std::copy(shape_.begin() + 1, shape_.end(), dst_shape.begin());
         details::copyBuffer<T, D>(
-            &data[data_idx * data_size], raw, dst_shape, shape, downsampling);
+            &data[data_idx * data_size], raw, dst_shape, src_shape, downsampling);
     }
 
     ++counter_[buffer_idx];
     // Caveat: We do not track the data indices. Therefore, if data with the same
     //         frame idx arrives repeatedly, it will still fill the chunk.
-    if (counter_[buffer_idx] == shape_[0]) {
+    if (counter_[buffer_idx] == buffer_shape[0]) {
         // Remove earlier chunks, no matter they are ready or not.
         size_t idx = chunk_indices_.front();
         while (chunk_idx != idx) {
@@ -398,7 +409,7 @@ void MemoryBuffer<T, N>::fill(const char* raw, size_t chunk_idx, size_t data_idx
 #if (VERBOSITY >= 2)
     // Outdated data are excluded.
     ++data_received_;
-    if (data_received_ % shape_[0] == 0) {
+    if (data_received_ % buffer_shape[0] == 0) {
         spdlog::info("{}/{} groups in the memory buffer are occupied", 
                      occupied(), buffer_.size());
     }
@@ -408,6 +419,8 @@ void MemoryBuffer<T, N>::fill(const char* raw, size_t chunk_idx, size_t data_idx
 
 template<typename T, size_t N>
 bool MemoryBuffer<T, N>::fetch(int timeout) {
+    using namespace std::chrono_literals;
+
     std::unique_lock lk(mtx_);
     if (timeout < 0) {
         cv_.wait(lk, [this] { return is_ready_; });

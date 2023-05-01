@@ -8,27 +8,17 @@
 
 #include "recon/application.hpp"
 #include "recon/reconstructor.hpp"
-#include "recon/preprocessing.hpp"
 #include "common/config.hpp"
 
 namespace po = boost::program_options;
 
 
-std::pair<float, float> parseReconstructedVolumeBoundary(
-        const po::variable_value& min_val, const po::variable_value& max_val, int size) {
-    float min_v = min_val.empty() ? - size / 2.f : min_val.as<float>();
-    float max_v = max_val.empty() ?   size / 2.f : max_val.as<float>();
-    if (min_v >= max_v) throw std::invalid_argument(
-        "Minimum of volume coordinate must be smaller than maximum of volume coordinate");
-    return {min_v, max_v};
-}
-
-std::pair<size_t, size_t> parseDownsampleFactor(
+std::pair<uint32_t, uint32_t> parseDownsampleFactor(
         const po::variable_value& downsample_row, 
         const po::variable_value& downsample_col, 
         const po::variable_value& downsample) {
-    size_t row = downsample_row.empty() ? downsample.as<size_t>() : downsample_row.as<size_t>();
-    size_t col = downsample_col.empty() ? downsample.as<size_t>() : downsample_col.as<size_t>();
+    uint32_t row = downsample_row.empty() ? downsample.as<uint32_t>() : downsample_row.as<uint32_t>();
+    uint32_t col = downsample_col.empty() ? downsample.as<uint32_t>() : downsample_col.as<uint32_t>();
     return {row, col};
 }
 
@@ -67,12 +57,12 @@ int main(int argc, char** argv) {
          "detector width in pixels")
         ("rows", po::value<size_t>()->default_value(1200),
          "detector height in pixels")
-        ("downsample", po::value<size_t>()->default_value(1),
+        ("downsample", po::value<uint32_t>()->default_value(1),
          "downsampling factor along both the row and the column. It will be "
          "overwirtten if 'downsample-col' or 'downsample-row' is given")
-        ("downsample-col", po::value<size_t>(),
+        ("downsample-col", po::value<uint32_t>(),
          "downsampling factor along the column")
-        ("downsample-row", po::value<size_t>(),
+        ("downsample-row", po::value<uint32_t>(),
          "downsampling factor along the row")
         ("angles", po::value<size_t>()->default_value(128),
          "number of projections per scan")
@@ -97,7 +87,7 @@ int main(int argc, char** argv) {
     reconstruction_desc.add_options()
         ("slice-size", po::value<size_t>(),
          "size of the square reconstructed slice in pixels. Default to detector columns.")
-        ("preview-size", po::value<size_t>()->default_value(128),
+        ("preview-size", po::value<size_t>(),
          "size of the cubic reconstructed volume for preview.")
         ("threads", po::value<size_t>()->default_value(8),
          "number of threads used for data processing")
@@ -155,16 +145,22 @@ int main(int argc, char** argv) {
     auto data_port = opts["data-port"].as<int>();
     auto message_port = opts["message-port"].as<int>();
 
-    auto [downsample_row, downsample_col] = parseDownsampleFactor(
+    auto [downsampling_row, downsampling_col] = parseDownsampleFactor(
         opts["downsample-row"], opts["downsample-col"], opts["downsample"]);
-    auto num_rows = opts["rows"].as<size_t>() / downsample_row;
-    auto num_cols = opts["cols"].as<size_t>() / downsample_col;
+    auto num_rows = opts["rows"].as<size_t>();
+    auto num_cols = opts["cols"].as<size_t>();
     auto num_angles = opts["angles"].as<size_t>();
-    auto [min_x, max_x] = parseReconstructedVolumeBoundary(opts["minx"], opts["maxx"], num_cols);
-    auto [min_y, max_y] = parseReconstructedVolumeBoundary(opts["miny"], opts["maxy"], num_cols);
-    auto [min_z, max_z] = parseReconstructedVolumeBoundary(opts["minz"], opts["maxz"], num_rows);
-    size_t slice_size = opts["slice-size"].empty() ? num_cols : opts["slice-size"].as<size_t>();
-    auto preview_size = opts["preview-size"].as<size_t>();
+    auto minx = opts["minx"].empty() ? std::nullopt : std::optional<float>{opts["minx"].as<float>()}; 
+    auto maxx = opts["maxx"].empty() ? std::nullopt : std::optional<float>{opts["maxx"].as<float>()}; 
+    auto miny = opts["miny"].empty() ? std::nullopt : std::optional<float>{opts["miny"].as<float>()}; 
+    auto maxy = opts["maxy"].empty() ? std::nullopt : std::optional<float>{opts["maxy"].as<float>()}; 
+    auto minz = opts["minz"].empty() ? std::nullopt : std::optional<float>{opts["minz"].as<float>()}; 
+    auto maxz = opts["maxz"].empty() ? std::nullopt : std::optional<float>{opts["maxz"].as<float>()}; 
+
+    auto slice_size = opts["slice-size"].empty() ? std::nullopt 
+                                                 : std::optional<size_t>(opts["slice-size"].as<size_t>());
+    auto preview_size = opts["preview-size"].empty() ? std::nullopt 
+                                                     : std::optional<size_t>(opts["preview-size"].as<size_t>());
     auto num_threads = opts["threads"].as<size_t>();
     auto num_darks = opts["darks"].as<size_t>();
     auto num_flats = opts["flats"].as<size_t>();
@@ -178,26 +174,20 @@ int main(int argc, char** argv) {
     auto beta = opts["beta"].as<float>();
     auto distance = opts["distance"].as<float>();
 
-    recastx::DaqClientConfig daq_client_cfg {daq_hostname, daq_port, daq_socket_type};
+    recastx::DaqClientConfig daq_client_cfg {daq_port, daq_hostname, daq_socket_type};
     recastx::ZmqServerConfig zmq_server_cfg {data_port, message_port};
     recastx::recon::Application app(raw_buffer_size, num_threads, daq_client_cfg, zmq_server_cfg);
 
-    app.init(num_rows, num_cols, num_angles, num_darks, num_flats, downsample_row, downsample_col);
+    app.setFlatFieldCorrectionParams(num_darks, num_flats);
+    app.setImageProcParams(downsampling_row, downsampling_col);
+    app.setFilterParams(gaussian_lowpass_filter, filter_name);
+    if (retrieve_phase) app.setPaganinParams(pixel_size, lambda, delta, beta, distance);
+    app.setProjectionGeometry(cone_beam ? recastx::BeamShape::CONE : recastx::BeamShape::PARALELL, 
+                              num_cols, num_rows, 1.0f, 1.0f, 0.0f, 0.0f, num_angles);
+    app.setReconGeometry(slice_size, preview_size, minx, maxx, miny, maxy, minz, maxz);
 
-    if (retrieve_phase) app.initPaganin(
-        {pixel_size, lambda, delta, beta, distance}, num_cols, num_rows);
-
-    app.initFilter({filter_name, gaussian_lowpass_filter}, num_cols, num_rows);
-
-    float half_slice_height = 0.5f * (max_z - min_z) / preview_size;
-    float z0 = 0.5f * (max_z + min_z);
-    app.initReconstructor(
-        cone_beam, 
-        {num_cols, num_rows, 1.f, 1.f, recastx::recon::defaultAngles(num_angles), 0.0f, 0.0f}, 
-        {slice_size, slice_size, 1, min_x, max_x, min_y, max_y, z0 - half_slice_height, z0 + half_slice_height},
-        {preview_size, preview_size, preview_size, min_x, max_x, min_y, max_y, min_z, max_z}
-    );
-
+    app.init();
+    
     app.runForEver();
 
     return 0;

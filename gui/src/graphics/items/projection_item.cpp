@@ -2,6 +2,7 @@
 
 #include "graphics/items/projection_item.hpp"
 #include "graphics/scene.hpp"
+#include "encoder.hpp"
 
 namespace recastx::gui {
 
@@ -16,22 +17,51 @@ void ProjectionItem::renderIm() {
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "PROJECTION");
 
     // Projection downsampling
+    ImGui::BeginDisabled(state_ == StatePacket_State::StatePacket_State_PROCESSING);
+
     ImGui::AlignTextToFramePadding();
-    ImGui::Text("Downsampling factor:");
+    ImGui::Text("Downsampling:");
     ImGui::SameLine();
 
-    ImGui::BeginDisabled(state_ == StatePacket_State::StatePacket_State_PROCESSING);
     float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
-    if (ImGui::ArrowButton("##left", ImGuiDir_Left)) {
-        if (downsampling_factor_ > 1) downsampling_factor_--;
+    ImGui::Text("Col");
+    ImGui::SameLine();
+    if (ImGui::ArrowButton("##col_left", ImGuiDir_Left)) {
+        if (downsampling_col_ > 1) {
+            downsampling_col_--;
+            setImageProcParameter();
+        }
     }
     ImGui::SameLine(0.0f, spacing);
-    if (ImGui::ArrowButton("##right", ImGuiDir_Right)) {
-        if (downsampling_factor_ < 10) downsampling_factor_++;
+    if (ImGui::ArrowButton("##col_right", ImGuiDir_Right)) {
+        if (downsampling_col_ < 10) {
+            downsampling_col_++;
+            setImageProcParameter();
+        }
     }
-    ImGui::EndDisabled();
     ImGui::SameLine();
-    ImGui::Text("%d", downsampling_factor_);
+    ImGui::Text("%d", downsampling_col_);
+    ImGui::SameLine();
+
+    ImGui::Text("Row");
+    ImGui::SameLine();
+    if (ImGui::ArrowButton("##row_left", ImGuiDir_Left)) {
+        if (downsampling_row_ > 1) {
+            downsampling_row_--;
+            setImageProcParameter();
+        }
+    }
+    ImGui::SameLine(0.0f, spacing);
+    if (ImGui::ArrowButton("##row_right", ImGuiDir_Right)) {
+        if (downsampling_row_ < 10) {
+            downsampling_row_++;
+            setImageProcParameter();
+        }
+    }
+    ImGui::SameLine();
+    ImGui::Text("%d", downsampling_row_);
+
+    ImGui::EndDisabled();
 
     // Projection center adjustment
     ImGui::BeginDisabled(state_ == StatePacket_State::StatePacket_State_PROCESSING);
@@ -39,5 +69,10 @@ void ProjectionItem::renderIm() {
     ImGui::DragFloat("Y offset", &y_offset_, 1, -50, 50, "%.1f");
     ImGui::EndDisabled();
 }
+
+void ProjectionItem::setImageProcParameter() {
+    scene_.send(createSetImageProcParamPacket(downsampling_col_, downsampling_row_));
+}
+
 
 } // namespace recastx::gui

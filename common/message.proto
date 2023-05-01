@@ -1,6 +1,7 @@
 syntax = "proto3";
 package recastx;
 
+import "parameter.proto";
 import "reconstruction.proto";
 import "state.proto";
 
@@ -8,6 +9,6 @@ message Message {
     oneof request {
         StatePacket state = 1;
         ReconRequestPacket recon = 2;
+        SetParameterPacket param = 3;
     }
 }
-

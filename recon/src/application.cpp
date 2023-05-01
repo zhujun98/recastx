@@ -31,82 +31,91 @@ Application::Application(size_t raw_buffer_size, int num_threads,
        data_server_(server_config.data_port, this),
        msg_server_(server_config.message_port, this) {}
 
-Application::~Application() = default;
+Application::~Application() { 
+    running_ = false; 
+} 
 
-void Application::init(size_t num_rows, size_t num_cols, size_t num_angles, 
-                       size_t num_darks, size_t num_flats,
-                       size_t downsample_row, size_t downsample_col) {
-    num_rows_ = num_rows;
-    num_cols_ = num_cols;
-    num_angles_ = num_angles;
-    downsample_row_ = downsample_row;
-    downsample_col_ = downsample_col;
+void Application::init() {
+    if (initialized_) return;
+    
+    uint32_t downsampling_col = imageproc_params_.downsampling_col;
+    uint32_t downsampling_row = imageproc_params_.downsampling_row;
+    size_t col_count = proj_geom_.col_count / downsampling_col;
+    size_t row_count = proj_geom_.row_count / downsampling_row;
 
-    darks_.reshape({num_darks, num_rows_, num_cols_});
-    flats_.reshape({num_flats, num_rows_, num_cols_});
-    dark_avg_.reshape({num_rows_, num_cols_});
-    reciprocal_.reshape({num_rows_, num_cols_});
+    size_t num_darks = flatfield_params_.num_darks;
+    size_t num_flats = flatfield_params_.num_flats;
+    size_t num_angles = proj_geom_.angles.size();
 
-    raw_buffer_.resize({num_angles, num_rows_, num_cols_});
-    sino_buffer_.reshape({num_angles, num_rows_, num_cols_});
+    darks_.reshape({num_darks, row_count, col_count});
+    flats_.reshape({num_flats, row_count, col_count});
+    dark_avg_.reshape({row_count, col_count});
+    reciprocal_.reshape({row_count, col_count});
+
+    raw_buffer_.reshape({num_angles, row_count, col_count});
+    sino_buffer_.reshape({num_angles, row_count, col_count});
+
+    initPaganin(col_count, row_count);
+    initFilter(col_count, row_count);
+    initReconstructor(col_count, row_count);
 
     initialized_ = true;
     spdlog::info("Initial parameters for real-time 3D tomographic reconstruction:");
     spdlog::info("- Number of required dark images: {}", num_darks);
     spdlog::info("- Number of required flat images: {}", num_flats);
     spdlog::info("- Number of projection images per tomogram: {}", num_angles);
+    spdlog::info("- Projection image size: {} ({}) x {} ({})", 
+                 col_count, downsampling_col, row_count, downsampling_row);
 }
 
-void Application::initPaganin(const PaganinConfig& config, int num_cols, int num_rows) {
-    if (!initialized_) throw std::runtime_error("Application not initialized!");
-
-    paganin_ = std::make_unique<Paganin>(
-        config.pixel_size, config.lambda, config.delta, config.beta, config.distance, 
-        &raw_buffer_.front()[0], num_cols, num_rows);
+void Application::setProjectionGeometry(BeamShape beam_shape, size_t col_count, size_t row_count,
+                                        float pixel_width, float pixel_height,
+                                        float src2origin, float origin2det, size_t num_angles) {
+    proj_geom_ = {beam_shape, col_count, row_count, pixel_width, pixel_height, 
+                  src2origin, origin2det, defaultAngles(num_angles)};
 }
 
-void Application::initFilter(const FilterConfig& config, int num_cols, int num_rows) {
-    if (!initialized_) throw std::runtime_error("Application not initialized!");
-
-    filter_ = std::make_unique<Filter>(
-        config.name, config.gaussian_lowpass_filter, 
-        &raw_buffer_.front()[0], num_cols, num_rows, num_threads_);
-}
-
-void Application::initReconstructor(bool cone_beam,
-                                    const ProjectionGeometry& proj_geom,
-                                    const VolumeGeometry& slice_geom,
-                                    const VolumeGeometry& preview_geom) {
-    preview_buffer_.reshape({preview_geom.col_count, preview_geom.row_count, preview_geom.slice_count});
-    slice_mediator_.reshape({slice_geom.col_count, slice_geom.row_count});
-    if (cone_beam) {
-        recon_ = std::make_unique<ConeBeamReconstructor>(proj_geom, slice_geom, preview_geom);
-    } else {
-        recon_ = std::make_unique<ParallelBeamReconstructor>(proj_geom, slice_geom, preview_geom);
-    }
+void Application::setReconGeometry(std::optional<size_t> slice_size, std::optional<size_t> preview_size,
+                                   std::optional<float> minx, std::optional<float> maxx, 
+                                   std::optional<float> miny, std::optional<float> maxy, 
+                                   std::optional<float> minz, std::optional<float> maxz) {
+    slice_size_ = slice_size;
+    preview_size_ = preview_size;
+    min_x_ = minx;
+    max_x_ = maxx;
+    min_y_ = miny;
+    max_y_ = maxy;
+    min_z_ = minz;
+    max_z_ = maxz;
+    // initialization is delayed
 }
 
 void Application::startPreprocessing() {
-    preproc_thread_ = std::thread([&] {
+    auto t = std::thread([&] {
         oneapi::tbb::task_arena arena(num_threads_);
-        while (true) {
-            raw_buffer_.fetch();
+        while (running_) {
+            if (!raw_buffer_.fetch(100)) continue; 
+            if (state_ != StatePacket_State::StatePacket_State_PROCESSING) continue;
+
             spdlog::info("Processing projections ...");
             processProjections(arena);
         }
     });
 
-    preproc_thread_.detach();
+    t.detach();
 }
 
 void Application::startUploading() {
-    upload_thread_ = std::thread([&] {
-        while (true) {
-            sino_buffer_.fetch();
+    auto t = std::thread([&] {
+
+        size_t num_angles = proj_geom_.angles.size();
+        while (running_) {
+            if (!sino_buffer_.fetch(100)) continue;
+            if (state_ != StatePacket_State::StatePacket_State_PROCESSING) continue;
 
             spdlog::info("Uploading sinograms to GPU ...");
             recon_->uploadSinograms(
-                1 - gpu_buffer_index_, sino_buffer_.front().data(), 0, num_angles_ - 1);
+                1 - gpu_buffer_index_, sino_buffer_.front().data(), 0, num_angles - 1);
 
             {
                 std::lock_guard<std::mutex> lck(gpu_mutex_);
@@ -117,12 +126,12 @@ void Application::startUploading() {
         }
     });
 
-    upload_thread_.detach();
+    t.detach();
 }
 
 void Application::startReconstructing() {
 
-    recon_thread_ = std::thread([&] {
+    auto t = std::thread([&] {
 
 #if (VERBOSITY >= 1)
         const float data_size = sino_buffer_.front().shape()[0] * sizeof(RawDtype) / (1024.f * 1024.f); // in MB
@@ -130,11 +139,12 @@ void Application::startReconstructing() {
         size_t count = 0;
         float total_duration = 0.f;
 #endif
- 
-        while (true) {
+
+        while (running_) {
             {
                 std::unique_lock<std::mutex> lck(gpu_mutex_);
                 if (gpu_cv_.wait_for(lck, 10ms, [&] { return sino_uploaded_; })) {
+                    if (state_ != StatePacket_State::StatePacket_State_PROCESSING) continue;
                     recon_->reconstructPreview(gpu_buffer_index_, preview_buffer_.back());
                 } else {
                     slice_mediator_.reconOnDemand(recon_.get(), gpu_buffer_index_);
@@ -145,6 +155,7 @@ void Application::startReconstructing() {
 
                 sino_uploaded_ = false;
             }
+            
             preview_buffer_.prepare();
  
 #if (VERBOSITY >= 1)
@@ -169,9 +180,10 @@ void Application::startReconstructing() {
 #endif
 
         }
+
     });
 
-    recon_thread_.detach();
+    t.detach();
 }
 
 void Application::runForEver() {
@@ -184,7 +196,7 @@ void Application::runForEver() {
     msg_server_.start();
 
     // TODO: start the event loop in the main thread
-    while (true) {
+    while (running_) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 }
@@ -192,7 +204,8 @@ void Application::runForEver() {
 void Application::pushProjection(
         ProjectionType k, size_t proj_idx, size_t num_rows, size_t num_cols, const char* data) {
 
-
+    uint32_t downsampling_row = imageproc_params_.downsampling_row;
+    uint32_t downsampling_col = imageproc_params_.downsampling_col;
     switch (k) {
         case ProjectionType::projection: {
             if (!darks_.empty() && !flats_.empty()) {
@@ -221,21 +234,22 @@ void Application::pushProjection(
                 return;
             }
 
+            size_t num_angles = proj_geom_.angles.size();
             // TODO: compute the average on the fly instead of storing the data in the buffer
-            raw_buffer_.fill<RawDtype>(data, proj_idx / num_angles_, proj_idx % num_angles_, 
-                                       {num_rows, num_cols}, {downsample_row_, downsample_col_});
+            raw_buffer_.fill<RawDtype>(data, proj_idx / num_angles, proj_idx % num_angles, 
+                                       {num_rows, num_cols}, {downsampling_row, downsampling_col});
             break;
         }
         case ProjectionType::dark: {
             reciprocal_computed_ = false;
             spdlog::info("Received {} darks in total.", 
-                         darks_.push(data, {num_rows, num_cols}, {downsample_row_, downsample_col_}));
+                         darks_.push(data, {num_rows, num_cols}, {downsampling_row, downsampling_col}));
             break;
         }
         case ProjectionType::flat: {
             reciprocal_computed_ = false;
             spdlog::info("Received {} flats in total.", 
-                         flats_.push(data, {num_rows, num_cols}, {downsample_row_, downsample_col_}));
+                         flats_.push(data, {num_rows, num_cols}, {downsampling_row, downsampling_col}));
             break;
         }
         default:
@@ -250,14 +264,17 @@ void Application::setSlice(size_t timestamp, const Orientation& orientation) {
 void Application::onStateChanged(StatePacket_State state) {
     state_ = state;
     if (state == StatePacket_State::StatePacket_State_PROCESSING) {
-        spdlog::info("Start processing ...");
+        init();
+        daq_client_.startAcquiring();
+        spdlog::info("Start acquiring and processing ...");
+    } else if (state == StatePacket_State::StatePacket_State_ACQUIRING) {
+        daq_client_.startAcquiring();
+        spdlog::info("Start acquiring ...");
     } else if (state == StatePacket_State::StatePacket_State_READY) {
-        spdlog::info("Stop processing ...");
+        daq_client_.stopAcquiring();
+        spdlog::info("Stop acquiring and processing ...");
     }
-
-    daq_client_.setState(state);
 }
-
 
 std::optional<ReconDataPacket> Application::previewDataPacket(int timeout) { 
     if (preview_buffer_.fetch(timeout)) {
@@ -296,13 +313,11 @@ std::vector<ReconDataPacket> Application::onDemandSliceDataPackets(int timeout) 
     return ret;
 }
 
-size_t Application::bufferSize() const { return num_angles_; }
-
 void Application::processProjections(oneapi::tbb::task_arena& arena) {
 
     auto& shape = raw_buffer_.shape();
-    int num_angles = static_cast<int>(shape[0]);
-    int num_pixels = static_cast<int>(shape[1] * shape[2]);
+    auto [num_angles, row_count, col_count] = shape;
+    size_t num_pixels = row_count * col_count;
 
 #if (VERBOSITY >= 2)
     ScopedTimer timer("Bench", "Processing projections");
@@ -312,7 +327,7 @@ void Application::processProjections(oneapi::tbb::task_arena& arena) {
 
     using namespace oneapi;
     arena.execute([&]{
-        tbb::parallel_for(tbb::blocked_range<int>(0, num_angles),
+        tbb::parallel_for(tbb::blocked_range<int>(0, static_cast<int>(num_angles)),
                           [&](const tbb::blocked_range<int> &block) {
             for (auto i = block.begin(); i != block.end(); ++i) {
                 float* p = &projs[i * num_pixels];
@@ -333,13 +348,13 @@ void Application::processProjections(oneapi::tbb::task_arena& arena) {
     // (projection_id, rows, cols) -> (rows, projection_id, cols).
     auto& sinos = sino_buffer_.back();
     arena.execute([&]{
-        tbb::parallel_for(tbb::blocked_range<int>(0, num_rows_),
+        tbb::parallel_for(tbb::blocked_range<int>(0, row_count),
                           [&](const tbb::blocked_range<int> &block) {
             for (auto i = block.begin(); i != block.end(); ++i) {
-                for (size_t j = 0; j < static_cast<size_t>(num_angles_); ++j) {
-                    for (size_t k = 0; k < static_cast<size_t>(num_cols_); ++k) {
-                        sinos[i * num_angles_ * num_cols_ + j * num_cols_ + k] = 
-                            projs[j * num_cols_ * num_rows_ + i * num_cols_ + k];
+                for (size_t j = 0; j < num_angles; ++j) {
+                    for (size_t k = 0; k < col_count; ++k) {
+                        sinos[i * num_angles * col_count + j * col_count + k] = 
+                            projs[j * col_count * row_count + i * col_count + k];
                     }
                 }
             }
@@ -347,6 +362,44 @@ void Application::processProjections(oneapi::tbb::task_arena& arena) {
     });
 
     sino_buffer_.prepare();
+}
+
+void Application::initPaganin(size_t col_count, size_t row_count) {
+    if (paganin_cfg_.has_value()) {
+        auto& cfg = paganin_cfg_.value();
+        paganin_ = std::make_unique<Paganin>(
+            cfg.pixel_size, cfg.lambda, cfg.delta, cfg.beta, cfg.distance, 
+            &raw_buffer_.front()[0], col_count, row_count);
+    }
+}
+
+void Application::initFilter(size_t col_count, size_t row_count) {
+    filter_ = std::make_unique<Filter>(
+        filter_cfg_.name, filter_cfg_.gaussian_lowpass_filter, 
+        &raw_buffer_.front()[0], col_count, row_count, num_threads_);
+}
+
+void Application::initReconstructor(size_t col_count, size_t row_count) {
+    auto [min_x, max_x] = details::parseReconstructedVolumeBoundary(min_x_, max_x_, col_count);
+    auto [min_y, max_y] = details::parseReconstructedVolumeBoundary(min_y_, max_y_, col_count);
+    auto [min_z, max_z] = details::parseReconstructedVolumeBoundary(min_z_, max_z_, row_count);
+    
+    size_t slice_size = slice_size_.value_or(col_count);
+    size_t preview_size = preview_size_.value_or(128);
+
+    float half_slice_height = 0.5f * (max_z - min_z) / preview_size;
+    float z0 = 0.5f * (max_z + min_z);
+
+    slice_geom_ = {slice_size, slice_size, 1, min_x, max_x, min_y, max_y, z0 - half_slice_height, z0 + half_slice_height};
+    preview_geom_ = {preview_size, preview_size, preview_size, min_x, max_x, min_y, max_y, min_z, max_z};
+
+    preview_buffer_.reshape({preview_geom_.col_count, preview_geom_.row_count, preview_geom_.slice_count});
+    slice_mediator_.reshape({slice_geom_.col_count, slice_geom_.row_count});
+    if (proj_geom_.beam_shape == BeamShape::CONE) {
+        recon_ = std::make_unique<ConeBeamReconstructor>(col_count, row_count, proj_geom_, slice_geom_, preview_geom_);
+    } else {
+        recon_ = std::make_unique<ParallelBeamReconstructor>(col_count, row_count, proj_geom_, slice_geom_, preview_geom_);
+    }
 }
 
 } // namespace recastx::recon

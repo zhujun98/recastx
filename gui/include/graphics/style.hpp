@@ -8,9 +8,9 @@ namespace recastx::gui {
 struct Style {
     static constexpr float MARGIN = 0.01f;
     static constexpr float ICON_HEIGHT = 0.10f;
-    static constexpr float ICON_WIDTH = 0.20f;
-    static constexpr float LEFT_PANEL_WIDTH = 0.20f;
-    static constexpr float STATUS_BAR_WIDTH = 0.30f;
+    static constexpr float ICON_WIDTH = 0.22f;
+    static constexpr float LEFT_PANEL_WIDTH = ICON_WIDTH;
+    static constexpr float STATUS_BAR_WIDTH = 0.28f;
     static constexpr float STATUS_BAR_HEIGHT = 0.18f;
     static constexpr float LOGGING_WIDTH = 0.46f;
     static constexpr float LOGGING_HEIGHT = 0.18f;

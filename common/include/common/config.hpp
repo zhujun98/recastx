@@ -14,12 +14,14 @@ namespace recastx {
 
     enum class ProjectionType : int { dark = 0, flat = 1, projection = 2, unknown = 99 };
 
+    enum class BeamShape { PARALELL, CONE };
+
     using RawDtype = uint16_t;
     using ProDtype = float;
 
     struct DaqClientConfig {
-        std::string hostname;
         int port;
+        std::string hostname;
         std::string socket_type;
     };
 
@@ -28,9 +30,19 @@ namespace recastx {
         int message_port;
     };
 
+    struct FlatFieldCorrectionParams {
+        size_t num_darks;
+        size_t num_flats;
+    };
+
+    struct ImageProcParams {
+        uint32_t downsampling_col;
+        uint32_t downsampling_row;
+    };
+
     struct FilterConfig {
-        std::string name;
         bool gaussian_lowpass_filter;
+        std::string name;
     };
 
     struct PaganinConfig {
@@ -42,13 +54,14 @@ namespace recastx {
     };
 
     struct ProjectionGeometry {
+        BeamShape beam_shape;
         size_t col_count; // number of detector columns
         size_t row_count; // number of detector rows
         float pixel_width; // width of each detector
         float pixel_height; // height of each detector
-        std::vector<float> angles; // array of projection angles 
         float source2origin = 0.f;
         float origin2detector = 0.f;
+        std::vector<float> angles; // array of projection angles
     };
 
     struct VolumeGeometry {

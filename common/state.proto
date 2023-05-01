@@ -5,7 +5,8 @@ message StatePacket {
     enum State {
         INIT = 0;
         READY = 1;
-        PROCESSING = 2;
+        ACQUIRING = 2;
+        PROCESSING = 3;
     }
 
     State state = 1;
