@@ -4,13 +4,11 @@
 #include <cassert>
 #include <chrono>
 #include <condition_variable>
-#include <iostream>
 #include <map>
 #include <numeric>
 #include <queue>
 #include <thread>
 #include <type_traits>
-using namespace std::chrono_literals;
 
 #include <spdlog/spdlog.h>
 
@@ -67,6 +65,8 @@ public:
 
 template<typename T>
 bool TripleBufferInterface<T>::fetch(int timeout) {
+    using namespace std::chrono_literals;
+
     std::unique_lock lk(mtx_);
     if (timeout < 0) {
         cv_.wait(lk, [this] { return is_ready_; });
@@ -419,6 +419,8 @@ void MemoryBuffer<T, N>::fill(const char* raw, size_t chunk_idx, size_t data_idx
 
 template<typename T, size_t N>
 bool MemoryBuffer<T, N>::fetch(int timeout) {
+    using namespace std::chrono_literals;
+
     std::unique_lock lk(mtx_);
     if (timeout < 0) {
         cv_.wait(lk, [this] { return is_ready_; });
