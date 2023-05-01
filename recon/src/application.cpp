@@ -31,7 +31,9 @@ Application::Application(size_t raw_buffer_size, int num_threads,
        data_server_(server_config.data_port, this),
        msg_server_(server_config.message_port, this) {}
 
-Application::~Application() = default;
+Application::~Application() { 
+    running_ = false; 
+} 
 
 void Application::init() {
     if (initialized_) return;
@@ -93,8 +95,10 @@ void Application::setReconGeometry(std::optional<size_t> slice_size, std::option
 void Application::startPreprocessing() {
     auto t = std::thread([&] {
         oneapi::tbb::task_arena arena(num_threads_);
-        while (true) {
-            raw_buffer_.fetch();
+        while (running_) {
+            if (!raw_buffer_.fetch(100)) continue; 
+            if (state_ != StatePacket_State::StatePacket_State_PROCESSING) continue;
+
             spdlog::info("Processing projections ...");
             processProjections(arena);
         }
@@ -107,8 +111,9 @@ void Application::startUploading() {
     auto t = std::thread([&] {
 
         size_t num_angles = proj_geom_.angles.size();
-        while (true) {
-            sino_buffer_.fetch();
+        while (running_) {
+            if (!sino_buffer_.fetch(100)) continue;
+            if (state_ != StatePacket_State::StatePacket_State_PROCESSING) continue;
 
             spdlog::info("Uploading sinograms to GPU ...");
             recon_->uploadSinograms(
@@ -136,11 +141,12 @@ void Application::startReconstructing() {
         size_t count = 0;
         float total_duration = 0.f;
 #endif
- 
-        while (true) {
+
+        while (running_) {
             {
                 std::unique_lock<std::mutex> lck(gpu_mutex_);
                 if (gpu_cv_.wait_for(lck, 10ms, [&] { return sino_uploaded_; })) {
+                    if (state_ != StatePacket_State::StatePacket_State_PROCESSING) continue;
                     recon_->reconstructPreview(gpu_buffer_index_, preview_buffer_.back());
                 } else {
                     slice_mediator_.reconOnDemand(recon_.get(), gpu_buffer_index_);
@@ -151,6 +157,7 @@ void Application::startReconstructing() {
 
                 sino_uploaded_ = false;
             }
+            
             preview_buffer_.prepare();
  
 #if (VERBOSITY >= 1)
@@ -175,6 +182,7 @@ void Application::startReconstructing() {
 #endif
 
         }
+
     });
 
     t.detach();
@@ -190,7 +198,7 @@ void Application::runForEver() {
     msg_server_.start();
 
     // TODO: start the event loop in the main thread
-    while (true) {
+    while (running_) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 }

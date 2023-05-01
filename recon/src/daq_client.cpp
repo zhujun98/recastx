@@ -44,7 +44,7 @@ DaqClient::~DaqClient() {
 }
 
 void DaqClient::start() {
-    thread_ = std::thread([&] {
+    auto t = std::thread([&] {
 
 #if (VERBOSITY >= 1)
         int monitor_every = app_->numAngles();
@@ -106,7 +106,7 @@ void DaqClient::start() {
         }
     });
 
-    thread_.detach();
+    t.detach();
 }
 
 void DaqClient::setState(StatePacket_State state) { state_ = state; }

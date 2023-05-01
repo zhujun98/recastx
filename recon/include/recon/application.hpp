@@ -94,6 +94,8 @@ class Application {
     int num_threads_;
 
     StatePacket_State state_;
+    // It's not a State because there might be race conditions.
+    bool running_ = true;
 
     DaqClient daq_client_;
     DataServer data_server_;

@@ -99,7 +99,8 @@ protected:
 
 TEST_F(ApplicationTest, TestPushProjection) {
     app_.init();
-    // app_.startPreprocessing();
+    app_.startPreprocessing();
+    app_.onStateChanged(StatePacket_State::StatePacket_State_PROCESSING);
 
     pushDarks(num_darks_);
     pushFlats(num_flats_);
@@ -133,7 +134,8 @@ TEST_F(ApplicationTest, TestPushProjection) {
 
 TEST_F(ApplicationTest, TestMemoryBufferReset) {
     app_.init();
-    // app_.startPreprocessing();
+    app_.startPreprocessing();
+    app_.onStateChanged(StatePacket_State::StatePacket_State_PROCESSING);
 
     pushDarks(num_darks_);
     pushFlats(num_flats_);
@@ -150,7 +152,8 @@ TEST_F(ApplicationTest, TestMemoryBufferReset) {
 
 TEST_F(ApplicationTest, TestPushProjectionUnordered) {
     app_.init();
-    // app_.startPreprocessing();
+    app_.startPreprocessing();
+    app_.onStateChanged(StatePacket_State::StatePacket_State_PROCESSING);
     
     pushDarks(num_darks_);
     pushFlats(num_flats_);
@@ -190,15 +193,21 @@ TEST_F(ApplicationTest, TestPushProjectionUnordered) {
 
 TEST_F(ApplicationTest, TestUploading) {
     app_.init();
-    // app_.startPreprocessing();
-    // app_.startUploading();
+    app_.startPreprocessing();
+    app_.startUploading();
+    app_.onStateChanged(StatePacket_State::StatePacket_State_PROCESSING);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
 
 TEST_F(ApplicationTest, TestReconstructing) {
     app_.init();
-    // app_.startPreprocessing();
-    // app_.startUploading();
-    // app_.startReconstructing();
+    app_.startPreprocessing();
+    app_.startUploading();
+    app_.startReconstructing();
+    app_.onStateChanged(StatePacket_State::StatePacket_State_PROCESSING);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
 
 TEST_F(ApplicationTest, TestWithPagagin) {
@@ -211,7 +220,8 @@ TEST_F(ApplicationTest, TestWithPagagin) {
     app_.setPaganinParams(pixel_size, lambda, delta, beta, distance);
 
     app_.init();
-    // app_.startPreprocessing();
+    app_.startPreprocessing();
+    app_.onStateChanged(StatePacket_State::StatePacket_State_PROCESSING);
     
     pushDarks(num_darks_);
     pushFlats(num_flats_);
