@@ -12,7 +12,8 @@ namespace recastx::recon {
 
 namespace details {
     std::vector<float> paganinFilter(
-        float pixel_size, float lambda, float delta, float beta, float distance, int cols, int rows);
+        float pixel_size, float lambda, float delta, float beta, float distance, 
+        int num_cols, int num_rows);
 } // details
 
 class Paganin {
@@ -22,8 +23,8 @@ class Paganin {
     float beta_;
     float distance_;
 
-    int cols_;
-    int rows_;
+    int num_cols_;
+    int num_rows_;
 
     fftwf_plan fft2d_plan_;
     fftwf_plan ffti2d_plan_;
@@ -31,7 +32,11 @@ class Paganin {
     std::vector<float> filter_;
 
   public:
-    Paganin(float pixel_size, float lambda, float delta, float beta, float distance, float* data, int cols, int rows);
+
+    Paganin(float pixel_size, float lambda, float delta, float beta, float distance, 
+            float* data, int num_cols, int num_rows);
+
+    ~Paganin();
 
     void apply(float* data, int idx=1);
 
