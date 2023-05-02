@@ -228,4 +228,21 @@ TEST_F(ApplicationTest, TestWithPagagin) {
     // pushProjection(0, num_angles_);
 }
 
+
+TEST_F(ApplicationTest, TestDownsampling) {
+    app_.init();
+    app_.startPreprocessing();
+
+    app_.onStateChanged(StatePacket_State::StatePacket_State_PROCESSING);
+    pushDarks(num_darks_);
+    pushFlats(num_flats_);
+    pushProjection(0, num_angles_);
+
+    app_.onStateChanged(StatePacket_State::StatePacket_State_READY);
+    app_.setImageProcParams(2u, 2u);
+    // FIXME: std::out_of_range in the dtor of ParallelBeamReconstructor
+    // app_.onStateChanged(StatePacket_State::StatePacket_State_PROCESSING);
+    // pushProjection(0, num_angles_);
+}
+
 } // namespace recastx::recon::test
