@@ -122,16 +122,16 @@ TEST_F(MemoryBufferTest, TestGeneral) {
     buffer_.fill<RawDtype>(_produceRawData({1, 2, 3, 4, 5, 6}).data(), 0, 0);
     ASSERT_EQ(buffer_.occupied(), 1);
     buffer_.fill<RawDtype>(_produceRawData({6, 1, 5, 1, 4, 1, 
-                                            3, 1, 2, 1, 1, 1}).data(), 0, 1, {2, 6}, {1, 2});
+                                            3, 1, 2, 1, 1, 1}).data(), 0, 1, {2, 6});
     buffer_.fill<RawDtype>(_produceRawData({1, 1, 2, 1, 3, 1, 
                                             1, 1, 2, 1, 3, 1,
                                             4, 1, 5, 1, 6, 1,
-                                            4, 1, 5, 1, 6, 1}).data(), 0, 2, {4, 6}, {2, 2});
+                                            4, 1, 5, 1, 6, 1}).data(), 0, 2, {4, 6});
     buffer_.fill<RawDtype>(_produceRawData({6, 1, 5, 1, 4, 1, 1,
                                             6, 1, 5, 1, 4, 1, 1,
                                             3, 1, 2, 1, 1, 1, 1,
                                             3, 1, 2, 1, 1, 1, 1,
-                                            1, 1, 1, 1, 1, 1, 1}).data(), 0, 3, {5, 7}, {2, 2});
+                                            1, 1, 1, 1, 1, 1, 1}).data(), 0, 3, {5, 7});
     EXPECT_EQ(&buffer_.ready(), &buffer_.back());
     ASSERT_TRUE(buffer_.fetch());
     EXPECT_THAT(buffer_.front(), 

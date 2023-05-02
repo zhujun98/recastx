@@ -186,9 +186,9 @@ void SliceBuffer<T>::reshape(const ShapeType& shape) {
 namespace details {
 
 template<typename T, typename D>
-inline void copyBuffer(T* dst, const char* src, size_t n) {
+inline void copyBuffer(T* dst, const char* src, const std::array<size_t, 2>& shape) {
     D v;
-    for (size_t size = sizeof(D), i = 0; i < n; ++i) {
+    for (size_t size = sizeof(D), i = 0; i < shape[0] * shape[1]; ++i) {
         memcpy(&v, src, size);
         src += size;
         *(dst++) = static_cast<T>(v);
@@ -198,12 +198,15 @@ inline void copyBuffer(T* dst, const char* src, size_t n) {
 template<typename T, typename D>
 inline void copyBuffer(T* dst, const char* src,
                        const std::array<size_t, 2>& dst_shape,
-                       const std::array<size_t, 2>& src_shape,
-                       const std::array<size_t, 2>& downsampling) {
+                       const std::array<size_t, 2>& src_shape) {
+    if (src_shape == dst_shape) copyBuffer<T, D>(dst, src, dst_shape);
+
+    size_t ds_r = src_shape[0] / dst_shape[0];
+    size_t ds_c = src_shape[1] / dst_shape[1];
     D v;
     for (size_t size = sizeof(D), 
-             rstep = downsampling[0] * size * src_shape[1], 
-             cstep = downsampling[1] * size, i = 0; i < dst_shape[0]; ++i) {
+             rstep = ds_r * size * src_shape[1], 
+             cstep = ds_c * size, i = 0; i < dst_shape[0]; ++i) {
         char* ptr = const_cast<char*>(src) + i * rstep;
         for (size_t j = 0; j < dst_shape[1]; ++j) {
             memcpy(&v, ptr, size);
@@ -258,8 +261,7 @@ private:
 
     template<typename D>
     void fill(const char* raw, size_t chunk_idx, size_t data_idx, 
-              const std::array<size_t, N-1>& src_shape, 
-              const std::array<size_t, N-1>& downsampling);
+              const std::array<size_t, N-1>& src_shape);
 
     bool fetch(int timeout = -1);
 
@@ -334,15 +336,14 @@ template<typename T, size_t N>
 template<typename D>
 void MemoryBuffer<T, N>::fill(const char* raw, size_t chunk_idx, size_t data_idx) {
     auto& shape = front_.shape();
-    fill<D>(raw, chunk_idx, data_idx, {shape[1], shape[2]}, {1, 1});
+    fill<D>(raw, chunk_idx, data_idx, {shape[1], shape[2]});
 }
 
 
 template<typename T, size_t N>
 template<typename D>
 void MemoryBuffer<T, N>::fill(const char* raw, size_t chunk_idx, size_t data_idx, 
-                              const std::array<size_t, N-1>& src_shape, 
-                              const std::array<size_t, N-1>& downsampling) {
+                              const std::array<size_t, N-1>& src_shape) {
     std::lock_guard lk(mtx_);
 
     if (chunk_indices_.empty()) {
@@ -381,13 +382,7 @@ void MemoryBuffer<T, N>::fill(const char* raw, size_t chunk_idx, size_t data_idx
     auto& buffer_shape = front_.shape();
     std::copy(buffer_shape.begin() + 1, buffer_shape.end(), dst_shape.begin());
     size_t data_size = std::accumulate(dst_shape.begin(), dst_shape.end(), 1, std::multiplies<>());
-    if (std::all_of(downsampling.cbegin(), downsampling.cend(), [](size_t v) { return v == 1; })) {
-        details::copyBuffer<T, D>(
-            &data[data_idx * data_size], raw, data_size);
-    } else {
-        details::copyBuffer<T, D>(
-            &data[data_idx * data_size], raw, dst_shape, src_shape, downsampling);
-    }
+    details::copyBuffer<T, D>(&data[data_idx * data_size], raw, dst_shape, src_shape);
 
     ++counter_[buffer_idx];
     // Caveat: We do not track the data indices. Therefore, if data with the same
