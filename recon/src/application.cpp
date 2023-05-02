@@ -264,6 +264,8 @@ void Application::setSlice(size_t timestamp, const Orientation& orientation) {
 }
 
 void Application::onStateChanged(StatePacket_State state) {
+    if (state_ == state) return;
+
     state_ = state;
     if (state == StatePacket_State::StatePacket_State_PROCESSING) {
         init();
