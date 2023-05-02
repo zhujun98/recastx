@@ -181,12 +181,12 @@ public:
     ImageGroup(const ImageGroup& other) = default;
     ImageGroup& operator=(const ImageGroup& other) = default;
 
-    ImageGroup(ImageGroup&& other)
+    ImageGroup(ImageGroup&& other) noexcept
              : Tensor<T, 3>(std::move(other)), count_(other.count_) {
         other.count_ = 0;
     }
 
-    ImageGroup& operator=(ImageGroup&& other) {
+    ImageGroup& operator=(ImageGroup&& other) noexcept {
         Tensor<T, 3>::operator=(std::move(other));
         count_ = other.count_;
         other.count_ = 0;
