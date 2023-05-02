@@ -144,11 +144,12 @@ inline void copyBuffer(T* dst, const char* src, size_t n) {
 template<typename T>
 inline void copyBuffer(T* dst, const char* src, 
                        const std::array<size_t, 2>& dst_shape, 
-                       const std::array<size_t, 2>& src_shape,
-                       const std::array<size_t, 2>& downsampling) {
+                       const std::array<size_t, 2>& src_shape) {
+    size_t ds_r = src_shape[0] / dst_shape[0];
+    size_t ds_c = src_shape[1] / dst_shape[1];
     for (size_t size = sizeof(T), 
-             rstep = downsampling[0] * size * src_shape[1], 
-             cstep = downsampling[1] * size, i = 0; i < dst_shape[0]; ++i) {
+             rstep = ds_r * size * src_shape[1], 
+             cstep = ds_c * size, i = 0; i < dst_shape[0]; ++i) {
         char* ptr = const_cast<char*>(src) + i * rstep;
         for (size_t j = 0; j < dst_shape[1]; ++j) {
             memcpy(dst++, ptr, size);
@@ -200,9 +201,7 @@ public:
     }
 
     size_t push(const char* buffer);
-    size_t push(const char* buffer, 
-                const std::array<size_t, 2>& shape, 
-                const std::array<size_t, 2>& downsampling);
+    size_t push(const char* buffer, const std::array<size_t, 2>& shape);
 
     void reset() { count_ = 0; }
 
@@ -221,19 +220,14 @@ size_t ImageGroup<T>::push(const char* buffer) {
 }
 
 template<typename T>
-size_t ImageGroup<T>::push(const char* buffer, 
-                           const std::array<size_t, 2>& shape, 
-                           const std::array<size_t, 2>& downsampling) {
+size_t ImageGroup<T>::push(const char* buffer, const std::array<size_t, 2>& shape) {
     size_t h = this->shape_[1];
     size_t w = this->shape_[2];
-    if (downsampling[0] == 1 && downsampling[1] == 1) {
-        assert(h == shape[0] && w == shape[1]);
-        return push(buffer);
-    }
+    if (shape[0] == h && shape[1] == w) return push(buffer);
     
     size_t idx = count_++ % this->shape_[0];
     size_t pixels = w * h;
-    details::copyBuffer(&this->data_[idx * pixels], buffer, {h, w}, shape, downsampling);
+    details::copyBuffer(&this->data_[idx * pixels], buffer, {h, w}, shape);
     return count_;
 }
 

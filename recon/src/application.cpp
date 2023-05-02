@@ -47,10 +47,13 @@ void Application::init() {
     size_t num_flats = flatfield_params_.num_flats;
     size_t num_angles = proj_geom_.angles.size();
 
-    darks_.reshape({num_darks, row_count, col_count});
-    flats_.reshape({num_flats, row_count, col_count});
+    // original darks and flats are stored
+    darks_.reshape({num_darks, proj_geom_.row_count, proj_geom_.col_count});
+    flats_.reshape({num_flats, proj_geom_.row_count, proj_geom_.col_count});
+
     dark_avg_.reshape({row_count, col_count});
     reciprocal_.reshape({row_count, col_count});
+    reciprocal_computed_ = false;
 
     raw_buffer_.reshape({num_angles, row_count, col_count});
     sino_buffer_.reshape({num_angles, row_count, col_count});
@@ -204,11 +207,14 @@ void Application::runForEver() {
 void Application::pushProjection(
         ProjectionType k, size_t proj_idx, size_t num_rows, size_t num_cols, const char* data) {
 
-    uint32_t downsampling_row = imageproc_params_.downsampling_row;
-    uint32_t downsampling_col = imageproc_params_.downsampling_col;
     switch (k) {
         case ProjectionType::projection: {
-            if (!darks_.empty() && !flats_.empty()) {
+            if (!reciprocal_computed_) {
+                if (darks_.empty() || flats_.empty()) {
+                    spdlog::warn("Send dark and flat images first! Projection ignored.");
+                    return;
+                }
+
                 if (!darks_.full()) {
                     spdlog::warn("Computing reciprocal with less darks than expected.");
                 }
@@ -216,40 +222,36 @@ void Application::pushProjection(
                     spdlog::warn("Computing reciprocal with less flats than expected.");
                 }
 
-                spdlog::info("Computing reciprocal for flat fielding ...");
-                computeReciprocal(darks_, flats_, reciprocal_, dark_avg_);
-                raw_buffer_.reset();
-
-#if (VERBOSITY >= 1)
-                spdlog::info("Memory buffer reset!");
+                spdlog::info("Computing reciprocal for flat field correction ...");
+                
+                {    
+#if (VERBOSITY >= 2)
+                    ScopedTimer timer("Bench", "Computing reciprocal");
 #endif
+                
+                    auto [dark_avg, reciprocal] = computeReciprocal(darks_, flats_);
 
+                    spdlog::info("Downsampling dark ... ");
+                    downsample(dark_avg, dark_avg_);
+                    spdlog::info("Downsampling reciprocal ... ");
+                    downsample(reciprocal, reciprocal_);
+                }
                 reciprocal_computed_ = true;
-                darks_.reset();
-                flats_.reset();
-            }
-
-            if (!reciprocal_computed_) {
-                spdlog::warn("Send dark and flat images first! Projection ignored.");
-                return;
             }
 
             size_t num_angles = proj_geom_.angles.size();
             // TODO: compute the average on the fly instead of storing the data in the buffer
-            raw_buffer_.fill<RawDtype>(data, proj_idx / num_angles, proj_idx % num_angles, 
-                                       {num_rows, num_cols}, {downsampling_row, downsampling_col});
+            raw_buffer_.fill<RawDtype>(data, proj_idx / num_angles, proj_idx % num_angles, {num_rows, num_cols});
             break;
         }
         case ProjectionType::dark: {
-            reciprocal_computed_ = false;
-            spdlog::info("Received {} darks in total.", 
-                         darks_.push(data, {num_rows, num_cols}, {downsampling_row, downsampling_col}));
+            maybeResetDarkAndFlatAcquisition();
+            spdlog::info("Received {} darks in total.", darks_.push(data));
             break;
         }
         case ProjectionType::flat: {
-            reciprocal_computed_ = false;
-            spdlog::info("Received {} flats in total.", 
-                         flats_.push(data, {num_rows, num_cols}, {downsampling_row, downsampling_col}));
+            maybeResetDarkAndFlatAcquisition();
+            spdlog::info("Received {} flats in total.", flats_.push(data));
             break;
         }
         default:

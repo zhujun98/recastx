@@ -105,6 +105,15 @@ class Application {
     void initFilter(size_t col_count, size_t row_count);
     void initReconstructor(size_t col_count, size_t row_count);
 
+    void maybeResetDarkAndFlatAcquisition() {
+        if (reciprocal_computed_) {
+            raw_buffer_.reset();
+            darks_.reset();
+            flats_.reset();
+            reciprocal_computed_ = false;
+        }
+    }
+
     void processProjections(oneapi::tbb::task_arena& arena);
 
 public:

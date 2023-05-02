@@ -10,7 +10,45 @@ using ::testing::ElementsAreArray;
 using ::testing::Pointwise;
 using ::testing::FloatNear;
 
-TEST(TestUtils, TestComputeReciprocal) {
+
+TEST(TestPreprocessing, TestDownsample) {
+    {
+        ProImageData src ({4, 4});
+        src = {
+            0, 1, 2, 3,
+            1, 2, 3, 4,
+            2, 3, 4, 5,
+            3, 4, 5, 6
+        };
+        ProImageData dst ({2, 2});
+        downsample(src, dst);
+        EXPECT_THAT(dst, ElementsAreArray({
+            0, 2,
+            2, 4
+        }));
+    }
+    {
+        ProImageData src ({7, 5});
+        src = {
+            0, 1, 2, 3, 4,
+            1, 2, 3, 4, 5,
+            2, 3, 4, 5, 6,
+            3, 4, 5, 6, 7,
+            4, 5, 6, 7, 8,
+            5, 6, 7, 8, 9,
+            6, 7, 8, 9, 10,
+        };
+        ProImageData dst ({3, 2});
+        downsample(src, dst);
+        EXPECT_THAT(dst, ElementsAreArray({
+            0, 2, 
+            2, 4,
+            4, 6
+        }));
+    }
+}
+
+TEST(TestPreprocessing, TestComputeReciprocal) {
     std::array<size_t, 2> shape {4, 3};
     RawImageGroup darks({3, shape[0], shape[1]});
     darks = {
@@ -24,10 +62,8 @@ TEST(TestUtils, TestComputeReciprocal) {
         2, 4, 8, 1, 3, 9, 5, 6, 1, 1, 1, 7, 
         9, 9, 4, 1, 6, 8, 6, 9, 2, 4, 9, 4
     };
-    ProImageData reciprocal(shape);
-    ProImageData dark_avg(shape);
 
-    computeReciprocal(darks, flats, reciprocal, dark_avg);
+    auto [dark_avg, reciprocal] = computeReciprocal(darks, flats);
 
     EXPECT_THAT(dark_avg, ElementsAreArray({
         2.33333333, 4.,        3.33333333,

@@ -1,6 +1,7 @@
 #ifndef RECON_PREPROCESSING_H
 #define RECON_PREPROCESSING_H
 
+#include <cassert>
 #include <vector>
 
 #include <spdlog/spdlog.h>
@@ -11,23 +12,37 @@
 
 namespace recastx::recon {
 
-inline void computeReciprocal(const RawImageGroup& darks,
-                              const RawImageGroup& flats,
-                              ProImageData& reciprocal,
-                              ProImageData& dark_avg) {
-#if (VERBOSITY >= 2)
-    ScopedTimer timer("Bench", "Computing reciprocal");
-#endif
+inline void downsample(const ProImageData& src, ProImageData& dst) {
+    auto& src_shape = src.shape();
+    auto& dst_shape = dst.shape();
+    size_t ds_row = src_shape[0] / dst_shape[0];
+    size_t ds_col = src_shape[1] / dst_shape[1];
+    assert (ds_row >= 1);
+    assert (ds_col >= 1);
+    for (size_t i = 0; i < dst_shape[0]; ++i) {
+        for (size_t j = 0; j < dst_shape[1]; ++j) {
+            dst[i * dst_shape[1] + j] = src[i * src_shape[1] * ds_row + ds_col * j];
+        }
+    }
+}
 
-    darks.average<float>(dark_avg);
+inline std::pair<ProImageData, ProImageData> computeReciprocal(
+        const RawImageGroup& darks, const RawImageGroup& flats) {
+
+    auto dark_avg = darks.average<float>();
     auto flat_avg = flats.average<float>();
-    for (size_t i = 0; i < reciprocal.shape()[0] * reciprocal.shape()[1]; ++i) {
+
+    auto& shape = dark_avg.shape();
+    ProImageData reciprocal {shape};
+    for (size_t i = 0; i < shape[0] * shape[1]; ++i) {
         if (dark_avg[i] == flat_avg[i]) {
             reciprocal[i] = 1.0f;
         } else {
             reciprocal[i] = 1.0f / (flat_avg[i] - dark_avg[i]);
         }
     }
+
+    return {dark_avg, reciprocal};
 }
 
 inline void flatField(float* data, 
