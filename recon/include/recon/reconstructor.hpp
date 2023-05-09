@@ -33,26 +33,26 @@ class Reconstructor {
 
 protected:
 
-    std::vector<std::unique_ptr<astra::CFloat32ProjectionData3DGPU>> proj_data_;
-    std::vector<astraCUDA3d::MemHandle3D> gpu_mem_proj_;
+    std::vector<std::unique_ptr<astra::CFloat32ProjectionData3DGPU>> p_data_;
+    std::vector<astraCUDA3d::MemHandle3D> p_mem_;
     std::unique_ptr<astra::CCudaProjector3D> projector_;
 
-    std::unique_ptr<astra::CVolumeGeometry3D> vol_geom_slice_;
-    astraCUDA3d::MemHandle3D vol_mem_slice_;
-    std::unique_ptr<astra::CFloat32VolumeData3DGPU> vol_data_slice_;
-    std::vector<std::unique_ptr<astra::CCudaBackProjectionAlgorithm3D>> algo_slice_;
+    std::unique_ptr<astra::CVolumeGeometry3D> s_geom_;
+    astraCUDA3d::MemHandle3D s_mem_;
+    std::unique_ptr<astra::CFloat32VolumeData3DGPU> s_data_;
+    std::vector<std::unique_ptr<astra::CCudaBackProjectionAlgorithm3D>> s_algo_;
 
-    std::unique_ptr<astra::CVolumeGeometry3D> vol_geom_preview_;
-    astraCUDA3d::MemHandle3D vol_mem_preview_;
-    std::unique_ptr<astra::CFloat32VolumeData3DGPU> vol_data_preview_;
-    std::vector<std::unique_ptr<astra::CCudaBackProjectionAlgorithm3D>> algo_preview_;
+    std::unique_ptr<astra::CVolumeGeometry3D> v_geom_;
+    astraCUDA3d::MemHandle3D v_mem_;
+    std::unique_ptr<astra::CFloat32VolumeData3DGPU> v_data_;
+    std::vector<std::unique_ptr<astra::CCudaBackProjectionAlgorithm3D>> v_algo_;
 
     std::unique_ptr<astra::CVolumeGeometry3D> makeVolumeGeometry(const VolumeGeometry& geom);
     astraCUDA3d::MemHandle3D makeVolumeGeometryMemHandle(const VolumeGeometry& geom);
 
 public:
 
-    Reconstructor(VolumeGeometry slice_geom, VolumeGeometry preview_geom);
+    Reconstructor(VolumeGeometry s_geom, VolumeGeometry v_geom);
 
     virtual ~Reconstructor();
 
@@ -65,16 +65,16 @@ public:
 
 class ParallelBeamReconstructor : public Reconstructor {
 
-    std::unique_ptr<astra::CParallelVecProjectionGeometry3D> proj_geom_slice_;
-    std::unique_ptr<astra::CParallelVecProjectionGeometry3D> proj_geom_preview_;
+    std::unique_ptr<astra::CParallelVecProjectionGeometry3D> s_p_geom_;
+    std::unique_ptr<astra::CParallelVecProjectionGeometry3D> v_p_geom_;
     std::vector<astra::SPar3DProjection> vectors_;
     std::vector<astra::SPar3DProjection> original_vectors_;
     std::vector<astra::SPar3DProjection> vec_buf_;
 
 public:
 
-    ParallelBeamReconstructor(size_t col_count, size_t row_count, ProjectionGeometry proj_geom, 
-                              VolumeGeometry slice_geom, VolumeGeometry preview_geom);
+    ParallelBeamReconstructor(size_t col_count, size_t row_count, ProjectionGeometry p_geom, 
+                              VolumeGeometry s_geom, VolumeGeometry v_geom);
     // FIXME ~solver clean up
 
     void reconstructSlice(Orientation x, int buffer_idx, Tensor<float, 2>& buffer) override;
@@ -85,15 +85,15 @@ public:
 
 class ConeBeamReconstructor : public Reconstructor {
 
-    std::unique_ptr<astra::CConeVecProjectionGeometry3D> proj_geom_slice_;
-    std::unique_ptr<astra::CConeVecProjectionGeometry3D> proj_geom_preview_;
+    std::unique_ptr<astra::CConeVecProjectionGeometry3D> s_p_geom_;
+    std::unique_ptr<astra::CConeVecProjectionGeometry3D> v_p_geom_;
     std::vector<astra::SConeProjection> vectors_;
     std::vector<astra::SConeProjection> vec_buf_;
 
 public:
 
-    ConeBeamReconstructor(size_t col_count, size_t row_count, ProjectionGeometry proj_geom, 
-                          VolumeGeometry slice_geom, VolumeGeometry preview_geom);
+    ConeBeamReconstructor(size_t col_count, size_t row_count, ProjectionGeometry p_geom, 
+                          VolumeGeometry s_geom, VolumeGeometry v_geom);
     // FIXME ~solver clean up
 
     void reconstructSlice(Orientation x, int buffer_idx, Tensor<float, 2>& buffer) override;
