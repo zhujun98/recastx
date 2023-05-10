@@ -16,7 +16,7 @@ This project was developed based on a successful proof-of-principle test [1] usi
 ## Installation
 
 ```sh
-module load gcc/9.3.0
+module load gcc/11.3.0
 ```
 
 ### Installing the reconstruction server

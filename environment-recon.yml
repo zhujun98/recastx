@@ -3,13 +3,13 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - cmake>=3.24
-  - boost=1.80.0
-  - spdlog=1.11.0
+  - cmake>=3.25.3
+  - boost=1.82.0
+  - spdlog=1.10.0
   - cppzmq=4.8.1
   - eigen=3.4.0
   - fftw=3.3.10
-  - tbb-devel=2021.7
+  - tbb-devel=2021.9
   - nlohmann_json=3.11.2
   - libastra=2.1.0
   - libprotobuf=3.21.10

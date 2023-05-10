@@ -33,14 +33,14 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_INSTALL_PREFIX ${CMAKE_PREFIX_PATH})
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-find_package(Boost 1.61 COMPONENTS program_options REQUIRED)
+find_package(Boost 1.82 COMPONENTS program_options REQUIRED)
 
 find_package(Protobuf 3.21 REQUIRED)
 
 find_package(cppzmq 4.7.1 REQUIRED)
 message(STATUS "Found cppzmq ${cppzmq_VERSION} at ${cppzmq_INCLUDE_DIR}")
 
-find_package(spdlog REQUIRED)
+find_package(spdlog 1.10.0 REQUIRED)
 
 if (BUILD_GUI)
     add_subdirectory(gui)
