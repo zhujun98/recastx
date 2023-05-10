@@ -5,7 +5,7 @@ channels:
 dependencies:
   - cmake>=3.25.3
   - boost=1.82.0
-  - spdlog=1.11.0
+  - spdlog=1.10.0
   - cppzmq=4.8.1
   - eigen=3.4.0
   - freetype=2.12.1

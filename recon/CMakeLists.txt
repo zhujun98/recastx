@@ -4,12 +4,12 @@ project(recastx-recon LANGUAGES CXX)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 find_package(FFTW REQUIRED COMPONENTS FLOAT_LIB)
 
-find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(Eigen3 3.4 REQUIRED NO_MODULE)
 message(STATUS "Found Eigen3 ${Eigen3_VERSION}")
 
 find_package(nlohmann_json REQUIRED)
 
-find_package(TBB 2021.5 REQUIRED)
+find_package(TBB 2021.9 REQUIRED)
 message(STATUS "Found TBB ${TBB_VERSION}")
 
 add_library(astra-toolbox SHARED IMPORTED)
