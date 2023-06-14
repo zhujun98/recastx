@@ -9,4 +9,4 @@ dependencies:
   - cppzmq=4.8.1
   - eigen=3.4.0
   - freetype=2.12.1
-  - libprotobuf=3.21.10
+  - grpc-cpp=1.51.1

@@ -14,13 +14,6 @@ inline Message createSetSlicePacket(uint64_t timestamp, const T& orientation) {
     return msg;
 }
 
-inline Message createSetStatePacket(StatePacket_State state) {
-    Message msg;
-    auto packet = msg.mutable_state();
-    packet->set_state(state);
-    return msg;
-}
-
 inline Message createSetImageProcParamPacket(uint32_t downsampling_col,
                                              uint32_t downsampling_row) {
     Message msg;

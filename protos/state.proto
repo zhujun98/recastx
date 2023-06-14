@@ -1,6 +1,12 @@
 syntax = "proto3";
 package recastx;
 
+import "google/protobuf/empty.proto";
+
+service ServerState {
+    rpc SetState (StatePacket) returns (google.protobuf.Empty) {}
+}
+
 message StatePacket {
     enum State {
         INIT = 0;

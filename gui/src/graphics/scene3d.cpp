@@ -69,7 +69,7 @@ void Scene3d::onStateChanged(StatePacket_State state) {
     state_ = state;
 
     for (auto item : items_) item->setState(state);
-    send(createSetStatePacket(state));
+//    send(createSetStatePacket(state));
 }
 
 void Scene3d::render() {
