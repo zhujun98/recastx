@@ -2,7 +2,7 @@ add_library(recastx_grpc_proto OBJECT
         imageproc.proto
         reconstruction.proto
         control.proto
-        )
+)
 target_link_libraries(recastx_grpc_proto
     PUBLIC
         gRPC::grpc++_reflection
@@ -24,4 +24,5 @@ protobuf_generate(
         LANGUAGE grpc
         GENERATE_EXTENSIONS .grpc.pb.h .grpc.pb.cc
         IMPORT_DIRS ${PROJECT_SOURCE_DIR}/protos
-        PLUGIN "protoc-gen-grpc=$<TARGET_FILE:gRPC::grpc_cpp_plugin>")
+        PLUGIN "protoc-gen-grpc=$<TARGET_FILE:gRPC::grpc_cpp_plugin>"
+)

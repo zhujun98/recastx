@@ -100,7 +100,7 @@ protected:
 TEST_F(ApplicationTest, TestPushProjection) {
     app_.init();
     app_.startPreprocessing();
-    app_.onStateChanged(StatePacket_State::StatePacket_State_PROCESSING);
+    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
 
     pushDarks(num_darks_);
     pushFlats(num_flats_);
@@ -135,7 +135,7 @@ TEST_F(ApplicationTest, TestPushProjection) {
 TEST_F(ApplicationTest, TestMemoryBufferReset) {
     app_.init();
     app_.startPreprocessing();
-    app_.onStateChanged(StatePacket_State::StatePacket_State_PROCESSING);
+    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
 
     pushDarks(num_darks_);
     pushFlats(num_flats_);
@@ -153,7 +153,7 @@ TEST_F(ApplicationTest, TestMemoryBufferReset) {
 TEST_F(ApplicationTest, TestPushProjectionUnordered) {
     app_.init();
     app_.startPreprocessing();
-    app_.onStateChanged(StatePacket_State::StatePacket_State_PROCESSING);
+    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
     
     pushDarks(num_darks_);
     pushFlats(num_flats_);
@@ -195,7 +195,7 @@ TEST_F(ApplicationTest, TestUploading) {
     app_.init();
     app_.startPreprocessing();
     app_.startUploading();
-    app_.onStateChanged(StatePacket_State::StatePacket_State_PROCESSING);
+    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
@@ -205,7 +205,7 @@ TEST_F(ApplicationTest, TestReconstructing) {
     app_.startPreprocessing();
     app_.startUploading();
     app_.startReconstructing();
-    app_.onStateChanged(StatePacket_State::StatePacket_State_PROCESSING);
+    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
@@ -220,7 +220,7 @@ TEST_F(ApplicationTest, TestWithPagagin) {
 
     app_.init();
     app_.startPreprocessing();
-    app_.onStateChanged(StatePacket_State::StatePacket_State_PROCESSING);
+    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
     
     pushDarks(num_darks_);
     pushFlats(num_flats_);
@@ -233,15 +233,15 @@ TEST_F(ApplicationTest, TestDownsampling) {
     app_.init();
     app_.startPreprocessing();
 
-    app_.onStateChanged(StatePacket_State::StatePacket_State_PROCESSING);
+    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
     pushDarks(num_darks_);
     pushFlats(num_flats_);
     pushProjection(0, num_angles_);
 
-    app_.onStateChanged(StatePacket_State::StatePacket_State_READY);
+    app_.onStateChanged(ServerState_State::ServerState_State_READY);
     app_.setImageProcParams(2u, 2u);
     // FIXME: std::out_of_range in the dtor of ParallelBeamReconstructor
-    // app_.onStateChanged(StatePacket_State::StatePacket_State_PROCESSING);
+    // app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
     // pushProjection(0, num_angles_);
 }
 

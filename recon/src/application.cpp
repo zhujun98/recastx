@@ -29,7 +29,7 @@ Application::Application(size_t raw_buffer_size, int num_threads,
                    client_config.socket_type,
                    this),
        data_server_(server_config.data_port, this),
-       msg_server_(server_config.message_port, this) {}
+       rpc_server_(new RpcServer(server_config.message_port, this)) {}
 
 Application::~Application() { 
     running_ = false; 
@@ -98,7 +98,7 @@ void Application::startPreprocessing() {
         oneapi::tbb::task_arena arena(num_threads_);
         while (running_) {
             if (!raw_buffer_.fetch(100)) continue; 
-            if (state_ != StatePacket_State::StatePacket_State_PROCESSING) continue;
+            if (state_ != ServerState_State::ServerState_State_PROCESSING) continue;
 
             spdlog::info("Processing projections ...");
             processProjections(arena);
@@ -114,7 +114,7 @@ void Application::startUploading() {
         size_t num_angles = proj_geom_.angles.size();
         while (running_) {
             if (!sino_buffer_.fetch(100)) continue;
-            if (state_ != StatePacket_State::StatePacket_State_PROCESSING) continue;
+            if (state_ != ServerState_State::ServerState_State_PROCESSING) continue;
 
             spdlog::info("Uploading sinograms to GPU ...");
             recon_->uploadSinograms(
@@ -147,7 +147,7 @@ void Application::startReconstructing() {
             {
                 std::unique_lock<std::mutex> lck(gpu_mutex_);
                 if (gpu_cv_.wait_for(lck, 10ms, [&] { return sino_uploaded_; })) {
-                    if (state_ != StatePacket_State::StatePacket_State_PROCESSING) continue;
+                    if (state_ != ServerState_State::ServerState_State_PROCESSING) continue;
                     recon_->reconstructPreview(gpu_buffer_index_, preview_buffer_.back());
                 } else {
                     slice_mediator_.reconOnDemand(recon_.get(), gpu_buffer_index_);
@@ -196,7 +196,7 @@ void Application::runForEver() {
 
     daq_client_.start();
     data_server_.start();
-    msg_server_.start();
+    rpc_server_->start();
 
     // TODO: start the event loop in the main thread
     while (running_) {
@@ -263,18 +263,18 @@ void Application::setSlice(size_t timestamp, const Orientation& orientation) {
     slice_mediator_.update(timestamp, orientation);
 }
 
-void Application::onStateChanged(StatePacket_State state) {
+void Application::onStateChanged(ServerState_State state) {
     if (state_ == state) return;
 
     state_ = state;
-    if (state == StatePacket_State::StatePacket_State_PROCESSING) {
+    if (state == ServerState_State::ServerState_State_PROCESSING) {
         init();
         daq_client_.startAcquiring();
         spdlog::info("Start acquiring and processing ...");
-    } else if (state == StatePacket_State::StatePacket_State_ACQUIRING) {
+    } else if (state == ServerState_State::ServerState_State_ACQUIRING) {
         daq_client_.startAcquiring();
         spdlog::info("Start acquiring ...");
-    } else if (state == StatePacket_State::StatePacket_State_READY) {
+    } else if (state == ServerState_State::ServerState_State_READY) {
         daq_client_.stopAcquiring();
         spdlog::info("Stop acquiring and processing ...");
     }
