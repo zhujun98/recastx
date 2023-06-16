@@ -9,16 +9,17 @@
 #include <GL/gl3w.h>
 #include <glm/glm.hpp>
 
-#include "zmq_client.hpp"
 #include "graphics/items/graphics_item.hpp"
 #include "graphics/graph_node.hpp"
 #include "graphics/viewport.hpp"
 #include "ticker.hpp"
+#include "zmq_client.hpp"
 
 namespace recastx::gui {
 
 class ShaderProgram;
 class Camera;
+class RpcClient;
 
 class Scene : public GraphNode, public InputHandler, public Ticker {
 
@@ -30,7 +31,7 @@ protected:
 
     std::unique_ptr<ShaderProgram> program_;
     std::unique_ptr<Camera> camera_;
-    MessageClient* client_;
+    RpcClient* client_;
 
     std::vector<GraphicsItem*> items_;
     std::vector<GraphicsDataItem*> data_items_;
@@ -48,7 +49,9 @@ protected:
 
     ~Scene() override;
 
-    void setClient(MessageClient* client) { client_ = client; }
+    void setClient(RpcClient* client) { client_ = client; }
+
+    RpcClient* client() { return client_; }
 
     virtual void onFrameBufferSizeChanged(int width, int height) = 0;
 
@@ -69,11 +72,6 @@ protected:
     bool handleKey(int key, int action, int mods) override;
 
     void tick(double time_elapsed) override;
-
-    template <typename T>
-    void send(T&& packet) const {
-        client_->send(std::forward<T>(packet));
-    }
 
     void setStatus(const std::string& key, const std::any& value) {
         scene_status_[key] = value;

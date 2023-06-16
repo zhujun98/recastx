@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
 
     Scene3d scene;
     DataClient data_client(opts["recon-host"].as<std::string>(), opts["data-port"].as<int>());
-    MessageClient msg_client(opts["recon-host"].as<std::string>(), opts["message-port"].as<int>());
+    RpcClient msg_client(opts["recon-host"].as<std::string>(), opts["message-port"].as<int>());
     scene.setClient(&msg_client);
     app.setScene(&scene);
 

@@ -14,7 +14,6 @@
 #include "graphics/camera3d.hpp"
 #include "graphics/primitives.hpp"
 #include "graphics/style.hpp"
-#include "encoder.hpp"
 #include "logger.hpp"
 
 namespace recastx::gui {
@@ -216,7 +215,7 @@ void ReconItem::renderGl(const glm::mat4& view,
 
 void ReconItem::init() {
     for (auto& slice : slices_) {
-        scene_.send(createSetSlicePacket(slice.first, slice.second->orientation3()));
+        scene_.client()->SetSlice(slice.first, slice.second->orientation3());
     }
 }
 
@@ -291,13 +290,11 @@ bool ReconItem::handleMouseButton(int button, int action) {
     } else if (action == GLFW_RELEASE) {
         if (dragged_slice_ != nullptr) {
             slices_[dragged_slice_->id()].first += MAX_NUM_SLICES;
-            auto packet = createSetSlicePacket(slices_[dragged_slice_->id()].first,
-                                               dragged_slice_->orientation3());
+            scene_.client()->SetSlice(slices_[dragged_slice_->id()].first,
+                                      dragged_slice_->orientation3());
 
             log::debug("Sent slice {} ({}) orientation update request",
                        dragged_slice_->id(), slices_[dragged_slice_->id()].first);
-
-            scene_.send(packet);
 
             dragged_slice_ = nullptr;
             drag_machine_ = nullptr;

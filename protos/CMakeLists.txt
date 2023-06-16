@@ -1,9 +1,8 @@
 add_library(recastx_grpc_proto OBJECT
-        parameter.proto
+        imageproc.proto
         reconstruction.proto
-        state.proto
-        message.proto
-)
+        control.proto
+        )
 target_link_libraries(recastx_grpc_proto
     PUBLIC
         gRPC::grpc++_reflection
