@@ -21,6 +21,8 @@
 
 namespace recastx::gui {
 
+using namespace std::string_literals;
+
 class DataClient {
 
     std::thread thread_;
@@ -52,7 +54,7 @@ class RpcClient {
   public:
 
     RpcClient(const std::string& hostname, int port)
-        : channel_(grpc::CreateChannel(hostname + std::to_string(port),
+        : channel_(grpc::CreateChannel(hostname + ":"s + std::to_string(port),
                                        grpc::InsecureChannelCredentials())),
           control_stub_(Control::NewStub(channel_)),
           imageproc_stub_(Imageproc::NewStub(channel_)),
