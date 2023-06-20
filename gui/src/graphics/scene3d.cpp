@@ -12,8 +12,8 @@
 #include "graphics/items/statusbar_item.hpp"
 #include "graphics/items/logging_item.hpp"
 #include "graphics/items/recon_item.hpp"
-#include "encoder.hpp"
 #include "logger.hpp"
+#include "zmq_client.hpp"
 
 namespace recastx::gui {
 
@@ -58,18 +58,19 @@ void Scene3d::onFrameBufferSizeChanged(int width, int height) {
                            h);
 }
 
-void Scene3d::onStateChanged(StatePacket_State state) {
-    if (state == StatePacket_State::StatePacket_State_PROCESSING) {
+void Scene3d::onStateChanged(ServerState_State state) {
+    if (state == ServerState_State::ServerState_State_PROCESSING) {
         log::info("Start processing ...");
-    } else if (state == StatePacket_State::StatePacket_State_ACQUIRING) {
+    } else if (state == ServerState_State::ServerState_State_ACQUIRING) {
         log::info("Start acquiring ...");
-    } else if (state == StatePacket_State::StatePacket_State_READY) {
+    } else if (state == ServerState_State::ServerState_State_READY) {
         log::info("Stop acquiring/processing ...");
     }
     state_ = state;
 
     for (auto item : items_) item->setState(state);
-    send(createSetStatePacket(state));
+
+    client_->SetServerState(state);
 }
 
 void Scene3d::render() {
@@ -83,9 +84,9 @@ void Scene3d::render() {
     ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.2f, 0.6f, 0.6f));
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.2f, 0.7f, 0.7f));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.2f, 0.8f, 0.8f));
-    ImGui::BeginDisabled(state_ == StatePacket_State::StatePacket_State_ACQUIRING ||
-                         state_ == StatePacket_State::StatePacket_State_PROCESSING);
-    if (ImGui::Button("Acquire")) onStateChanged(StatePacket_State::StatePacket_State_ACQUIRING);
+    ImGui::BeginDisabled(state_ == ServerState_State::ServerState_State_ACQUIRING ||
+                         state_ == ServerState_State::ServerState_State_PROCESSING);
+    if (ImGui::Button("Acquire")) onStateChanged(ServerState_State::ServerState_State_ACQUIRING);
     ImGui::EndDisabled();
     ImGui::PopStyleColor(3);
     ImGui::SameLine();
@@ -93,9 +94,9 @@ void Scene3d::render() {
     ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.3f, 0.6f, 0.6f));
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.3f, 0.7f, 0.7f));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.3f, 0.8f, 0.8f));
-    ImGui::BeginDisabled(state_ == StatePacket_State::StatePacket_State_PROCESSING ||
-                         state_ == StatePacket_State::StatePacket_State_ACQUIRING);
-    if (ImGui::Button("Process")) onStateChanged(StatePacket_State::StatePacket_State_PROCESSING);
+    ImGui::BeginDisabled(state_ == ServerState_State::ServerState_State_PROCESSING ||
+                         state_ == ServerState_State::ServerState_State_ACQUIRING);
+    if (ImGui::Button("Process")) onStateChanged(ServerState_State::ServerState_State_PROCESSING);
     ImGui::EndDisabled();
     ImGui::PopStyleColor(3);
     ImGui::SameLine();
@@ -103,9 +104,9 @@ void Scene3d::render() {
     ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.0f, 0.6f, 0.6f));
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.0f, 0.7f, 0.7f));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.0f, 0.8f, 0.8f));
-    ImGui::BeginDisabled(state_ != StatePacket_State::StatePacket_State_PROCESSING &&
-                         state_ != StatePacket_State::StatePacket_State_ACQUIRING);
-    if (ImGui::Button("Stop")) onStateChanged(StatePacket_State::StatePacket_State_READY);
+    ImGui::BeginDisabled(state_ != ServerState_State::ServerState_State_PROCESSING &&
+                         state_ != ServerState_State::ServerState_State_ACQUIRING);
+    if (ImGui::Button("Stop")) onStateChanged(ServerState_State::ServerState_State_READY);
     ImGui::EndDisabled();
     ImGui::PopStyleColor(3);
 

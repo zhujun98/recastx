@@ -8,6 +8,7 @@
 #include <glm/glm.hpp>
 
 #include "textures.hpp"
+#include "common/config.hpp"
 
 namespace recastx::gui {
 
@@ -17,7 +18,6 @@ class Slice {
 
     using DataType = std::vector<float>;
     using SizeType = std::array<size_t, 2>;
-    using Orient3Type = std::array<float, 9>; // for SlicePacket
     using Orient4Type = glm::mat4;
 
   private:
@@ -62,7 +62,7 @@ class Slice {
     void setOrientation(const glm::vec3& base, const glm::vec3& x, const glm::vec3& y);
     void setOrientation(const Slice::Orient4Type& orient);
 
-    [[nodiscard]] Orient3Type orientation3() const;
+    [[nodiscard]] Orientation orientation3() const;
     Orient4Type& orientation4();
 
     [[nodiscard]] const DataType& data() const;

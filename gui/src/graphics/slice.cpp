@@ -53,7 +53,7 @@ void Slice::setOrientation(const Slice::Orient4Type& orient) {
     orient_ = orient;
 }
 
-Slice::Orient3Type Slice::orientation3() const {
+Orientation Slice::orientation3() const {
     return {
         orient_[0][0], orient_[0][1], orient_[0][2],
         orient_[1][0], orient_[1][1], orient_[1][2],

@@ -2,7 +2,6 @@
 
 #include "graphics/items/projection_item.hpp"
 #include "graphics/scene.hpp"
-#include "encoder.hpp"
 
 namespace recastx::gui {
 
@@ -17,7 +16,7 @@ void ProjectionItem::renderIm() {
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "PROJECTION");
 
     // Projection downsampling
-    ImGui::BeginDisabled(state_ == StatePacket_State::StatePacket_State_PROCESSING);
+    ImGui::BeginDisabled(state_ == ServerState_State::ServerState_State_PROCESSING);
 
     ImGui::AlignTextToFramePadding();
     ImGui::Text("Downsampling:");
@@ -64,14 +63,14 @@ void ProjectionItem::renderIm() {
     ImGui::EndDisabled();
 
     // Projection center adjustment
-    ImGui::BeginDisabled(state_ == StatePacket_State::StatePacket_State_PROCESSING);
+    ImGui::BeginDisabled(state_ == ServerState_State::ServerState_State_PROCESSING);
     ImGui::DragFloat("X offset", &x_offset_, 1, -50, 50, "%.1f");
     ImGui::DragFloat("Y offset", &y_offset_, 1, -50, 50, "%.1f");
     ImGui::EndDisabled();
 }
 
 void ProjectionItem::setImageProcParameter() {
-    scene_.send(createSetImageProcParamPacket(downsampling_col_, downsampling_row_));
+    scene_.client()->SetDownsamplingParams(downsampling_col_, downsampling_row_);
 }
 
 

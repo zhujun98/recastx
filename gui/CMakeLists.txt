@@ -73,25 +73,17 @@ set(GUI_SOURCES
         ${GL3W_BUILD_DIR}/src/gl3w.c
         )
 
-protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS
-        ../common/parameter.proto
-        ../common/reconstruction.proto
-        ../common/state.proto
-        ../common/message.proto)
-list(APPEND GUI_SOURCES ${PROTO_SRCS} ${PROTO_HDRS})
-
 set(TARGET_NAME recastx-gui)
 add_executable(${TARGET_NAME} ${GUI_SOURCES})
 target_include_directories(${TARGET_NAME}
-        PRIVATE include
-                "../common/include"
+        PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include
+                ${CMAKE_CURRENT_LIST_DIR}/../common/include
                 ${FREETYPE_INCLUDE_DIRS}
                 ${IMGUI_DIR}
                 ${IMGUI_DIR}/backends
                 ${IMPLOT_DIR}
                 ${GL3W_BUILD_DIR}/include
-                ${CMAKE_CURRENT_BINARY_DIR}
-        )
+)
 target_link_libraries(${TARGET_NAME}
         PRIVATE dl
                 glfw
@@ -102,8 +94,8 @@ target_link_libraries(${TARGET_NAME}
                 Eigen3::Eigen
                 Boost::program_options
                 spdlog::spdlog
-                protobuf::libprotobuf
                 cppzmq
+                recastx_grpc_proto
         )
 
 if (NOT APPLE)

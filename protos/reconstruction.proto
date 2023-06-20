@@ -1,6 +1,12 @@
 syntax = "proto3";
 package recastx;
 
+import "google/protobuf/empty.proto";
+
+service Reconstruction {
+  rpc SetSlice (Slice) returns (google.protobuf.Empty) {}
+}
+
 message SliceDataPacket {
   bytes data = 1;
   uint32 col_count = 2;
@@ -22,13 +28,7 @@ message ReconDataPacket {
   }
 }
 
-message SetSlicePacket {
-  uint64 timestamp = 1;
-  repeated float orientation = 2;
-}
-
-message ReconRequestPacket {
-  oneof request {
-    SetSlicePacket set_slice = 1;
-  }
+message Slice {
+    uint64 timestamp = 1;
+    repeated float orientation = 2;
 }

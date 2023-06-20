@@ -30,13 +30,6 @@ set(RECON_SOURCES
         "src/application.cpp"
 )
 
-set(PROTOS "${CMAKE_CURRENT_LIST_DIR}/../common/parameter.proto"
-           "${CMAKE_CURRENT_LIST_DIR}/../common/reconstruction.proto"
-           "${CMAKE_CURRENT_LIST_DIR}/../common/state.proto"
-           "${CMAKE_CURRENT_LIST_DIR}/../common/message.proto")
-protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTOS})
-list(APPEND RECON_SOURCES ${PROTO_SRCS} ${PROTO_HDRS})
-
 set(RECON_LIB lib-recastx-recon)
 add_library(${RECON_LIB} ${RECON_SOURCES})
 
@@ -44,7 +37,6 @@ target_include_directories(${RECON_LIB}
         PRIVATE
                 ${ASTRA_INCLUDE_DIR}
         PUBLIC
-                ${CMAKE_CURRENT_BINARY_DIR}
                 ${CMAKE_CURRENT_LIST_DIR}/include
                 ${CMAKE_CURRENT_LIST_DIR}/../common/include
         )
@@ -55,7 +47,7 @@ target_link_libraries(${RECON_LIB}
                 spdlog::spdlog
                 TBB::tbb
                 ${FFTW_FLOAT_LIB}
-                protobuf::libprotobuf
+                recastx_grpc_proto
         PUBLIC 
                 cppzmq
                 spdlog::spdlog

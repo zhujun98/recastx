@@ -1,0 +1,13 @@
+syntax = "proto3";
+package recastx;
+
+import "google/protobuf/empty.proto";
+
+service Imageproc {
+  rpc SetDownsamplingParams (DownsamplingParams) returns (google.protobuf.Empty) {}
+}
+
+message DownsamplingParams {
+  uint32 downsampling_col = 1;
+  uint32 downsampling_row = 2;
+}

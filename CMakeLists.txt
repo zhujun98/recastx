@@ -35,12 +35,18 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 find_package(Boost 1.82 COMPONENTS program_options REQUIRED)
 
-find_package(Protobuf 3.21 REQUIRED)
-
 find_package(cppzmq 4.7.1 REQUIRED)
 message(STATUS "Found cppzmq ${cppzmq_VERSION} at ${cppzmq_INCLUDE_DIR}")
 
 find_package(spdlog 1.10.0 REQUIRED)
+
+find_package(Threads REQUIRED)
+find_package(Protobuf REQUIRED)
+
+find_package(gRPC CONFIG 1.51.1 REQUIRED)
+message(STATUS "Found gRPC ${gRPC_VERSION}")
+
+add_subdirectory(protos)
 
 if (BUILD_GUI)
     add_subdirectory(gui)
