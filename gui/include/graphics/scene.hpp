@@ -13,7 +13,7 @@
 #include "graphics/graph_node.hpp"
 #include "graphics/viewport.hpp"
 #include "ticker.hpp"
-#include "zmq_client.hpp"
+#include "rpc_client.hpp"
 
 namespace recastx::gui {
 

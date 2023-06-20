@@ -45,7 +45,7 @@ set(IMPLOT_SOURCE_FILES
 # build
 set(GUI_SOURCES
         "src/application.cpp"
-        "src/zmq_client.cpp"
+        "src/rpc_client.cpp"
         "src/main.cpp"
         "src/math_common.cpp"
         "src/path.cpp"

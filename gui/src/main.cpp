@@ -10,7 +10,7 @@
 
 #include "application.hpp"
 #include "graphics/scene3d.hpp"
-#include "zmq_client.hpp"
+#include "rpc_client.hpp"
 
 int main(int argc, char** argv) {
     spdlog::set_pattern("[%Y-%m-%d %T.%e] [%^%l%$] %v");

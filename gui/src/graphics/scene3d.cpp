@@ -13,7 +13,7 @@
 #include "graphics/items/logging_item.hpp"
 #include "graphics/items/recon_item.hpp"
 #include "logger.hpp"
-#include "zmq_client.hpp"
+#include "rpc_client.hpp"
 
 namespace recastx::gui {
 

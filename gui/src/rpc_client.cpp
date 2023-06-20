@@ -2,7 +2,7 @@
 
 #include <zmq.hpp>
 
-#include "zmq_client.hpp"
+#include "rpc_client.hpp"
 
 namespace recastx::gui {
 
@@ -45,20 +45,5 @@ void DataClient::start() {
 }
 
 std::queue<ReconDataPacket>& DataClient::packets() { return packets_; }
-
-
-MessageClient::MessageClient(const std::string &hostname, int port)
-        : context_(1), socket_(context_, ZMQ_PAIR) {
-
-    std::string endpoint = "tcp://"s + hostname + ":"s + std::to_string(port);
-    socket_.connect(endpoint);
-
-    log::info("Connecting to the reconstruction message server: {}", endpoint);
-}
-
-MessageClient::~MessageClient() {
-    socket_.set(zmq::sockopt::linger, 200);
-    context_.shutdown();
-};
 
 } // namespace recastx::gui
