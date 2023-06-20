@@ -101,6 +101,10 @@ Install [foamstream](https://github.com/zhujun98/foamstream.git), and stream rea
 experimental data, for example, by
 ```sh
 foamstream-tomcat --datafile pet1 --ordered
+
+# pet1: recastx-recon --rows 800 --cols 384 --angles 400 --threads 32
+# h1: recastx-recon --rows 2016 --cols 288 --angles 500 --threads 32
+
 ```
 or stream fake data, for example, by
 ```sh
