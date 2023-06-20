@@ -13,7 +13,7 @@ using namespace std::chrono_literals;
 #include "recon/phase.hpp"
 #include "recon/preprocessing.hpp"
 #include "recon/reconstructor.hpp"
-#include "recon/zmq_server.hpp"
+#include "recon/rpc_server.hpp"
 #include "common/scoped_timer.hpp"
 
 namespace recastx::recon {
@@ -25,10 +25,10 @@ Application::Application(size_t raw_buffer_size, int num_threads,
                          const ZmqServerConfig& server_config)
      : raw_buffer_(raw_buffer_size), 
        num_threads_(num_threads),
-       daq_client_("tcp://"s + client_config.hostname + ":"s + std::to_string(client_config.port),
-                   client_config.socket_type,
-                   this),
-       data_server_(server_config.data_port, this),
+       daq_client_(new DaqClient("tcp://"s + client_config.hostname + ":"s + std::to_string(client_config.port),
+                                 client_config.socket_type,
+                                 this)),
+       data_server_(new DataServer(server_config.data_port, this)),
        rpc_server_(new RpcServer(server_config.message_port, this)) {}
 
 Application::~Application() { 
@@ -194,8 +194,9 @@ void Application::runForEver() {
     startUploading();
     startReconstructing();
 
-    daq_client_.start();
-    data_server_.start();
+    daq_client_->start();
+
+    data_server_->start();
     rpc_server_->start();
 
     // TODO: start the event loop in the main thread
@@ -269,13 +270,13 @@ void Application::onStateChanged(ServerState_State state) {
     state_ = state;
     if (state == ServerState_State::ServerState_State_PROCESSING) {
         init();
-        daq_client_.startAcquiring();
+        daq_client_->startAcquiring();
         spdlog::info("Start acquiring and processing ...");
     } else if (state == ServerState_State::ServerState_State_ACQUIRING) {
-        daq_client_.startAcquiring();
+        daq_client_->startAcquiring();
         spdlog::info("Start acquiring ...");
     } else if (state == ServerState_State::ServerState_State_READY) {
-        daq_client_.stopAcquiring();
+        daq_client_->stopAcquiring();
         spdlog::info("Stop acquiring and processing ...");
     }
 }

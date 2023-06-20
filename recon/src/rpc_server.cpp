@@ -1,6 +1,6 @@
 #include <spdlog/spdlog.h>
 
-#include "recon/zmq_server.hpp"
+#include "recon/rpc_server.hpp"
 #include "recon/application.hpp"
 
 #include "common/utils.hpp"

@@ -21,7 +21,6 @@ extern "C" {
 #include "daq_client.hpp"
 #include "slice_mediator.hpp"
 #include "tensor.hpp"
-#include "zmq_server.hpp"
 
 #include "reconstruction.pb.h"
 #include "control.pb.h"
@@ -32,6 +31,9 @@ namespace recastx::recon {
 class Filter;
 class Paganin;
 class Reconstructor;
+class DataServer;
+class RpcServer;
+class DaqClient;
 
 namespace details {
 
@@ -98,8 +100,8 @@ class Application {
     // It's not a State because there might be race conditions.
     bool running_ = true;
 
-    DaqClient daq_client_;
-    DataServer data_server_;
+    std::unique_ptr<DaqClient> daq_client_;
+    std::unique_ptr<DataServer> data_server_;
     std::unique_ptr<RpcServer> rpc_server_;
 
     void initPaganin(size_t col_count, size_t row_count);

@@ -26,7 +26,7 @@ set(RECON_SOURCES
         "src/reconstructor.cpp"
         "src/slice_mediator.cpp"
         "src/daq_client.cpp"
-        "src/zmq_server.cpp"
+        "src/rpc_server.cpp"
         "src/application.cpp"
 )
 
