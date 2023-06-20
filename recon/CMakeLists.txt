@@ -47,12 +47,12 @@ target_link_libraries(${RECON_LIB}
                 spdlog::spdlog
                 TBB::tbb
                 ${FFTW_FLOAT_LIB}
-                recastx_grpc_proto
         PUBLIC 
                 cppzmq
                 spdlog::spdlog
                 Eigen3::Eigen
                 astra-toolbox
+                recastx_grpc_proto
         )
 
 target_compile_options(${RECON_LIB}

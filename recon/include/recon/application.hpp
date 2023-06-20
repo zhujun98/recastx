@@ -19,11 +19,12 @@ extern "C" {
 #include "common/config.hpp"
 #include "buffer.hpp"
 #include "daq_client.hpp"
-#include "reconstruction.pb.h"
 #include "slice_mediator.hpp"
-#include "state.pb.h"
 #include "tensor.hpp"
 #include "zmq_server.hpp"
+
+#include "reconstruction.pb.h"
+#include "control.pb.h"
 
 
 namespace recastx::recon {
@@ -93,13 +94,13 @@ class Application {
 
     int num_threads_;
 
-    StatePacket_State state_;
+    ServerState_State state_;
     // It's not a State because there might be race conditions.
     bool running_ = true;
 
     DaqClient daq_client_;
     DataServer data_server_;
-    MessageServer msg_server_;
+    std::unique_ptr<RpcServer> rpc_server_;
 
     void initPaganin(size_t col_count, size_t row_count);
     void initFilter(size_t col_count, size_t row_count);
@@ -166,7 +167,7 @@ public:
 
     void setSlice(size_t timestamp, const Orientation& orientation);
 
-    void onStateChanged(StatePacket_State state);
+    void onStateChanged(ServerState_State state);
 
     std::optional<ReconDataPacket> previewDataPacket(int timeout);
 

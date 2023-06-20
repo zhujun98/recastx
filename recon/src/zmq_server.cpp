@@ -4,7 +4,6 @@
 #include "recon/application.hpp"
 
 #include "common/utils.hpp"
-#include "message.pb.h"
 
 namespace recastx::recon {
 
@@ -58,63 +57,53 @@ void DataServer::start() {
     thread_.detach();
 }
 
+ControlService::ControlService(Application* app) : app_(app) {}
 
-MessageServer::MessageServer(int port, Application* app)
-    : context_(1), socket_(context_, ZMQ_PAIR), app_(app) {
-    using namespace std::chrono_literals;
-
-    socket_.bind("tcp://*:"s + std::to_string(port));
-
-    spdlog::info("Waiting for the connection from the message client: {}", port);
+grpc::Status ControlService::SetServerState(grpc::ServerContext* context, 
+                                            const ServerState* state,
+                                            google::protobuf::Empty* ack) {
+    app_->onStateChanged(state->state());
+    return grpc::Status::OK;
 }
 
-MessageServer::~MessageServer() = default; 
+ImageprocService::ImageprocService(Application* app) : app_(app) {}
 
-void MessageServer::start() {
+grpc::Status ImageprocService::SetDownsamplingParams(grpc::ServerContext* context, 
+                                                     const DownsamplingParams* params,
+                                                     google::protobuf::Empty* ack) {
+    app_->setImageProcParams(params->downsampling_col(), params->downsampling_row());
+    return grpc::Status::OK;
+}
+
+ReconstructionService::ReconstructionService(Application* app) : app_(app) {}
+
+grpc::Status ReconstructionService::SetSlice(grpc::ServerContext* context, 
+                                             const Slice* slice,
+                                             google::protobuf::Empty* ack) {
+    Orientation orient;
+    std::copy(slice->orientation().begin(), slice->orientation().end(), orient.begin());
+    app_->setSlice(slice->timestamp(), orient);
+    return grpc::Status::OK;
+}
+
+RpcServer::RpcServer(int port, Application* app)
+        : address_("0.0.0.0:" + std::to_string(port)), 
+          control_service_(app),
+          imageproc_service_(app),
+          reconstruction_service_(app)  {
+}
+
+void RpcServer::start() {
+    spdlog::info("Starting RPC services ...");
     thread_ = std::thread([&] {
-        while (true) {
-            zmq::message_t update;
-            socket_.recv(update, zmq::recv_flags::none);
+        grpc::ServerBuilder builder;
+        builder.AddListeningPort(address_, grpc::InsecureServerCredentials());
+        builder.RegisterService(&control_service_);
+        builder.RegisterService(&imageproc_service_);
+        builder.RegisterService(&reconstruction_service_);
 
-            Message msg;
-            msg.ParseFromArray(update.data(), static_cast<int>(update.size()));
-
-            spdlog::debug("Received packet");
-
-            if (msg.has_recon()) {
-                auto& request = msg.recon();
-
-                if (request.has_set_slice()) {
-                    auto& packet = request.set_slice();
-                    Orientation orient;
-                    std::copy(packet.orientation().begin(), packet.orientation().end(), orient.begin());
-                    app_->setSlice(packet.timestamp(), orient);
-
-                    continue;
-                }
-            }
-            
-            if (msg.has_state()) {
-                auto& packet = msg.state();
-                app_->onStateChanged(packet.state());
-
-                continue;
-            }
-
-            if (msg.has_param()) {
-                auto& request = msg.param();
-
-                if (request.has_image_proc()) {
-                    auto& packet = request.image_proc();
-                    app_->setImageProcParams(packet.downsampling_col(),
-                                             packet.downsampling_row());
-                }
-                continue;
-            }
-
-            spdlog::warn("Unknown or empty packet received");
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
+        server_ = builder.BuildAndStart();
+        server_->Wait();
     });
 
     thread_.detach();
