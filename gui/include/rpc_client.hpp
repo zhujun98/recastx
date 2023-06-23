@@ -33,6 +33,8 @@ class RpcClient {
 
     inline static std::queue<ReconData> packets_;
 
+    void errorState(const grpc::Status& status) const;
+
   public:
 
     static std::queue<ReconData>& packets();

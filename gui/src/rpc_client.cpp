@@ -1,6 +1,7 @@
 #include <thread>
 
 #include "rpc_client.hpp"
+#include "logger.hpp"
 
 namespace recastx::gui {
 
@@ -50,11 +51,7 @@ void RpcClient::setServerState(ServerState_State state) {
 //        context.set_wait_for_ready(true);
 
     grpc::Status status = control_stub_->SetServerState(&context, request, &reply);
-
-    if (!status.ok()) {
-        std::cout << status.error_code() << ": " << status.error_message()
-                  << std::endl;
-    }
+    errorState(status);
 }
 
 void RpcClient::setDownsamplingParams(uint32_t downsampling_col, uint32_t downsampling_row) {
@@ -68,11 +65,7 @@ void RpcClient::setDownsamplingParams(uint32_t downsampling_col, uint32_t downsa
 //        context.set_wait_for_ready(true);
 
     grpc::Status status = imageproc_stub_->SetDownsamplingParams(&context, request, &reply);
-
-    if (!status.ok()) {
-        std::cout << status.error_code() << ": " << status.error_message()
-                  << std::endl;
-    }
+    errorState(status);
 }
 
 void RpcClient::setSlice(uint64_t timestamp, const Orientation& orientation) {
@@ -86,11 +79,7 @@ void RpcClient::setSlice(uint64_t timestamp, const Orientation& orientation) {
 //        context.set_wait_for_ready(true);
 
     grpc::Status status = reconstruction_stub_->SetSlice(&context, request, &reply);
-
-    if (!status.ok()) {
-        std::cout << status.error_code() << ": " << status.error_message()
-                  << std::endl;
-    }
+    errorState(status);
 }
 
 void RpcClient::startReconDataStream() {
@@ -109,6 +98,13 @@ void RpcClient::startReconDataStream() {
 
 void RpcClient::stopReconDataStream() {
 
+}
+
+void RpcClient::errorState(const grpc::Status& status) const {
+    if (!status.ok()) {
+        log::debug("{}: {}", status.error_code(), status.error_message());
+        log::warn("Failed to connect to the reconstruction server!");
+    }
 }
 
 } // namespace recastx::gui
