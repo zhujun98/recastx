@@ -40,12 +40,12 @@ protected:
     bool gaussian_lowpass_filter_ = false;
     int threads_ = 4;
 
-    const DaqClientConfig client_cfg {12345, "localhost", "pull"};
-    const ZmqServerConfig server_cfg {12346, 12347};
+    const DaqClientConfig daq_cfg {12345, "localhost", "pull"};
+    const RpcServerConfig rpc_cfg {12347};
 
     Application app_;
 
-    ApplicationTest() : app_ {buffer_size_, threads_, client_cfg, server_cfg} {
+    ApplicationTest() : app_ {buffer_size_, threads_, daq_cfg, rpc_cfg} {
     }
 
     ~ApplicationTest() override = default;

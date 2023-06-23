@@ -21,15 +21,14 @@ namespace recastx::recon {
 using namespace std::string_literals;
 
 Application::Application(size_t raw_buffer_size, int num_threads, 
-                         const DaqClientConfig& client_config, 
-                         const ZmqServerConfig& server_config)
+                         const DaqClientConfig& daq_config, 
+                         const RpcServerConfig& rpc_config)
      : raw_buffer_(raw_buffer_size), 
        num_threads_(num_threads),
-       daq_client_(new DaqClient("tcp://"s + client_config.hostname + ":"s + std::to_string(client_config.port),
-                                 client_config.socket_type,
+       daq_client_(new DaqClient("tcp://"s + daq_config.hostname + ":"s + std::to_string(daq_config.port),
+                                 daq_config.socket_type,
                                  this)),
-       data_server_(new DataServer(server_config.data_port, this)),
-       rpc_server_(new RpcServer(server_config.message_port, this)) {}
+       rpc_server_(new RpcServer(rpc_config.port, this)) {}
 
 Application::~Application() { 
     running_ = false; 
@@ -196,7 +195,7 @@ void Application::runForEver() {
 
     daq_client_->start();
 
-    data_server_->start();
+    // data_server_->start();
     rpc_server_->start();
 
     // TODO: start the event loop in the main thread
@@ -281,7 +280,7 @@ void Application::onStateChanged(ServerState_State state) {
     }
 }
 
-std::optional<ReconDataPacket> Application::previewDataPacket(int timeout) { 
+std::optional<ReconData> Application::previewData(int timeout) { 
     if (preview_buffer_.fetch(timeout)) {
         auto& data = preview_buffer_.front();
         auto [x, y, z] = data.shape();
@@ -290,8 +289,8 @@ std::optional<ReconDataPacket> Application::previewDataPacket(int timeout) {
     return std::nullopt;
 }
 
-std::vector<ReconDataPacket> Application::sliceDataPackets(int timeout) {
-    std::vector<ReconDataPacket> ret;
+std::vector<ReconData> Application::sliceData(int timeout) {
+    std::vector<ReconData> ret;
     auto& buffer = slice_mediator_.allSlices();
     if (buffer.fetch(timeout)) {
         for (auto& [k, slice] : buffer.front()) {
@@ -303,8 +302,8 @@ std::vector<ReconDataPacket> Application::sliceDataPackets(int timeout) {
     return ret;
 }
 
-std::vector<ReconDataPacket> Application::onDemandSliceDataPackets(int timeout) {
-    std::vector<ReconDataPacket> ret;
+std::vector<ReconData> Application::onDemandSliceData(int timeout) {
+    std::vector<ReconData> ret;
     auto& buffer = slice_mediator_.onDemandSlices();
     if (buffer.fetch(timeout)) {
         for (auto& [k, slice] : buffer.front()) {

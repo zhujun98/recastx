@@ -9,54 +9,6 @@ namespace recastx::recon {
 
 using namespace std::string_literals;
 
-DataServer::DataServer(int port, Application* app)
-    : context_(1), socket_(context_, ZMQ_REP), app_(app) {
-
-    socket_.bind("tcp://*:"s + std::to_string(port));
-
-    spdlog::info("Waiting for connections from the data client: {}", port);
-}
-
-DataServer::~DataServer() = default;
-
-void DataServer::start() {
-    thread_ = std::thread([&] {
-        while (true) {
-            // - Do not block because slice request needs to be responsive
-            // - If the number of the logical threads are more than the number of the physical threads, 
-            //   the preview_data could always have value.
-            auto preview_data = app_->previewDataPacket(0);
-            if (preview_data) {
-                auto slice_data = app_->sliceDataPackets(-1);
-
-                std::lock_guard<std::mutex> lck(send_mtx_);
-
-                send(preview_data.value());
-                
-                for (const auto& packet : slice_data) {
-                    send(packet);
-                    auto ts = packet.slice().timestamp();
-                    spdlog::debug("Slice data {} ({}) sent", sliceIdFromTimestamp(ts), ts);
-                }
-            } else {
-                auto slice_data = app_->onDemandSliceDataPackets(10);
-
-                if (!slice_data.empty()) {
-                    std::lock_guard<std::mutex> lck(send_mtx_);
-                    for (const auto& packet : slice_data) {
-                        send(packet);
-                        auto ts = packet.slice().timestamp();
-                        spdlog::debug("On-demand slice data {} ({}) sent", 
-                                      sliceIdFromTimestamp(ts), ts);
-                    }
-                }
-            }
-        }
-    });
-
-    thread_.detach();
-}
-
 ControlService::ControlService(Application* app) : app_(app) {}
 
 grpc::Status ControlService::SetServerState(grpc::ServerContext* context, 
@@ -86,6 +38,39 @@ grpc::Status ReconstructionService::SetSlice(grpc::ServerContext* context,
     return grpc::Status::OK;
 }
 
+grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
+                                                 const google::protobuf::Empty*,
+                                                 grpc::ServerWriter<ReconData>* writer) {
+    // - Do not block because slice request needs to be responsive
+    // - If the number of the logical threads are more than the number of the physical threads, 
+    //   the preview_data could always have value.
+    auto preview_data = app_->previewData(0);
+    if (preview_data) {
+        auto slice_data = app_->sliceData(-1);
+
+        writer->Write(preview_data.value());
+        
+        for (const auto& item : slice_data) {
+            writer->Write(item);
+            auto ts = item.slice().timestamp();
+            spdlog::debug("Slice data {} ({}) sent", sliceIdFromTimestamp(ts), ts);
+        }
+    } else {
+        auto slice_data = app_->onDemandSliceData(10);
+
+        if (!slice_data.empty()) {
+            for (const auto& item : slice_data) {
+                writer->Write(item);
+                auto ts = item.slice().timestamp();
+                spdlog::debug("On-demand slice data {} ({}) sent", 
+                              sliceIdFromTimestamp(ts), ts);
+            }
+        }
+    }
+
+    return grpc::Status::OK;
+}
+
 RpcServer::RpcServer(int port, Application* app)
         : address_("0.0.0.0:" + std::to_string(port)), 
           control_service_(app),
@@ -94,7 +79,8 @@ RpcServer::RpcServer(int port, Application* app)
 }
 
 void RpcServer::start() {
-    spdlog::info("Starting RPC services ...");
+
+    spdlog::info("Starting RPC services at {}", address_);
     thread_ = std::thread([&] {
         grpc::ServerBuilder builder;
         builder.AddListeningPort(address_, grpc::InsecureServerCredentials());

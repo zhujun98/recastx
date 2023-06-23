@@ -34,7 +34,7 @@ DaqClient::DaqClient(const std::string& endpoint,
     socket_.connect(endpoint);
 
     if(socket_.get(zmq::sockopt::type) == static_cast<int>(zmq::socket_type::sub)) {
-        spdlog::info("Connected to data server (PUB-SUB){}", endpoint);
+        spdlog::info("Connected to data server (PUB-SUB) at {}", endpoint);
         socket_.set(zmq::sockopt::subscribe, "");
     } else if (socket_.get(zmq::sockopt::type) == static_cast<int>(zmq::socket_type::pull)) {
         spdlog::info("Connected to data server (PUSH-PULL) {}", endpoint);

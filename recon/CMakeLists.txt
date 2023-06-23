@@ -1,5 +1,8 @@
 project(recastx-recon LANGUAGES CXX)
 
+find_package(cppzmq 4.7.1 REQUIRED)
+message(STATUS "Found cppzmq ${cppzmq_VERSION} at ${cppzmq_INCLUDE_DIR}")
+
 # Caveat: sequence
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 find_package(FFTW REQUIRED COMPONENTS FLOAT_LIB)

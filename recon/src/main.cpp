@@ -42,11 +42,8 @@ int main(int argc, char** argv) {
          "ZMQ socket port of the DAQ server")
         ("daq-socket", po::value<std::string>()->default_value("pull"),
          "ZMQ socket type of the DAQ server. Options: sub/pull")
-        ("data-port", po::value<int>()->default_value(9970),
-         "ZMQ socket port of the reconstruction data server. "
-         "At TOMCAT, the valid port range is [9970, 9979]")
-        ("message-port", po::value<int>()->default_value(9971),
-         "ZMQ socket port of the reconstruction message server. "
+        ("rpc-port", po::value<int>()->default_value(9971),
+         "port of the gRPC server."
          "At TOMCAT, the valid port range is [9970, 9979]")
     ;
 
@@ -142,8 +139,7 @@ int main(int argc, char** argv) {
     auto daq_hostname = opts["daq-host"].as<std::string>();
     auto daq_port = opts["daq-port"].as<int>();
     auto daq_socket_type = opts["daq-socket"].as<std::string>();
-    auto data_port = opts["data-port"].as<int>();
-    auto message_port = opts["message-port"].as<int>();
+    auto rpc_port = opts["rpc-port"].as<int>();
 
     auto [downsampling_row, downsampling_col] = parseDownsampleFactor(
         opts["downsample-row"], opts["downsample-col"], opts["downsample"]);
@@ -175,8 +171,8 @@ int main(int argc, char** argv) {
     auto distance = opts["distance"].as<float>();
 
     recastx::DaqClientConfig daq_client_cfg {daq_port, daq_hostname, daq_socket_type};
-    recastx::ZmqServerConfig zmq_server_cfg {data_port, message_port};
-    recastx::recon::Application app(raw_buffer_size, num_threads, daq_client_cfg, zmq_server_cfg);
+    recastx::RpcServerConfig rpc_server_cfg {rpc_port};
+    recastx::recon::Application app(raw_buffer_size, num_threads, daq_client_cfg, rpc_server_cfg);
 
     app.setFlatFieldCorrectionParams(num_darks, num_flats);
     app.setImageProcParams(downsampling_row, downsampling_col);
