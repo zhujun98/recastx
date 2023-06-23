@@ -70,7 +70,7 @@ void ProjectionItem::renderIm() {
 }
 
 void ProjectionItem::setImageProcParameter() {
-    scene_.client()->SetDownsamplingParams(downsampling_col_, downsampling_row_);
+    scene_.client()->setDownsamplingParams(downsampling_col_, downsampling_row_);
 }
 
 

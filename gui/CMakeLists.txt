@@ -108,5 +108,9 @@ target_compile_definitions(${TARGET_NAME}
                 -DGLM_FORCE_CTOR_INIT
         )
 
+if (BUILD_TEST)
+    add_subdirectory(tests)
+endif()
+
 # INSTALL COMMANDS
 install(TARGETS ${TARGET_NAME} RUNTIME DESTINATION bin)

@@ -60,17 +60,19 @@ void Scene3d::onFrameBufferSizeChanged(int width, int height) {
 
 void Scene3d::onStateChanged(ServerState_State state) {
     if (state == ServerState_State::ServerState_State_PROCESSING) {
-        log::info("Start processing ...");
+        log::info("Start acquiring & processing ...");
+        //client_->startReconDataStream();
     } else if (state == ServerState_State::ServerState_State_ACQUIRING) {
         log::info("Start acquiring ...");
-    } else if (state == ServerState_State::ServerState_State_READY) {
-        log::info("Stop acquiring/processing ...");
+    } else /* (state == ServerState_State::ServerState_State_READY) */ {
+        log::info("Stop acquiring & processing ...");
+        //client_->stopReconDataStream();
     }
     state_ = state;
 
     for (auto item : items_) item->setState(state);
 
-    client_->SetServerState(state);
+    client_->setServerState(state);
 }
 
 void Scene3d::render() {

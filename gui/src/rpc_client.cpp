@@ -29,6 +29,7 @@ using namespace std::string_literals;
 //    thread_.detach();
 //}
 //
+
 std::queue<ReconData>& RpcClient::packets() { return packets_; }
 
 RpcClient::RpcClient(const std::string& hostname, int port)
@@ -39,7 +40,7 @@ RpcClient::RpcClient(const std::string& hostname, int port)
           reconstruction_stub_(Reconstruction::NewStub(channel_)) {
 }
 
-void RpcClient::SetServerState(ServerState_State state) {
+void RpcClient::setServerState(ServerState_State state) {
     ServerState request;
     request.set_state(state);
 
@@ -56,7 +57,7 @@ void RpcClient::SetServerState(ServerState_State state) {
     }
 }
 
-void RpcClient::SetDownsamplingParams(uint32_t downsampling_col, uint32_t downsampling_row) {
+void RpcClient::setDownsamplingParams(uint32_t downsampling_col, uint32_t downsampling_row) {
     DownsamplingParams request;
     request.set_downsampling_col(downsampling_col);
     request.set_downsampling_row(downsampling_row);
@@ -74,7 +75,7 @@ void RpcClient::SetDownsamplingParams(uint32_t downsampling_col, uint32_t downsa
     }
 }
 
-void RpcClient::SetSlice(uint64_t timestamp, const Orientation& orientation) {
+void RpcClient::setSlice(uint64_t timestamp, const Orientation& orientation) {
     Slice request;
     request.set_timestamp(timestamp);
     for (auto v : orientation) request.add_orientation(v);
@@ -92,17 +93,22 @@ void RpcClient::SetSlice(uint64_t timestamp, const Orientation& orientation) {
     }
 }
 
-void RpcClient::GetSliceData() {
+void RpcClient::startReconDataStream() {
     grpc::ClientContext context;
 
     google::protobuf::Empty request;
     std::unique_ptr<grpc::ClientReader<ReconData> > reader(
             reconstruction_stub_->GetReconData(&context, request));
 
-    ReconData data;
-    while (reader->Read(&data)) {
+    while (true) {
+        ReconData data;
+        reader->Read(&data);
         packets_.push(data);
     }
+}
+
+void RpcClient::stopReconDataStream() {
+
 }
 
 } // namespace recastx::gui

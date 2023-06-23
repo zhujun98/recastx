@@ -39,13 +39,15 @@ class RpcClient {
 
     RpcClient(const std::string& hostname, int port);
 
-    void SetServerState(ServerState_State state);
+    void setServerState(ServerState_State state);
 
-    void SetDownsamplingParams(uint32_t downsampling_col, uint32_t downsampling_row);
+    void setDownsamplingParams(uint32_t downsampling_col, uint32_t downsampling_row);
 
-    void SetSlice(uint64_t timestamp, const Orientation& orientation);
+    void setSlice(uint64_t timestamp, const Orientation& orientation);
 
-    void GetSliceData();
+    void startReconDataStream();
+
+    void stopReconDataStream();
 };
 
 }  // namespace recastx::gui
