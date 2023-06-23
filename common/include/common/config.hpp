@@ -25,9 +25,8 @@ namespace recastx {
         std::string socket_type;
     };
 
-    struct ZmqServerConfig {
-        int data_port;
-        int message_port;
+    struct RpcServerConfig {
+        int port;
     };
 
     struct FlatFieldCorrectionParams {

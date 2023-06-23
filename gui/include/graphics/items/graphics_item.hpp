@@ -50,7 +50,7 @@ class GraphicsDataItem {
 
 public:
 
-    virtual bool consume(const ReconDataPacket& packet) = 0;
+    virtual bool consume(const ReconData& packet) = 0;
 };
 
 class GraphicsGLItem {

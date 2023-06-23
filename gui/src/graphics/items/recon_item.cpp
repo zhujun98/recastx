@@ -249,7 +249,7 @@ void ReconItem::setVolumeData(const std::string& data, const std::array<uint32_t
     maybeUpdateMinMaxValues();
 }
 
-bool ReconItem::consume(const ReconDataPacket &packet) {
+bool ReconItem::consume(const ReconData& packet) {
     if (packet.has_slice()) {
         auto& data = packet.slice();
         setSliceData(data.data(), {data.row_count(), data.col_count()}, data.timestamp());

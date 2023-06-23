@@ -5,30 +5,32 @@ import "google/protobuf/empty.proto";
 
 service Reconstruction {
   rpc SetSlice (Slice) returns (google.protobuf.Empty) {}
+
+  rpc GetReconData (google.protobuf.Empty) returns (stream ReconData) {}
 }
 
-message SliceDataPacket {
+message SliceData {
   bytes data = 1;
   uint32 col_count = 2;
   uint32 row_count = 3;
   uint64 timestamp = 4;
 }
 
-message VolumeDataPacket {
+message VolumeData {
   bytes data = 1;
   uint32 col_count = 2;
   uint32 row_count = 3;
   uint32 slice_count = 4;
 }
 
-message ReconDataPacket {
+message ReconData {
   oneof data {
-    VolumeDataPacket volume = 1;
-    SliceDataPacket slice = 2;
+    VolumeData volume = 1;
+    SliceData slice = 2;
   }
 }
 
 message Slice {
-    uint64 timestamp = 1;
-    repeated float orientation = 2;
+  uint64 timestamp = 1;
+  repeated float orientation = 2;
 }

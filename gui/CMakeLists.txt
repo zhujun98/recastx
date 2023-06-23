@@ -94,7 +94,6 @@ target_link_libraries(${TARGET_NAME}
                 Eigen3::Eigen
                 Boost::program_options
                 spdlog::spdlog
-                cppzmq
                 recastx_grpc_proto
         )
 

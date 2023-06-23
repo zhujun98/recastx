@@ -25,10 +25,8 @@ int main(int argc, char** argv) {
         ("help,h", "print help message")
         ("recon-host", po::value<std::string>()->default_value("localhost"),
          "hostname of the reconstruction server")
-        ("data-port", po::value<int>()->default_value(9970),
-         "ZMQ socket port of the reconstruction data server. ")
-        ("message-port", po::value<int>()->default_value(9971),
-         "ZMQ socket port of the reconstruction message server. ")
+        ("rpc-port", po::value<int>()->default_value(9971),
+         "port of the RPC server. ")
     ;
 
     po::variables_map opts;
@@ -43,13 +41,11 @@ int main(int argc, char** argv) {
     auto& app = Application::instance();
 
     Scene3d scene;
-    DataClient data_client(opts["recon-host"].as<std::string>(), opts["data-port"].as<int>());
-    RpcClient msg_client(opts["recon-host"].as<std::string>(), opts["message-port"].as<int>());
-    scene.setClient(&msg_client);
+    RpcClient rpc_client(opts["recon-host"].as<std::string>(), opts["rpc-port"].as<int>());
+    scene.setClient(&rpc_client);
     app.setScene(&scene);
 
     scene.init();
-    data_client.start();
 
     app.exec();
 
