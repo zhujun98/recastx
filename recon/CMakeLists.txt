@@ -12,11 +12,21 @@ find_package(nlohmann_json REQUIRED)
 find_package(TBB 2021.9 REQUIRED)
 message(STATUS "Found TBB ${TBB_VERSION}")
 
+include(CheckLanguage)
+check_language(CUDA)
+
 add_library(astra-toolbox SHARED IMPORTED)
-set_target_properties(
-        astra-toolbox PROPERTIES
-        IMPORTED_LOCATION ${CMAKE_PREFIX_PATH}/lib/libastra.so
-        INTERFACE_COMPILE_DEFINITIONS "ASTRA_CUDA")
+if (APPLE)
+    set_target_properties(
+            astra-toolbox PROPERTIES
+            IMPORTED_LOCATION ${CMAKE_PREFIX_PATH}/lib/libastra.dylib)
+else()
+    set_target_properties(
+            astra-toolbox PROPERTIES
+            IMPORTED_LOCATION ${CMAKE_PREFIX_PATH}/lib/libastra.so
+            INTERFACE_COMPILE_DEFINITIONS "ASTRA_CUDA")
+endif()
+
 set(ASTRA_INCLUDE_DIR ${CMAKE_PREFIX_PATH}/include)
 
 set(RECON_SOURCES
