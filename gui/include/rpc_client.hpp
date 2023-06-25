@@ -31,9 +31,12 @@ class RpcClient {
     std::unique_ptr<Imageproc::Stub> imageproc_stub_;
     std::unique_ptr<Reconstruction::Stub> reconstruction_stub_;
 
+    std::thread thread_;
+    bool streaming_ {false};
+
     inline static std::queue<ReconData> packets_;
 
-    void errorState(const grpc::Status& status) const;
+    bool errorState(const grpc::Status& status) const;
 
   public:
 

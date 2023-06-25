@@ -1,12 +1,12 @@
 #include <spdlog/spdlog.h>
 
+#include "common/utils.hpp"
 #include "rpc_server.hpp"
-
 
 namespace recastx::gui::test {
 
 using namespace std::string_literals;
-
+using namespace std::chrono_literals;
 
 grpc::Status ControlService::SetServerState(grpc::ServerContext* context,
                                             const ServerState* state,
@@ -21,7 +21,6 @@ grpc::Status ControlService::SetServerState(grpc::ServerContext* context,
     return grpc::Status::OK;
 }
 
-
 grpc::Status ImageprocService::SetDownsamplingParams(grpc::ServerContext* context,
                                                      const DownsamplingParams* params,
                                                      google::protobuf::Empty* ack) {
@@ -32,15 +31,42 @@ grpc::Status ImageprocService::SetDownsamplingParams(grpc::ServerContext* contex
 grpc::Status ReconstructionService::SetSlice(grpc::ServerContext* context,
                                              const Slice* slice,
                                              google::protobuf::Empty* ack) {
-    spdlog::info("Set slice: {}", slice->timestamp());
+    spdlog::info("Update slice parameters: {} ({})", sliceIdFromTimestamp(slice->timestamp()), slice->timestamp());
+    timestamp_ = slice->timestamp();
     return grpc::Status::OK;
 }
 
 grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
                                                  const google::protobuf::Empty*,
-                                                 grpc::ServerWriter<ReconData>* writer) {
-
+                                                 ReconData* data) {
+    static uint64_t counter = 2;
+    std::this_thread::sleep_for(100ms);
+    if (counter++ % 5 == 0) {
+        setVolumeData(data);
+    } else {
+        setSliceData(data);
+    }
     return grpc::Status::OK;
+}
+
+void ReconstructionService::setSliceData(ReconData* data) {
+    auto slice = data->mutable_slice();
+
+    std::vector<float> vec(512 * 512);
+    slice->set_data(vec.data(), vec.size() * sizeof(float));
+    slice->set_col_count(512);
+    slice->set_row_count(512);
+    slice->set_timestamp(timestamp_);
+}
+
+void ReconstructionService::setVolumeData(ReconData* data) {
+    auto vol = data->mutable_volume();
+
+    std::vector<float> vec(32 * 32 * 32);
+    vol->set_data(vec.data(), vec.size() * sizeof(float));
+    vol->set_col_count(32);
+    vol->set_row_count(32);
+    vol->set_slice_count(32);
 }
 
 RpcServer::RpcServer(int port)

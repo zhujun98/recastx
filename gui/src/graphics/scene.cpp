@@ -93,7 +93,7 @@ void Scene::tick(double /*time_elapsed*/) {
         }
 
         if (!consumed) {
-            spdlog::warn("ReconDataPacket ignored!");
+            spdlog::warn("ReconData ignored!");
         }
     }
 }

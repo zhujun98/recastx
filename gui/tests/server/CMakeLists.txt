@@ -4,3 +4,6 @@ target_link_libraries(rpc_server
         recastx_grpc_proto
         spdlog::spdlog
 )
+target_include_directories(rpc_server
+    PUBLIC
+        ${CMAKE_CURRENT_LIST_DIR}/../../../common/include)

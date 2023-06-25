@@ -6,7 +6,7 @@ import "google/protobuf/empty.proto";
 service Reconstruction {
   rpc SetSlice (Slice) returns (google.protobuf.Empty) {}
 
-  rpc GetReconData (google.protobuf.Empty) returns (stream ReconData) {}
+  rpc GetReconData (google.protobuf.Empty) returns (ReconData) {}
 }
 
 message SliceData {

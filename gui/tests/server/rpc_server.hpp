@@ -1,9 +1,9 @@
 #ifndef GUI_TEST_RPCSERVER_HPP
 #define GUI_TEST_RPCSERVER_HPP
 
-
 #include <array>
 #include <string>
+#include <thread>
 
 #include <grpcpp/security/server_credentials.h>
 #include <grpcpp/server.h>
@@ -37,6 +37,14 @@ class ImageprocService final : public Imageproc::Service {
 
 class ReconstructionService final : public Reconstruction::Service {
 
+    std::thread thread_;
+
+    uint64_t timestamp_ {0};
+
+    void setSliceData(ReconData* data);
+
+    void setVolumeData(ReconData* data);
+
   public:
 
     grpc::Status SetSlice(grpc::ServerContext* context,
@@ -45,7 +53,7 @@ class ReconstructionService final : public Reconstruction::Service {
 
     grpc::Status GetReconData(grpc::ServerContext* context,
                               const google::protobuf::Empty*,
-                              grpc::ServerWriter<ReconData>* writer) override;
+                              ReconData* data) override;
 };
 
 class RpcServer {

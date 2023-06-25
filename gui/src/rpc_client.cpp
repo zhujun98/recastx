@@ -83,28 +83,39 @@ void RpcClient::setSlice(uint64_t timestamp, const Orientation& orientation) {
 }
 
 void RpcClient::startReconDataStream() {
-    grpc::ClientContext context;
+    thread_ = std::thread([&]() {
+        streaming_ = true;
+        ReconData reply;
+        while (streaming_) {
+            grpc::ClientContext context;
 
-    google::protobuf::Empty request;
-    std::unique_ptr<grpc::ClientReader<ReconData> > reader(
-            reconstruction_stub_->GetReconData(&context, request));
+            google::protobuf::Empty request;
 
-    while (true) {
-        ReconData data;
-        reader->Read(&data);
-        packets_.push(data);
-    }
+            grpc::Status status = reconstruction_stub_->GetReconData(&context, request, &reply);
+            if (!errorState(status)) {
+                log::info("Received ReconData");
+                packets_.push(reply);
+            }
+        }
+
+        log::debug("ReconData streaming finished");
+    });
 }
 
 void RpcClient::stopReconDataStream() {
-
+    streaming_ = false;
+    if (thread_.joinable()) {
+        thread_.join();
+    }
 }
 
-void RpcClient::errorState(const grpc::Status& status) const {
+bool RpcClient::errorState(const grpc::Status& status) const {
     if (!status.ok()) {
         log::debug("{}: {}", status.error_code(), status.error_message());
         log::warn("Failed to connect to the reconstruction server!");
+        return true;
     }
+    return false;
 }
 
 } // namespace recastx::gui

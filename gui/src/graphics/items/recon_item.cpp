@@ -1,4 +1,3 @@
-#include <iostream>
 #include <cassert>
 
 #include <glm/gtc/constants.hpp>
