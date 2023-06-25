@@ -53,7 +53,7 @@ class ReconstructionService final : public Reconstruction::Service {
 
     grpc::Status GetReconData(grpc::ServerContext* context,
                               const google::protobuf::Empty*,
-                              ReconData* data) override;
+                              grpc::ServerWriter<ReconData>* writer) override;
 };
 
 class RpcServer {

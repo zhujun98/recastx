@@ -7,30 +7,6 @@ namespace recastx::gui {
 
 using namespace std::string_literals;
 
-//
-//void DataClient::start() {
-//    thread_ = std::thread([&]() {
-//        while (true) {
-//            zmq::message_t reply;
-//
-//            try {
-//                socket_.send(zmq::str_buffer("GUIReady"), zmq::send_flags::none);
-//                [[maybe_unused]] auto recv_ret = socket_.recv(reply, zmq::recv_flags::none);
-//            } catch (const zmq::error_t& e) {
-//                if (e.num() != ETERM) throw;
-//                break;
-//            }
-//
-//            ReconDataPacket packet;
-//            packet.ParseFromArray(reply.data(), static_cast<int>(reply.size()));
-//            packets_.push(std::move(packet));
-//        }
-//    });
-//
-//    thread_.detach();
-//}
-//
-
 std::queue<ReconData>& RpcClient::packets() { return packets_; }
 
 RpcClient::RpcClient(const std::string& hostname, int port)
@@ -91,11 +67,14 @@ void RpcClient::startReconDataStream() {
 
             google::protobuf::Empty request;
 
-            grpc::Status status = reconstruction_stub_->GetReconData(&context, request, &reply);
-            if (!errorState(status)) {
+            std::unique_ptr<grpc::ClientReader<ReconData> > reader(
+                    reconstruction_stub_->GetReconData(&context, request));
+            while(reader->Read(&reply)) {
                 log::info("Received ReconData");
                 packets_.push(reply);
             }
+            grpc::Status status = reader->Finish();
+            errorState(status);
         }
 
         log::debug("ReconData streaming finished");

@@ -38,13 +38,17 @@ grpc::Status ReconstructionService::SetSlice(grpc::ServerContext* context,
 
 grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
                                                  const google::protobuf::Empty*,
-                                                 ReconData* data) {
-    static uint64_t counter = 2;
-    std::this_thread::sleep_for(100ms);
-    if (counter++ % 5 == 0) {
-        setVolumeData(data);
-    } else {
-        setSliceData(data);
+                                                 grpc::ServerWriter<ReconData>* writer) {
+    uint64_t counter = 0;
+    ReconData data;
+    while (counter < 4) {
+        std::this_thread::sleep_for(100ms);
+        if (counter++ % 4 == 0) {
+            setVolumeData(&data);
+        } else {
+            setSliceData(&data);
+        }
+        writer->Write(data);
     }
     return grpc::Status::OK;
 }
