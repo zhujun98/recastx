@@ -8,8 +8,8 @@
 namespace recastx::recon {
 
 template<typename T>
-inline ReconDataPacket createSliceDataPacket(const T& data, uint32_t x, uint32_t y, uint64_t timestamp) {
-    ReconDataPacket packet;
+inline ReconData createSliceDataPacket(const T& data, uint32_t x, uint32_t y, uint64_t timestamp) {
+    ReconData packet;
     auto slice = packet.mutable_slice();
     // TODO: change 'float' to 'ValueType'
     slice->set_data(data.data(), data.size() * sizeof(float));
@@ -20,8 +20,8 @@ inline ReconDataPacket createSliceDataPacket(const T& data, uint32_t x, uint32_t
 }
 
 template<typename T>
-inline ReconDataPacket createVolumeDataPacket(const T& data, uint32_t x, uint32_t y, uint32_t z) {
-    ReconDataPacket packet;
+inline ReconData createVolumeDataPacket(const T& data, uint32_t x, uint32_t y, uint32_t z) {
+    ReconData packet;
     auto volume = packet.mutable_volume();
     // TODO: change 'float' to 'ValueType'
     volume->set_data(data.data(), data.size() * sizeof(float));

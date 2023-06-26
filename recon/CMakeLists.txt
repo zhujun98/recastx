@@ -1,5 +1,8 @@
 project(recastx-recon LANGUAGES CXX)
 
+find_package(cppzmq 4.7.1 REQUIRED)
+message(STATUS "Found cppzmq ${cppzmq_VERSION} at ${cppzmq_INCLUDE_DIR}")
+
 # Caveat: sequence
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 find_package(FFTW REQUIRED COMPONENTS FLOAT_LIB)
@@ -12,11 +15,21 @@ find_package(nlohmann_json REQUIRED)
 find_package(TBB 2021.9 REQUIRED)
 message(STATUS "Found TBB ${TBB_VERSION}")
 
+include(CheckLanguage)
+check_language(CUDA)
+
 add_library(astra-toolbox SHARED IMPORTED)
-set_target_properties(
-        astra-toolbox PROPERTIES
-        IMPORTED_LOCATION ${CMAKE_PREFIX_PATH}/lib/libastra.so
-        INTERFACE_COMPILE_DEFINITIONS "ASTRA_CUDA")
+if (APPLE)
+    set_target_properties(
+            astra-toolbox PROPERTIES
+            IMPORTED_LOCATION ${CMAKE_PREFIX_PATH}/lib/libastra.dylib)
+else()
+    set_target_properties(
+            astra-toolbox PROPERTIES
+            IMPORTED_LOCATION ${CMAKE_PREFIX_PATH}/lib/libastra.so
+            INTERFACE_COMPILE_DEFINITIONS "ASTRA_CUDA")
+endif()
+
 set(ASTRA_INCLUDE_DIR ${CMAKE_PREFIX_PATH}/include)
 
 set(RECON_SOURCES
@@ -26,7 +39,7 @@ set(RECON_SOURCES
         "src/reconstructor.cpp"
         "src/slice_mediator.cpp"
         "src/daq_client.cpp"
-        "src/zmq_server.cpp"
+        "src/rpc_server.cpp"
         "src/application.cpp"
 )
 

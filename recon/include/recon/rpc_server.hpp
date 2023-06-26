@@ -1,8 +1,7 @@
-#ifndef RECON_ZMQSERVER_H
-#define RECON_ZMQSERVER_H
+#ifndef RECON_RPCSERVER_H
+#define RECON_RPCSERVER_H
 
 #include <array>
-#include <mutex>
 #include <string>
 #include <thread>
 
@@ -20,56 +19,17 @@ namespace recastx::recon {
 
 class Application;
 
-class DataServer {
-
-    zmq::context_t context_;
-    zmq::socket_t socket_;
-
-    std::thread thread_;
-
-    std::mutex send_mtx_;
-
-    Application* app_;
-
-public:
-
-    DataServer(int port, Application* app);
-
-    ~DataServer();
-
-    template<typename T>
-    void send(const T& data);
-
-    void start();
-};
-
-template<typename T>
-void DataServer::send(const T& packet) {
-    std::string encoded;
-    packet.SerializeToString(&encoded);
-
-    zmq::message_t msg;
-    socket_.recv(msg, zmq::recv_flags::none);
-    auto request = std::string(static_cast<char*>(msg.data()), msg.size());
-    if (request == "GUIReady") {
-        socket_.send(zmq::buffer(std::move(encoded)), zmq::send_flags::none);
-    } else {
-        spdlog::warn("Unknown request received: {}", request);
-    }
-}
-
-
 class ControlService final : public Control::Service {
 
     Application* app_;
 
   public:
 
-    ControlService(Application* app);
+    explicit ControlService(Application* app);
 
     grpc::Status SetServerState(grpc::ServerContext* context, 
                                 const ServerState* state,
-                                google::protobuf::Empty* ack);
+                                google::protobuf::Empty* ack) override;
 
 };
 
@@ -79,24 +39,30 @@ class ImageprocService final : public Imageproc::Service {
 
   public:
 
-    ImageprocService(Application* app);
+    explicit ImageprocService(Application* app);
 
     grpc::Status SetDownsamplingParams(grpc::ServerContext* context, 
                                        const DownsamplingParams* params,
-                                       google::protobuf::Empty* ack);
+                                       google::protobuf::Empty* ack) override;
 };
 
 class ReconstructionService final : public Reconstruction::Service {
+
+    std::thread thread_;
 
     Application* app_;
 
   public:
 
-    ReconstructionService(Application* app);
+    explicit ReconstructionService(Application* app);
 
-    grpc::Status SetSlice(grpc::ServerContext* context, 
+    grpc::Status SetSlice(grpc::ServerContext* context,
                           const Slice* slice,
-                          google::protobuf::Empty* ack);
+                          google::protobuf::Empty* ack) override;
+
+    grpc::Status GetReconData(grpc::ServerContext* context,
+                              const google::protobuf::Empty*,
+                              grpc::ServerWriter<ReconData>* writer) override;
 };
 
 class RpcServer {
@@ -120,4 +86,4 @@ public:
 
 } // namespace recastx::recon
 
-#endif // RECON_ZMQSERVER_H
+#endif // RECON_RPCSERVER_H

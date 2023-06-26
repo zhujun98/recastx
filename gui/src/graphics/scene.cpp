@@ -79,7 +79,7 @@ bool Scene::handleKey(int key, int action, int mods) {
 }
 
 void Scene::tick(double /*time_elapsed*/) {
-    auto& packets = DataClient::packets();
+    auto& packets = RpcClient::packets();
     while (!packets.empty()) {
         auto data = std::move(packets.front());
         packets.pop();
@@ -93,7 +93,7 @@ void Scene::tick(double /*time_elapsed*/) {
         }
 
         if (!consumed) {
-            spdlog::warn("ReconDataPacket ignored!");
+            spdlog::warn("ReconData ignored!");
         }
     }
 }

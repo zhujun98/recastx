@@ -21,7 +21,6 @@ extern "C" {
 #include "daq_client.hpp"
 #include "slice_mediator.hpp"
 #include "tensor.hpp"
-#include "zmq_server.hpp"
 
 #include "reconstruction.pb.h"
 #include "control.pb.h"
@@ -32,6 +31,8 @@ namespace recastx::recon {
 class Filter;
 class Paganin;
 class Reconstructor;
+class DaqClient;
+class RpcServer;
 
 namespace details {
 
@@ -98,8 +99,7 @@ class Application {
     // It's not a State because there might be race conditions.
     bool running_ = true;
 
-    DaqClient daq_client_;
-    DataServer data_server_;
+    std::unique_ptr<DaqClient> daq_client_;
     std::unique_ptr<RpcServer> rpc_server_;
 
     void initPaganin(size_t col_count, size_t row_count);
@@ -121,8 +121,8 @@ public:
 
     Application(size_t raw_buffer_size, 
                 int num_threads, 
-                const DaqClientConfig& client_config, 
-                const ZmqServerConfig& server_config); 
+                const DaqClientConfig& daq_config, 
+                const RpcServerConfig& rpc_config); 
 
     ~Application();
 
@@ -169,11 +169,11 @@ public:
 
     void onStateChanged(ServerState_State state);
 
-    std::optional<ReconDataPacket> previewDataPacket(int timeout);
+    std::optional<ReconData> previewData(int timeout);
 
-    std::vector<ReconDataPacket> sliceDataPackets(int timeout);
+    std::vector<ReconData> sliceData(int timeout);
 
-    std::vector<ReconDataPacket> onDemandSliceDataPackets(int timeout);
+    std::vector<ReconData> onDemandSliceData(int timeout);
 
     size_t numAngles() const { return proj_geom_.angles.size(); };
 

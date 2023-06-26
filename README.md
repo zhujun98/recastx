@@ -73,7 +73,7 @@ vglrun recastx-gui --recon-host x02da-gpu-1
 
 Or on a local PC
 ```sh
-ssh -L 9970:localhost:9970 -L 9971:localhost:9971 x02da-gpu-1
+ssh -L 9971:localhost:9971 x02da-gpu-1
 ```
 
 ### Step 2: Start the reconstruction server

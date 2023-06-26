@@ -1,4 +1,3 @@
-#include <iostream>
 #include <cassert>
 
 #include <glm/gtc/constants.hpp>
@@ -215,7 +214,7 @@ void ReconItem::renderGl(const glm::mat4& view,
 
 void ReconItem::init() {
     for (auto& slice : slices_) {
-        scene_.client()->SetSlice(slice.first, slice.second->orientation3());
+        scene_.client()->setSlice(slice.first, slice.second->orientation3());
     }
 }
 
@@ -249,7 +248,7 @@ void ReconItem::setVolumeData(const std::string& data, const std::array<uint32_t
     maybeUpdateMinMaxValues();
 }
 
-bool ReconItem::consume(const ReconDataPacket &packet) {
+bool ReconItem::consume(const ReconData& packet) {
     if (packet.has_slice()) {
         auto& data = packet.slice();
         setSliceData(data.data(), {data.row_count(), data.col_count()}, data.timestamp());
@@ -290,7 +289,7 @@ bool ReconItem::handleMouseButton(int button, int action) {
     } else if (action == GLFW_RELEASE) {
         if (dragged_slice_ != nullptr) {
             slices_[dragged_slice_->id()].first += MAX_NUM_SLICES;
-            scene_.client()->SetSlice(slices_[dragged_slice_->id()].first,
+            scene_.client()->setSlice(slices_[dragged_slice_->id()].first,
                                       dragged_slice_->orientation3());
 
             log::debug("Sent slice {} ({}) orientation update request",
