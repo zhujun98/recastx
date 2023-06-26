@@ -50,7 +50,6 @@ grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
         int num = dist(gen);
         if (num == 0) continue;
 
-
         if (num == 3) {
             setVolumeData(&data);
             writer->Write(data);
@@ -71,21 +70,21 @@ grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
 void ReconstructionService::setSliceData(ReconData* data) {
     auto slice = data->mutable_slice();
 
-    std::vector<float> vec(512 * 512);
+    std::vector<float> vec(1024 * 2048);
     slice->set_data(vec.data(), vec.size() * sizeof(float));
-    slice->set_col_count(512);
-    slice->set_row_count(512);
+    slice->set_col_count(1024);
+    slice->set_row_count(2048);
     slice->set_timestamp(timestamp_);
 }
 
 void ReconstructionService::setVolumeData(ReconData* data) {
     auto vol = data->mutable_volume();
 
-    std::vector<float> vec(32 * 32 * 32);
+    std::vector<float> vec(128 * 128 * 128);
     vol->set_data(vec.data(), vec.size() * sizeof(float));
-    vol->set_col_count(32);
-    vol->set_row_count(32);
-    vol->set_slice_count(32);
+    vol->set_col_count(128);
+    vol->set_row_count(128);
+    vol->set_slice_count(128);
 }
 
 RpcServer::RpcServer(int port)

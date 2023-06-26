@@ -8,7 +8,8 @@
 
 namespace recastx {
 
-    constexpr size_t MAX_NUM_SLICES = 3;
+    inline constexpr size_t MAX_NUM_SLICES = 3;
+    inline constexpr int K_MAX_RPC_RECV_MESSAGE_SIZE = 2048 * 2048 * 4;
 
     using Orientation = std::array<float, 9>;
 

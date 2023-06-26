@@ -1,5 +1,6 @@
 #include <thread>
 
+#include "common/config.hpp"
 #include "rpc_client.hpp"
 #include "logger.hpp"
 
@@ -9,12 +10,17 @@ using namespace std::string_literals;
 
 std::queue<ReconData>& RpcClient::packets() { return packets_; }
 
-RpcClient::RpcClient(const std::string& hostname, int port)
-        : channel_(grpc::CreateChannel(hostname + ":"s + std::to_string(port),
-                                       grpc::InsecureChannelCredentials())),
-          control_stub_(Control::NewStub(channel_)),
-          imageproc_stub_(Imageproc::NewStub(channel_)),
-          reconstruction_stub_(Reconstruction::NewStub(channel_)) {
+RpcClient::RpcClient(const std::string& hostname, int port) {
+
+    grpc::ChannelArguments ch_args;
+    ch_args.SetMaxReceiveMessageSize(K_MAX_RPC_RECV_MESSAGE_SIZE);
+    channel_ = grpc::CreateCustomChannel(hostname + ":"s + std::to_string(port),
+                                         grpc::InsecureChannelCredentials(),
+                                         ch_args);
+
+    control_stub_ = Control::NewStub(channel_);
+    imageproc_stub_ = Imageproc::NewStub(channel_);
+    reconstruction_stub_ = Reconstruction::NewStub(channel_);
 }
 
 void RpcClient::setServerState(ServerState_State state) {
