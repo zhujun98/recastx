@@ -1,3 +1,5 @@
+#include <random>
+
 #include <spdlog/spdlog.h>
 
 #include "common/utils.hpp"
@@ -39,17 +41,30 @@ grpc::Status ReconstructionService::SetSlice(grpc::ServerContext* context,
 grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
                                                  const google::protobuf::Empty*,
                                                  grpc::ServerWriter<ReconData>* writer) {
-    uint64_t counter = 0;
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> dist(0, 3);
+
     ReconData data;
-    while (counter < 4) {
-        std::this_thread::sleep_for(100ms);
-        if (counter++ % 4 == 0) {
+    while (true) {
+        int num = dist(gen);
+        if (num == 0) continue;
+
+
+        if (num == 3) {
             setVolumeData(&data);
-        } else {
-            setSliceData(&data);
+            writer->Write(data);
         }
-        writer->Write(data);
+
+        for (int i = 0; i < num; ++i) {
+            setSliceData(&data);
+            writer->Write(data);
+        }
+
+        std::this_thread::sleep_for(100ms);
+        break;
     }
+
     return grpc::Status::OK;
 }
 
