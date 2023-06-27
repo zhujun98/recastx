@@ -32,7 +32,7 @@ grpc::Status ControlService::SetServerState(grpc::ServerContext* context,
 grpc::Status ImageprocService::SetDownsamplingParams(grpc::ServerContext* context,
                                                      const DownsamplingParams* params,
                                                      google::protobuf::Empty* ack) {
-    spdlog::info("Set downsampling parameters: {} / {}", params->downsampling_row(), params->downsampling_col());
+    spdlog::info("Set downsampling parameters: {} / {}", params->col(), params->row());
     return grpc::Status::OK;
 }
 

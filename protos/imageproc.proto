@@ -8,6 +8,6 @@ service Imageproc {
 }
 
 message DownsamplingParams {
-  uint32 downsampling_col = 1;
-  uint32 downsampling_row = 2;
+  uint32 col = 1;
+  uint32 row = 2;
 }

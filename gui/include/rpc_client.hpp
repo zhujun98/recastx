@@ -46,7 +46,7 @@ class RpcClient {
 
     void setServerState(ServerState_State state, ServerState_Mode mode);
 
-    void setDownsamplingParams(uint32_t downsampling_col, uint32_t downsampling_row);
+    void setDownsamplingParams(uint32_t col, uint32_t row);
 
     void setSlice(uint64_t timestamp, const Orientation& orientation);
 
