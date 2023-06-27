@@ -43,24 +43,27 @@ grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
                                                  grpc::ServerWriter<ReconData>* writer) {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<int> dist(0, 3);
+    std::uniform_int_distribution<int> dist(0, 4);
 
     ReconData data;
     while (true) {
-        int num = dist(gen);
-        if (num == 0) continue;
+        setVolumeData(&data);
+        writer->Write(data);
 
-        if (num == 3) {
-            setVolumeData(&data);
-            writer->Write(data);
-        }
-
-        for (int i = 0; i < num; ++i) {
+        for (int i = 0; i < 3; ++i) {
             setSliceData(&data);
             writer->Write(data);
         }
 
-        std::this_thread::sleep_for(100ms);
+        if (dist(gen) == 4) {
+            // simulate on-demand slice requested sporadically
+            spdlog::info("Set on-demand slice data");
+            setSliceData(&data);
+            writer->Write(data);
+        }
+
+        std::this_thread::sleep_for(200ms);
+
         break;
     }
 
@@ -70,10 +73,10 @@ grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
 void ReconstructionService::setSliceData(ReconData* data) {
     auto slice = data->mutable_slice();
 
-    std::vector<float> vec(1024 * 2048);
+    std::vector<float> vec(1024 * 512);
     slice->set_data(vec.data(), vec.size() * sizeof(float));
     slice->set_col_count(1024);
-    slice->set_row_count(2048);
+    slice->set_row_count(512);
     slice->set_timestamp(timestamp_);
 }
 
