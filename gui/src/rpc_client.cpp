@@ -23,9 +23,10 @@ RpcClient::RpcClient(const std::string& hostname, int port) {
     reconstruction_stub_ = Reconstruction::NewStub(channel_);
 }
 
-void RpcClient::setServerState(ServerState_State state) {
+void RpcClient::setServerState(ServerState_State state, ServerState_Mode mode) {
     ServerState request;
     request.set_state(state);
+    request.set_mode(mode);
 
     google::protobuf::Empty reply;
 
@@ -36,10 +37,10 @@ void RpcClient::setServerState(ServerState_State state) {
     errorState(status);
 }
 
-void RpcClient::setDownsamplingParams(uint32_t downsampling_col, uint32_t downsampling_row) {
+void RpcClient::setDownsamplingParams(uint32_t col, uint32_t row) {
     DownsamplingParams request;
-    request.set_downsampling_col(downsampling_col);
-    request.set_downsampling_row(downsampling_row);
+    request.set_col(col);
+    request.set_row(row);
 
     google::protobuf::Empty reply;
 

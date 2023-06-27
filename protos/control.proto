@@ -15,5 +15,11 @@ message ServerState {
     PROCESSING = 3;
   }
 
+  enum Mode {
+    CONTINUOUS = 0;
+    DISCRETE = 1;
+  }
+
   State state = 1;
+  Mode mode = 2;
 }

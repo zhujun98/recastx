@@ -22,6 +22,7 @@ extern "C" {
 #include "slice_mediator.hpp"
 #include "tensor.hpp"
 
+#include "imageproc.pb.h"
 #include "reconstruction.pb.h"
 #include "control.pb.h"
 
@@ -96,6 +97,7 @@ class Application {
     int num_threads_;
 
     ServerState_State state_;
+    ServerState_Mode mode_;
     // It's not a State because there might be race conditions.
     bool running_ = true;
 
@@ -133,11 +135,7 @@ public:
         flatfield_params_ = {std::forward<Ts>(args)...};
     }
 
-    template<typename ...Ts>
-    void setImageProcParams(Ts... args) {
-        initialized_ = false;
-        imageproc_params_ = {std::forward<Ts>(args)...}; 
-    }
+    void setDownsamplingParams(uint32_t col, uint32_t row);
 
     template<typename ...Ts>
     void setPaganinParams(Ts... args) { paganin_cfg_ = {std::forward<Ts>(args)...}; }
@@ -167,7 +165,7 @@ public:
 
     void setSlice(size_t timestamp, const Orientation& orientation);
 
-    void onStateChanged(ServerState_State state);
+    void onStateChanged(ServerState_State state, ServerState_Mode mode);
 
     std::optional<ReconData> previewData(int timeout);
 
