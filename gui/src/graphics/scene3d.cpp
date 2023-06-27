@@ -13,7 +13,6 @@
 #include "graphics/items/logging_item.hpp"
 #include "graphics/items/recon_item.hpp"
 #include "logger.hpp"
-#include "rpc_client.hpp"
 
 namespace recastx::gui {
 
@@ -28,7 +27,8 @@ Scene3d::Scene3d()
           recon_item_(new ReconItem(*this)),
           statusbar_item_(new StatusbarItem(*this)),
           logging_item_(new LoggingItem(*this)),
-          axiscube_item_(new AxiscubeItem(*this)) {
+          axiscube_item_(new AxiscubeItem(*this)),
+          server_state_(ServerState_State::ServerState_State_READY) {
     camera_ = std::make_unique<Camera>();
 }
 
@@ -59,20 +59,26 @@ void Scene3d::onFrameBufferSizeChanged(int width, int height) {
 }
 
 void Scene3d::onStateChanged(ServerState_State state) {
-    if (state == ServerState_State::ServerState_State_PROCESSING) {
-        log::info("Start acquiring & processing ...");
-        client_->startReconDataStream();
-    } else if (state == ServerState_State::ServerState_State_ACQUIRING) {
-        log::info("Start acquiring ...");
-    } else /* (state == ServerState_State::ServerState_State_READY) */ {
-        log::info("Stop acquiring & processing ...");
-        client_->stopReconDataStream();
-    }
-    state_ = state;
+    client_->setServerState(state, scan_mode_);
+    server_state_ = state;
 
     for (auto item : items_) item->setState(state);
 
-    client_->setServerState(state);
+    if (state == ServerState_State::ServerState_State_PROCESSING) {
+        std::string mode_str;
+        if (scan_mode_ == ServerState_Mode_CONTINUOUS) {
+            mode_str = "continuous";
+        } else { // scan_mode_ == ServerState_Mode_DISCRETE
+            mode_str = "discrete";
+        }
+        log::info("Start acquiring & processing  in '{}' mode", mode_str);
+        client_->startReconDataStream();
+    } else if (state == ServerState_State::ServerState_State_ACQUIRING) {
+        log::info("Start acquiring");
+    } else /* (state == ServerState_State::ServerState_State_READY) */ {
+        log::info("Stop acquiring & processing");
+        client_->stopReconDataStream();
+    }
 }
 
 void Scene3d::render() {
@@ -86,8 +92,8 @@ void Scene3d::render() {
     ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.2f, 0.6f, 0.6f));
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.2f, 0.7f, 0.7f));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.2f, 0.8f, 0.8f));
-    ImGui::BeginDisabled(state_ == ServerState_State::ServerState_State_ACQUIRING ||
-                         state_ == ServerState_State::ServerState_State_PROCESSING);
+    ImGui::BeginDisabled(server_state_ == ServerState_State::ServerState_State_ACQUIRING ||
+                         server_state_ == ServerState_State::ServerState_State_PROCESSING);
     if (ImGui::Button("Acquire")) onStateChanged(ServerState_State::ServerState_State_ACQUIRING);
     ImGui::EndDisabled();
     ImGui::PopStyleColor(3);
@@ -96,8 +102,8 @@ void Scene3d::render() {
     ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.3f, 0.6f, 0.6f));
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.3f, 0.7f, 0.7f));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.3f, 0.8f, 0.8f));
-    ImGui::BeginDisabled(state_ == ServerState_State::ServerState_State_PROCESSING ||
-                         state_ == ServerState_State::ServerState_State_ACQUIRING);
+    ImGui::BeginDisabled(server_state_ == ServerState_State::ServerState_State_PROCESSING ||
+                         server_state_ == ServerState_State::ServerState_State_ACQUIRING);
     if (ImGui::Button("Process")) onStateChanged(ServerState_State::ServerState_State_PROCESSING);
     ImGui::EndDisabled();
     ImGui::PopStyleColor(3);
@@ -106,11 +112,20 @@ void Scene3d::render() {
     ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.0f, 0.6f, 0.6f));
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.0f, 0.7f, 0.7f));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.0f, 0.8f, 0.8f));
-    ImGui::BeginDisabled(state_ != ServerState_State::ServerState_State_PROCESSING &&
-                         state_ != ServerState_State::ServerState_State_ACQUIRING);
+    ImGui::BeginDisabled(server_state_ != ServerState_State::ServerState_State_PROCESSING &&
+                         server_state_ != ServerState_State::ServerState_State_ACQUIRING);
     if (ImGui::Button("Stop")) onStateChanged(ServerState_State::ServerState_State_READY);
     ImGui::EndDisabled();
     ImGui::PopStyleColor(3);
+
+    ImGui::BeginDisabled(server_state_ != ServerState_State::ServerState_State_READY);
+    static int scan_mode;
+    ImGui::RadioButton("Continuous", &scan_mode, 0); ImGui::SameLine();
+    ImGui::RadioButton("Discrete", &scan_mode, 1);
+    scan_mode_ = ServerState_Mode(scan_mode);
+    ImGui::EndDisabled();
+
+    ImGui::Separator();
 
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "CAMERA");
     ImGui::Checkbox("Fix camera", &fixed_camera_);

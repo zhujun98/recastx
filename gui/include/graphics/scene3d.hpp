@@ -32,7 +32,8 @@ class Scene3d : public Scene {
 
     std::unique_ptr<AxiscubeItem> axiscube_item_;
 
-    ServerState_State state_;
+    ServerState_State server_state_;
+    ServerState_Mode  scan_mode_;
 
     void onStateChanged(ServerState_State state);
 

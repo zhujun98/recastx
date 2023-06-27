@@ -14,11 +14,17 @@ grpc::Status ControlService::SetServerState(grpc::ServerContext* context,
                                             const ServerState* state,
                                             google::protobuf::Empty* ack) {
     if (state->state() == ServerState_State::ServerState_State_PROCESSING) {
-        spdlog::info("Start acquiring & processing ...");
+        std::string mode;
+        if (state->mode() == ServerState_Mode_CONTINUOUS) {
+            mode = "continuous";
+        } else if (state->mode() == ServerState_Mode_DISCRETE) {
+            mode = "discrete";
+        }
+        spdlog::info("Start acquiring & processing in '{}' mode", mode);
     } else if (state->state() == ServerState_State::ServerState_State_ACQUIRING) {
-        spdlog::info("Start acquiring ...");
+        spdlog::info("Start acquiring");
     } else if (state->state() == ServerState_State::ServerState_State_READY) {
-        spdlog::info("Stop acquiring & processing ...");
+        spdlog::info("Stop acquiring & processing");
     }
     return grpc::Status::OK;
 }

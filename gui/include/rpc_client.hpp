@@ -44,7 +44,7 @@ class RpcClient {
 
     RpcClient(const std::string& hostname, int port);
 
-    void setServerState(ServerState_State state);
+    void setServerState(ServerState_State state, ServerState_Mode mode);
 
     void setDownsamplingParams(uint32_t downsampling_col, uint32_t downsampling_row);
 

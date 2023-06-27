@@ -23,9 +23,10 @@ RpcClient::RpcClient(const std::string& hostname, int port) {
     reconstruction_stub_ = Reconstruction::NewStub(channel_);
 }
 
-void RpcClient::setServerState(ServerState_State state) {
+void RpcClient::setServerState(ServerState_State state, ServerState_Mode mode) {
     ServerState request;
     request.set_state(state);
+    request.set_mode(mode);
 
     google::protobuf::Empty reply;
 
