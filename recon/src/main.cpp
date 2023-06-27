@@ -175,7 +175,7 @@ int main(int argc, char** argv) {
     recastx::recon::Application app(raw_buffer_size, num_threads, daq_client_cfg, rpc_server_cfg);
 
     app.setFlatFieldCorrectionParams(num_darks, num_flats);
-    app.setImageProcParams(downsampling_row, downsampling_col);
+    app.setDownsamplingParams(downsampling_col, downsampling_row);
     app.setFilterParams(gaussian_lowpass_filter, filter_name);
     if (retrieve_phase) app.setPaganinParams(pixel_size, lambda, delta, beta, distance);
     app.setProjectionGeometry(cone_beam ? recastx::BeamShape::CONE : recastx::BeamShape::PARALELL, 

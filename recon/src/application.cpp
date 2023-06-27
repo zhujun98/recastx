@@ -70,6 +70,12 @@ void Application::init() {
                  col_count, downsampling_col, row_count, downsampling_row);
 }
 
+void Application::setDownsamplingParams(uint32_t col, uint32_t row) {
+    initialized_ = false;
+    imageproc_params_.downsampling_col = col;
+    imageproc_params_.downsampling_row = row; 
+}
+
 void Application::setProjectionGeometry(BeamShape beam_shape, size_t col_count, size_t row_count,
                                         float pixel_width, float pixel_height,
                                         float src2origin, float origin2det, size_t num_angles) {
@@ -263,20 +269,28 @@ void Application::setSlice(size_t timestamp, const Orientation& orientation) {
     slice_mediator_.update(timestamp, orientation);
 }
 
-void Application::onStateChanged(ServerState_State state) {
-    if (state_ == state) return;
+void Application::onStateChanged(ServerState_State state, ServerState_Mode mode) {
+    if (state_ == state && mode_ == mode) return;
 
     state_ = state;
-    if (state == ServerState_State::ServerState_State_PROCESSING) {
+    mode_ = mode;
+    if (state_ == ServerState_State::ServerState_State_PROCESSING) {
         init();
         daq_client_->startAcquiring();
-        spdlog::info("Start acquiring and processing ...");
-    } else if (state == ServerState_State::ServerState_State_ACQUIRING) {
+        
+        std::string mode_str;
+        if (mode == ServerState_Mode_CONTINUOUS) {
+            mode_str = "continuous";
+        } else if (mode == ServerState_Mode_DISCRETE) {
+            mode_str = "discrete";
+        }
+        spdlog::info("Start acquiring and processing in '{}' mode", mode_str);
+    } else if (state_ == ServerState_State::ServerState_State_ACQUIRING) {
         daq_client_->startAcquiring();
-        spdlog::info("Start acquiring ...");
-    } else if (state == ServerState_State::ServerState_State_READY) {
+        spdlog::info("Start acquiring");
+    } else if (state_ == ServerState_State::ServerState_State_READY) {
         daq_client_->stopAcquiring();
-        spdlog::info("Stop acquiring and processing ...");
+        spdlog::info("Stop acquiring and processing");
     }
 }
 

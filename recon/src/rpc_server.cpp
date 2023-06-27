@@ -14,7 +14,7 @@ ControlService::ControlService(Application* app) : app_(app) {}
 grpc::Status ControlService::SetServerState(grpc::ServerContext* context, 
                                             const ServerState* state,
                                             google::protobuf::Empty* ack) {
-    app_->onStateChanged(state->state());
+    app_->onStateChanged(state->state(), state->mode());
     return grpc::Status::OK;
 }
 
@@ -23,7 +23,10 @@ ImageprocService::ImageprocService(Application* app) : app_(app) {}
 grpc::Status ImageprocService::SetDownsamplingParams(grpc::ServerContext* context, 
                                                      const DownsamplingParams* params,
                                                      google::protobuf::Empty* ack) {
-    app_->setImageProcParams(params->downsampling_col(), params->downsampling_row());
+    auto col = params->col();
+    auto row = params->row();
+    app_->setDownsamplingParams(col, row);
+    spdlog::info("Set image downsampling paramters: {} / {}", col, row);
     return grpc::Status::OK;
 }
 

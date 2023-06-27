@@ -52,7 +52,7 @@ protected:
 
     void SetUp() override { 
         app_.setFlatFieldCorrectionParams(num_darks_, num_flats_);
-        app_.setImageProcParams(downsampling_col_, downsampling_row_);
+        app_.setDownsamplingParams(downsampling_col_, downsampling_row_);
         app_.setFilterParams(gaussian_lowpass_filter_, filter_name_);
         app_.setProjectionGeometry(recastx::BeamShape::PARALELL, num_cols_, num_rows_,
                                    pixel_width_, pixel_height_, 
@@ -100,7 +100,8 @@ protected:
 TEST_F(ApplicationTest, TestPushProjection) {
     app_.init();
     app_.startPreprocessing();
-    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
+    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING, 
+                        ServerState_Mode::ServerState_Mode_DISCRETE);
 
     pushDarks(num_darks_);
     pushFlats(num_flats_);
@@ -135,7 +136,8 @@ TEST_F(ApplicationTest, TestPushProjection) {
 TEST_F(ApplicationTest, TestMemoryBufferReset) {
     app_.init();
     app_.startPreprocessing();
-    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
+    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING, 
+                        ServerState_Mode::ServerState_Mode_DISCRETE);
 
     pushDarks(num_darks_);
     pushFlats(num_flats_);
@@ -153,7 +155,8 @@ TEST_F(ApplicationTest, TestMemoryBufferReset) {
 TEST_F(ApplicationTest, TestPushProjectionUnordered) {
     app_.init();
     app_.startPreprocessing();
-    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
+    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING, 
+                        ServerState_Mode::ServerState_Mode_DISCRETE);
     
     pushDarks(num_darks_);
     pushFlats(num_flats_);
@@ -195,7 +198,8 @@ TEST_F(ApplicationTest, TestUploading) {
     app_.init();
     app_.startPreprocessing();
     app_.startUploading();
-    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
+    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING, 
+                        ServerState_Mode::ServerState_Mode_DISCRETE);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
@@ -205,7 +209,8 @@ TEST_F(ApplicationTest, TestReconstructing) {
     app_.startPreprocessing();
     app_.startUploading();
     app_.startReconstructing();
-    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
+    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING, 
+                        ServerState_Mode::ServerState_Mode_DISCRETE);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
@@ -220,7 +225,8 @@ TEST_F(ApplicationTest, TestWithPagagin) {
 
     app_.init();
     app_.startPreprocessing();
-    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
+    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING, 
+                        ServerState_Mode::ServerState_Mode_DISCRETE);
     
     pushDarks(num_darks_);
     pushFlats(num_flats_);
@@ -232,14 +238,16 @@ TEST_F(ApplicationTest, TestWithPagagin) {
 TEST_F(ApplicationTest, TestDownsampling) {
     app_.init();
     app_.startPreprocessing();
+    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING, 
+                        ServerState_Mode::ServerState_Mode_DISCRETE);
 
-    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
     pushDarks(num_darks_);
     pushFlats(num_flats_);
     pushProjection(0, num_angles_);
 
-    app_.onStateChanged(ServerState_State::ServerState_State_READY);
-    app_.setImageProcParams(2u, 2u);
+    app_.onStateChanged(ServerState_State::ServerState_State_READY, 
+                        ServerState_Mode::ServerState_Mode_DISCRETE);
+    app_.setDownsamplingParams(2u, 2u);
     // FIXME: std::out_of_range in the dtor of ParallelBeamReconstructor
     // app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
     // pushProjection(0, num_angles_);
