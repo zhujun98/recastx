@@ -72,9 +72,13 @@ cmake .. -DCMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"} \
 make -j12 && make install
 ```
 
-## Running at TOMCAT
+## Usage
 
-### Step 1: Start the GUI 
+<img src="recastx-architecture.png" width="640"/>
+
+### At TOMCAT
+
+#### Step 1: Start the GUI 
 
 Log in (no ssh) onto the graphics workstation `x02da-gws-3` and open a terminal
 ```sh
@@ -94,7 +98,7 @@ Or on a local PC
 ssh -L 9971:localhost:9971 x02da-gpu-1
 ```
 
-### Step 2: Start the reconstruction server
+#### Step 2: Start the reconstruction server
 
 ```sh
 conda activate recastx-recon
@@ -111,7 +115,7 @@ For more information, type
 recastx-recon -h
 ```
 
-### Step 3: Stream the data
+#### Step 3: Stream the data
 
 **Option1**: Streaming data from files on the GPU node
 
@@ -129,9 +133,27 @@ or stream fake data, for example, by
 foamstream-tomcat --rows 800 --cols 384 --projections 10000
 ```
 
-**Option2**: On the DAQ node:
+**Option2**: On the DAQ node
 
+Start data acquisition with GigaFRoST camera.
 
-## Running at other facilities
+### At other facilities
 
-**TBD**: a data adaptor should be needed
+TBD: a data adaptor should be needed
+
+## GUI
+
+- *Acquire*: Click to only start acquiring the raw projection images and meta data.
+- *Process*: Click to start acquiring and processing data.
+- *Stop*: Click to stop acquiring and processing data.
+- *Mode*
+  - *Continuous*:
+  - *Discrete*:
+- *Fix camera*: Check to disable rotating and zooming the 3D model with mouse.
+- *Downsampling*
+    - *Col*: Downsampling factor of columns of the raw projection image.
+    - *Row*: Downsampling factor of rows of the raw projection image.
+- *Auto Levels*: Check to enable automatically setting color levels of the displayed objects.
+    - *Min*: 
+    - *Max*:
+- *Reset slices*: Click to reset the positions and orientations of all the slices.
