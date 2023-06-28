@@ -36,7 +36,7 @@ class RpcClient {
 
     inline static std::queue<ReconData> packets_;
 
-    bool errorState(const grpc::Status& status) const;
+    bool checkStatus(const grpc::Status& status) const;
 
   public:
 
@@ -44,7 +44,7 @@ class RpcClient {
 
     RpcClient(const std::string& hostname, int port);
 
-    void setServerState(ServerState_State state, ServerState_Mode mode);
+    bool setServerState(ServerState_State state, ServerState_Mode mode);
 
     void setDownsamplingParams(uint32_t col, uint32_t row);
 

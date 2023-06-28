@@ -23,7 +23,7 @@ RpcClient::RpcClient(const std::string& hostname, int port) {
     reconstruction_stub_ = Reconstruction::NewStub(channel_);
 }
 
-void RpcClient::setServerState(ServerState_State state, ServerState_Mode mode) {
+bool RpcClient::setServerState(ServerState_State state, ServerState_Mode mode) {
     ServerState request;
     request.set_state(state);
     request.set_mode(mode);
@@ -31,10 +31,9 @@ void RpcClient::setServerState(ServerState_State state, ServerState_Mode mode) {
     google::protobuf::Empty reply;
 
     grpc::ClientContext context;
-//        context.set_wait_for_ready(true);
 
     grpc::Status status = control_stub_->SetServerState(&context, request, &reply);
-    errorState(status);
+    return checkStatus(status);
 }
 
 void RpcClient::setDownsamplingParams(uint32_t col, uint32_t row) {
@@ -45,10 +44,9 @@ void RpcClient::setDownsamplingParams(uint32_t col, uint32_t row) {
     google::protobuf::Empty reply;
 
     grpc::ClientContext context;
-//        context.set_wait_for_ready(true);
 
     grpc::Status status = imageproc_stub_->SetDownsamplingParams(&context, request, &reply);
-    errorState(status);
+    checkStatus(status);
 }
 
 void RpcClient::setSlice(uint64_t timestamp, const Orientation& orientation) {
@@ -59,10 +57,9 @@ void RpcClient::setSlice(uint64_t timestamp, const Orientation& orientation) {
     google::protobuf::Empty reply;
 
     grpc::ClientContext context;
-//        context.set_wait_for_ready(true);
 
     grpc::Status status = reconstruction_stub_->SetSlice(&context, request, &reply);
-    errorState(status);
+    checkStatus(status);
 }
 
 void RpcClient::startReconDataStream() {
@@ -81,7 +78,7 @@ void RpcClient::startReconDataStream() {
                 packets_.push(reply);
             }
             grpc::Status status = reader->Finish();
-            errorState(status);
+            checkStatus(status);
         }
 
         log::debug("ReconData streaming finished");
@@ -95,7 +92,7 @@ void RpcClient::stopReconDataStream() {
     }
 }
 
-bool RpcClient::errorState(const grpc::Status& status) const {
+bool RpcClient::checkStatus(const grpc::Status& status) const {
     if (!status.ok()) {
         log::debug("{}: {}", status.error_code(), status.error_message());
         log::warn("Failed to connect to the reconstruction server!");

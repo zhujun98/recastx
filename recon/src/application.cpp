@@ -284,13 +284,13 @@ void Application::onStateChanged(ServerState_State state, ServerState_Mode mode)
         } else if (mode == ServerState_Mode_DISCRETE) {
             mode_str = "discrete";
         }
-        spdlog::info("Start acquiring and processing in '{}' mode", mode_str);
+        spdlog::info("Start acquiring and processing data in '{}' mode", mode_str);
     } else if (state_ == ServerState_State::ServerState_State_ACQUIRING) {
         daq_client_->startAcquiring();
-        spdlog::info("Start acquiring");
+        spdlog::info("Start acquiring data");
     } else if (state_ == ServerState_State::ServerState_State_READY) {
         daq_client_->stopAcquiring();
-        spdlog::info("Stop acquiring and processing");
+        spdlog::info("Stop acquiring and processing data");
     }
 }
 

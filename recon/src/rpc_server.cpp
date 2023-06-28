@@ -26,7 +26,7 @@ grpc::Status ImageprocService::SetDownsamplingParams(grpc::ServerContext* contex
     auto col = params->col();
     auto row = params->row();
     app_->setDownsamplingParams(col, row);
-    spdlog::info("Set image downsampling paramters: {} / {}", col, row);
+    spdlog::info("Set image downsampling parameters: {} / {}", col, row);
     return grpc::Status::OK;
 }
 

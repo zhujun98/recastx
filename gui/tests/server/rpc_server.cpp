@@ -20,11 +20,11 @@ grpc::Status ControlService::SetServerState(grpc::ServerContext* context,
         } else if (state->mode() == ServerState_Mode_DISCRETE) {
             mode = "discrete";
         }
-        spdlog::info("Start acquiring & processing in '{}' mode", mode);
+        spdlog::info("Start acquiring & processing data in '{}' mode", mode);
     } else if (state->state() == ServerState_State::ServerState_State_ACQUIRING) {
-        spdlog::info("Start acquiring");
+        spdlog::info("Start acquiring data");
     } else if (state->state() == ServerState_State::ServerState_State_READY) {
-        spdlog::info("Stop acquiring & processing");
+        spdlog::info("Stop acquiring & processing data");
     }
     return grpc::Status::OK;
 }

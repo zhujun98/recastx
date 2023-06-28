@@ -59,9 +59,9 @@ void Scene3d::onFrameBufferSizeChanged(int width, int height) {
 }
 
 void Scene3d::onStateChanged(ServerState_State state) {
-    client_->setServerState(state, scan_mode_);
-    server_state_ = state;
+    if (client_->setServerState(state, scan_mode_)) return;
 
+    server_state_ = state;
     for (auto item : items_) item->setState(state);
 
     if (state == ServerState_State::ServerState_State_PROCESSING) {
@@ -71,12 +71,12 @@ void Scene3d::onStateChanged(ServerState_State state) {
         } else { // scan_mode_ == ServerState_Mode_DISCRETE
             mode_str = "discrete";
         }
-        log::info("Start acquiring & processing  in '{}' mode", mode_str);
+        log::info("Start acquiring & processing data in '{}' mode", mode_str);
         client_->startReconDataStream();
     } else if (state == ServerState_State::ServerState_State_ACQUIRING) {
-        log::info("Start acquiring");
+        log::info("Start acquiring data");
     } else /* (state == ServerState_State::ServerState_State_READY) */ {
-        log::info("Stop acquiring & processing");
+        log::info("Stop acquiring & processing data");
         client_->stopReconDataStream();
     }
 }
