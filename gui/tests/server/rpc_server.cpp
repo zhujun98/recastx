@@ -14,18 +14,26 @@ grpc::Status ControlService::SetServerState(grpc::ServerContext* context,
                                             const ServerState* state,
                                             google::protobuf::Empty* ack) {
     if (state->state() == ServerState_State::ServerState_State_PROCESSING) {
-        std::string mode;
-        if (state->mode() == ServerState_Mode_CONTINUOUS) {
-            mode = "continuous";
-        } else if (state->mode() == ServerState_Mode_DISCRETE) {
-            mode = "discrete";
-        }
-        spdlog::info("Start acquiring & processing data in '{}' mode", mode);
+        spdlog::info("Start acquiring & processing data");
     } else if (state->state() == ServerState_State::ServerState_State_ACQUIRING) {
         spdlog::info("Start acquiring data");
     } else if (state->state() == ServerState_State::ServerState_State_READY) {
         spdlog::info("Stop acquiring & processing data");
     }
+    return grpc::Status::OK;
+}
+
+grpc::Status ControlService::SetScanMode(grpc::ServerContext* context,
+                                         const ScanMode* mode,
+                                         google::protobuf::Empty* ack) {
+    std::string mode_str;
+    if (mode->mode() == ScanMode_Mode_CONTINUOUS) {
+        mode_str = "continuous";
+    } else if (mode->mode() == ScanMode_Mode_DISCRETE) {
+        mode_str = "discrete";
+    }
+    spdlog::info("Set scan mode: {} / {}", mode_str, mode->update_interval());
+
     return grpc::Status::OK;
 }
 

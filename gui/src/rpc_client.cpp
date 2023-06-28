@@ -23,10 +23,9 @@ RpcClient::RpcClient(const std::string& hostname, int port) {
     reconstruction_stub_ = Reconstruction::NewStub(channel_);
 }
 
-bool RpcClient::setServerState(ServerState_State state, ServerState_Mode mode) {
+bool RpcClient::setServerState(ServerState_State state) {
     ServerState request;
     request.set_state(state);
-    request.set_mode(mode);
 
     google::protobuf::Empty reply;
 
@@ -34,6 +33,19 @@ bool RpcClient::setServerState(ServerState_State state, ServerState_Mode mode) {
 
     grpc::Status status = control_stub_->SetServerState(&context, request, &reply);
     return checkStatus(status);
+}
+
+void RpcClient::setScanMode(ScanMode_Mode mode, uint32_t update_interval) {
+    ScanMode request;
+    request.set_mode(mode);
+    request.set_update_interval(update_interval);
+
+    google::protobuf::Empty reply;
+
+    grpc::ClientContext context;
+
+    grpc::Status status = control_stub_->SetScanMode(&context, request, & reply);
+    checkStatus(status);
 }
 
 void RpcClient::setDownsamplingParams(uint32_t col, uint32_t row) {

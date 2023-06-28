@@ -5,6 +5,8 @@ import "google/protobuf/empty.proto";
 
 service Control {
   rpc SetServerState (ServerState) returns (google.protobuf.Empty) {}
+
+  rpc SetScanMode (ScanMode) returns (google.protobuf.Empty) {}
 }
 
 message ServerState {
@@ -15,11 +17,15 @@ message ServerState {
     PROCESSING = 3;
   }
 
+  State state = 1;
+}
+
+message ScanMode {
   enum Mode {
     CONTINUOUS = 0;
     DISCRETE = 1;
   }
 
-  State state = 1;
-  Mode mode = 2;
+  Mode mode = 1;
+  uint32 update_interval = 2;
 }

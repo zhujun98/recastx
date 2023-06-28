@@ -96,7 +96,7 @@ class Application {
 
     int num_threads_;
 
-    ServerState_State state_;
+    ServerState_State state_ { ServerState_State_READY };
     ServerState_Mode mode_;
     // It's not a State because there might be race conditions.
     bool running_ = true;
