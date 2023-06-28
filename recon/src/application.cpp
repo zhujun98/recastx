@@ -1,7 +1,6 @@
 #include <chrono>
 #include <complex>
 #include <numeric>
-using namespace std::chrono_literals;
 
 #include <Eigen/Eigen>
 #include <spdlog/spdlog.h>
@@ -18,13 +17,16 @@ using namespace std::chrono_literals;
 
 namespace recastx::recon {
 
+using namespace std::chrono_literals;
 using namespace std::string_literals;
 
-Application::Application(size_t raw_buffer_size, int num_threads, 
+Application::Application(size_t raw_buffer_size, 
+                         const ImageprocParams& imageproc_params, 
                          const DaqClientConfig& daq_config, 
                          const RpcServerConfig& rpc_config)
-     : raw_buffer_(raw_buffer_size), 
-       num_threads_(num_threads),
+     : raw_buffer_(raw_buffer_size),
+       imgproc_params_(imageproc_params),
+       server_state_(ServerState_State_READY),
        daq_client_(new DaqClient("tcp://"s + daq_config.hostname + ":"s + std::to_string(daq_config.port),
                                  daq_config.socket_type,
                                  this)),
@@ -37,8 +39,8 @@ Application::~Application() {
 void Application::init() {
     if (initialized_) return;
     
-    uint32_t downsampling_col = imageproc_params_.downsampling_col;
-    uint32_t downsampling_row = imageproc_params_.downsampling_row;
+    uint32_t downsampling_col = imgproc_params_.downsampling_col;
+    uint32_t downsampling_row = imgproc_params_.downsampling_row;
     size_t col_count = proj_geom_.col_count / downsampling_col;
     size_t row_count = proj_geom_.row_count / downsampling_row;
 
@@ -70,12 +72,6 @@ void Application::init() {
                  col_count, downsampling_col, row_count, downsampling_row);
 }
 
-void Application::setDownsamplingParams(uint32_t col, uint32_t row) {
-    initialized_ = false;
-    imageproc_params_.downsampling_col = col;
-    imageproc_params_.downsampling_row = row; 
-}
-
 void Application::setProjectionGeometry(BeamShape beam_shape, size_t col_count, size_t row_count,
                                         float pixel_width, float pixel_height,
                                         float src2origin, float origin2det, size_t num_angles) {
@@ -100,10 +96,10 @@ void Application::setReconGeometry(std::optional<size_t> slice_size, std::option
 
 void Application::startPreprocessing() {
     auto t = std::thread([&] {
-        oneapi::tbb::task_arena arena(num_threads_);
+        oneapi::tbb::task_arena arena(imgproc_params_.num_threads);
         while (running_) {
             if (!raw_buffer_.fetch(100)) continue; 
-            if (state_ != ServerState_State::ServerState_State_PROCESSING) continue;
+            if (server_state_ != ServerState_State::ServerState_State_PROCESSING) continue;
 
             spdlog::info("Processing projections ...");
             processProjections(arena);
@@ -119,7 +115,7 @@ void Application::startUploading() {
         size_t num_angles = proj_geom_.angles.size();
         while (running_) {
             if (!sino_buffer_.fetch(100)) continue;
-            if (state_ != ServerState_State::ServerState_State_PROCESSING) continue;
+            if (server_state_ != ServerState_State::ServerState_State_PROCESSING) continue;
 
             spdlog::info("Uploading sinograms to GPU ...");
             recon_->uploadSinograms(
@@ -152,7 +148,7 @@ void Application::startReconstructing() {
             {
                 std::unique_lock<std::mutex> lck(gpu_mutex_);
                 if (gpu_cv_.wait_for(lck, 10ms, [&] { return sino_uploaded_; })) {
-                    if (state_ != ServerState_State::ServerState_State_PROCESSING) continue;
+                    if (server_state_ != ServerState_State::ServerState_State_PROCESSING) continue;
                     recon_->reconstructPreview(gpu_buffer_index_, preview_buffer_.back());
                 } else {
                     slice_mediator_.reconOnDemand(recon_.get(), gpu_buffer_index_);
@@ -200,8 +196,6 @@ void Application::runForEver() {
     startReconstructing();
 
     daq_client_->start();
-
-    // data_server_->start();
     rpc_server_->start();
 
     // TODO: start the event loop in the main thread
@@ -265,30 +259,44 @@ void Application::pushProjection(
     }
 }
 
+void Application::setDownsamplingParams(uint32_t col, uint32_t row) {
+    initialized_ = false;
+    imgproc_params_.downsampling_col = col;
+    imgproc_params_.downsampling_row = row;
+
+    spdlog::info("Set image downsampling parameters: {} / {}", col, row);
+}
+
 void Application::setSlice(size_t timestamp, const Orientation& orientation) {
     slice_mediator_.update(timestamp, orientation);
 }
 
-void Application::onStateChanged(ServerState_State state, ServerState_Mode mode) {
-    if (state_ == state && mode_ == mode) return;
+void Application::setScanMode(ScanMode_Mode mode, uint32_t update_interval) {
+    scan_mode_ = mode;
+    scan_update_inverval_ = update_interval;
+}
 
-    state_ = state;
-    mode_ = mode;
-    if (state_ == ServerState_State::ServerState_State_PROCESSING) {
+void Application::onStateChanged(ServerState_State state) {
+    if (server_state_ == state) return;
+
+    server_state_ = state;
+    if (server_state_ == ServerState_State::ServerState_State_PROCESSING) {
         init();
         daq_client_->startAcquiring();
-        
-        std::string mode_str;
-        if (mode == ServerState_Mode_CONTINUOUS) {
-            mode_str = "continuous";
-        } else if (mode == ServerState_Mode_DISCRETE) {
-            mode_str = "discrete";
+
+        spdlog::info("Start acquiring and processing data");
+
+        if (scan_mode_ == ScanMode_Mode_CONTINUOUS) {
+            spdlog::info("- Scan mode: continuous");
+            spdlog::info("- Update interval: {}", scan_update_inverval_);
+        } else if (scan_mode_ == ScanMode_Mode_DISCRETE) {
+            spdlog::info("- Scan mode: discrete");
         }
-        spdlog::info("Start acquiring and processing data in '{}' mode", mode_str);
-    } else if (state_ == ServerState_State::ServerState_State_ACQUIRING) {
+
+    } else if (server_state_ == ServerState_State::ServerState_State_ACQUIRING) {
         daq_client_->startAcquiring();
         spdlog::info("Start acquiring data");
-    } else if (state_ == ServerState_State::ServerState_State_READY) {
+    } else if (server_state_ == ServerState_State::ServerState_State_READY) {
         daq_client_->stopAcquiring();
         spdlog::info("Stop acquiring and processing data");
     }
@@ -352,7 +360,7 @@ void Application::processProjections(oneapi::tbb::task_arena& arena) {
 
                 flatField(p, num_pixels, dark_avg_, reciprocal_);
 
-                if (paganin_) paganin_->apply(p, i % num_threads_);
+                if (paganin_) paganin_->apply(p, i % imgproc_params_.num_threads);
                 else
                     negativeLog(p, num_pixels);
 
@@ -394,7 +402,7 @@ void Application::initPaganin(size_t col_count, size_t row_count) {
 void Application::initFilter(size_t col_count, size_t row_count) {
     filter_ = std::make_unique<Filter>(
         filter_cfg_.name, filter_cfg_.gaussian_lowpass_filter, 
-        &raw_buffer_.front()[0], col_count, row_count, num_threads_);
+        &raw_buffer_.front()[0], col_count, row_count, imgproc_params_.num_threads);
 }
 
 void Application::initReconstructor(size_t col_count, size_t row_count) {

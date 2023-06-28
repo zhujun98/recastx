@@ -86,7 +86,7 @@ int main(int argc, char** argv) {
          "size of the square reconstructed slice in pixels. Default to detector columns.")
         ("preview-size", po::value<size_t>(),
          "size of the cubic reconstructed volume for preview.")
-        ("threads", po::value<size_t>()->default_value(8),
+        ("threads", po::value<uint32_t>()->default_value(8),
          "number of threads used for data processing")
         ("darks", po::value<size_t>()->default_value(10),
          "number of required dark images")
@@ -157,7 +157,7 @@ int main(int argc, char** argv) {
                                                  : std::optional<size_t>(opts["slice-size"].as<size_t>());
     auto preview_size = opts["preview-size"].empty() ? std::nullopt 
                                                      : std::optional<size_t>(opts["preview-size"].as<size_t>());
-    auto num_threads = opts["threads"].as<size_t>();
+    auto num_threads = opts["threads"].as<uint32_t>();
     auto num_darks = opts["darks"].as<size_t>();
     auto num_flats = opts["flats"].as<size_t>();
     auto raw_buffer_size = opts["raw-buffer-size"].as<size_t>();
@@ -172,10 +172,10 @@ int main(int argc, char** argv) {
 
     recastx::DaqClientConfig daq_client_cfg {daq_port, daq_hostname, daq_socket_type};
     recastx::RpcServerConfig rpc_server_cfg {rpc_port};
-    recastx::recon::Application app(raw_buffer_size, num_threads, daq_client_cfg, rpc_server_cfg);
+    recastx::ImageprocParams imageproc_params {num_threads, downsampling_col, downsampling_row};
+    recastx::recon::Application app(raw_buffer_size, imageproc_params, daq_client_cfg, rpc_server_cfg);
 
     app.setFlatFieldCorrectionParams(num_darks, num_flats);
-    app.setDownsamplingParams(downsampling_col, downsampling_row);
     app.setFilterParams(gaussian_lowpass_filter, filter_name);
     if (retrieve_phase) app.setPaganinParams(pixel_size, lambda, delta, beta, distance);
     app.setProjectionGeometry(cone_beam ? recastx::BeamShape::CONE : recastx::BeamShape::PARALELL, 
