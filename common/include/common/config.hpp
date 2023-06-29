@@ -35,7 +35,8 @@ namespace recastx {
         size_t num_flats;
     };
 
-    struct ImageProcParams {
+    struct ImageprocParams {
+        uint32_t num_threads;
         uint32_t downsampling_col;
         uint32_t downsampling_row;
     };

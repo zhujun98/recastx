@@ -28,14 +28,12 @@ void ProjectionItem::renderIm() {
     if (ImGui::ArrowButton("##col_left", ImGuiDir_Left)) {
         if (downsampling_col_ > 1) {
             downsampling_col_--;
-            setImageProcParameter();
         }
     }
     ImGui::SameLine(0.0f, spacing);
     if (ImGui::ArrowButton("##col_right", ImGuiDir_Right)) {
         if (downsampling_col_ < 10) {
             downsampling_col_++;
-            setImageProcParameter();
         }
     }
     ImGui::SameLine();
@@ -47,14 +45,12 @@ void ProjectionItem::renderIm() {
     if (ImGui::ArrowButton("##row_left", ImGuiDir_Left)) {
         if (downsampling_row_ > 1) {
             downsampling_row_--;
-            setImageProcParameter();
         }
     }
     ImGui::SameLine(0.0f, spacing);
     if (ImGui::ArrowButton("##row_right", ImGuiDir_Right)) {
         if (downsampling_row_ < 10) {
             downsampling_row_++;
-            setImageProcParameter();
         }
     }
     ImGui::SameLine();
@@ -69,9 +65,12 @@ void ProjectionItem::renderIm() {
     ImGui::EndDisabled();
 }
 
-void ProjectionItem::setImageProcParameter() {
-    scene_.client()->setDownsamplingParams(downsampling_col_, downsampling_row_);
+void ProjectionItem::updateServerParams() {
+    setDownsamplingParams();
 }
 
+void ProjectionItem::setDownsamplingParams() {
+    scene_.client()->setDownsamplingParams(downsampling_col_, downsampling_row_);
+}
 
 } // namespace recastx::gui

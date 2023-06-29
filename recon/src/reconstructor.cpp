@@ -128,13 +128,12 @@ ParallelBeamReconstructor::ParallelBeamReconstructor(size_t col_count, size_t ro
     original_vectors_ = vectors_;
     vec_buf_ = vectors_;
 
-    auto zeros = std::vector<float>(num_angles * col_count * row_count, 0.0f);
-
     // Projection data and back projection algorithm
     projector_ = std::make_unique<astra::CCudaProjector3D>();
+    auto buf = std::vector<float>(col_count * num_angles * row_count, 0.0f);
     for (int i = 0; i < 2; ++i) {
         p_mem_.push_back(astraCUDA3d::createProjectionArrayHandle(
-            zeros.data(), col_count, num_angles, row_count));
+            buf.data(), col_count, num_angles, row_count));
         p_data_.push_back(std::make_unique<astra::CFloat32ProjectionData3DGPU>(
             s_p_geom_.get(), p_mem_[0]));
 
@@ -183,6 +182,7 @@ void ParallelBeamReconstructor::reconstructSlice(
     s_p_geom_ = std::make_unique<astra::CParallelVecProjectionGeometry3D>(
         num_angles, num_rows, num_cols, vec_buf_.data());
 
+    spdlog::debug("Reconstructing preview with buffer index: {}", buffer_idx);
     p_data_[buffer_idx]->changeGeometry(s_p_geom_.get());
     s_algo_[buffer_idx]->run();
 
@@ -197,6 +197,7 @@ void ParallelBeamReconstructor::reconstructPreview(int buffer_idx, Tensor<float,
     ScopedTimer timer("Bench", "Reconstructing preview");
 #endif
 
+    spdlog::debug("Reconstructing preview with buffer index: {}", buffer_idx);
     p_data_[buffer_idx]->changeGeometry(v_p_geom_.get());
     v_algo_[buffer_idx]->run();
 
@@ -249,12 +250,12 @@ ConeBeamReconstructor::ConeBeamReconstructor(size_t col_count, size_t row_count,
 
     vec_buf_ = vectors_;
 
-    auto zeros = std::vector<float>(num_angles * col_count * row_count, 0.0f);
 
     // Projection data
+    auto buf = std::vector<float>(col_count * num_angles * row_count, 0.0f);
     for (int i = 0; i < 2; ++i) {
         p_mem_.push_back(astraCUDA3d::createProjectionArrayHandle(
-            zeros.data(), col_count, num_angles, row_count));
+            buf.data(), col_count, num_angles, row_count));
         p_data_.push_back(std::make_unique<astra::CFloat32ProjectionData3DGPU>(
             s_p_geom_.get(), p_mem_[0]));
     }

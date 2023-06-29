@@ -50,9 +50,6 @@ inline std::pair<float, float> parseReconstructedVolumeBoundary(
 
 class Application {
 
-    ImageProcParams imageproc_params_;
-    FlatFieldCorrectionParams flatfield_params_;
-
     // Why did I choose ProDtype over RawDtype?
     MemoryBuffer<ProDtype, 3> raw_buffer_;
 
@@ -76,6 +73,9 @@ class Application {
     FilterConfig filter_cfg_;
     std::unique_ptr<Filter> filter_;
 
+    ImageprocParams imgproc_params_;
+    FlatFieldCorrectionParams flatfield_params_;
+
     std::optional<size_t> slice_size_;
     std::optional<size_t> preview_size_;
     std::optional<float> min_x_;
@@ -94,10 +94,10 @@ class Application {
     std::condition_variable gpu_cv_;
     std::mutex gpu_mutex_;
 
-    int num_threads_;
+    ServerState_State server_state_;
+    ScanMode_Mode scan_mode_;
+    uint32_t scan_update_inverval_;
 
-    ServerState_State state_;
-    ServerState_Mode mode_;
     // It's not a State because there might be race conditions.
     bool running_ = true;
 
@@ -121,8 +121,8 @@ class Application {
 
 public:
 
-    Application(size_t raw_buffer_size, 
-                int num_threads, 
+    Application(size_t raw_buffer_size,
+                const ImageprocParams& imageproc_params, 
                 const DaqClientConfig& daq_config, 
                 const RpcServerConfig& rpc_config); 
 
@@ -134,8 +134,6 @@ public:
     void setFlatFieldCorrectionParams(Ts... args) {
         flatfield_params_ = {std::forward<Ts>(args)...};
     }
-
-    void setDownsamplingParams(uint32_t col, uint32_t row);
 
     template<typename ...Ts>
     void setPaganinParams(Ts... args) { paganin_cfg_ = {std::forward<Ts>(args)...}; }
@@ -163,9 +161,13 @@ public:
     void pushProjection(
         ProjectionType k, size_t proj_idx, size_t num_rows, size_t num_cols, const char* data); 
 
+    void setDownsamplingParams(uint32_t col, uint32_t row);
+
     void setSlice(size_t timestamp, const Orientation& orientation);
 
-    void onStateChanged(ServerState_State state, ServerState_Mode mode);
+    void setScanMode(ScanMode_Mode mode, uint32_t update_inverval);
+
+    void onStateChanged(ServerState_State state);
 
     std::optional<ReconData> previewData(int timeout);
 

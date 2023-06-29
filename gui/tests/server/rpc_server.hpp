@@ -24,6 +24,9 @@ class ControlService final : public Control::Service {
                                 const ServerState* state,
                                 google::protobuf::Empty* ack) override;
 
+    grpc::Status SetScanMode(grpc::ServerContext* context,
+                             const ScanMode* mode,
+                             google::protobuf::Empty* ack) override;
 };
 
 class ImageprocService final : public Imageproc::Service {

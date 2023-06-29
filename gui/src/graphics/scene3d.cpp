@@ -28,7 +28,9 @@ Scene3d::Scene3d()
           statusbar_item_(new StatusbarItem(*this)),
           logging_item_(new LoggingItem(*this)),
           axiscube_item_(new AxiscubeItem(*this)),
-          server_state_(ServerState_State::ServerState_State_READY) {
+          server_state_(ServerState_State::ServerState_State_READY),
+          scan_mode_(ScanMode_Mode_CONTINUOUS),
+          scan_update_interval_(min_scan_update_interval_) {
     camera_ = std::make_unique<Camera>();
 }
 
@@ -59,19 +61,19 @@ void Scene3d::onFrameBufferSizeChanged(int width, int height) {
 }
 
 void Scene3d::onStateChanged(ServerState_State state) {
-    if (client_->setServerState(state, scan_mode_)) return;
+    if (state == ServerState_State_PROCESSING || state == ServerState_State_ACQUIRING) {
+        updateServerParams();
+        for (auto item : items_) {
+            item->updateServerParams();
+        }
+    }
 
+    if (client_->setServerState(state)) return;
     server_state_ = state;
     for (auto item : items_) item->setState(state);
 
     if (state == ServerState_State::ServerState_State_PROCESSING) {
-        std::string mode_str;
-        if (scan_mode_ == ServerState_Mode_CONTINUOUS) {
-            mode_str = "continuous";
-        } else { // scan_mode_ == ServerState_Mode_DISCRETE
-            mode_str = "discrete";
-        }
-        log::info("Start acquiring & processing data in '{}' mode", mode_str);
+        log::info("Start acquiring & processing data");
         client_->startReconDataStream();
     } else if (state == ServerState_State::ServerState_State_ACQUIRING) {
         log::info("Start acquiring data");
@@ -79,6 +81,14 @@ void Scene3d::onStateChanged(ServerState_State state) {
         log::info("Stop acquiring & processing data");
         client_->stopReconDataStream();
     }
+}
+
+void Scene3d::updateServerParams() {
+    setScanMode();
+}
+
+void Scene3d::setScanMode() {
+    client_->setScanMode(scan_mode_, scan_update_interval_);
 }
 
 void Scene3d::render() {
@@ -118,11 +128,38 @@ void Scene3d::render() {
     ImGui::EndDisabled();
     ImGui::PopStyleColor(3);
 
+    // ---
+    ImGui::Separator();
+    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "SCAN MODE");
+
     ImGui::BeginDisabled(server_state_ != ServerState_State::ServerState_State_READY);
-    static int scan_mode;
-    ImGui::RadioButton("Continuous", &scan_mode, 0); ImGui::SameLine();
-    ImGui::RadioButton("Discrete", &scan_mode, 1);
-    scan_mode_ = ServerState_Mode(scan_mode);
+    static int scan_mode = static_cast<int>(scan_mode_);
+    ImGui::RadioButton("Continuous", &scan_mode, static_cast<int>(ScanMode_Mode_CONTINUOUS));
+    ImGui::SameLine();
+    ImGui::RadioButton("Discrete", &scan_mode, static_cast<int>(ScanMode_Mode_DISCRETE));
+    scan_mode_ = ScanMode_Mode(scan_mode);
+    ImGui::EndDisabled();
+
+    ImGui::Text("Update interval");
+    ImGui::SameLine();
+    ImGui::BeginDisabled(scan_mode_ != ScanMode_Mode_CONTINUOUS);
+    if (ImGui::ArrowButton("##continuous_interval_left", ImGuiDir_Left)) {
+        assert(scan_update_interval_ >= scan_update_interval_step_size_);
+        scan_update_interval_ -= scan_update_interval_step_size_;
+        if (scan_update_interval_ < min_scan_update_interval_) {
+            scan_update_interval_ = min_scan_update_interval_;
+        }
+    }
+    float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
+    ImGui::SameLine(0.0f, spacing);
+    if (ImGui::ArrowButton("##continuous_interval_right", ImGuiDir_Right)) {
+        scan_update_interval_ += scan_update_interval_step_size_;
+        if (scan_update_interval_ > max_scan_update_interval_) {
+            scan_update_interval_ = max_scan_update_interval_;
+        }
+    }
+    ImGui::SameLine();
+    ImGui::Text("%d", scan_update_interval_);
     ImGui::EndDisabled();
 
     ImGui::Separator();

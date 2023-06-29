@@ -44,7 +44,9 @@ class RpcClient {
 
     RpcClient(const std::string& hostname, int port);
 
-    bool setServerState(ServerState_State state, ServerState_Mode mode);
+    bool setServerState(ServerState_State state);
+
+    void setScanMode(ScanMode_Mode mode, uint32_t update_interval);
 
     void setDownsamplingParams(uint32_t col, uint32_t row);
 

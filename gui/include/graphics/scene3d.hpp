@@ -33,9 +33,17 @@ class Scene3d : public Scene {
     std::unique_ptr<AxiscubeItem> axiscube_item_;
 
     ServerState_State server_state_;
-    ServerState_Mode  scan_mode_;
+    ScanMode_Mode  scan_mode_;
+    static constexpr uint32_t scan_update_interval_step_size_ {32};
+    static constexpr uint32_t min_scan_update_interval_ {32};
+    static constexpr uint32_t max_scan_update_interval_ {1024};
+    uint32_t scan_update_interval_;
 
     void onStateChanged(ServerState_State state);
+
+    void updateServerParams();
+
+    void setScanMode();
 
 public:
 
