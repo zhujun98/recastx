@@ -78,6 +78,10 @@ void RpcClient::startReconDataStream() {
     thread_ = std::thread([&]() {
         streaming_ = true;
         ReconData reply;
+
+        constexpr int min_timeout = 100;
+        constexpr int max_timeout = 2000;
+        int timeout = min_timeout;
         while (streaming_) {
             grpc::ClientContext context;
 
@@ -86,11 +90,17 @@ void RpcClient::startReconDataStream() {
             std::unique_ptr<grpc::ClientReader<ReconData> > reader(
                     reconstruction_stub_->GetReconData(&context, request));
             while(reader->Read(&reply)) {
-                log::info("Received ReconData");
+                log::debug("Received ReconData");
                 packets_.push(reply);
             }
             grpc::Status status = reader->Finish();
-            checkStatus(status);
+
+            if (checkStatus(status)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(timeout));
+                timeout = std::min(2 * timeout, max_timeout);
+            } else {
+                timeout = min_timeout;
+            }
         }
 
         log::debug("ReconData streaming finished");
