@@ -41,9 +41,9 @@ class Scene3d : public Scene {
 
     void onStateChanged(ServerState_State state);
 
-    void updateServerParams();
+    bool updateServerParams();
 
-    void setScanMode();
+    bool setScanMode();
 
 public:
 

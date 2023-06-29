@@ -58,9 +58,9 @@ void Scene3d::onFrameBufferSizeChanged(int width, int height) {
 
 void Scene3d::onStateChanged(ServerState_State state) {
     if (state == ServerState_State_PROCESSING || state == ServerState_State_ACQUIRING) {
-        updateServerParams();
+        if (updateServerParams()) return;
         for (auto item : items_) {
-            item->updateServerParams();
+            if (item->updateServerParams()) return;
         }
     }
 
@@ -79,12 +79,12 @@ void Scene3d::onStateChanged(ServerState_State state) {
     }
 }
 
-void Scene3d::updateServerParams() {
-    setScanMode();
+bool Scene3d::updateServerParams() {
+    return setScanMode();
 }
 
-void Scene3d::setScanMode() {
-    client_->setScanMode(scan_mode_, scan_update_interval_);
+bool Scene3d::setScanMode() {
+    return client_->setScanMode(scan_mode_, scan_update_interval_);
 }
 
 void Scene3d::render() {

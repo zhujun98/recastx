@@ -212,8 +212,8 @@ void ReconItem::renderGl(const glm::mat4& view,
     glDisable(GL_BLEND);
 }
 
-void ReconItem::updateServerParams() {
-    updateServerSliceParams();
+bool ReconItem::updateServerParams() {
+    return updateServerSliceParams();
 }
 
 void ReconItem::setSliceData(const std::string& data,
@@ -351,10 +351,13 @@ void ReconItem::initSlices() {
                                       glm::vec3(0.0f, 2.0f, 0.0f));
 }
 
-void ReconItem::updateServerSliceParams() {
+bool ReconItem::updateServerSliceParams() {
     for (auto& slice : slices_) {
-        scene_.client()->setSlice(slice.first, slice.second->orientation3());
+        if (scene_.client()->setSlice(slice.first, slice.second->orientation3())) {
+            return true;
+        }
     }
+    return false;
 }
 
 void ReconItem::initVolume() {

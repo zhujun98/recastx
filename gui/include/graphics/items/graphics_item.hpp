@@ -40,7 +40,7 @@ public:
 
     virtual void setState(ServerState_State state) { state_ = state; }
 
-    virtual void updateServerParams() {}
+    virtual bool updateServerParams() { return false; }
 
     [[nodiscard]] Scene& scene() const { return scene_; }
 };

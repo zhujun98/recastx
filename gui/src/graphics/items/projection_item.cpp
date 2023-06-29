@@ -65,12 +65,12 @@ void ProjectionItem::renderIm() {
     ImGui::EndDisabled();
 }
 
-void ProjectionItem::updateServerParams() {
-    setDownsamplingParams();
+bool ProjectionItem::updateServerParams() {
+    return setDownsamplingParams();
 }
 
-void ProjectionItem::setDownsamplingParams() {
-    scene_.client()->setDownsamplingParams(downsampling_col_, downsampling_row_);
+bool ProjectionItem::setDownsamplingParams() {
+    return scene_.client()->setDownsamplingParams(downsampling_col_, downsampling_row_);
 }
 
 } // namespace recastx::gui

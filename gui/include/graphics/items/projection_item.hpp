@@ -13,7 +13,7 @@ class ProjectionItem : public GraphicsItem {
     float x_offset_ = 0.f;
     float y_offset_ = 0.f;
 
-    void setDownsamplingParams();
+    bool setDownsamplingParams();
 
 public:
 
@@ -23,7 +23,7 @@ public:
 
     void renderIm() override;
 
-    void updateServerParams() override;
+    bool updateServerParams() override;
 };
 
 } // namespace recastx::gui
