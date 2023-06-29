@@ -284,7 +284,7 @@ void Application::onStateChanged(ServerState_State state) {
         init();
         daq_client_->startAcquiring();
 
-        spdlog::info("Start acquiring and processing data");
+        spdlog::info("Start acquiring and processing data:");
 
         if (scan_mode_ == ScanMode_Mode_CONTINUOUS) {
             spdlog::info("- Scan mode: continuous");

@@ -73,13 +73,7 @@ void Scene3d::onStateChanged(ServerState_State state) {
     for (auto item : items_) item->setState(state);
 
     if (state == ServerState_State::ServerState_State_PROCESSING) {
-        std::string mode_str;
-        if (scan_mode_ == ScanMode_Mode_CONTINUOUS) {
-            mode_str = "continuous";
-        } else { // scan_mode_ == ServerState_Mode_DISCRETE
-            mode_str = "discrete";
-        }
-        log::info("Start acquiring & processing data in '{}' mode", mode_str);
+        log::info("Start acquiring & processing data");
         client_->startReconDataStream();
     } else if (state == ServerState_State::ServerState_State_ACQUIRING) {
         log::info("Start acquiring data");
@@ -140,9 +134,9 @@ void Scene3d::render() {
 
     ImGui::BeginDisabled(server_state_ != ServerState_State::ServerState_State_READY);
     static int scan_mode = static_cast<int>(scan_mode_);
-    ImGui::RadioButton("Continuous", &scan_mode, 0);
+    ImGui::RadioButton("Continuous", &scan_mode, static_cast<int>(ScanMode_Mode_CONTINUOUS));
     ImGui::SameLine();
-    ImGui::RadioButton("Discrete", &scan_mode, 1);
+    ImGui::RadioButton("Discrete", &scan_mode, static_cast<int>(ScanMode_Mode_DISCRETE));
     scan_mode_ = ScanMode_Mode(scan_mode);
     ImGui::EndDisabled();
 
@@ -150,6 +144,7 @@ void Scene3d::render() {
     ImGui::SameLine();
     ImGui::BeginDisabled(scan_mode_ != ScanMode_Mode_CONTINUOUS);
     if (ImGui::ArrowButton("##continuous_interval_left", ImGuiDir_Left)) {
+        assert(scan_update_interval_ >= scan_update_interval_step_size_);
         scan_update_interval_ -= scan_update_interval_step_size_;
         if (scan_update_interval_ < min_scan_update_interval_) {
             scan_update_interval_ = min_scan_update_interval_;
