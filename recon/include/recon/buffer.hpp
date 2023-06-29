@@ -257,11 +257,10 @@ private:
     void reset();
 
     template<typename D>
-    void fill(const char* raw, size_t chunk_idx, size_t data_idx);
+    void fill(const char* raw, size_t index);
 
     template<typename D>
-    void fill(const char* raw, size_t chunk_idx, size_t data_idx, 
-              const std::array<size_t, N-1>& src_shape);
+    void fill(const char* raw, size_t index, const std::array<size_t, N-1>& src_shape);
 
     bool fetch(int timeout = -1);
 
@@ -334,16 +333,20 @@ void MemoryBuffer<T, N>::reset() {
 
 template<typename T, size_t N>
 template<typename D>
-void MemoryBuffer<T, N>::fill(const char* raw, size_t chunk_idx, size_t data_idx) {
+void MemoryBuffer<T, N>::fill(const char* raw, size_t index) {
     auto& shape = front_.shape();
-    fill<D>(raw, chunk_idx, data_idx, {shape[1], shape[2]});
+    fill<D>(raw, index, {shape[1], shape[2]});
 }
 
 
 template<typename T, size_t N>
 template<typename D>
-void MemoryBuffer<T, N>::fill(const char* raw, size_t chunk_idx, size_t data_idx, 
-                              const std::array<size_t, N-1>& src_shape) {
+void MemoryBuffer<T, N>::fill(
+        const char* raw, size_t index, const std::array<size_t, N-1>& src_shape) {
+
+    size_t chunk_size = shape()[0];
+    size_t chunk_idx = index / chunk_size;
+    size_t data_idx = index % chunk_size;
     std::lock_guard lk(mtx_);
 
     if (chunk_indices_.empty()) {
