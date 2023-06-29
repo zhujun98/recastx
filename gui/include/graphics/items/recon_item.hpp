@@ -107,8 +107,8 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
 
     void initSlices();
 
-    void resetSlices();
-  
+    void updateServerSliceParams();
+
     void initVolume();
 
     void updateHoveringSlice(float x, float y);
