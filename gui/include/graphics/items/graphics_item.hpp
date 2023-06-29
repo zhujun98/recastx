@@ -36,8 +36,6 @@ public:
 
     virtual void renderIm() {};
 
-    virtual void init();
-
     virtual void onWindowSizeChanged(int width, int height);
 
     virtual void setState(ServerState_State state) { state_ = state; }

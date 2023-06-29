@@ -45,9 +45,6 @@ int main(int argc, char** argv) {
     RpcClient rpc_client(opts["recon-host"].as<std::string>(), opts["rpc-port"].as<int>());
     scene.setClient(&rpc_client);
     app.setScene(&scene);
-
-    scene.init();
-
     app.exec();
 
     spdlog::info("GUI application closed!");

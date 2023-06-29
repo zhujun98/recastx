@@ -59,8 +59,6 @@ protected:
 
     virtual void render() = 0;
 
-    virtual void init();
-
     void addItem(GraphicsItem* item);
 
     bool handleMouseButton(int button, int action) override;

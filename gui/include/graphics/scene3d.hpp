@@ -51,8 +51,6 @@ public:
 
     ~Scene3d() override;
 
-    void init() override;
-
     void onFrameBufferSizeChanged(int width, int height) override;
 
     void render() override;

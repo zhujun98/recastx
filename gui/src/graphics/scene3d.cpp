@@ -32,15 +32,11 @@ Scene3d::Scene3d()
           scan_mode_(ScanMode_Mode_CONTINUOUS),
           scan_update_interval_(min_scan_update_interval_) {
     camera_ = std::make_unique<Camera>();
-}
-
-Scene3d::~Scene3d() = default;
-
-void Scene3d::init() {
-    Scene::init();
 
     scene_status_["tomoUpdateFrameRate"] = 0.;
 }
+
+Scene3d::~Scene3d() = default;
 
 void Scene3d::onFrameBufferSizeChanged(int width, int height) {
     viewport_->update(0, 0, width, height);

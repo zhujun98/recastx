@@ -133,7 +133,7 @@ public:
                   const glm::mat4& projection,
                   const RenderParams& params) override;
 
-    void init() override;
+    void updateServerParams() override;
 
     void setSliceData(const std::string& data,
                       const std::array<uint32_t, 2>& size,

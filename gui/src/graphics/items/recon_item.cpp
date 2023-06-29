@@ -119,7 +119,7 @@ void ReconItem::renderIm() {
 
     if(ImGui::Button("Reset slices")) {
         initSlices();
-        init();
+        updateServerParams();
     }
 
     ImGui::Checkbox("Show slice histograms", &show_statistics_);
@@ -212,7 +212,7 @@ void ReconItem::renderGl(const glm::mat4& view,
     glDisable(GL_BLEND);
 }
 
-void ReconItem::init() {
+void ReconItem::updateServerParams() {
     for (auto& slice : slices_) {
         scene_.client()->setSlice(slice.first, slice.second->orientation3());
     }
