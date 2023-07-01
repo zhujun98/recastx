@@ -113,8 +113,6 @@ class Application {
 
     void maybeInitReconBuffer(size_t col_count, size_t row_count);
 
-    void init();
-
     void maybeResetDarkAndFlatAcquisition() {
         if (reciprocal_computed_) {
             raw_buffer_.reset();
@@ -142,6 +140,8 @@ public:
                 const RpcServerConfig& rpc_config); 
 
     ~Application();
+
+    void init();
 
     template<typename ...Ts>
     void setFlatFieldCorrectionParams(Ts... args) {

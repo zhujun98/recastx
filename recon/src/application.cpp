@@ -26,6 +26,8 @@ Application::Application(size_t raw_buffer_size,
      : raw_buffer_(raw_buffer_size),
        imgproc_params_(imageproc_params),
        server_state_(ServerState_State_INIT),
+       scan_mode_(ScanMode_Mode_CONTINUOUS),
+       scan_update_interval_(K_MIN_SCAN_UPDATE_INTERVAL),
        daq_client_(new DaqClient("tcp://"s + daq_config.hostname + ":"s + std::to_string(daq_config.port),
                                  daq_config.socket_type,
                                  this)),
@@ -35,6 +37,30 @@ Application::~Application() {
     running_ = false; 
 } 
 
+void Application::init() {
+    uint32_t downsampling_col = imgproc_params_.downsampling_col;
+    uint32_t downsampling_row = imgproc_params_.downsampling_row;
+    size_t col_count = proj_geom_.col_count / downsampling_col;
+    size_t row_count = proj_geom_.row_count / downsampling_row;
+
+    maybeInitFlatFieldBuffer(row_count, col_count);
+
+    maybeInitReconBuffer(col_count, row_count);
+
+    initPaganin(col_count, row_count);
+    
+    initFilter(col_count, row_count);
+    
+    gpu_buffer_index_ = 0;
+    initReconstructor(col_count, row_count);
+
+    spdlog::info("Initial parameters for real-time 3D tomographic reconstruction:");
+    spdlog::info("- Number of required dark images: {}", flatfield_params_.num_darks);
+    spdlog::info("- Number of required flat images: {}", flatfield_params_.num_flats);
+    spdlog::info("- Number of projection images per tomogram: {}", proj_geom_.angles.size());
+    spdlog::info("- Projection image size: {} ({}) x {} ({})", 
+                 col_count, downsampling_col, row_count, downsampling_row);
+}
 
 void Application::setProjectionGeometry(BeamShape beam_shape, size_t col_count, size_t row_count,
                                         float pixel_width, float pixel_height,
@@ -456,31 +482,6 @@ void Application::maybeInitReconBuffer(size_t col_count, size_t row_count) {
         sino_buffer_.reshape({chunk_size, row_count, col_count});
         spdlog::debug("Reconstruction buffers resized");
     }
-}
-
-void Application::init() {
-    uint32_t downsampling_col = imgproc_params_.downsampling_col;
-    uint32_t downsampling_row = imgproc_params_.downsampling_row;
-    size_t col_count = proj_geom_.col_count / downsampling_col;
-    size_t row_count = proj_geom_.row_count / downsampling_row;
-
-    maybeInitFlatFieldBuffer(row_count, col_count);
-
-    maybeInitReconBuffer(col_count, row_count);
-
-    initPaganin(col_count, row_count);
-    
-    initFilter(col_count, row_count);
-    
-    gpu_buffer_index_ = 0;
-    initReconstructor(col_count, row_count);
-
-    spdlog::info("Initial parameters for real-time 3D tomographic reconstruction:");
-    spdlog::info("- Number of required dark images: {}", flatfield_params_.num_darks);
-    spdlog::info("- Number of required flat images: {}", flatfield_params_.num_flats);
-    spdlog::info("- Number of projection images per tomogram: {}", proj_geom_.angles.size());
-    spdlog::info("- Projection image size: {} ({}) x {} ({})", 
-                 col_count, downsampling_col, row_count, downsampling_row);
 }
 
 } // namespace recastx::recon

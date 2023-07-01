@@ -30,7 +30,7 @@ Scene3d::Scene3d()
           axiscube_item_(new AxiscubeItem(*this)),
           server_state_(ServerState_State::ServerState_State_READY),
           scan_mode_(ScanMode_Mode_CONTINUOUS),
-          scan_update_interval_(min_scan_update_interval_) {
+          scan_update_interval_(K_MIN_SCAN_UPDATE_INTERVAL) {
     camera_ = std::make_unique<Camera>();
 
     scene_status_["tomoUpdateFrameRate"] = 0.;
@@ -141,17 +141,17 @@ void Scene3d::render() {
     ImGui::BeginDisabled(scan_mode_ != ScanMode_Mode_CONTINUOUS);
     if (ImGui::ArrowButton("##continuous_interval_left", ImGuiDir_Left)) {
         assert(scan_update_interval_ >= scan_update_interval_step_size_);
-        scan_update_interval_ -= scan_update_interval_step_size_;
-        if (scan_update_interval_ < min_scan_update_interval_) {
-            scan_update_interval_ = min_scan_update_interval_;
+        scan_update_interval_ -= K_SCAN_UPDATE_INTERVAL_STEP_SIZE;
+        if (scan_update_interval_ < K_MIN_SCAN_UPDATE_INTERVAL) {
+            scan_update_interval_ = K_MIN_SCAN_UPDATE_INTERVAL;
         }
     }
     float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
     ImGui::SameLine(0.0f, spacing);
     if (ImGui::ArrowButton("##continuous_interval_right", ImGuiDir_Right)) {
-        scan_update_interval_ += scan_update_interval_step_size_;
-        if (scan_update_interval_ > max_scan_update_interval_) {
-            scan_update_interval_ = max_scan_update_interval_;
+        scan_update_interval_ += K_SCAN_UPDATE_INTERVAL_STEP_SIZE;
+        if (scan_update_interval_ > K_MAX_SCAN_UPDATE_INTERVAL) {
+            scan_update_interval_ = K_MAX_SCAN_UPDATE_INTERVAL;
         }
     }
     ImGui::SameLine();
