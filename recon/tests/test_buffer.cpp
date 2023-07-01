@@ -33,7 +33,7 @@ TEST(TripleTensorBufferTest, TestConstructor) {
 
 TEST(TripleTensorBufferTest, TestPrepareAndFetch) {
     TripleTensorBuffer<float, 2> b2f;
-    b2f.reshape({3, 2});
+    b2f.resize({3, 2});
 
     std::initializer_list<float> data1 {1.f, 2.f, 1.f, 2.f, 1.f, 2.f};
     std::initializer_list<float> data2 {3.f, 4.f, 3.f, 4.f, 3.f, 4.f};
@@ -60,7 +60,7 @@ TEST(SliceBufferTest, TestNonOnDemand) {
     sbf.insert(1);
     ASSERT_EQ(sbf.size(), 1);
     std::array<size_t, 2> shape {3, 5};
-    sbf.reshape(shape);
+    sbf.resize(shape);
     ASSERT_TRUE(sbf.insert(4));
     ASSERT_EQ(sbf.size(), 2);
     ASSERT_FALSE(sbf.insert(4));
@@ -83,7 +83,7 @@ TEST(SliceBufferTest, TestOnDemand) {
     ASSERT_TRUE(sbf.onDemand());
 
     std::array<size_t, 2> shape {5, 6};
-    sbf.reshape(shape);
+    sbf.resize(shape);
     sbf.insert(0);
     sbf.insert(1);
     sbf.insert(2);
@@ -116,7 +116,7 @@ protected:
     MemoryBuffer<float, 3> buffer_ {capacity_};
 
     void SetUp() override {
-        buffer_.reshape(shape_);
+        buffer_.resize(shape_);
     }
 };
 
@@ -221,7 +221,7 @@ TEST_F(MemoryBufferTest, TestReshape) {
 
     // expand
     std::array<size_t, 3> new_shape {4, 3, 4};
-    buffer_.reshape(new_shape);
+    buffer_.resize(new_shape);
     ASSERT_EQ(buffer_.occupied(), 0);
     EXPECT_THAT(buffer_.shape(), ElementsAre(4, 3, 4));
     for (size_t j = 0; j < new_shape[0]; ++j) {
@@ -230,7 +230,7 @@ TEST_F(MemoryBufferTest, TestReshape) {
     ASSERT_EQ(buffer_.occupied(), 1);
 
     // shrink
-    buffer_.reshape(shape_);
+    buffer_.resize(shape_);
     ASSERT_EQ(buffer_.occupied(), 0);
     EXPECT_THAT(buffer_.shape(), ElementsAre(4, 2, 3));
 }

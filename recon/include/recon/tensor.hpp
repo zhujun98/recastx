@@ -78,12 +78,12 @@ public:
         shape_.swap(other.shape_);
     }
 
-    void reshape(const ShapeType& shape) {
+    void resize(const ShapeType& shape) {
         data_.resize(std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>()));
         shape_ = shape;
     }
 
-    void reshape(const ShapeType& shape, T value) {
+    void resize(const ShapeType& shape, T value) {
         data_.resize(std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>()), value);
     }
 

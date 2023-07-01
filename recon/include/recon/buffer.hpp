@@ -117,15 +117,15 @@ public:
     TripleTensorBuffer() = default;
     ~TripleTensorBuffer() override = default;
 
-    virtual void reshape(const ShapeType& shape);
+    virtual void resize(const ShapeType& shape);
 };
 
 template<typename T, size_t N>
-void TripleTensorBuffer<T, N>::reshape(const ShapeType& shape) {
+void TripleTensorBuffer<T, N>::resize(const ShapeType& shape) {
     std::lock_guard(this->mtx_);
-    this->back_.reshape(shape);
-    this->ready_.reshape(shape);
-    this->front_.reshape(shape);
+    this->back_.resize(shape);
+    this->ready_.resize(shape);
+    this->front_.resize(shape);
 }
 
 
@@ -162,7 +162,7 @@ public:
 
     bool insert(size_t index);
 
-    void reshape(const ShapeType& shape);
+    void resize(const ShapeType& shape);
 
     const ShapeType& shape() const { return shape_; }
 
@@ -183,11 +183,11 @@ bool SliceBuffer<T>::insert(size_t index) {
 }
 
 template<typename T>
-void SliceBuffer<T>::reshape(const ShapeType& shape) {
+void SliceBuffer<T>::resize(const ShapeType& shape) {
     std::lock_guard lk(this->mtx_);
-    for (auto& [k, v] : this->back_) std::get<2>(v).reshape(shape);
-    for (auto& [k, v] : this->ready_) std::get<2>(v).reshape(shape);
-    for (auto& [k, v] : this->front_) std::get<2>(v).reshape(shape);
+    for (auto& [k, v] : this->back_) std::get<2>(v).resize(shape);
+    for (auto& [k, v] : this->ready_) std::get<2>(v).resize(shape);
+    for (auto& [k, v] : this->front_) std::get<2>(v).resize(shape);
     shape_ = shape;
 }
 
@@ -260,7 +260,7 @@ private:
     explicit MemoryBuffer(size_t capacity);
     ~MemoryBuffer() = default;
 
-    void reshape(const std::array<size_t, N>& shape);
+    void resize(const std::array<size_t, N>& shape);
 
     void reset();
 
@@ -315,11 +315,11 @@ MemoryBuffer<T, N>::MemoryBuffer(size_t capacity) : capacity_(capacity) {
 }
 
 template<typename T, size_t N>
-void MemoryBuffer<T, N>::reshape(const std::array<size_t, N>& shape) {
+void MemoryBuffer<T, N>::resize(const std::array<size_t, N>& shape) {
     reset();
 
-    for (size_t i = 0; i < capacity_; ++i) buffer_[i].reshape(shape);
-    front_.reshape(shape);
+    for (size_t i = 0; i < capacity_; ++i) buffer_[i].resize(shape);
+    front_.resize(shape);
 }
 
 template<typename T, size_t N>

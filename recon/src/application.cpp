@@ -442,8 +442,8 @@ void Application::initReconstructor(size_t col_count, size_t row_count) {
     slice_geom_ = {s_size, s_size, 1, min_x, max_x, min_y, max_y, z0 - half_slice_height, z0 + half_slice_height};
     preview_geom_ = {p_size, p_size, p_size, min_x, max_x, min_y, max_y, min_z, max_z};
 
-    preview_buffer_.reshape({preview_geom_.col_count, preview_geom_.row_count, preview_geom_.slice_count});
-    slice_mediator_.reshape({slice_geom_.col_count, slice_geom_.row_count});
+    preview_buffer_.resize({preview_geom_.col_count, preview_geom_.row_count, preview_geom_.slice_count});
+    slice_mediator_.resize({slice_geom_.col_count, slice_geom_.row_count});
 
     bool double_buffer = scan_mode_ == ScanMode_Mode_DISCRETE;
     if (proj_geom_.beam_shape == BeamShape::CONE) {
@@ -464,20 +464,20 @@ void Application::maybeInitFlatFieldBuffer(size_t row_count, size_t col_count) {
 
     auto shape_d = darks_.shape();
     if (shape_d[0] != num_darks || shape_d[1] != row_count_orig || shape_d[2] != col_count_orig) {
-        darks_.reshape({num_darks, row_count_orig, col_count_orig});
+        darks_.resize({num_darks, row_count_orig, col_count_orig});
         spdlog::debug("Dark image buffer resized");
     }
 
     auto shape_f = flats_.shape();
     if (shape_f[0] != num_flats || shape_f[1] != row_count_orig || shape_f[2] != col_count_orig) {
-        flats_.reshape({num_flats, row_count_orig, col_count_orig});
+        flats_.resize({num_flats, row_count_orig, col_count_orig});
         spdlog::debug("Flat image buffer resized");
     }
 
     auto shape = dark_avg_.shape();
     if (shape[0] != row_count || shape[1] != col_count) {
-        dark_avg_.reshape({row_count, col_count});
-        reciprocal_.reshape({row_count, col_count});
+        dark_avg_.resize({row_count, col_count});
+        reciprocal_.resize({row_count, col_count});
         spdlog::debug("Reciprocal buffer resized");
     }
 
@@ -489,8 +489,8 @@ void Application::maybeInitReconBuffer(size_t col_count, size_t row_count) {
                          ? scan_update_interval_ : proj_geom_.angles.size());
     auto shape = raw_buffer_.shape();
     if (shape[0] != chunk_size || shape[1] != row_count || shape[2] != col_count) {
-        raw_buffer_.reshape({chunk_size, row_count, col_count});
-        sino_buffer_.reshape({chunk_size, row_count, col_count});
+        raw_buffer_.resize({chunk_size, row_count, col_count});
+        sino_buffer_.resize({chunk_size, row_count, col_count});
         spdlog::debug("Reconstruction buffers resized");
     }
 }
