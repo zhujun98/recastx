@@ -161,6 +161,8 @@ void Application::startReconstructing() {
                 sino_uploaded_ = false;
             }
             
+            spdlog::info("Volume and slices reconstructed");
+
             preview_buffer_.prepare();
  
 #if (VERBOSITY >= 1)
