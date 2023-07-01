@@ -38,7 +38,7 @@ TEST(SliceMediatorTest, TestUpdate) {
     ASSERT_EQ(params.at(1).second, orient1);
 
     std::array<size_t, 2> shape {5, 6};
-    mediator.reshape(shape);
+    mediator.resize(shape);
     ASSERT_EQ(all.shape(), shape);
     ASSERT_EQ(on_demand.shape(), shape);
 

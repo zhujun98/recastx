@@ -81,12 +81,12 @@ TEST(TestTensor, TestAssignment) {
 TEST(TensorTest, TestReshape) {
     Tensor<float, 2> t2f({3, 2});
     t2f = {1, 1, 1, 2, 2, 2};
-    t2f.reshape({1, 4});
+    t2f.resize({1, 4});
     EXPECT_THAT(t2f, ElementsAre(1, 1, 1, 2));
     ASSERT_THAT(t2f.shape(), ElementsAre(1, 4));
     ASSERT_EQ(t2f.size(), 4);
 
-    t2f.reshape({2, 3}, 6);
+    t2f.resize({2, 3}, 6);
     EXPECT_THAT(t2f, ElementsAre(1, 1, 1, 2, 6, 6));
 }
 

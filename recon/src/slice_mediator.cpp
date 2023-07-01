@@ -19,9 +19,9 @@ SliceMediator::SliceMediator() : ondemand_slices_(true) {}
 
 SliceMediator::~SliceMediator() = default;
 
-void SliceMediator::reshape(const SliceBufferType::ShapeType& shape) {
-    all_slices_.reshape(shape);
-    ondemand_slices_.reshape(shape);
+void SliceMediator::resize(const SliceBufferType::ShapeType& shape) {
+    all_slices_.resize(shape);
+    ondemand_slices_.resize(shape);
 }
 
 void SliceMediator::update(size_t timestamp, const Orientation& orientation) {

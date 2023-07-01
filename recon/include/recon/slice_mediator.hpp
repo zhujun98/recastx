@@ -49,7 +49,7 @@ public:
     SliceMediator(SliceMediator&& other) noexcept = delete;
     SliceMediator& operator=(SliceMediator&& other) noexcept = delete;
 
-    void reshape(const SliceBufferType::ShapeType& shape);
+    void resize(const SliceBufferType::ShapeType& shape);
 
     void update(size_t timestamp, const Orientation& orientation);
 
