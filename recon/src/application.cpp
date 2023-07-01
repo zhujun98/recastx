@@ -111,18 +111,19 @@ void Application::startUploading() {
             spdlog::info("Uploading sinograms to GPU ...");
             size_t chunk_size = sino_buffer_.front().shape()[0];
             {
-                std::lock_guard<std::mutex> lck(gpu_mutex_);
                 
                 if (scan_mode_ == ScanMode_Mode_DISCRETE) {
                     recon_->uploadSinograms(1 - gpu_buffer_index_, sino_buffer_.front().data(), chunk_size);
+                    std::lock_guard<std::mutex> lck(gpu_mutex_);
                     gpu_buffer_index_ = 1 - gpu_buffer_index_;
+                    sino_uploaded_ = true;
                 } else {
+                    std::lock_guard<std::mutex> lck(gpu_mutex_);
+                    sino_uploaded_ = true;
                     recon_->uploadSinograms(gpu_buffer_index_, sino_buffer_.front().data(), chunk_size);
                 }
 
                 spdlog::debug("Sinogram uploaded!");
-
-                sino_uploaded_ = true;
             }
 
             gpu_cv_.notify_one();
@@ -160,6 +161,8 @@ void Application::startReconstructing() {
                 sino_uploaded_ = false;
             }
             
+            spdlog::info("Volume and slices reconstructed");
+
             preview_buffer_.prepare();
  
 #if (VERBOSITY >= 1)
