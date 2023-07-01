@@ -28,12 +28,6 @@ void Scene::onWindowSizeChanged(int width, int height) {
     }
 }
 
-void Scene::init() {
-    for (auto &comp : items_) {
-        comp->init();
-    }
-}
-
 void Scene::addItem(GraphicsItem* item) {
     items_.push_back(item);
     auto data_item = dynamic_cast<GraphicsDataItem*>(item);

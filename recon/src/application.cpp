@@ -1,4 +1,3 @@
-#include <chrono>
 #include <complex>
 #include <numeric>
 
@@ -26,7 +25,9 @@ Application::Application(size_t raw_buffer_size,
                          const RpcServerConfig& rpc_config)
      : raw_buffer_(raw_buffer_size),
        imgproc_params_(imageproc_params),
-       server_state_(ServerState_State_READY),
+       server_state_(ServerState_State_INIT),
+       scan_mode_(ScanMode_Mode_CONTINUOUS),
+       scan_update_interval_(K_MIN_SCAN_UPDATE_INTERVAL),
        daq_client_(new DaqClient("tcp://"s + daq_config.hostname + ":"s + std::to_string(daq_config.port),
                                  daq_config.socket_type,
                                  this)),
@@ -37,37 +38,26 @@ Application::~Application() {
 } 
 
 void Application::init() {
-    if (initialized_) return;
-    
     uint32_t downsampling_col = imgproc_params_.downsampling_col;
     uint32_t downsampling_row = imgproc_params_.downsampling_row;
     size_t col_count = proj_geom_.col_count / downsampling_col;
     size_t row_count = proj_geom_.row_count / downsampling_row;
 
-    size_t num_darks = flatfield_params_.num_darks;
-    size_t num_flats = flatfield_params_.num_flats;
-    size_t num_angles = proj_geom_.angles.size();
+    maybeInitFlatFieldBuffer(row_count, col_count);
 
-    // original darks and flats are stored
-    darks_.reshape({num_darks, proj_geom_.row_count, proj_geom_.col_count});
-    flats_.reshape({num_flats, proj_geom_.row_count, proj_geom_.col_count});
-
-    dark_avg_.reshape({row_count, col_count});
-    reciprocal_.reshape({row_count, col_count});
-    reciprocal_computed_ = false;
-
-    raw_buffer_.reshape({num_angles, row_count, col_count});
-    sino_buffer_.reshape({num_angles, row_count, col_count});
+    maybeInitReconBuffer(col_count, row_count);
 
     initPaganin(col_count, row_count);
+    
     initFilter(col_count, row_count);
+    
+    gpu_buffer_index_ = 0;
     initReconstructor(col_count, row_count);
 
-    initialized_ = true;
     spdlog::info("Initial parameters for real-time 3D tomographic reconstruction:");
-    spdlog::info("- Number of required dark images: {}", num_darks);
-    spdlog::info("- Number of required flat images: {}", num_flats);
-    spdlog::info("- Number of projection images per tomogram: {}", num_angles);
+    spdlog::info("- Number of required dark images: {}", flatfield_params_.num_darks);
+    spdlog::info("- Number of required flat images: {}", flatfield_params_.num_flats);
+    spdlog::info("- Number of projection images per tomogram: {}", proj_geom_.angles.size());
     spdlog::info("- Projection image size: {} ({}) x {} ({})", 
                  col_count, downsampling_col, row_count, downsampling_row);
 }
@@ -98,8 +88,9 @@ void Application::startPreprocessing() {
     auto t = std::thread([&] {
         oneapi::tbb::task_arena arena(imgproc_params_.num_threads);
         while (running_) {
+            if (waitForProcessing()) continue;
+
             if (!raw_buffer_.fetch(100)) continue; 
-            if (server_state_ != ServerState_State::ServerState_State_PROCESSING) continue;
 
             spdlog::info("Processing projections ...");
             processProjections(arena);
@@ -112,20 +103,28 @@ void Application::startPreprocessing() {
 void Application::startUploading() {
     auto t = std::thread([&] {
 
-        size_t num_angles = proj_geom_.angles.size();
         while (running_) {
+            if(waitForProcessing()) continue;
+
             if (!sino_buffer_.fetch(100)) continue;
-            if (server_state_ != ServerState_State::ServerState_State_PROCESSING) continue;
 
             spdlog::info("Uploading sinograms to GPU ...");
-            recon_->uploadSinograms(
-                1 - gpu_buffer_index_, sino_buffer_.front().data(), 0, num_angles - 1);
-
+            size_t chunk_size = sino_buffer_.front().shape()[0];
             {
                 std::lock_guard<std::mutex> lck(gpu_mutex_);
+                
+                if (scan_mode_ == ScanMode_Mode_DISCRETE) {
+                    recon_->uploadSinograms(1 - gpu_buffer_index_, sino_buffer_.front().data(), chunk_size);
+                    gpu_buffer_index_ = 1 - gpu_buffer_index_;
+                } else {
+                    recon_->uploadSinograms(gpu_buffer_index_, sino_buffer_.front().data(), chunk_size);
+                }
+
+                spdlog::debug("Sinogram uploaded!");
+
                 sino_uploaded_ = true;
-                gpu_buffer_index_ = 1 - gpu_buffer_index_;
             }
+
             gpu_cv_.notify_one();
         }
     });
@@ -145,10 +144,11 @@ void Application::startReconstructing() {
 #endif
 
         while (running_) {
+            if (waitForProcessing()) continue;
+
             {
                 std::unique_lock<std::mutex> lck(gpu_mutex_);
                 if (gpu_cv_.wait_for(lck, 10ms, [&] { return sino_uploaded_; })) {
-                    if (server_state_ != ServerState_State::ServerState_State_PROCESSING) continue;
                     recon_->reconstructPreview(gpu_buffer_index_, preview_buffer_.back());
                 } else {
                     slice_mediator_.reconOnDemand(recon_.get(), gpu_buffer_index_);
@@ -191,6 +191,8 @@ void Application::startReconstructing() {
 }
 
 void Application::runForEver() {
+    // Wait for initilization
+
     startPreprocessing();
     startUploading();
     startReconstructing();
@@ -239,9 +241,8 @@ void Application::pushProjection(
                 reciprocal_computed_ = true;
             }
 
-            size_t num_angles = proj_geom_.angles.size();
             // TODO: compute the average on the fly instead of storing the data in the buffer
-            raw_buffer_.fill<RawDtype>(data, proj_idx / num_angles, proj_idx % num_angles, {num_rows, num_cols});
+            raw_buffer_.fill<RawDtype>(data, proj_idx, {num_rows, num_cols});
             break;
         }
         case ProjectionType::dark: {
@@ -260,11 +261,10 @@ void Application::pushProjection(
 }
 
 void Application::setDownsamplingParams(uint32_t col, uint32_t row) {
-    initialized_ = false;
     imgproc_params_.downsampling_col = col;
     imgproc_params_.downsampling_row = row;
 
-    spdlog::info("Set image downsampling parameters: {} / {}", col, row);
+    spdlog::debug("Set image downsampling parameters: {} / {}", col, row);
 }
 
 void Application::setSlice(size_t timestamp, const Orientation& orientation) {
@@ -273,14 +273,23 @@ void Application::setSlice(size_t timestamp, const Orientation& orientation) {
 
 void Application::setScanMode(ScanMode_Mode mode, uint32_t update_interval) {
     scan_mode_ = mode;
-    scan_update_inverval_ = update_interval;
+    scan_update_interval_ = update_interval;
+    
+    if (mode == ScanMode_Mode_DISCRETE) {
+        spdlog::debug("Set scan mode: {}", static_cast<int>(mode));
+    } else {
+        spdlog::debug("Set scan mode: {}, update interval {}", 
+                      static_cast<int>(mode), update_interval);
+    }
 }
 
 void Application::onStateChanged(ServerState_State state) {
-    if (server_state_ == state) return;
+    if (server_state_ == state) {
+        spdlog::debug("Server allready in state: {}", static_cast<int>(state));
+        return;
+    }
 
-    server_state_ = state;
-    if (server_state_ == ServerState_State::ServerState_State_PROCESSING) {
+    if (state == ServerState_State::ServerState_State_PROCESSING) {
         init();
         daq_client_->startAcquiring();
 
@@ -288,18 +297,20 @@ void Application::onStateChanged(ServerState_State state) {
 
         if (scan_mode_ == ScanMode_Mode_CONTINUOUS) {
             spdlog::info("- Scan mode: continuous");
-            spdlog::info("- Update interval: {}", scan_update_inverval_);
+            spdlog::info("- Update interval: {}", scan_update_interval_);
         } else if (scan_mode_ == ScanMode_Mode_DISCRETE) {
             spdlog::info("- Scan mode: discrete");
         }
-
-    } else if (server_state_ == ServerState_State::ServerState_State_ACQUIRING) {
+    } else if (state == ServerState_State::ServerState_State_ACQUIRING) {
+        init();
         daq_client_->startAcquiring();
         spdlog::info("Start acquiring data");
-    } else if (server_state_ == ServerState_State::ServerState_State_READY) {
+    } else if (state == ServerState_State::ServerState_State_READY) {
         daq_client_->stopAcquiring();
         spdlog::info("Stop acquiring and processing data");
     }
+    
+    server_state_ = state;
 }
 
 std::optional<ReconData> Application::previewData(int timeout) { 
@@ -342,7 +353,7 @@ std::vector<ReconData> Application::onDemandSliceData(int timeout) {
 void Application::processProjections(oneapi::tbb::task_arena& arena) {
 
     auto& shape = raw_buffer_.shape();
-    auto [num_angles, row_count, col_count] = shape;
+    auto [chunk_size, row_count, col_count] = shape;
     size_t num_pixels = row_count * col_count;
 
 #if (VERBOSITY >= 2)
@@ -353,7 +364,7 @@ void Application::processProjections(oneapi::tbb::task_arena& arena) {
 
     using namespace oneapi;
     arena.execute([&]{
-        tbb::parallel_for(tbb::blocked_range<int>(0, static_cast<int>(num_angles)),
+        tbb::parallel_for(tbb::blocked_range<int>(0, static_cast<int>(chunk_size)),
                           [&](const tbb::blocked_range<int> &block) {
             for (auto i = block.begin(); i != block.end(); ++i) {
                 float* p = &projs[i * num_pixels];
@@ -377,9 +388,9 @@ void Application::processProjections(oneapi::tbb::task_arena& arena) {
         tbb::parallel_for(tbb::blocked_range<int>(0, row_count),
                           [&](const tbb::blocked_range<int> &block) {
             for (auto i = block.begin(); i != block.end(); ++i) {
-                for (size_t j = 0; j < num_angles; ++j) {
+                for (size_t j = 0; j < chunk_size; ++j) {
                     for (size_t k = 0; k < col_count; ++k) {
-                        sinos[i * num_angles * col_count + j * col_count + k] = 
+                        sinos[i * chunk_size * col_count + j * col_count + k] = 
                             projs[j * col_count * row_count + i * col_count + k];
                     }
                 }
@@ -389,6 +400,7 @@ void Application::processProjections(oneapi::tbb::task_arena& arena) {
 
     sino_buffer_.prepare();
 }
+
 
 void Application::initPaganin(size_t col_count, size_t row_count) {
     if (paganin_cfg_.has_value()) {
@@ -421,10 +433,54 @@ void Application::initReconstructor(size_t col_count, size_t row_count) {
 
     preview_buffer_.reshape({preview_geom_.col_count, preview_geom_.row_count, preview_geom_.slice_count});
     slice_mediator_.reshape({slice_geom_.col_count, slice_geom_.row_count});
+
+    bool double_buffer = scan_mode_ == ScanMode_Mode_DISCRETE;
     if (proj_geom_.beam_shape == BeamShape::CONE) {
-        recon_ = std::make_unique<ConeBeamReconstructor>(col_count, row_count, proj_geom_, slice_geom_, preview_geom_);
+        recon_ = std::make_unique<ConeBeamReconstructor>(
+            col_count, row_count, proj_geom_, slice_geom_, preview_geom_, double_buffer);
     } else {
-        recon_ = std::make_unique<ParallelBeamReconstructor>(col_count, row_count, proj_geom_, slice_geom_, preview_geom_);
+        recon_ = std::make_unique<ParallelBeamReconstructor>(
+            col_count, row_count, proj_geom_, slice_geom_, preview_geom_, double_buffer);
+    }
+}
+
+void Application::maybeInitFlatFieldBuffer(size_t row_count, size_t col_count) {
+    // store original darks and flats
+    size_t num_darks = flatfield_params_.num_darks;
+    size_t num_flats = flatfield_params_.num_flats;
+    size_t row_count_orig = proj_geom_.row_count;
+    size_t col_count_orig = proj_geom_.col_count;
+
+    auto shape_d = darks_.shape();
+    if (shape_d[0] != num_darks || shape_d[1] != row_count_orig || shape_d[2] != col_count_orig) {
+        darks_.reshape({num_darks, row_count_orig, col_count_orig});
+        spdlog::debug("Dark image buffer resized");
+    }
+
+    auto shape_f = flats_.shape();
+    if (shape_f[0] != num_flats || shape_f[1] != row_count_orig || shape_f[2] != col_count_orig) {
+        flats_.reshape({num_flats, row_count_orig, col_count_orig});
+        spdlog::debug("Flat image buffer resized");
+    }
+
+    auto shape = dark_avg_.shape();
+    if (shape[0] != row_count || shape[1] != col_count) {
+        dark_avg_.reshape({row_count, col_count});
+        reciprocal_.reshape({row_count, col_count});
+        spdlog::debug("Reciprocal buffer resized");
+    }
+
+    reciprocal_computed_ = false;
+}
+
+void Application::maybeInitReconBuffer(size_t col_count, size_t row_count) {
+    size_t chunk_size = (scan_mode_ == ScanMode_Mode_CONTINUOUS 
+                         ? scan_update_interval_ : proj_geom_.angles.size());
+    auto shape = raw_buffer_.shape();
+    if (shape[0] != chunk_size || shape[1] != row_count || shape[2] != col_count) {
+        raw_buffer_.reshape({chunk_size, row_count, col_count});
+        sino_buffer_.reshape({chunk_size, row_count, col_count});
+        spdlog::debug("Reconstruction buffers resized");
     }
 }
 

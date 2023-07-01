@@ -46,11 +46,11 @@ class RpcClient {
 
     bool setServerState(ServerState_State state);
 
-    void setScanMode(ScanMode_Mode mode, uint32_t update_interval);
+    bool setScanMode(ScanMode_Mode mode, uint32_t update_interval);
 
-    void setDownsamplingParams(uint32_t col, uint32_t row);
+    bool setDownsamplingParams(uint32_t col, uint32_t row);
 
-    void setSlice(uint64_t timestamp, const Orientation& orientation);
+    bool setSlice(uint64_t timestamp, const Orientation& orientation);
 
     void startReconDataStream();
 

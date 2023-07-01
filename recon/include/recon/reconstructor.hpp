@@ -29,10 +29,23 @@ namespace details {
     std::string astraInfo(const astra::CVolumeGeometry3D& x);
 }
 
+class Uploader {
+
+    size_t start_;
+    size_t group_size_;
+
+  public:
+
+    explicit Uploader(size_t group_size);
+
+    void upload(astra::CFloat32ProjectionData3DGPU* dst, const float* src, size_t n);
+};
+
 class Reconstructor {
 
 protected:
 
+    std::vector<Uploader> uploader_;
     std::vector<std::unique_ptr<astra::CFloat32ProjectionData3DGPU>> p_data_;
     std::vector<astraCUDA3d::MemHandle3D> p_mem_;
     std::unique_ptr<astra::CCudaProjector3D> projector_;
@@ -52,7 +65,10 @@ protected:
 
 public:
 
-    Reconstructor(VolumeGeometry s_geom, VolumeGeometry v_geom);
+    Reconstructor(const ProjectionGeometry& p_geom, 
+                  const VolumeGeometry& s_geom, 
+                  const VolumeGeometry& v_geom,
+                  bool double_buffer);
 
     virtual ~Reconstructor();
 
@@ -60,7 +76,7 @@ public:
 
     virtual void reconstructPreview(int buffer_idx, Tensor<float, 3>& buffer) = 0;
 
-    void uploadSinograms(int buffer_idx, const float* data, int begin, int end);
+    void uploadSinograms(int buffer_idx, const float* data, size_t n);
 };
 
 class ParallelBeamReconstructor : public Reconstructor {
@@ -73,8 +89,12 @@ class ParallelBeamReconstructor : public Reconstructor {
 
 public:
 
-    ParallelBeamReconstructor(size_t col_count, size_t row_count, ProjectionGeometry p_geom, 
-                              VolumeGeometry s_geom, VolumeGeometry v_geom);
+    ParallelBeamReconstructor(size_t col_count, 
+                              size_t row_count, 
+                              const ProjectionGeometry& p_geom, 
+                              const VolumeGeometry& s_geom, 
+                              const VolumeGeometry& v_geom, 
+                              bool double_buffer);
     // FIXME ~solver clean up
 
     void reconstructSlice(Orientation x, int buffer_idx, Tensor<float, 2>& buffer) override;
@@ -92,8 +112,12 @@ class ConeBeamReconstructor : public Reconstructor {
 
 public:
 
-    ConeBeamReconstructor(size_t col_count, size_t row_count, ProjectionGeometry p_geom, 
-                          VolumeGeometry s_geom, VolumeGeometry v_geom);
+    ConeBeamReconstructor(size_t col_count, 
+                          size_t row_count, 
+                          const ProjectionGeometry& p_geom, 
+                          const VolumeGeometry& s_geom, 
+                          const VolumeGeometry& v_geom, 
+                          bool double_buffer);
     // FIXME ~solver clean up
 
     void reconstructSlice(Orientation x, int buffer_idx, Tensor<float, 2>& buffer) override;

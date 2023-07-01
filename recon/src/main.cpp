@@ -182,8 +182,6 @@ int main(int argc, char** argv) {
                               num_cols, num_rows, 1.0f, 1.0f, 0.0f, 0.0f, num_angles);
     app.setReconGeometry(slice_size, preview_size, minx, maxx, miny, maxy, minz, maxz);
 
-    app.init();
-    
     app.runForEver();
 
     return 0;

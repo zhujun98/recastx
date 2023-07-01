@@ -34,24 +34,19 @@ class Scene3d : public Scene {
 
     ServerState_State server_state_;
     ScanMode_Mode  scan_mode_;
-    static constexpr uint32_t scan_update_interval_step_size_ {32};
-    static constexpr uint32_t min_scan_update_interval_ {32};
-    static constexpr uint32_t max_scan_update_interval_ {1024};
     uint32_t scan_update_interval_;
 
     void onStateChanged(ServerState_State state);
 
-    void updateServerParams();
+    bool updateServerParams();
 
-    void setScanMode();
+    bool setScanMode();
 
 public:
 
     explicit Scene3d();
 
     ~Scene3d() override;
-
-    void init() override;
 
     void onFrameBufferSizeChanged(int width, int height) override;
 

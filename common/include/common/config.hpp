@@ -11,6 +11,10 @@ namespace recastx {
     inline constexpr size_t MAX_NUM_SLICES = 3;
     inline constexpr int K_MAX_RPC_RECV_MESSAGE_SIZE = 2048 * 2048 * 4;
 
+    inline constexpr uint32_t K_SCAN_UPDATE_INTERVAL_STEP_SIZE = 16;
+    inline constexpr uint32_t K_MIN_SCAN_UPDATE_INTERVAL = 16;
+    inline constexpr uint32_t K_MAX_SCAN_UPDATE_INTERVAL = 128;
+
     using Orientation = std::array<float, 9>;
 
     enum class ProjectionType : int { dark = 0, flat = 1, projection = 2, unknown = 99 };

@@ -47,9 +47,12 @@ protected:
     Application app_;
 
     ApplicationTest() : app_ {buffer_size_, imgproc_params, daq_cfg, rpc_cfg} {
+        app_.setScanMode(ScanMode_Mode_DISCRETE, num_angles_);
     }
 
-    ~ApplicationTest() override = default;
+    ~ApplicationTest() override {
+        app_.onStateChanged(ServerState_State::ServerState_State_INIT);
+    };
 
     void SetUp() override { 
         app_.setFlatFieldCorrectionParams(num_darks_, num_flats_);
@@ -98,7 +101,6 @@ protected:
 };
 
 TEST_F(ApplicationTest, TestPushProjection) {
-    app_.init();
     app_.startPreprocessing();
     app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
 
@@ -133,7 +135,6 @@ TEST_F(ApplicationTest, TestPushProjection) {
 }
 
 TEST_F(ApplicationTest, TestMemoryBufferReset) {
-    app_.init();
     app_.startPreprocessing();
     app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
 
@@ -151,7 +152,6 @@ TEST_F(ApplicationTest, TestMemoryBufferReset) {
 }
 
 TEST_F(ApplicationTest, TestPushProjectionUnordered) {
-    app_.init();
     app_.startPreprocessing();
     app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
     
@@ -192,7 +192,6 @@ TEST_F(ApplicationTest, TestPushProjectionUnordered) {
 }
 
 TEST_F(ApplicationTest, TestUploading) {
-    app_.init();
     app_.startPreprocessing();
     app_.startUploading();
     app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
@@ -201,7 +200,6 @@ TEST_F(ApplicationTest, TestUploading) {
 }
 
 TEST_F(ApplicationTest, TestReconstructing) {
-    app_.init();
     app_.startPreprocessing();
     app_.startUploading();
     app_.startReconstructing();
@@ -218,7 +216,6 @@ TEST_F(ApplicationTest, TestWithPagagin) {
     float distance = 40.f;
     app_.setPaganinParams(pixel_size, lambda, delta, beta, distance);
 
-    app_.init();
     app_.startPreprocessing();
     app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
     
@@ -230,7 +227,6 @@ TEST_F(ApplicationTest, TestWithPagagin) {
 
 
 TEST_F(ApplicationTest, TestDownsampling) {
-    app_.init();
     app_.startPreprocessing();
     app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
 

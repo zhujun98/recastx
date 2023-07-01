@@ -119,7 +119,7 @@ void ReconItem::renderIm() {
 
     if(ImGui::Button("Reset slices")) {
         initSlices();
-        init();
+        updateServerSliceParams();
     }
 
     ImGui::Checkbox("Show slice histograms", &show_statistics_);
@@ -212,10 +212,8 @@ void ReconItem::renderGl(const glm::mat4& view,
     glDisable(GL_BLEND);
 }
 
-void ReconItem::init() {
-    for (auto& slice : slices_) {
-        scene_.client()->setSlice(slice.first, slice.second->orientation3());
-    }
+bool ReconItem::updateServerParams() {
+    return updateServerSliceParams();
 }
 
 void ReconItem::setSliceData(const std::string& data,
@@ -335,10 +333,6 @@ void ReconItem::initSlices() {
     for (size_t i = 0; i < MAX_NUM_SLICES; ++i)
         slices_.emplace_back(i, std::make_unique<Slice>(i));
 
-    resetSlices();
-}
-
-void ReconItem::resetSlices() {
     assert(slices_.size() == MAX_NUM_SLICES);
 
     // slice along axis 0 = x
@@ -355,6 +349,15 @@ void ReconItem::resetSlices() {
     slices_[2].second->setOrientation(glm::vec3(-1.0f, -1.0f, 0.0f),
                                       glm::vec3(2.0f, 0.0f, 0.0f),
                                       glm::vec3(0.0f, 2.0f, 0.0f));
+}
+
+bool ReconItem::updateServerSliceParams() {
+    for (auto& slice : slices_) {
+        if (scene_.client()->setSlice(slice.first, slice.second->orientation3())) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void ReconItem::initVolume() {

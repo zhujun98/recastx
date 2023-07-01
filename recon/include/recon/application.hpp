@@ -3,6 +3,7 @@
 
 #include <complex>
 #include <condition_variable>
+#include <chrono>
 #include <cstdint>
 #include <iostream>
 #include <optional>
@@ -65,8 +66,6 @@ class Application {
 
     TripleTensorBuffer<ProDtype, 3> preview_buffer_;
 
-    bool initialized_ = false;
-
     std::optional<PaganinConfig> paganin_cfg_;
     std::unique_ptr<Paganin> paganin_;
     
@@ -96,7 +95,7 @@ class Application {
 
     ServerState_State server_state_;
     ScanMode_Mode scan_mode_;
-    uint32_t scan_update_inverval_;
+    uint32_t scan_update_interval_;
 
     // It's not a State because there might be race conditions.
     bool running_ = true;
@@ -105,8 +104,14 @@ class Application {
     std::unique_ptr<RpcServer> rpc_server_;
 
     void initPaganin(size_t col_count, size_t row_count);
+
     void initFilter(size_t col_count, size_t row_count);
+
     void initReconstructor(size_t col_count, size_t row_count);
+
+    void maybeInitFlatFieldBuffer(size_t row_count, size_t col_count);
+
+    void maybeInitReconBuffer(size_t col_count, size_t row_count);
 
     void maybeResetDarkAndFlatAcquisition() {
         if (reciprocal_computed_) {
@@ -118,6 +123,14 @@ class Application {
     }
 
     void processProjections(oneapi::tbb::task_arena& arena);
+
+    bool waitForProcessing() {
+        if (server_state_ != ServerState_State::ServerState_State_PROCESSING) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            return true;
+        }
+        return false;
+    };
 
 public:
 

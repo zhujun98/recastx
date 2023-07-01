@@ -35,7 +35,7 @@ bool RpcClient::setServerState(ServerState_State state) {
     return checkStatus(status);
 }
 
-void RpcClient::setScanMode(ScanMode_Mode mode, uint32_t update_interval) {
+bool RpcClient::setScanMode(ScanMode_Mode mode, uint32_t update_interval) {
     ScanMode request;
     request.set_mode(mode);
     request.set_update_interval(update_interval);
@@ -45,10 +45,10 @@ void RpcClient::setScanMode(ScanMode_Mode mode, uint32_t update_interval) {
     grpc::ClientContext context;
 
     grpc::Status status = control_stub_->SetScanMode(&context, request, & reply);
-    checkStatus(status);
+    return checkStatus(status);
 }
 
-void RpcClient::setDownsamplingParams(uint32_t col, uint32_t row) {
+bool RpcClient::setDownsamplingParams(uint32_t col, uint32_t row) {
     DownsamplingParams request;
     request.set_col(col);
     request.set_row(row);
@@ -58,10 +58,10 @@ void RpcClient::setDownsamplingParams(uint32_t col, uint32_t row) {
     grpc::ClientContext context;
 
     grpc::Status status = imageproc_stub_->SetDownsamplingParams(&context, request, &reply);
-    checkStatus(status);
+    return checkStatus(status);
 }
 
-void RpcClient::setSlice(uint64_t timestamp, const Orientation& orientation) {
+bool RpcClient::setSlice(uint64_t timestamp, const Orientation& orientation) {
     Slice request;
     request.set_timestamp(timestamp);
     for (auto v : orientation) request.add_orientation(v);
@@ -71,13 +71,17 @@ void RpcClient::setSlice(uint64_t timestamp, const Orientation& orientation) {
     grpc::ClientContext context;
 
     grpc::Status status = reconstruction_stub_->SetSlice(&context, request, &reply);
-    checkStatus(status);
+    return checkStatus(status);
 }
 
 void RpcClient::startReconDataStream() {
     thread_ = std::thread([&]() {
         streaming_ = true;
         ReconData reply;
+
+        constexpr int min_timeout = 100;
+        constexpr int max_timeout = 2000;
+        int timeout = min_timeout;
         while (streaming_) {
             grpc::ClientContext context;
 
@@ -86,11 +90,17 @@ void RpcClient::startReconDataStream() {
             std::unique_ptr<grpc::ClientReader<ReconData> > reader(
                     reconstruction_stub_->GetReconData(&context, request));
             while(reader->Read(&reply)) {
-                log::info("Received ReconData");
+                log::debug("Received ReconData");
                 packets_.push(reply);
             }
             grpc::Status status = reader->Finish();
-            checkStatus(status);
+
+            if (checkStatus(status)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(timeout));
+                timeout = std::min(2 * timeout, max_timeout);
+            } else {
+                timeout = min_timeout;
+            }
         }
 
         log::debug("ReconData streaming finished");
