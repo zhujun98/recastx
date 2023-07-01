@@ -1,3 +1,13 @@
+/**
+ * Copyright (c) Paul Scherrer Institut PSI
+ * Author: Jun Zhu
+ *
+ * Reconstruction algorithms are originally from https://github.com/cicwi/RECAST3D.git.
+ *
+ * Distributed under the terms of the GPLv3 License.
+ *
+ * The full license is in the file LICENSE, distributed with this software.
+*/
 #include <spdlog/spdlog.h>
 
 #include "recon/reconstructor.hpp"
