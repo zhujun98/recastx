@@ -434,14 +434,13 @@ void Application::initReconstructor(size_t col_count, size_t row_count) {
     auto [min_y, max_y] = details::parseReconstructedVolumeBoundary(min_y_, max_y_, col_count);
     auto [min_z, max_z] = details::parseReconstructedVolumeBoundary(min_z_, max_z_, row_count);
     
-    size_t slice_size = slice_size_.value_or(col_count);
-    size_t preview_size = preview_size_.value_or(128);
-
-    float half_slice_height = 0.5f * (max_z - min_z) / preview_size;
+    size_t s_size = slice_size_.value_or(col_count);
+    size_t p_size = preview_size_.value_or(128);
+    float half_slice_height = 0.5f * (max_z - min_z) / p_size;
     float z0 = 0.5f * (max_z + min_z);
 
-    slice_geom_ = {slice_size, slice_size, 1, min_x, max_x, min_y, max_y, z0 - half_slice_height, z0 + half_slice_height};
-    preview_geom_ = {preview_size, preview_size, preview_size, min_x, max_x, min_y, max_y, min_z, max_z};
+    slice_geom_ = {s_size, s_size, 1, min_x, max_x, min_y, max_y, z0 - half_slice_height, z0 + half_slice_height};
+    preview_geom_ = {p_size, p_size, p_size, min_x, max_x, min_y, max_y, min_z, max_z};
 
     preview_buffer_.reshape({preview_geom_.col_count, preview_geom_.row_count, preview_geom_.slice_count});
     slice_mediator_.reshape({slice_geom_.col_count, slice_geom_.row_count});
