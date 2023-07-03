@@ -38,8 +38,7 @@ Application::Application(size_t raw_buffer_size,
        scan_mode_(ScanMode_Mode_CONTINUOUS),
        scan_update_interval_(K_MIN_SCAN_UPDATE_INTERVAL),
        daq_client_(new DaqClient("tcp://"s + daq_config.hostname + ":"s + std::to_string(daq_config.port),
-                                 daq_config.socket_type,
-                                 this)),
+                                 daq_config.socket_type)),
        rpc_server_(new RpcServer(rpc_config.port, this)) {}
 
 Application::~Application() { 
@@ -93,6 +92,86 @@ void Application::setReconGeometry(std::optional<size_t> slice_size, std::option
     // initialization is delayed
 }
 
+void Application::pushDark(const Projection& proj) {
+    maybeResetDarkAndFlatAcquisition();
+    spdlog::info("Received {} darks in total.", darks_.push(static_cast<const char*>(proj.data.data())));
+}
+
+void Application::pushFlat(const Projection& proj) {
+    maybeResetDarkAndFlatAcquisition();
+    spdlog::info("Received {} flats in total.", flats_.push(static_cast<const char*>(proj.data.data())));
+}
+
+void Application::pushProjection(const Projection& proj) {
+    if (reciprocal_computed_) {
+        // TODO: compute the average on the fly instead of storing the data in the buffer
+        raw_buffer_.fill<RawDtype>(static_cast<const char*>(proj.data.data()), proj.index, {proj.row_count, proj.col_count});
+        return; 
+    }
+        
+    if (darks_.empty() || flats_.empty()) {
+        spdlog::warn("Send dark and flat images first! Projection ignored.");
+        return;
+    }
+
+    if (!darks_.full()) {
+        spdlog::warn("Computing reciprocal with less darks than expected.");
+    }
+    if (!flats_.full()) {
+        spdlog::warn("Computing reciprocal with less flats than expected.");
+    }
+
+    spdlog::info("Computing reciprocal for flat field correction ...");
+    
+    {    
+#if (VERBOSITY >= 2)
+        ScopedTimer timer("Bench", "Computing reciprocal");
+#endif
+    
+        auto [dark_avg, reciprocal] = computeReciprocal(darks_, flats_);
+
+        spdlog::info("Downsampling dark ... ");
+        downsample(dark_avg, dark_avg_);
+        spdlog::info("Downsampling reciprocal ... ");
+        downsample(reciprocal, reciprocal_);
+    }
+    reciprocal_computed_ = true;
+}
+
+void Application::startAcquiring() {
+    auto t = std::thread([&] {
+        while (running_) {
+           if (waitForAcquiring()) continue;
+
+            auto item = daq_client_->next();
+            if (!item.has_value()) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                continue;
+            }
+
+            auto& data = item.value();
+            switch(data.type) {
+                case ProjectionType::PROJECTION: {
+                    pushProjection(data);
+                    break;
+                }
+                case ProjectionType::DARK: {
+                    pushDark(data);
+                    break;
+                }
+                case ProjectionType::FLAT: {
+                    pushFlat(data);
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
+    });
+
+    t.detach();
+}
+
 void Application::startPreprocessing() {
     auto t = std::thread([&] {
         oneapi::tbb::task_arena arena(imgproc_params_.num_threads);
@@ -111,7 +190,6 @@ void Application::startPreprocessing() {
 
 void Application::startUploading() {
     auto t = std::thread([&] {
-
         while (running_) {
             if(waitForProcessing()) continue;
 
@@ -123,11 +201,11 @@ void Application::startUploading() {
                 
                 if (scan_mode_ == ScanMode_Mode_DISCRETE) {
                     recon_->uploadSinograms(1 - gpu_buffer_index_, sino_buffer_.front().data(), chunk_size);
-                    std::lock_guard<std::mutex> lck(gpu_mutex_);
+                    std::lock_guard<std::mutex> lck(gpu_mtx_);
                     gpu_buffer_index_ = 1 - gpu_buffer_index_;
                     sino_uploaded_ = true;
                 } else {
-                    std::lock_guard<std::mutex> lck(gpu_mutex_);
+                    std::lock_guard<std::mutex> lck(gpu_mtx_);
                     sino_uploaded_ = true;
                     recon_->uploadSinograms(gpu_buffer_index_, sino_buffer_.front().data(), chunk_size);
                 }
@@ -155,9 +233,8 @@ void Application::startReconstructing() {
 
         while (running_) {
             if (waitForProcessing()) continue;
-
             {
-                std::unique_lock<std::mutex> lck(gpu_mutex_);
+                std::unique_lock<std::mutex> lck(gpu_mtx_);
                 if (gpu_cv_.wait_for(lck, 10ms, [&] { return sino_uploaded_; })) {
                     recon_->reconstructPreview(gpu_buffer_index_, preview_buffer_.back());
                 } else {
@@ -203,8 +280,7 @@ void Application::startReconstructing() {
 }
 
 void Application::runForEver() {
-    // Wait for initilization
-
+    startAcquiring();    
     startPreprocessing();
     startUploading();
     startReconstructing();
@@ -215,60 +291,6 @@ void Application::runForEver() {
     // TODO: start the event loop in the main thread
     while (running_) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    }
-}
-
-void Application::pushProjection(
-        ProjectionType k, size_t proj_idx, size_t num_rows, size_t num_cols, const char* data) {
-
-    switch (k) {
-        case ProjectionType::projection: {
-            if (!reciprocal_computed_) {
-                if (darks_.empty() || flats_.empty()) {
-                    spdlog::warn("Send dark and flat images first! Projection ignored.");
-                    return;
-                }
-
-                if (!darks_.full()) {
-                    spdlog::warn("Computing reciprocal with less darks than expected.");
-                }
-                if (!flats_.full()) {
-                    spdlog::warn("Computing reciprocal with less flats than expected.");
-                }
-
-                spdlog::info("Computing reciprocal for flat field correction ...");
-                
-                {    
-#if (VERBOSITY >= 2)
-                    ScopedTimer timer("Bench", "Computing reciprocal");
-#endif
-                
-                    auto [dark_avg, reciprocal] = computeReciprocal(darks_, flats_);
-
-                    spdlog::info("Downsampling dark ... ");
-                    downsample(dark_avg, dark_avg_);
-                    spdlog::info("Downsampling reciprocal ... ");
-                    downsample(reciprocal, reciprocal_);
-                }
-                reciprocal_computed_ = true;
-            }
-
-            // TODO: compute the average on the fly instead of storing the data in the buffer
-            raw_buffer_.fill<RawDtype>(data, proj_idx, {num_rows, num_cols});
-            break;
-        }
-        case ProjectionType::dark: {
-            maybeResetDarkAndFlatAcquisition();
-            spdlog::info("Received {} darks in total.", darks_.push(data));
-            break;
-        }
-        case ProjectionType::flat: {
-            maybeResetDarkAndFlatAcquisition();
-            spdlog::info("Received {} flats in total.", flats_.push(data));
-            break;
-        }
-        default:
-            break;
     }
 }
 

@@ -17,7 +17,6 @@ namespace recastx {
 
     using Orientation = std::array<float, 9>;
 
-    enum class ProjectionType : int { dark = 0, flat = 1, projection = 2, unknown = 99 };
 
     enum class BeamShape { PARALELL, CONE };
 

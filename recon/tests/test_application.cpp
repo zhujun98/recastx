@@ -77,7 +77,7 @@ protected:
     void pushDarks(int n) {
         std::vector<RawDtype> img(pixels_, 0);
         for (int i = 0; i < n; ++i) {
-            app_.pushProjection(ProjectionType::dark, i, num_rows_, num_cols_, 
+            app_.pushProjection(recon::ProjectionType::DARK, i, num_rows_, num_cols_, 
                                 reinterpret_cast<char*>(img.data()));
         }
     } 
@@ -85,7 +85,7 @@ protected:
     void pushFlats(int n) {
         std::vector<RawDtype> img(pixels_, 1);
         for (int i = 0; i < n; ++i) {
-            app_.pushProjection(ProjectionType::flat, i, num_rows_, num_cols_, 
+            app_.pushProjection(recon::ProjectionType::FLAT, i, num_rows_, num_cols_, 
                                 reinterpret_cast<char*>(img.data()));
         }
     } 
@@ -102,7 +102,7 @@ protected:
             if (i % 2 == 1) {
                 for (size_t i = 0; i < img.size(); ++i) img[i] += 1;
             }
-            app_.pushProjection(ProjectionType::projection, i, num_rows_, num_cols_, 
+            app_.pushProjection(ProjectionType::PROJECTION, i, num_rows_, num_cols_, 
                                 reinterpret_cast<char*>(img.data()));
         }
     }

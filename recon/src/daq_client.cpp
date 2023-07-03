@@ -6,13 +6,13 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
+#include <cassert>
 #include <chrono>
 
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 
 #include "recon/daq_client.hpp"
-#include "recon/application.hpp"
 
 
 namespace recastx::recon {
@@ -22,10 +22,10 @@ using namespace std::string_literals;
 namespace detail {
 
 ProjectionType parseProjectionType(int v) {
-    if (v != static_cast<int>(ProjectionType::dark) &&
-        v != static_cast<int>(ProjectionType::flat) && 
-        v != static_cast<int>(ProjectionType::projection)) {
-            return ProjectionType::unknown;
+    if (v != static_cast<int>(ProjectionType::DARK) &&
+        v != static_cast<int>(ProjectionType::FLAT) && 
+        v != static_cast<int>(ProjectionType::PROJECTION)) {
+            return ProjectionType::UNKNOWN;
         }
     return static_cast<ProjectionType>(v);
 }
@@ -33,12 +33,9 @@ ProjectionType parseProjectionType(int v) {
 } // detail
 
 
-DaqClient::DaqClient(const std::string& endpoint,
-                     const std::string& socket_type,
-                     Application* app)
+DaqClient::DaqClient(const std::string& endpoint, const std::string& socket_type)
         : context_(1),
-          socket_(context_, parseSocketType(socket_type)),
-          app_(app) {
+          socket_(context_, parseSocketType(socket_type)) {
     socket_.connect(endpoint);
 
     if(socket_.get(zmq::sockopt::type) == static_cast<int>(zmq::socket_type::sub)) {
@@ -59,26 +56,24 @@ void DaqClient::start() {
         throw std::runtime_error("Cannot start a DaqClient twice!");
     }
 
-    running_ = true;
     auto t = std::thread([&] {
-
-#if (VERBOSITY >= 1)
-        int monitor_every = app_->numAngles();
-        int msg_counter = 0;
-#endif
-
         zmq::message_t update;
+
+        running_ = true;
         while (running_) {
-            if (!acquiring_ || !socket_.recv(update, zmq::recv_flags::dontwait).has_value()) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            // Caveat: sequence of conditions
+            if (!acquiring_ 
+                    || queue_.size() == K_MAX_QUEUE_SIZE 
+                    || !socket_.recv(update, zmq::recv_flags::dontwait).has_value()) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 continue;
             }
 
-            auto meta = nlohmann::json::parse(std::string((char*)update.data(), update.size()));
+            auto meta = nlohmann::json::parse(update.to_string());
             size_t frame = meta["frame"];
             int scan_index = meta["image_attributes"]["scan_index"]; 
             ProjectionType proj_type = detail::parseProjectionType(scan_index);
-            if (proj_type == ProjectionType::unknown) {
+            if (proj_type == ProjectionType::UNKNOWN) {
                 spdlog::error("Unknown scan index: {}", scan_index);
                 continue;
             }
@@ -88,8 +83,8 @@ void DaqClient::start() {
             if (initialized_) {
                 if (n_rows != num_rows_ || n_cols != num_cols_) {
                     // monitor only
-                    spdlog::warn("Received image data with a different shape. Current: {} x {}, before: {} x {}", 
-                                 n_rows, n_cols, num_rows_, num_cols_);
+                    spdlog::warn("Received image data with a different shape. Current: {} x {}, "
+                                 "before: {} x {}", n_rows, n_cols, num_rows_, num_cols_);
                     continue;
                 }
             } else {
@@ -98,23 +93,19 @@ void DaqClient::start() {
                 initialized_ = true;
             }
 
-            // TODO: too much information even if for debug only
-            // spdlog::debug("Projection received: type = {0:d}, frame = {1:d}", scan_index, frame);
-
             socket_.recv(update, zmq::recv_flags::none);
-            app_->pushProjection(proj_type, frame, n_rows, n_cols, static_cast<char*>(update.data()));
+            assert(update.size() == sizeof(RawDtype) * n_rows * n_cols);
+            queue_.emplace(proj_type, frame, n_cols, n_rows, std::move(update));
 
 #if (VERBOSITY >= 1)
-            if (proj_type == ProjectionType::projection) {
-                ++msg_counter;
-                if (msg_counter % monitor_every == 0) {
-                    spdlog::info("**************************************************************");
-                    spdlog::info("# of projections received: {}", msg_counter);
-                    spdlog::info("**************************************************************");
+            if (proj_type == ProjectionType::PROJECTION) {
+                ++projection_received_;
+                if (projection_received_ % K_MONITOR_EVERY == 0) {
+                    spdlog::info("# of projections received: {}", projection_received_);
                 }                
             } else {
-                // reset the counter and timer when dark/flat arrives
-                msg_counter = 0;
+                // reset the counter when receiving a dark or a flat
+                projection_received_ = 0;
             }
 #endif
 
@@ -136,6 +127,14 @@ zmq::socket_type DaqClient::parseSocketType(const std::string& socket_type) cons
     if (socket_type.compare("pull") == 0) return zmq::socket_type::pull;
     if (socket_type.compare("sub") == 0) return zmq::socket_type::sub;
     throw std::invalid_argument("Unsupported socket type: "s + socket_type); 
+}
+
+std::optional<Projection> DaqClient::next() {
+    if (queue_.empty()) return {};
+
+    auto ret = std::move(queue_.front());
+    queue_.pop();
+    return ret;
 }
 
 } // namespace recastx::recon

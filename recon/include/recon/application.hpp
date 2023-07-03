@@ -99,7 +99,7 @@ class Application {
     int gpu_buffer_index_ = 0;
     bool sino_uploaded_ = false;
     std::condition_variable gpu_cv_;
-    std::mutex gpu_mutex_;
+    std::mutex gpu_mtx_;
 
     ServerState_State server_state_;
     ScanMode_Mode scan_mode_;
@@ -130,11 +130,24 @@ class Application {
         }
     }
 
+    void pushDark(const Projection& proj);
+    void pushFlat(const Projection& proj);
+    void pushProjection(const Projection& proj);
+
     void processProjections(oneapi::tbb::task_arena& arena);
 
-    bool waitForProcessing() {
+    bool waitForAcquiring() const {
+        if (server_state_ != ServerState_State::ServerState_State_ACQUIRING 
+                && server_state_ != ServerState_State_PROCESSING) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            return true;
+        }
+        return false;
+    }
+
+    bool waitForProcessing() const {
         if (server_state_ != ServerState_State::ServerState_State_PROCESSING) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
             return true;
         }
         return false;
@@ -170,6 +183,9 @@ public:
                           std::optional<float> min_x, std::optional<float> max_x, 
                           std::optional<float> min_y, std::optional<float> max_y, 
                           std::optional<float> min_z, std::optional<float> max_z);
+
+    void startAcquiring();
+    void stopAcquiring();
 
     void startPreprocessing();
 
