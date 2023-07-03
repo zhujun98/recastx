@@ -148,7 +148,7 @@ void Scene3d::render() {
     ImGui::SameLine();
     ImGui::BeginDisabled(scan_mode_ != ScanMode_Mode_CONTINUOUS);
     if (ImGui::ArrowButton("##continuous_interval_left", ImGuiDir_Left)) {
-        assert(scan_update_interval_ >= scan_update_interval_step_size_);
+        assert(scan_update_interval_ >= K_SCAN_UPDATE_INTERVAL_STEP_SIZE);
         scan_update_interval_ -= K_SCAN_UPDATE_INTERVAL_STEP_SIZE;
         if (scan_update_interval_ < K_MIN_SCAN_UPDATE_INTERVAL) {
             scan_update_interval_ = K_MIN_SCAN_UPDATE_INTERVAL;
