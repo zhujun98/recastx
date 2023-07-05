@@ -233,6 +233,7 @@ class MemoryBuffer {
 public:
 
     using BufferType = Tensor<T, N>;
+    using ValueType = typename BufferType::ValueType;
 
 private:
 
@@ -291,6 +292,8 @@ private:
     }
 
     const std::array<size_t, N>& shape() const { return front_.shape(); }
+
+    size_t size() const { return front_.size(); }
 };
 
 template<typename T, size_t N>
@@ -401,14 +404,14 @@ void MemoryBuffer<T, N>::fill(
     //         frame idx arrives repeatedly, it will still fill the chunk.
     if (counter_[buffer_idx] == buffer_shape[0]) {
         // Remove earlier chunks, no matter they are ready or not.
-        size_t idx = chunk_indices_.front();
-        while (chunk_idx != idx) {
-            pop();
-#if (VERBOSITY >= 1)
-            spdlog::warn("Chunk {} is ready! Earlier chunks {} dropped!", chunk_idx, idx);
-#endif
-            idx = chunk_indices_.front();
-        }
+//         size_t idx = chunk_indices_.front();
+//         while (chunk_idx != idx) {
+//             pop();
+// #if (VERBOSITY >= 1)
+//             spdlog::warn("Chunk {} is ready! Earlier chunks {} dropped!", chunk_idx, idx);
+// #endif
+//             idx = chunk_indices_.front();
+//         }
         is_ready_ = true;
         cv_.notify_one();
     }

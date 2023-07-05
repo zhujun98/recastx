@@ -34,6 +34,8 @@ TEST(TripleTensorBufferTest, TestConstructor) {
 TEST(TripleTensorBufferTest, TestPrepareAndFetch) {
     TripleTensorBuffer<float, 2> b2f;
     b2f.resize({3, 2});
+    EXPECT_THAT(b2f.shape(), ElementsAre(3, 2));
+    ASSERT_EQ(b2f.size(), 6);
 
     std::initializer_list<float> data1 {1.f, 2.f, 1.f, 2.f, 1.f, 2.f};
     std::initializer_list<float> data2 {3.f, 4.f, 3.f, 4.f, 3.f, 4.f};
@@ -218,12 +220,14 @@ TEST_F(MemoryBufferTest, TestReshape) {
     }
     ASSERT_EQ(buffer_.occupied(), 1);
     EXPECT_THAT(buffer_.shape(), ElementsAre(4, 2, 3));
+    ASSERT_EQ(buffer_.size(), 24);
 
     // expand
     std::array<size_t, 3> new_shape {4, 3, 4};
     buffer_.resize(new_shape);
     ASSERT_EQ(buffer_.occupied(), 0);
     EXPECT_THAT(buffer_.shape(), ElementsAre(4, 3, 4));
+    ASSERT_EQ(buffer_.size(), 48);
     for (size_t j = 0; j < new_shape[0]; ++j) {
         buffer_.fill<RawDtype>(_produceRawData({1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6}).data(), j); 
     }
@@ -233,5 +237,6 @@ TEST_F(MemoryBufferTest, TestReshape) {
     buffer_.resize(shape_);
     ASSERT_EQ(buffer_.occupied(), 0);
     EXPECT_THAT(buffer_.shape(), ElementsAre(4, 2, 3));
+    ASSERT_EQ(buffer_.size(), 24);
 }
 } // namespace recastx::recon::test

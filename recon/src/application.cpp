@@ -108,7 +108,7 @@ void Application::pushProjection(const Projection& proj) {
         raw_buffer_.fill<RawDtype>(static_cast<const char*>(proj.data.data()), proj.index, {proj.row_count, proj.col_count});
         return; 
     }
-        
+
     if (darks_.empty() || flats_.empty()) {
         spdlog::warn("Send dark and flat images first! Projection ignored.");
         return;
@@ -136,6 +136,8 @@ void Application::pushProjection(const Projection& proj) {
         downsample(reciprocal, reciprocal_);
     }
     reciprocal_computed_ = true;
+
+    monitor_.resetTimer();
 }
 
 void Application::startAcquiring() {
@@ -153,14 +155,17 @@ void Application::startAcquiring() {
             switch(data.type) {
                 case ProjectionType::PROJECTION: {
                     pushProjection(data);
+                    monitor_.addProjection();
                     break;
                 }
                 case ProjectionType::DARK: {
                     pushDark(data);
+                    monitor_.addDark();
                     break;
                 }
                 case ProjectionType::FLAT: {
                     pushFlat(data);
+                    monitor_.addFlat();
                     break;
                 }
                 default:
@@ -240,7 +245,7 @@ void Application::startReconstructing() {
             }
             
             spdlog::info("Volume and slices reconstructed");
-            ++tomogram_reconstructed_;
+            monitor_.addTomogram();
 
             preview_buffer_.prepare();
         }
@@ -406,21 +411,14 @@ void Application::onStartProcessing() {
         spdlog::info("- Scan mode: discrete");
     }
 
-    tomogram_reconstructed_ = 0;
-    processing_start_tp_ = std::chrono::steady_clock::now();
+    monitor_ = Monitor(raw_buffer_.size() * sizeof(typename decltype(raw_buffer_)::ValueType));
 }
 
 void Application::onStopProcessing() {
     daq_client_->stopAcquiring();
     spdlog::info("Stop acquiring and processing data");
 
-    float duration = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now() -  processing_start_tp_).count();
-
-    float throughput = sino_buffer_.size() * sizeof(RawDtype) * tomogram_reconstructed_ / duration;
-
-    spdlog::info("[Bench] Tomogram reconstructed: {}, average throughput: {:.1f} (MB/s)", 
-                 tomogram_reconstructed_, throughput);
+    monitor_.summarize();
 }
 
 void Application::onStartAcquiring() {

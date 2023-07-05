@@ -59,6 +59,60 @@ inline std::pair<float, float> parseReconstructedVolumeBoundary(
 
 class Application {
 
+    class Monitor {
+        std::chrono::time_point<std::chrono::steady_clock> start_;
+
+        size_t num_darks_ = 0;
+        size_t num_flats_ = 0;
+        size_t num_projections_= 0;
+        size_t num_tomograms_ = 0;
+
+        size_t scan_byte_size_;
+
+      public:
+
+        explicit Monitor(size_t scan_byte_size = 0) : 
+            start_(std::chrono::steady_clock::now()),
+            scan_byte_size_(scan_byte_size) {
+        }
+
+        void reset() {
+            num_darks_ = 0;
+            num_flats_ = 0;
+            num_projections_ = 0;
+            num_tomograms_ = 0;
+
+            resetTimer();
+        }
+
+        void resetTimer() {
+            start_ = std::chrono::steady_clock::now();
+        }
+
+        void addDark() { ++num_darks_; }
+
+        void addFlat() { ++num_flats_; }
+
+        void addProjection() { ++num_projections_; }
+
+        void addTomogram() {
+            ++num_tomograms_;
+        }
+
+        void summarize() const {
+            float duration = std::chrono::duration_cast<std::chrono::microseconds>(
+                std::chrono::steady_clock::now() -  start_).count();
+            float throughput = scan_byte_size_ * num_tomograms_ / duration;
+
+            spdlog::info("Summarise of run:");
+            spdlog::info("- Number of darks processed: {}", num_darks_);
+            spdlog::info("- Number of flats processed: {}", num_flats_);
+            spdlog::info("- Number of projections processed: {}", num_projections_);
+            spdlog::info("- Tomograms reconstructed: {}, average throughput: {:.1f} (MB/s)", 
+                         num_tomograms_, throughput);
+        }
+    };
+
     // Why did I choose ProDtype over RawDtype?
     MemoryBuffer<ProDtype, 3> raw_buffer_;
 
@@ -107,9 +161,7 @@ class Application {
 
     // It's not a State because there might be race conditions.
     bool running_ = true;
-
-    std::chrono::time_point<std::chrono::steady_clock> processing_start_tp_;
-    size_t tomogram_reconstructed_ = 0;
+    Monitor monitor_;
 
     std::unique_ptr<DaqClient> daq_client_;
     std::unique_ptr<RpcServer> rpc_server_;
