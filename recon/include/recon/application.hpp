@@ -108,6 +108,9 @@ class Application {
     // It's not a State because there might be race conditions.
     bool running_ = true;
 
+    std::chrono::time_point<std::chrono::steady_clock> processing_start_tp_;
+    size_t tomogram_reconstructed_ = 0;
+
     std::unique_ptr<DaqClient> daq_client_;
     std::unique_ptr<RpcServer> rpc_server_;
 
@@ -135,6 +138,10 @@ class Application {
     void pushProjection(const Projection& proj);
 
     void processProjections(oneapi::tbb::task_arena& arena);
+
+    void onStartProcessing();
+    void onStopProcessing();
+    void onStartAcquiring();
 
     bool waitForAcquiring() const {
         if (server_state_ != ServerState_State::ServerState_State_ACQUIRING 

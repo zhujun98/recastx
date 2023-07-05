@@ -118,6 +118,8 @@ public:
     ~TripleTensorBuffer() override = default;
 
     virtual void resize(const ShapeType& shape);
+
+    size_t size() const { return this->front_.size(); }
 };
 
 template<typename T, size_t N>
@@ -127,7 +129,6 @@ void TripleTensorBuffer<T, N>::resize(const ShapeType& shape) {
     this->ready_.resize(shape);
     this->front_.resize(shape);
 }
-
 
 template<typename T>
 class SliceBuffer : public TripleBufferInterface<std::map<size_t, std::tuple<bool, size_t, Tensor<T, 2>>>> {

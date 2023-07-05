@@ -223,14 +223,6 @@ void Application::startUploading() {
 void Application::startReconstructing() {
 
     auto t = std::thread([&] {
-
-#if (VERBOSITY >= 1)
-        const float data_size = sino_buffer_.front().shape()[0] * sizeof(RawDtype) / (1024.f * 1024.f); // in MB
-        auto start = std::chrono::steady_clock::now();
-        size_t count = 0;
-        float total_duration = 0.f;
-#endif
-
         while (running_) {
             if (waitForProcessing()) continue;
             {
@@ -248,30 +240,9 @@ void Application::startReconstructing() {
             }
             
             spdlog::info("Volume and slices reconstructed");
+            ++tomogram_reconstructed_;
 
             preview_buffer_.prepare();
- 
-#if (VERBOSITY >= 1)
-            // The throughtput is measured in the last step of the pipeline because
-            // data could be dropped beforehand.
-            float duration = std::chrono::duration_cast<std::chrono::microseconds>(
-                std::chrono::steady_clock::now() -  start).count();
-            start = std::chrono::steady_clock::now();
-
-            float tp = data_size * 1000000 / duration;
-            ++count;
-            float tp_avg;
-            if (count == 1) tp_avg = tp;
-            else {
-                // skip the first group since the duration includes the time for initialization as well as
-                // processing darks and flats
-                total_duration += duration;
-                tp_avg = data_size * (count - 1) * 1000000 / total_duration;
-            }
-            spdlog::info("[bench] Throughput (reconstruction) (MB/s). "
-                         "Current: {:.1f}, averaged: {:.1f} ({})", tp, tp_avg, count);
-#endif
-
         }
 
     });
@@ -324,24 +295,11 @@ void Application::onStateChanged(ServerState_State state) {
     }
 
     if (state == ServerState_State::ServerState_State_PROCESSING) {
-        init();
-        daq_client_->startAcquiring();
-
-        spdlog::info("Start acquiring and processing data:");
-
-        if (scan_mode_ == ScanMode_Mode_CONTINUOUS) {
-            spdlog::info("- Scan mode: continuous");
-            spdlog::info("- Update interval: {}", scan_update_interval_);
-        } else if (scan_mode_ == ScanMode_Mode_DISCRETE) {
-            spdlog::info("- Scan mode: discrete");
-        }
+        onStartProcessing();
     } else if (state == ServerState_State::ServerState_State_ACQUIRING) {
-        init();
-        daq_client_->startAcquiring();
-        spdlog::info("Start acquiring data");
+        onStartAcquiring();
     } else if (state == ServerState_State::ServerState_State_READY) {
-        daq_client_->stopAcquiring();
-        spdlog::info("Stop acquiring and processing data");
+        onStopProcessing();
     }
     
     server_state_ = state;
@@ -435,6 +393,41 @@ void Application::processProjections(oneapi::tbb::task_arena& arena) {
     sino_buffer_.prepare();
 }
 
+void Application::onStartProcessing() {
+    init();
+    daq_client_->startAcquiring();
+
+    spdlog::info("Start acquiring and processing data:");
+
+    if (scan_mode_ == ScanMode_Mode_CONTINUOUS) {
+        spdlog::info("- Scan mode: continuous");
+        spdlog::info("- Update interval: {}", scan_update_interval_);
+    } else if (scan_mode_ == ScanMode_Mode_DISCRETE) {
+        spdlog::info("- Scan mode: discrete");
+    }
+
+    tomogram_reconstructed_ = 0;
+    processing_start_tp_ = std::chrono::steady_clock::now();
+}
+
+void Application::onStopProcessing() {
+    daq_client_->stopAcquiring();
+    spdlog::info("Stop acquiring and processing data");
+
+    float duration = std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::steady_clock::now() -  processing_start_tp_).count();
+
+    float throughput = sino_buffer_.size() * sizeof(RawDtype) * tomogram_reconstructed_ / duration;
+
+    spdlog::info("[Bench] Tomogram reconstructed: {}, average throughput: {:.1f} (MB/s)", 
+                 tomogram_reconstructed_, throughput);
+}
+
+void Application::onStartAcquiring() {
+    init();
+    daq_client_->startAcquiring();
+    spdlog::info("Start acquiring data");
+}
 
 void Application::initPaganin(size_t col_count, size_t row_count) {
     if (paganin_cfg_.has_value()) {
