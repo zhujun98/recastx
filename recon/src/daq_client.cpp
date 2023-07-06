@@ -34,7 +34,8 @@ ProjectionType parseProjectionType(int v) {
 
 
 DaqClient::DaqClient(const std::string& endpoint, const std::string& socket_type)
-        : context_(1),
+        : DaqClientInterface(),
+          context_(1),
           socket_(context_, parseSocketType(socket_type)) {
     socket_.connect(endpoint);
 
@@ -127,14 +128,6 @@ zmq::socket_type DaqClient::parseSocketType(const std::string& socket_type) cons
     if (socket_type.compare("pull") == 0) return zmq::socket_type::pull;
     if (socket_type.compare("sub") == 0) return zmq::socket_type::sub;
     throw std::invalid_argument("Unsupported socket type: "s + socket_type); 
-}
-
-std::optional<Projection> DaqClient::next() {
-    if (queue_.empty()) return {};
-
-    auto ret = std::move(queue_.front());
-    queue_.pop();
-    return ret;
 }
 
 } // namespace recastx::recon

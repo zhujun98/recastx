@@ -22,9 +22,25 @@ namespace recastx::recon::test {
 using ::testing::Pointwise;
 using ::testing::FloatNear;
 
+class MockDaqClient : public DaqClientInterface {
+
+  public:
+
+    void start() {}
+
+    void startAcquiring() {}
+    void stopAcquiring() {}
+
+    template<typename... Args>
+    void push(Args&&... args) {
+        queue_.emplace(std::forward<Args>(args)...);
+    }
+};
+
+
 class ApplicationTest : public testing::Test {
 
-protected:
+  protected:
 
     size_t num_cols_ = 5;
     size_t num_rows_ = 4;
@@ -48,13 +64,16 @@ protected:
     bool gaussian_lowpass_filter_ = false;
     uint32_t threads_ = 4;
 
-    const DaqClientConfig daq_cfg {12345, "localhost", "pull"};
+    std::unique_ptr<DaqClientInterface> daq_client_;
+
     const RpcServerConfig rpc_cfg {12347};
     const ImageprocParams imgproc_params {threads_, downsampling_col_, downsampling_row_};
 
     Application app_;
 
-    ApplicationTest() : app_ {buffer_size_, imgproc_params, daq_cfg, rpc_cfg} {
+    ApplicationTest() : 
+            daq_client_(new MockDaqClient()),
+            app_ {buffer_size_, imgproc_params, daq_client_.get(), rpc_cfg} {
         app_.setScanMode(ScanMode_Mode_DISCRETE, num_angles_);
     }
 
@@ -77,16 +96,20 @@ protected:
     void pushDarks(int n) {
         std::vector<RawDtype> img(pixels_, 0);
         for (int i = 0; i < n; ++i) {
-            app_.pushProjection(recon::ProjectionType::DARK, i, num_rows_, num_cols_, 
-                                reinterpret_cast<char*>(img.data()));
+            dynamic_cast<MockDaqClient*>(daq_client_.get())->push(
+                recon::ProjectionType::DARK, i, num_rows_, num_cols_, 
+                zmq::message_t(reinterpret_cast<void*>(img.data()), img.size() * sizeof(RawDtype)));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
     } 
 
     void pushFlats(int n) {
         std::vector<RawDtype> img(pixels_, 1);
         for (int i = 0; i < n; ++i) {
-            app_.pushProjection(recon::ProjectionType::FLAT, i, num_rows_, num_cols_, 
-                                reinterpret_cast<char*>(img.data()));
+            dynamic_cast<MockDaqClient*>(daq_client_.get())->push(
+                recon::ProjectionType::FLAT, i, num_rows_, num_cols_, 
+                zmq::message_t(reinterpret_cast<void*>(img.data()), img.size() * sizeof(RawDtype)));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
     } 
 
@@ -102,30 +125,35 @@ protected:
             if (i % 2 == 1) {
                 for (size_t i = 0; i < img.size(); ++i) img[i] += 1;
             }
-            app_.pushProjection(ProjectionType::PROJECTION, i, num_rows_, num_cols_, 
-                                reinterpret_cast<char*>(img.data()));
-        }
+            dynamic_cast<MockDaqClient*>(daq_client_.get())->push(
+                ProjectionType::PROJECTION, i, num_cols_, num_rows_,
+                zmq::message_t(reinterpret_cast<void*>(img.data()), img.size() * sizeof(RawDtype)));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+       }
     }
 };
 
 TEST_F(ApplicationTest, TestPushProjection) {
+    app_.startAcquiring();
     app_.startPreprocessing();
     app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
 
     pushDarks(num_darks_);
     pushFlats(num_flats_);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
     auto& sino = app_.sinoBuffer().ready();
 
     // push projections (don't completely fill the buffer)
     pushProjection(0, num_angles_ - 1);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
     auto& projs_ready = app_.rawBuffer().ready();
     EXPECT_EQ(projs_ready[0], 2.f);
     EXPECT_EQ(projs_ready[(num_angles_ - 1) * pixels_ - 1], 3.f); 
 
     // push projections to fill the buffer
     pushProjection(num_angles_ - 1, num_angles_);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
     auto& projs_front = app_.rawBuffer().front();
     EXPECT_THAT(std::vector<float>(projs_front.begin(), projs_front.begin() + 10), 
@@ -143,6 +171,7 @@ TEST_F(ApplicationTest, TestPushProjection) {
 }
 
 TEST_F(ApplicationTest, TestMemoryBufferReset) {
+    app_.startAcquiring();
     app_.startPreprocessing();
     app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
 
@@ -150,6 +179,7 @@ TEST_F(ApplicationTest, TestMemoryBufferReset) {
     pushFlats(num_flats_);
     pushProjection(0, 1);
     pushProjection(num_angles_, num_angles_ + 1);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
     EXPECT_EQ(app_.rawBuffer().occupied(), 2);
 
     pushDarks(num_darks_);
@@ -160,6 +190,7 @@ TEST_F(ApplicationTest, TestMemoryBufferReset) {
 }
 
 TEST_F(ApplicationTest, TestPushProjectionUnordered) {
+    app_.startAcquiring();
     app_.startPreprocessing();
     app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
     

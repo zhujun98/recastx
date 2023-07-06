@@ -23,12 +23,6 @@ namespace recastx {
     using RawDtype = uint16_t;
     using ProDtype = float;
 
-    struct DaqClientConfig {
-        int port;
-        std::string hostname;
-        std::string socket_type;
-    };
-
     struct RpcServerConfig {
         int port;
     };

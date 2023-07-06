@@ -14,7 +14,6 @@
 #include <spdlog/spdlog.h>
 
 #include "recon/application.hpp"
-#include "recon/daq_client.hpp"
 #include "recon/encoder.hpp"
 #include "recon/filter.hpp"
 #include "recon/phase.hpp"
@@ -30,15 +29,14 @@ using namespace std::string_literals;
 
 Application::Application(size_t raw_buffer_size, 
                          const ImageprocParams& imageproc_params, 
-                         const DaqClientConfig& daq_config, 
+                         DaqClientInterface* daq_client,
                          const RpcServerConfig& rpc_config)
      : raw_buffer_(raw_buffer_size),
        imgproc_params_(imageproc_params),
        server_state_(ServerState_State_INIT),
        scan_mode_(ScanMode_Mode_CONTINUOUS),
        scan_update_interval_(K_MIN_SCAN_UPDATE_INTERVAL),
-       daq_client_(new DaqClient("tcp://"s + daq_config.hostname + ":"s + std::to_string(daq_config.port),
-                                 daq_config.socket_type)),
+       daq_client_(daq_client),
        rpc_server_(new RpcServer(rpc_config.port, this)) {}
 
 Application::~Application() { 

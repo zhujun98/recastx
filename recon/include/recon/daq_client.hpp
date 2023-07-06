@@ -9,46 +9,25 @@
 #ifndef RECON_DAQCLIENT_H
 #define RECON_DAQCLIENT_H
 
-#include <optional>
-#include <queue>
 #include <string>
 #include <thread>
 
-#include <zmq.hpp>
-
+#include "daq_client_interface.hpp"
 #include "common/config.hpp"
 
 namespace recastx::recon {
 
-enum class ProjectionType : int { DARK = 0, FLAT = 1, PROJECTION = 2, UNKNOWN = 99 };
+class DaqClient : public DaqClientInterface {
 
-struct Projection {
-    ProjectionType type;
-    size_t index;
-    size_t col_count;
-    size_t row_count;
-    zmq::message_t data;
-
-    Projection(ProjectionType type, size_t index, size_t col_count, size_t row_count, zmq::message_t data) :
-        type(type), index(index), col_count(col_count), row_count(row_count), data(std::move(data)) {}
-
-};
-
-class DaqClient {
-
-public:
-
-    using BufferType = std::queue<Projection>;
+  public:
 
     static constexpr size_t K_MAX_QUEUE_SIZE = 100;
     static constexpr size_t K_MONITOR_EVERY = 1000;
 
-private:
+  private:
 
     zmq::context_t context_;
     zmq::socket_t socket_;
-
-    BufferType queue_;
 
     zmq::socket_type parseSocketType(const std::string& socket_type) const; 
 
@@ -61,7 +40,7 @@ private:
 
     size_t projection_received_ = 0;
 
-public:
+  public:
 
     DaqClient(const std::string& endpoint, const std::string& socket_type);
 

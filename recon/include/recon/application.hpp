@@ -27,7 +27,6 @@ extern "C" {
 
 #include "common/config.hpp"
 #include "buffer.hpp"
-#include "daq_client.hpp"
 #include "slice_mediator.hpp"
 #include "tensor.hpp"
 
@@ -35,13 +34,13 @@ extern "C" {
 #include "reconstruction.pb.h"
 #include "control.pb.h"
 
+#include "daq_client_interface.hpp"
 
 namespace recastx::recon {
 
 class Filter;
 class Paganin;
 class Reconstructor;
-class DaqClient;
 class RpcServer;
 
 namespace details {
@@ -179,7 +178,7 @@ class Application {
     bool running_ = true;
     Monitor monitor_;
 
-    std::unique_ptr<DaqClient> daq_client_;
+    DaqClientInterface* daq_client_;
     std::unique_ptr<RpcServer> rpc_server_;
 
     void initPaganin(size_t col_count, size_t row_count);
@@ -231,8 +230,8 @@ class Application {
 public:
 
     Application(size_t raw_buffer_size,
-                const ImageprocParams& imageproc_params, 
-                const DaqClientConfig& daq_config, 
+                const ImageprocParams& imageproc_params,
+                DaqClientInterface* daq_client,
                 const RpcServerConfig& rpc_config); 
 
     ~Application();
