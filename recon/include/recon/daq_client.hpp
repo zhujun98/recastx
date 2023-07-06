@@ -41,7 +41,7 @@ public:
     using BufferType = std::queue<Projection>;
 
     static constexpr size_t K_MAX_QUEUE_SIZE = 100;
-    static constexpr size_t K_MONITOR_EVERY = 100;
+    static constexpr size_t K_MONITOR_EVERY = 1000;
 
 private:
 
