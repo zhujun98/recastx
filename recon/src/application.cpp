@@ -210,7 +210,6 @@ void Application::startUploading() {
             spdlog::info("Uploading sinograms to GPU ...");
             size_t chunk_size = sino_buffer_.front().shape()[0];
             {
-                
                 if (scan_mode_ == ScanMode_Mode_DISCRETE) {
                     recon_->uploadSinograms(1 - gpu_buffer_index_, sino_buffer_.front().data(), chunk_size);
                     std::lock_guard<std::mutex> lck(gpu_mtx_);
@@ -418,7 +417,7 @@ void Application::onStartProcessing() {
         spdlog::info("- Scan mode: discrete");
     }
 
-    monitor_ = Monitor(raw_buffer_.size() * sizeof(typename decltype(raw_buffer_)::ValueType));
+    monitor_ = Monitor(raw_buffer_.size() * sizeof(RawDtype));
 }
 
 void Application::onStopProcessing() {
