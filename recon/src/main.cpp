@@ -38,9 +38,12 @@ int main(int argc, char** argv) {
     spdlog::set_level(spdlog::level::debug);
 #endif
 
+    bool auto_processing = false;
     po::options_description general_desc("General options");
     general_desc.add_options()
         ("help,h", "print help message")
+        ("auto-processing", po::bool_switch(&auto_processing), 
+         "...")
     ;
 
     po::options_description connection_desc("ZMQ options");
@@ -194,7 +197,7 @@ int main(int argc, char** argv) {
                               num_cols, num_rows, 1.0f, 1.0f, 0.0f, 0.0f, num_angles);
     app.setReconGeometry(slice_size, preview_size, minx, maxx, miny, maxy, minz, maxz);
 
-    app.runForEver();
+    app.spin(auto_processing);
 
     return 0;
 }

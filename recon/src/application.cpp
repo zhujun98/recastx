@@ -34,7 +34,7 @@ Application::Application(size_t raw_buffer_size,
      : raw_buffer_(raw_buffer_size),
        imgproc_params_(imageproc_params),
        server_state_(ServerState_State_INIT),
-       scan_mode_(ScanMode_Mode_CONTINUOUS),
+       scan_mode_(ScanMode_Mode_DISCRETE),
        scan_update_interval_(K_MIN_SCAN_UPDATE_INTERVAL),
        daq_client_(daq_client),
        rpc_server_(new RpcServer(rpc_config.port, this)) {}
@@ -142,27 +142,25 @@ void Application::pushProjection(const Projection& proj) {
 }
 
 void Application::startAcquiring() {
-    constexpr size_t min_interval = 1;
-    constexpr size_t max_interval = 100;
-    size_t interval = min_interval;
     auto t = std::thread([&] {
         while (running_) {
             if (waitForAcquiring()) continue;
 
             auto item = daq_client_->next();
             if (!item.has_value()) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(interval));
-                interval = std::min(max_interval, interval * 2);
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 continue;
-            } else {
-                interval = min_interval;
             }
 
             auto& data = item.value();
+            static size_t counter = 0;
             switch(data.type) {
                 case ProjectionType::PROJECTION: {
                     pushProjection(data);
                     monitor_.addProjection();
+                    if (counter++ % 10 == 0) {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                    }
                     break;
                 }
                 case ProjectionType::DARK: {
@@ -261,7 +259,7 @@ void Application::startReconstructing() {
     t.detach();
 }
 
-void Application::runForEver() {
+void Application::spin(bool auto_processing) {
     startAcquiring();    
     startPreprocessing();
     startUploading();
@@ -269,6 +267,10 @@ void Application::runForEver() {
 
     daq_client_->start();
     rpc_server_->start();
+
+    if (auto_processing) {
+        onStateChanged(ServerState_State::ServerState_State_PROCESSING);
+    }
 
     // TODO: start the event loop in the main thread
     while (running_) {
@@ -417,7 +419,8 @@ void Application::onStartProcessing() {
         spdlog::info("- Scan mode: discrete");
     }
 
-    monitor_ = Monitor(raw_buffer_.size() * sizeof(RawDtype));
+    monitor_ = Monitor(proj_geom_.row_count * proj_geom_.col_count * proj_geom_.angles.size() 
+                       * sizeof(RawDtype));
 }
 
 void Application::onStopProcessing() {
