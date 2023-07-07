@@ -159,7 +159,7 @@ void Application::startAcquiring() {
                     pushProjection(data);
                     monitor_.addProjection();
                     if (counter++ % 10 == 0) {
-                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                        std::this_thread::sleep_for(std::chrono::microseconds(1));
                     }
                     break;
                 }
