@@ -147,13 +147,14 @@ TBD: a data adaptor should be needed
 - *Process*: Click to start acquiring and processing data.
 - *Stop*: Click to stop acquiring and processing data.
 - *Mode*
-  - *Continuous*:
-  - *Discrete*:
+  - *Continuous*: Reconstruction takes place continuously at a given interval.
+  - *Discrete*: Reconstruction takes place only after a 180-degree-scan finished.
+- *Update interval*: Reconstruction in the *Continuous* mode will take place each time after receiving the specified number of projections. 
 - *Fix camera*: Check to disable rotating and zooming the 3D model with mouse.
 - *Downsampling*
     - *Col*: Downsampling factor of columns of the raw projection image.
     - *Row*: Downsampling factor of rows of the raw projection image.
 - *Auto Levels*: Check to enable automatically setting color levels of the displayed objects.
-    - *Min*: 
-    - *Max*:
+    - *Min*: Minimum colormap value.
+    - *Max*: Maximum colormap value.
 - *Reset slices*: Click to reset the positions and orientations of all the slices.
