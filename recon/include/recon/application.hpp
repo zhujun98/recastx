@@ -191,14 +191,7 @@ class Application {
 
     void maybeInitReconBuffer(size_t col_count, size_t row_count);
 
-    void maybeResetDarkAndFlatAcquisition() {
-        if (reciprocal_computed_) {
-            raw_buffer_.reset();
-            darks_.reset();
-            flats_.reset();
-            reciprocal_computed_ = false;
-        }
-    }
+    void maybeResetDarkAndFlatAcquisition();
 
     void pushDark(const Projection& proj);
     void pushFlat(const Projection& proj);

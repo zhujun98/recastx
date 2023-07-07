@@ -62,7 +62,7 @@ class ApplicationTest : public testing::Test {
 
     std::string filter_name_ = "shepp";
     bool gaussian_lowpass_filter_ = false;
-    uint32_t threads_ = 4;
+    uint32_t threads_ = 2;
 
     std::unique_ptr<DaqClientInterface> daq_client_;
 
@@ -78,7 +78,8 @@ class ApplicationTest : public testing::Test {
     }
 
     ~ApplicationTest() override {
-        app_.onStateChanged(ServerState_State::ServerState_State_INIT);
+        app_.onStateChanged(ServerState_State::ServerState_State_READY);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     };
 
     void SetUp() override { 
@@ -97,9 +98,8 @@ class ApplicationTest : public testing::Test {
         std::vector<RawDtype> img(pixels_, 0);
         for (int i = 0; i < n; ++i) {
             dynamic_cast<MockDaqClient*>(daq_client_.get())->push(
-                recon::ProjectionType::DARK, i, num_rows_, num_cols_, 
+                ProjectionType::DARK, i, num_cols_, num_rows_, 
                 zmq::message_t(reinterpret_cast<void*>(img.data()), img.size() * sizeof(RawDtype)));
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
     } 
 
@@ -107,9 +107,8 @@ class ApplicationTest : public testing::Test {
         std::vector<RawDtype> img(pixels_, 1);
         for (int i = 0; i < n; ++i) {
             dynamic_cast<MockDaqClient*>(daq_client_.get())->push(
-                recon::ProjectionType::FLAT, i, num_rows_, num_cols_, 
+                ProjectionType::FLAT, i, num_cols_, num_rows_, 
                 zmq::message_t(reinterpret_cast<void*>(img.data()), img.size() * sizeof(RawDtype)));
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
     } 
 
@@ -128,7 +127,6 @@ class ApplicationTest : public testing::Test {
             dynamic_cast<MockDaqClient*>(daq_client_.get())->push(
                 ProjectionType::PROJECTION, i, num_cols_, num_rows_,
                 zmq::message_t(reinterpret_cast<void*>(img.data()), img.size() * sizeof(RawDtype)));
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
        }
     }
 };
@@ -140,20 +138,18 @@ TEST_F(ApplicationTest, TestPushProjection) {
 
     pushDarks(num_darks_);
     pushFlats(num_flats_);
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
-    auto& sino = app_.sinoBuffer().ready();
-
     // push projections (don't completely fill the buffer)
     pushProjection(0, num_angles_ - 1);
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    auto& sino = app_.sinoBuffer().ready();
     auto& projs_ready = app_.rawBuffer().ready();
     EXPECT_EQ(projs_ready[0], 2.f);
     EXPECT_EQ(projs_ready[(num_angles_ - 1) * pixels_ - 1], 3.f); 
 
     // push projections to fill the buffer
     pushProjection(num_angles_ - 1, num_angles_);
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     auto& projs_front = app_.rawBuffer().front();
     EXPECT_THAT(std::vector<float>(projs_front.begin(), projs_front.begin() + 10), 
@@ -173,19 +169,20 @@ TEST_F(ApplicationTest, TestPushProjection) {
 TEST_F(ApplicationTest, TestMemoryBufferReset) {
     app_.startAcquiring();
     app_.startPreprocessing();
-    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
+    app_.onStateChanged(ServerState_State::ServerState_State_ACQUIRING);
 
     pushDarks(num_darks_);
     pushFlats(num_flats_);
     pushProjection(0, 1);
     pushProjection(num_angles_, num_angles_ + 1);
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     EXPECT_EQ(app_.rawBuffer().occupied(), 2);
 
+    // test reset when darks or flats received after projections
     pushDarks(num_darks_);
     pushFlats(num_flats_);
-    // buffer should have been reset
     pushProjection(0, 1);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     EXPECT_EQ(app_.rawBuffer().occupied(), 1);
 }
 
@@ -196,10 +193,11 @@ TEST_F(ApplicationTest, TestPushProjectionUnordered) {
     
     pushDarks(num_darks_);
     pushFlats(num_flats_);
-
     pushProjection(0, num_angles_ - 3);
     int overflow = 3;
     pushProjection(num_angles_ - 1, num_angles_ + overflow);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
     auto& projs_ready = app_.rawBuffer().ready();
     EXPECT_EQ(projs_ready[0], 2.f);
     EXPECT_EQ(projs_ready[overflow * pixels_ - 1], 3.f);
@@ -207,6 +205,7 @@ TEST_F(ApplicationTest, TestPushProjectionUnordered) {
 
     pushProjection(num_angles_ - 3, num_angles_ - 1);
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
     auto& projs_front = app_.rawBuffer().front();
     // FIXME: unittest fails from now and then
     EXPECT_THAT(std::vector<float>(projs_front.begin(), projs_front.begin() + 10), 

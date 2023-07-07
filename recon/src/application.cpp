@@ -92,61 +92,70 @@ void Application::setReconGeometry(std::optional<size_t> slice_size, std::option
 
 void Application::pushDark(const Projection& proj) {
     maybeResetDarkAndFlatAcquisition();
-    spdlog::info("Received {} darks in total.", darks_.push(static_cast<const char*>(proj.data.data())));
+    spdlog::info("Received {} darks in total.", 
+                 darks_.push(static_cast<const char*>(proj.data.data())));
 }
 
 void Application::pushFlat(const Projection& proj) {
     maybeResetDarkAndFlatAcquisition();
-    spdlog::info("Received {} flats in total.", flats_.push(static_cast<const char*>(proj.data.data())));
+    spdlog::info("Received {} flats in total.", 
+                 flats_.push(static_cast<const char*>(proj.data.data())));
 }
 
 void Application::pushProjection(const Projection& proj) {
-    if (reciprocal_computed_) {
-        // TODO: compute the average on the fly instead of storing the data in the buffer
-        raw_buffer_.fill<RawDtype>(static_cast<const char*>(proj.data.data()), proj.index, {proj.row_count, proj.col_count});
-        return; 
-    }
+    if (!reciprocal_computed_) {
+        if (darks_.empty() || flats_.empty()) {
+            spdlog::warn("Send dark and flat images first! Projection ignored.");
+            return;
+        }
 
-    if (darks_.empty() || flats_.empty()) {
-        spdlog::warn("Send dark and flat images first! Projection ignored.");
-        return;
-    }
+        if (!darks_.full()) {
+            spdlog::warn("Computing reciprocal with less darks than expected.");
+        }
+        if (!flats_.full()) {
+            spdlog::warn("Computing reciprocal with less flats than expected.");
+        }
 
-    if (!darks_.full()) {
-        spdlog::warn("Computing reciprocal with less darks than expected.");
-    }
-    if (!flats_.full()) {
-        spdlog::warn("Computing reciprocal with less flats than expected.");
-    }
-
-    spdlog::info("Computing reciprocal for flat field correction ...");
-    
-    {    
+        spdlog::info("Computing reciprocal for flat field correction ...");
+        
+        {    
 #if (VERBOSITY >= 2)
-        ScopedTimer timer("Bench", "Computing reciprocal");
+            ScopedTimer timer("Bench", "Computing reciprocal");
 #endif
+        
+            auto [dark_avg, reciprocal] = computeReciprocal(darks_, flats_);
+
+            spdlog::debug("Downsampling dark ... ");
+            downsample(dark_avg, dark_avg_);
+            spdlog::debug("Downsampling reciprocal ... ");
+            downsample(reciprocal, reciprocal_);
+        }
     
-        auto [dark_avg, reciprocal] = computeReciprocal(darks_, flats_);
-
-        spdlog::info("Downsampling dark ... ");
-        downsample(dark_avg, dark_avg_);
-        spdlog::info("Downsampling reciprocal ... ");
-        downsample(reciprocal, reciprocal_);
+        reciprocal_computed_ = true;
+        
+        monitor_.resetTimer();
     }
-    reciprocal_computed_ = true;
 
-    monitor_.resetTimer();
+    // TODO: compute the average on the fly instead of storing the data in the buffer
+    raw_buffer_.fill<RawDtype>(
+        static_cast<const char*>(proj.data.data()), proj.index, {proj.row_count, proj.col_count});
 }
 
 void Application::startAcquiring() {
+    constexpr size_t min_interval = 1;
+    constexpr size_t max_interval = 100;
+    size_t interval = min_interval;
     auto t = std::thread([&] {
         while (running_) {
-           if (waitForAcquiring()) continue;
+            if (waitForAcquiring()) continue;
 
             auto item = daq_client_->next();
             if (!item.has_value()) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+                interval = std::min(max_interval, interval * 2);
                 continue;
+            } else {
+                interval = min_interval;
             }
 
             auto& data = item.value();
@@ -503,6 +512,16 @@ void Application::maybeInitReconBuffer(size_t col_count, size_t row_count) {
         raw_buffer_.resize({chunk_size, row_count, col_count});
         sino_buffer_.resize({chunk_size, row_count, col_count});
         spdlog::debug("Reconstruction buffers resized");
+    }
+    raw_buffer_.reset();
+}
+
+void Application::maybeResetDarkAndFlatAcquisition() {
+    if (reciprocal_computed_) {
+        raw_buffer_.reset();
+        darks_.reset();
+        flats_.reset();
+        reciprocal_computed_ = false;
     }
 }
 
