@@ -15,6 +15,7 @@
 #include <boost/program_options.hpp>
 
 #include "recon/application.hpp"
+#include "recon/daq_client.hpp"
 #include "recon/reconstructor.hpp"
 #include "common/config.hpp"
 
@@ -178,10 +179,13 @@ int main(int argc, char** argv) {
     auto beta = opts["beta"].as<float>();
     auto distance = opts["distance"].as<float>();
 
-    recastx::DaqClientConfig daq_client_cfg {daq_port, daq_hostname, daq_socket_type};
+    using namespace std::string_literals;
+
+    recastx::recon::DaqClient daq_client(
+        "tcp://"s + daq_hostname + ":"s + std::to_string(daq_port), daq_socket_type);
     recastx::RpcServerConfig rpc_server_cfg {rpc_port};
     recastx::ImageprocParams imageproc_params {num_threads, downsampling_col, downsampling_row};
-    recastx::recon::Application app(raw_buffer_size, imageproc_params, daq_client_cfg, rpc_server_cfg);
+    recastx::recon::Application app(raw_buffer_size, imageproc_params, &daq_client, rpc_server_cfg);
 
     app.setFlatFieldCorrectionParams(num_darks, num_flats);
     app.setFilterParams(gaussian_lowpass_filter, filter_name);

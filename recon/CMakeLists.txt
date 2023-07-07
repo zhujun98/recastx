@@ -51,7 +51,7 @@ set(RECON_SOURCES
         "src/application.cpp"
 )
 
-set(RECON_LIB lib-recastx-recon)
+set(RECON_LIB _recastx-recon)
 add_library(${RECON_LIB} ${RECON_SOURCES})
 
 target_include_directories(${RECON_LIB}

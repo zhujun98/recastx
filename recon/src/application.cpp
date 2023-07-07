@@ -14,7 +14,6 @@
 #include <spdlog/spdlog.h>
 
 #include "recon/application.hpp"
-#include "recon/daq_client.hpp"
 #include "recon/encoder.hpp"
 #include "recon/filter.hpp"
 #include "recon/phase.hpp"
@@ -30,16 +29,14 @@ using namespace std::string_literals;
 
 Application::Application(size_t raw_buffer_size, 
                          const ImageprocParams& imageproc_params, 
-                         const DaqClientConfig& daq_config, 
+                         DaqClientInterface* daq_client,
                          const RpcServerConfig& rpc_config)
      : raw_buffer_(raw_buffer_size),
        imgproc_params_(imageproc_params),
        server_state_(ServerState_State_INIT),
        scan_mode_(ScanMode_Mode_CONTINUOUS),
        scan_update_interval_(K_MIN_SCAN_UPDATE_INTERVAL),
-       daq_client_(new DaqClient("tcp://"s + daq_config.hostname + ":"s + std::to_string(daq_config.port),
-                                 daq_config.socket_type,
-                                 this)),
+       daq_client_(daq_client),
        rpc_server_(new RpcServer(rpc_config.port, this)) {}
 
 Application::~Application() { 
@@ -93,6 +90,100 @@ void Application::setReconGeometry(std::optional<size_t> slice_size, std::option
     // initialization is delayed
 }
 
+void Application::pushDark(const Projection& proj) {
+    maybeResetDarkAndFlatAcquisition();
+    spdlog::info("Received {} darks in total.", 
+                 darks_.push(static_cast<const char*>(proj.data.data())));
+}
+
+void Application::pushFlat(const Projection& proj) {
+    maybeResetDarkAndFlatAcquisition();
+    spdlog::info("Received {} flats in total.", 
+                 flats_.push(static_cast<const char*>(proj.data.data())));
+}
+
+void Application::pushProjection(const Projection& proj) {
+    if (!reciprocal_computed_) {
+        if (darks_.empty() || flats_.empty()) {
+            spdlog::warn("Send dark and flat images first! Projection ignored.");
+            return;
+        }
+
+        if (!darks_.full()) {
+            spdlog::warn("Computing reciprocal with less darks than expected.");
+        }
+        if (!flats_.full()) {
+            spdlog::warn("Computing reciprocal with less flats than expected.");
+        }
+
+        spdlog::info("Computing reciprocal for flat field correction ...");
+        
+        {    
+#if (VERBOSITY >= 2)
+            ScopedTimer timer("Bench", "Computing reciprocal");
+#endif
+        
+            auto [dark_avg, reciprocal] = computeReciprocal(darks_, flats_);
+
+            spdlog::debug("Downsampling dark ... ");
+            downsample(dark_avg, dark_avg_);
+            spdlog::debug("Downsampling reciprocal ... ");
+            downsample(reciprocal, reciprocal_);
+        }
+    
+        reciprocal_computed_ = true;
+        
+        monitor_.resetTimer();
+    }
+
+    // TODO: compute the average on the fly instead of storing the data in the buffer
+    raw_buffer_.fill<RawDtype>(
+        static_cast<const char*>(proj.data.data()), proj.index, {proj.row_count, proj.col_count});
+}
+
+void Application::startAcquiring() {
+    constexpr size_t min_interval = 1;
+    constexpr size_t max_interval = 100;
+    size_t interval = min_interval;
+    auto t = std::thread([&] {
+        while (running_) {
+            if (waitForAcquiring()) continue;
+
+            auto item = daq_client_->next();
+            if (!item.has_value()) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+                interval = std::min(max_interval, interval * 2);
+                continue;
+            } else {
+                interval = min_interval;
+            }
+
+            auto& data = item.value();
+            switch(data.type) {
+                case ProjectionType::PROJECTION: {
+                    pushProjection(data);
+                    monitor_.addProjection();
+                    break;
+                }
+                case ProjectionType::DARK: {
+                    pushDark(data);
+                    monitor_.addDark();
+                    break;
+                }
+                case ProjectionType::FLAT: {
+                    pushFlat(data);
+                    monitor_.addFlat();
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
+    });
+
+    t.detach();
+}
+
 void Application::startPreprocessing() {
     auto t = std::thread([&] {
         oneapi::tbb::task_arena arena(imgproc_params_.num_threads);
@@ -111,7 +202,6 @@ void Application::startPreprocessing() {
 
 void Application::startUploading() {
     auto t = std::thread([&] {
-
         while (running_) {
             if(waitForProcessing()) continue;
 
@@ -123,11 +213,11 @@ void Application::startUploading() {
                 
                 if (scan_mode_ == ScanMode_Mode_DISCRETE) {
                     recon_->uploadSinograms(1 - gpu_buffer_index_, sino_buffer_.front().data(), chunk_size);
-                    std::lock_guard<std::mutex> lck(gpu_mutex_);
+                    std::lock_guard<std::mutex> lck(gpu_mtx_);
                     gpu_buffer_index_ = 1 - gpu_buffer_index_;
                     sino_uploaded_ = true;
                 } else {
-                    std::lock_guard<std::mutex> lck(gpu_mutex_);
+                    std::lock_guard<std::mutex> lck(gpu_mtx_);
                     sino_uploaded_ = true;
                     recon_->uploadSinograms(gpu_buffer_index_, sino_buffer_.front().data(), chunk_size);
                 }
@@ -145,19 +235,10 @@ void Application::startUploading() {
 void Application::startReconstructing() {
 
     auto t = std::thread([&] {
-
-#if (VERBOSITY >= 1)
-        const float data_size = sino_buffer_.front().shape()[0] * sizeof(RawDtype) / (1024.f * 1024.f); // in MB
-        auto start = std::chrono::steady_clock::now();
-        size_t count = 0;
-        float total_duration = 0.f;
-#endif
-
         while (running_) {
             if (waitForProcessing()) continue;
-
             {
-                std::unique_lock<std::mutex> lck(gpu_mutex_);
+                std::unique_lock<std::mutex> lck(gpu_mtx_);
                 if (gpu_cv_.wait_for(lck, 10ms, [&] { return sino_uploaded_; })) {
                     recon_->reconstructPreview(gpu_buffer_index_, preview_buffer_.back());
                 } else {
@@ -171,30 +252,9 @@ void Application::startReconstructing() {
             }
             
             spdlog::info("Volume and slices reconstructed");
+            monitor_.addTomogram();
 
             preview_buffer_.prepare();
- 
-#if (VERBOSITY >= 1)
-            // The throughtput is measured in the last step of the pipeline because
-            // data could be dropped beforehand.
-            float duration = std::chrono::duration_cast<std::chrono::microseconds>(
-                std::chrono::steady_clock::now() -  start).count();
-            start = std::chrono::steady_clock::now();
-
-            float tp = data_size * 1000000 / duration;
-            ++count;
-            float tp_avg;
-            if (count == 1) tp_avg = tp;
-            else {
-                // skip the first group since the duration includes the time for initialization as well as
-                // processing darks and flats
-                total_duration += duration;
-                tp_avg = data_size * (count - 1) * 1000000 / total_duration;
-            }
-            spdlog::info("[bench] Throughput (reconstruction) (MB/s). "
-                         "Current: {:.1f}, averaged: {:.1f} ({})", tp, tp_avg, count);
-#endif
-
         }
 
     });
@@ -203,8 +263,7 @@ void Application::startReconstructing() {
 }
 
 void Application::runForEver() {
-    // Wait for initilization
-
+    startAcquiring();    
     startPreprocessing();
     startUploading();
     startReconstructing();
@@ -215,60 +274,6 @@ void Application::runForEver() {
     // TODO: start the event loop in the main thread
     while (running_) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    }
-}
-
-void Application::pushProjection(
-        ProjectionType k, size_t proj_idx, size_t num_rows, size_t num_cols, const char* data) {
-
-    switch (k) {
-        case ProjectionType::projection: {
-            if (!reciprocal_computed_) {
-                if (darks_.empty() || flats_.empty()) {
-                    spdlog::warn("Send dark and flat images first! Projection ignored.");
-                    return;
-                }
-
-                if (!darks_.full()) {
-                    spdlog::warn("Computing reciprocal with less darks than expected.");
-                }
-                if (!flats_.full()) {
-                    spdlog::warn("Computing reciprocal with less flats than expected.");
-                }
-
-                spdlog::info("Computing reciprocal for flat field correction ...");
-                
-                {    
-#if (VERBOSITY >= 2)
-                    ScopedTimer timer("Bench", "Computing reciprocal");
-#endif
-                
-                    auto [dark_avg, reciprocal] = computeReciprocal(darks_, flats_);
-
-                    spdlog::info("Downsampling dark ... ");
-                    downsample(dark_avg, dark_avg_);
-                    spdlog::info("Downsampling reciprocal ... ");
-                    downsample(reciprocal, reciprocal_);
-                }
-                reciprocal_computed_ = true;
-            }
-
-            // TODO: compute the average on the fly instead of storing the data in the buffer
-            raw_buffer_.fill<RawDtype>(data, proj_idx, {num_rows, num_cols});
-            break;
-        }
-        case ProjectionType::dark: {
-            maybeResetDarkAndFlatAcquisition();
-            spdlog::info("Received {} darks in total.", darks_.push(data));
-            break;
-        }
-        case ProjectionType::flat: {
-            maybeResetDarkAndFlatAcquisition();
-            spdlog::info("Received {} flats in total.", flats_.push(data));
-            break;
-        }
-        default:
-            break;
     }
 }
 
@@ -302,24 +307,11 @@ void Application::onStateChanged(ServerState_State state) {
     }
 
     if (state == ServerState_State::ServerState_State_PROCESSING) {
-        init();
-        daq_client_->startAcquiring();
-
-        spdlog::info("Start acquiring and processing data:");
-
-        if (scan_mode_ == ScanMode_Mode_CONTINUOUS) {
-            spdlog::info("- Scan mode: continuous");
-            spdlog::info("- Update interval: {}", scan_update_interval_);
-        } else if (scan_mode_ == ScanMode_Mode_DISCRETE) {
-            spdlog::info("- Scan mode: discrete");
-        }
+        onStartProcessing();
     } else if (state == ServerState_State::ServerState_State_ACQUIRING) {
-        init();
-        daq_client_->startAcquiring();
-        spdlog::info("Start acquiring data");
+        onStartAcquiring();
     } else if (state == ServerState_State::ServerState_State_READY) {
-        daq_client_->stopAcquiring();
-        spdlog::info("Stop acquiring and processing data");
+        onStopProcessing();
     }
     
     server_state_ = state;
@@ -413,6 +405,34 @@ void Application::processProjections(oneapi::tbb::task_arena& arena) {
     sino_buffer_.prepare();
 }
 
+void Application::onStartProcessing() {
+    init();
+    daq_client_->startAcquiring();
+
+    spdlog::info("Start acquiring and processing data:");
+
+    if (scan_mode_ == ScanMode_Mode_CONTINUOUS) {
+        spdlog::info("- Scan mode: continuous");
+        spdlog::info("- Update interval: {}", scan_update_interval_);
+    } else if (scan_mode_ == ScanMode_Mode_DISCRETE) {
+        spdlog::info("- Scan mode: discrete");
+    }
+
+    monitor_ = Monitor(raw_buffer_.size() * sizeof(typename decltype(raw_buffer_)::ValueType));
+}
+
+void Application::onStopProcessing() {
+    daq_client_->stopAcquiring();
+    spdlog::info("Stop acquiring and processing data");
+
+    monitor_.summarize();
+}
+
+void Application::onStartAcquiring() {
+    init();
+    daq_client_->startAcquiring();
+    spdlog::info("Start acquiring data");
+}
 
 void Application::initPaganin(size_t col_count, size_t row_count) {
     if (paganin_cfg_.has_value()) {
@@ -492,6 +512,16 @@ void Application::maybeInitReconBuffer(size_t col_count, size_t row_count) {
         raw_buffer_.resize({chunk_size, row_count, col_count});
         sino_buffer_.resize({chunk_size, row_count, col_count});
         spdlog::debug("Reconstruction buffers resized");
+    }
+    raw_buffer_.reset();
+}
+
+void Application::maybeResetDarkAndFlatAcquisition() {
+    if (reciprocal_computed_) {
+        raw_buffer_.reset();
+        darks_.reset();
+        flats_.reset();
+        reciprocal_computed_ = false;
     }
 }
 

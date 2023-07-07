@@ -17,18 +17,11 @@ namespace recastx {
 
     using Orientation = std::array<float, 9>;
 
-    enum class ProjectionType : int { dark = 0, flat = 1, projection = 2, unknown = 99 };
 
     enum class BeamShape { PARALELL, CONE };
 
     using RawDtype = uint16_t;
     using ProDtype = float;
-
-    struct DaqClientConfig {
-        int port;
-        std::string hostname;
-        std::string socket_type;
-    };
 
     struct RpcServerConfig {
         int port;

@@ -12,18 +12,22 @@
 #include <string>
 #include <thread>
 
-#include <zmq.hpp>
+#include "daq_client_interface.hpp"
+#include "common/config.hpp"
 
 namespace recastx::recon {
 
-class Application;
+class DaqClient : public DaqClientInterface {
 
-class DaqClient {
+  public:
+
+    static constexpr size_t K_MAX_QUEUE_SIZE = 100;
+    static constexpr size_t K_MONITOR_EVERY = 1000;
+
+  private:
 
     zmq::context_t context_;
     zmq::socket_t socket_;
-
-    Application* app_;
 
     zmq::socket_type parseSocketType(const std::string& socket_type) const; 
 
@@ -34,11 +38,11 @@ class DaqClient {
     size_t num_rows_;
     size_t num_cols_;
 
-public:
+    size_t projection_received_ = 0;
 
-    DaqClient(const std::string& endpoint,
-              const std::string& socket_type,
-              Application* app);
+  public:
+
+    DaqClient(const std::string& endpoint, const std::string& socket_type);
 
     ~DaqClient();
 
@@ -46,6 +50,8 @@ public:
 
     void stopAcquiring();
     void startAcquiring();
+
+    std::optional<Projection> next();
 };
 
 

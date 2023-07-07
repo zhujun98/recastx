@@ -53,6 +53,22 @@ message(STATUS "Found gRPC ${gRPC_VERSION}")
 
 add_subdirectory(protos)
 
+if (BUILD_TEST)
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG v1.13.0
+    )
+    
+    # For Windows: Prevent overriding the parent project's compiler/linker settings
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
+
+    enable_testing()
+    include(GoogleTest)
+endif()
+
 if (BUILD_GUI)
     add_subdirectory(gui)
 else()

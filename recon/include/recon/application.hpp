@@ -27,7 +27,6 @@ extern "C" {
 
 #include "common/config.hpp"
 #include "buffer.hpp"
-#include "daq_client.hpp"
 #include "slice_mediator.hpp"
 #include "tensor.hpp"
 
@@ -35,13 +34,13 @@ extern "C" {
 #include "reconstruction.pb.h"
 #include "control.pb.h"
 
+#include "daq_client_interface.hpp"
 
 namespace recastx::recon {
 
 class Filter;
 class Paganin;
 class Reconstructor;
-class DaqClient;
 class RpcServer;
 
 namespace details {
@@ -58,6 +57,76 @@ inline std::pair<float, float> parseReconstructedVolumeBoundary(
 } // details
 
 class Application {
+
+    class Monitor {
+        std::chrono::time_point<std::chrono::steady_clock> start_;
+
+        size_t num_darks_ = 0;
+        size_t num_flats_ = 0;
+        size_t num_projections_= 0;
+        size_t num_tomograms_ = 0;
+
+        size_t scan_byte_size_;
+
+        std::chrono::time_point<std::chrono::steady_clock> tomo_start_;
+        size_t report_tomo_throughput_every_ = 10;
+
+      public:
+
+        explicit Monitor(size_t scan_byte_size = 0) : 
+            start_(std::chrono::steady_clock::now()),
+            scan_byte_size_(scan_byte_size),
+            tomo_start_(start_) {
+        }
+
+        void reset() {
+            num_darks_ = 0;
+            num_flats_ = 0;
+            num_projections_ = 0;
+            num_tomograms_ = 0;
+
+            resetTimer();
+        }
+
+        void resetTimer() {
+            start_ = std::chrono::steady_clock::now();
+            tomo_start_ = start_;
+        }
+
+        void addDark() { ++num_darks_; }
+
+        void addFlat() { ++num_flats_; }
+
+        void addProjection() { ++num_projections_; }
+
+        void addTomogram() {
+            ++num_tomograms_;
+
+            if (num_tomograms_ % report_tomo_throughput_every_ == 0) {
+                // The number for the first <report_tomo_throughput_every_> tomograms 
+                // underestimates the throughput! 
+                auto end = std::chrono::steady_clock::now();
+                float dt = std::chrono::duration_cast<std::chrono::microseconds>(
+                    end -  tomo_start_).count();
+                float throughput = scan_byte_size_ * report_tomo_throughput_every_ / dt;
+                spdlog::info("[Bench] Reconstruction throughput: {:.1f} (MB/s)", throughput);
+                tomo_start_ = end;
+            }
+        }
+
+        void summarize() const {
+            float dt = std::chrono::duration_cast<std::chrono::microseconds>(
+                std::chrono::steady_clock::now() -  start_).count();
+            float throughput = scan_byte_size_ * num_tomograms_ / dt;
+
+            spdlog::info("Summarise of run:");
+            spdlog::info("- Number of darks processed: {}", num_darks_);
+            spdlog::info("- Number of flats processed: {}", num_flats_);
+            spdlog::info("- Number of projections processed: {}", num_projections_);
+            spdlog::info("- Tomograms reconstructed: {}, average throughput: {:.1f} (MB/s)", 
+                         num_tomograms_, throughput);
+        }
+    };
 
     // Why did I choose ProDtype over RawDtype?
     MemoryBuffer<ProDtype, 3> raw_buffer_;
@@ -99,7 +168,7 @@ class Application {
     int gpu_buffer_index_ = 0;
     bool sino_uploaded_ = false;
     std::condition_variable gpu_cv_;
-    std::mutex gpu_mutex_;
+    std::mutex gpu_mtx_;
 
     ServerState_State server_state_;
     ScanMode_Mode scan_mode_;
@@ -107,8 +176,9 @@ class Application {
 
     // It's not a State because there might be race conditions.
     bool running_ = true;
+    Monitor monitor_;
 
-    std::unique_ptr<DaqClient> daq_client_;
+    DaqClientInterface* daq_client_;
     std::unique_ptr<RpcServer> rpc_server_;
 
     void initPaganin(size_t col_count, size_t row_count);
@@ -121,20 +191,30 @@ class Application {
 
     void maybeInitReconBuffer(size_t col_count, size_t row_count);
 
-    void maybeResetDarkAndFlatAcquisition() {
-        if (reciprocal_computed_) {
-            raw_buffer_.reset();
-            darks_.reset();
-            flats_.reset();
-            reciprocal_computed_ = false;
-        }
-    }
+    void maybeResetDarkAndFlatAcquisition();
+
+    void pushDark(const Projection& proj);
+    void pushFlat(const Projection& proj);
+    void pushProjection(const Projection& proj);
 
     void processProjections(oneapi::tbb::task_arena& arena);
 
-    bool waitForProcessing() {
+    void onStartProcessing();
+    void onStopProcessing();
+    void onStartAcquiring();
+
+    bool waitForAcquiring() const {
+        if (server_state_ != ServerState_State::ServerState_State_ACQUIRING 
+                && server_state_ != ServerState_State_PROCESSING) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            return true;
+        }
+        return false;
+    }
+
+    bool waitForProcessing() const {
         if (server_state_ != ServerState_State::ServerState_State_PROCESSING) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
             return true;
         }
         return false;
@@ -143,8 +223,8 @@ class Application {
 public:
 
     Application(size_t raw_buffer_size,
-                const ImageprocParams& imageproc_params, 
-                const DaqClientConfig& daq_config, 
+                const ImageprocParams& imageproc_params,
+                DaqClientInterface* daq_client,
                 const RpcServerConfig& rpc_config); 
 
     ~Application();
@@ -170,6 +250,9 @@ public:
                           std::optional<float> min_x, std::optional<float> max_x, 
                           std::optional<float> min_y, std::optional<float> max_y, 
                           std::optional<float> min_z, std::optional<float> max_z);
+
+    void startAcquiring();
+    void stopAcquiring();
 
     void startPreprocessing();
 
