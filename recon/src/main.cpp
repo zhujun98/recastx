@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
     general_desc.add_options()
         ("help,h", "print help message")
         ("auto-processing", po::bool_switch(&auto_processing), 
-         "...")
+         "start data processing automatically (without waiting for the GUI client)")
     ;
 
     po::options_description connection_desc("ZMQ options");
@@ -98,8 +98,8 @@ int main(int argc, char** argv) {
          "size of the square reconstructed slice in pixels. Default to detector columns.")
         ("preview-size", po::value<size_t>(),
          "size of the cubic reconstructed volume for preview.")
-        ("threads", po::value<uint32_t>()->default_value(8),
-         "number of threads used for data processing")
+        ("imageproc-threads", po::value<uint32_t>(),
+         "number of threads used for image processing")
         ("darks", po::value<size_t>()->default_value(10),
          "number of required dark images")
         ("flats", po::value<size_t>()->default_value(10),
@@ -165,11 +165,13 @@ int main(int argc, char** argv) {
     auto minz = opts["minz"].empty() ? std::nullopt : std::optional<float>{opts["minz"].as<float>()}; 
     auto maxz = opts["maxz"].empty() ? std::nullopt : std::optional<float>{opts["maxz"].as<float>()}; 
 
-    auto slice_size = opts["slice-size"].empty() ? std::nullopt 
-                                                 : std::optional<size_t>(opts["slice-size"].as<size_t>());
-    auto preview_size = opts["preview-size"].empty() ? std::nullopt 
-                                                     : std::optional<size_t>(opts["preview-size"].as<size_t>());
-    auto num_threads = opts["threads"].as<uint32_t>();
+    auto slice_size = opts["slice-size"].empty()
+        ? std::nullopt : std::optional<size_t>(opts["slice-size"].as<size_t>());
+    auto preview_size = opts["preview-size"].empty()
+        ? std::nullopt : std::optional<size_t>(opts["preview-size"].as<size_t>());
+    auto imageproc_threads = opts["imageproc-threads"].empty()
+         ? recastx::recon::Application::defaultImageprocConcurrency() 
+         : opts["imageproc-threads"].as<uint32_t>();
     auto num_darks = opts["darks"].as<size_t>();
     auto num_flats = opts["flats"].as<size_t>();
     auto raw_buffer_size = opts["raw-buffer-size"].as<size_t>();
@@ -187,7 +189,7 @@ int main(int argc, char** argv) {
     recastx::recon::DaqClient daq_client(
         "tcp://"s + daq_hostname + ":"s + std::to_string(daq_port), daq_socket_type);
     recastx::RpcServerConfig rpc_server_cfg {rpc_port};
-    recastx::ImageprocParams imageproc_params {num_threads, downsampling_col, downsampling_row};
+    recastx::ImageprocParams imageproc_params {imageproc_threads, downsampling_col, downsampling_row};
     recastx::recon::Application app(raw_buffer_size, imageproc_params, &daq_client, rpc_server_cfg);
 
     app.setFlatFieldCorrectionParams(num_darks, num_flats);
