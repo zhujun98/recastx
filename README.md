@@ -104,10 +104,10 @@ ssh -L 9971:localhost:9971 x02da-gpu-1
 conda activate recastx-recon
 
 # Receiving the data stream and running the GUI both locally
-recastx-recon --threads 32 --rows 800 --cols 384 --angles 400
+recastx-recon  --rows 800 --cols 384 --angles 400
 
 # Receiving the data stream from a DAQ node
-recastx-recon --daq-host xbl-daq-36 --threads 32 --rows 800 --cols 384 --angles 400
+recastx-recon --daq-host xbl-daq-36 --rows 800 --cols 384 --angles 400
 ```
 
 For more information, type

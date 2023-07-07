@@ -58,6 +58,15 @@ inline std::pair<float, float> parseReconstructedVolumeBoundary(
 
 class Application {
 
+  public:
+
+    static uint32_t defaultImageprocConcurrency() {
+        uint32_t n = std::thread::hardware_concurrency();
+        return n > 2 ? n / 2 : 1;
+    }
+
+  private:
+
     class Monitor {
         std::chrono::time_point<std::chrono::steady_clock> start_;
 
@@ -220,7 +229,7 @@ class Application {
         return false;
     };
 
-public:
+  public:
 
     Application(size_t raw_buffer_size,
                 const ImageprocParams& imageproc_params,
