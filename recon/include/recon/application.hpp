@@ -260,7 +260,7 @@ public:
 
     void startReconstructing();
 
-    void runForEver();
+    void spin(bool auto_processing=false);
 
     void pushProjection(
         ProjectionType k, size_t proj_idx, size_t num_rows, size_t num_cols, const char* data); 

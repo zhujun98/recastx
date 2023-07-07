@@ -261,7 +261,7 @@ void Application::startReconstructing() {
     t.detach();
 }
 
-void Application::runForEver() {
+void Application::spin(bool auto_processing) {
     startAcquiring();    
     startPreprocessing();
     startUploading();
@@ -269,6 +269,10 @@ void Application::runForEver() {
 
     daq_client_->start();
     rpc_server_->start();
+
+    if (auto_processing) {
+        onStateChanged(ServerState_State::ServerState_State_PROCESSING);
+    }
 
     // TODO: start the event loop in the main thread
     while (running_) {
