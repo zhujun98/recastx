@@ -34,7 +34,7 @@ Application::Application(size_t raw_buffer_size,
      : raw_buffer_(raw_buffer_size),
        imgproc_params_(imageproc_params),
        server_state_(ServerState_State_INIT),
-       scan_mode_(ScanMode_Mode_CONTINUOUS),
+       scan_mode_(ScanMode_Mode_DISCRETE),
        scan_update_interval_(K_MIN_SCAN_UPDATE_INTERVAL),
        daq_client_(daq_client),
        rpc_server_(new RpcServer(rpc_config.port, this)) {}
@@ -142,20 +142,14 @@ void Application::pushProjection(const Projection& proj) {
 }
 
 void Application::startAcquiring() {
-    constexpr size_t min_interval = 1;
-    constexpr size_t max_interval = 100;
-    size_t interval = min_interval;
     auto t = std::thread([&] {
         while (running_) {
             if (waitForAcquiring()) continue;
 
             auto item = daq_client_->next();
             if (!item.has_value()) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(interval));
-                interval = std::min(max_interval, interval * 2);
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 continue;
-            } else {
-                interval = min_interval;
             }
 
             auto& data = item.value();
