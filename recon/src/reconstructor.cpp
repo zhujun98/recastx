@@ -77,7 +77,6 @@ void Uploader::upload(astra::CFloat32ProjectionData3DGPU* dst, const float* src,
     }
 
     start_ = (end + 1) % group_size_;
-    spdlog::info("Finished uploading sinograms to GPU");
 }
 
 // class Reconstructor

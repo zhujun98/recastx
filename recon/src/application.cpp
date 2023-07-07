@@ -194,8 +194,9 @@ void Application::startPreprocessing() {
 
             if (!raw_buffer_.fetch(100)) continue; 
 
-            spdlog::info("Processing projections ...");
-            processProjections(arena);
+            spdlog::info("Preprocessing projections ...");
+            preprocessProjections(arena);
+            spdlog::debug("Projection preprocessing finished!");
         }
     });
 
@@ -241,6 +242,7 @@ void Application::startReconstructing() {
             {
                 std::unique_lock<std::mutex> lck(gpu_mtx_);
                 if (gpu_cv_.wait_for(lck, 10ms, [&] { return sino_uploaded_; })) {
+                    spdlog::info("Reconstructing preview and slices ...");
                     recon_->reconstructPreview(gpu_buffer_index_, preview_buffer_.back());
                 } else {
                     slice_mediator_.reconOnDemand(recon_.get(), gpu_buffer_index_);
@@ -252,7 +254,7 @@ void Application::startReconstructing() {
                 sino_uploaded_ = false;
             }
             
-            spdlog::info("Volume and slices reconstructed");
+            spdlog::debug("Preview and slices reconstructed!");
             monitor_.addTomogram();
 
             preview_buffer_.prepare();
@@ -307,7 +309,7 @@ void Application::setScanMode(ScanMode_Mode mode, uint32_t update_interval) {
 
 void Application::onStateChanged(ServerState_State state) {
     if (server_state_ == state) {
-        spdlog::debug("Server allready in state: {}", static_cast<int>(state));
+        spdlog::debug("Server already in state: {}", static_cast<int>(state));
         return;
     }
 
@@ -359,14 +361,14 @@ std::vector<ReconData> Application::onDemandSliceData(int timeout) {
     return ret;
 }
 
-void Application::processProjections(oneapi::tbb::task_arena& arena) {
+void Application::preprocessProjections(oneapi::tbb::task_arena& arena) {
 
     auto& shape = raw_buffer_.shape();
     auto [chunk_size, row_count, col_count] = shape;
     size_t num_pixels = row_count * col_count;
 
 #if (VERBOSITY >= 2)
-    ScopedTimer timer("Bench", "Processing projections");
+    ScopedTimer timer("Bench", "Preprocessing projections");
 #endif
 
     auto projs = raw_buffer_.front().data();

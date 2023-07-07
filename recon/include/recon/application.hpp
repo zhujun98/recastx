@@ -206,7 +206,7 @@ class Application {
     void pushFlat(const Projection& proj);
     void pushProjection(const Projection& proj);
 
-    void processProjections(oneapi::tbb::task_arena& arena);
+    void preprocessProjections(oneapi::tbb::task_arena& arena);
 
     void onStartProcessing();
     void onStopProcessing();
