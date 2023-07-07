@@ -417,7 +417,8 @@ void Application::onStartProcessing() {
         spdlog::info("- Scan mode: discrete");
     }
 
-    monitor_ = Monitor(raw_buffer_.size() * sizeof(RawDtype));
+    monitor_ = Monitor(proj_geom_.row_count * proj_geom_.col_count * proj_geom_.angles.size() 
+                       * sizeof(RawDtype));
 }
 
 void Application::onStopProcessing() {
