@@ -92,14 +92,18 @@ void Application::setReconGeometry(std::optional<size_t> slice_size, std::option
 
 void Application::pushDark(const Projection& proj) {
     maybeResetDarkAndFlatAcquisition();
-    spdlog::info("Received {} darks in total.", 
-                 darks_.push(static_cast<const char*>(proj.data.data())));
+    size_t n = darks_.push(static_cast<const char*>(proj.data.data()));
+    if (n % 10 == 0) {
+        spdlog::info("# of darks received: {}", n);
+    }
 }
 
 void Application::pushFlat(const Projection& proj) {
     maybeResetDarkAndFlatAcquisition();
-    spdlog::info("Received {} flats in total.", 
-                 flats_.push(static_cast<const char*>(proj.data.data())));
+    size_t n = flats_.push(static_cast<const char*>(proj.data.data()));
+    if (n % 10 == 0) {
+        spdlog::info("# of flats received: {}", n);
+    }
 }
 
 void Application::pushProjection(const Projection& proj) {
