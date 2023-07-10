@@ -13,7 +13,8 @@
 
 namespace recastx::gui {
 
-ProjectionItem::ProjectionItem(Scene& scene) : GraphicsItem(scene) {
+ProjectionItem::ProjectionItem(Scene& scene)
+        : GraphicsItem(scene), filter_name_("shepp") {
     scene.addItem(this);
 }
 
@@ -71,14 +72,30 @@ void ProjectionItem::renderIm() {
     ImGui::DragFloat("X offset", &x_offset_, 1, -50, 50, "%.1f");
     ImGui::DragFloat("Y offset", &y_offset_, 1, -50, 50, "%.1f");
     ImGui::EndDisabled();
+
+    ImGui::Text("Filter: ");
+    ImGui::SameLine();
+    if (ImGui::BeginCombo("##filter", filter_options.at(filter_name_).c_str())) {
+        for (const auto& [k, v] : filter_options) {
+            const bool is_selected = (filter_name_ == k);
+            if (ImGui::Selectable(v.c_str(), is_selected)) {
+                filter_name_ = k;
+            }
+        }
+        ImGui::EndCombo();
+    }
 }
 
 bool ProjectionItem::updateServerParams() {
-    return setDownsamplingParams();
+    return setDownsamplingParams() || setProjectionFilter();
 }
 
 bool ProjectionItem::setDownsamplingParams() {
     return scene_.client()->setDownsamplingParams(downsampling_col_, downsampling_row_);
+}
+
+bool ProjectionItem::setProjectionFilter() {
+    return scene_.client()->setProjectionFilter(filter_name_);
 }
 
 } // namespace recastx::gui

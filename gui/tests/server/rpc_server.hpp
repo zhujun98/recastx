@@ -44,6 +44,10 @@ class ImageprocService final : public Imageproc::Service {
     grpc::Status SetDownsamplingParams(grpc::ServerContext* context,
                                        const DownsamplingParams* params,
                                        google::protobuf::Empty* ack) override;
+
+    grpc::Status SetProjectionFilter(grpc::ServerContext* contest,
+                                     const ProjectionFilter* params,
+                                     google::protobuf::Empty* ack) override;
 };
 
 class ReconstructionService final : public Reconstruction::Service {

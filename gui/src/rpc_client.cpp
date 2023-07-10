@@ -73,6 +73,18 @@ bool RpcClient::setDownsamplingParams(uint32_t col, uint32_t row) {
     return checkStatus(status);
 }
 
+bool RpcClient::setProjectionFilter(const std::string& filter_name) {
+    ProjectionFilter request;
+    request.set_name(filter_name);
+
+    google::protobuf::Empty reply;
+
+    grpc::ClientContext context;
+
+    grpc::Status status = imageproc_stub_->SetProjectionFilter(&context, request, &reply);
+    return checkStatus(status);
+}
+
 bool RpcClient::setSlice(uint64_t timestamp, const Orientation& orientation) {
     Slice request;
     request.set_timestamp(timestamp);

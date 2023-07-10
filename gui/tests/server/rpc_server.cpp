@@ -52,6 +52,13 @@ grpc::Status ImageprocService::SetDownsamplingParams(grpc::ServerContext* contex
     return grpc::Status::OK;
 }
 
+grpc::Status ImageprocService::SetProjectionFilter(grpc::ServerContext* contest,
+                                                   const ProjectionFilter* params,
+                                                   google::protobuf::Empty* ack) {
+    spdlog::info("Set projection filter: {}", params->name());
+    return grpc::Status::OK;
+}
+
 grpc::Status ReconstructionService::SetSlice(grpc::ServerContext* context,
                                              const Slice* slice,
                                              google::protobuf::Empty* ack) {
