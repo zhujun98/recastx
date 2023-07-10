@@ -43,11 +43,11 @@ int main(int argc, char** argv) {
     general_desc.add_options()
         ("help,h", "print help message")
         ("auto-processing", po::bool_switch(&auto_processing), 
-         "start data processing automatically (without waiting for the GUI client)")
+         "start data processing automatically (without waiting for a trigger from the GUI client)")
     ;
 
-    po::options_description connection_desc("ZMQ options");
-    connection_desc.add_options()
+    po::options_description communication_desc("Communication options");
+    communication_desc.add_options()
         ("daq-host", po::value<std::string>()->default_value("localhost"), 
          "hostname of the DAQ server")
         ("daq-port", po::value<int>()->default_value(9667),
@@ -89,17 +89,24 @@ int main(int argc, char** argv) {
          "maximal Z-coordinate of the reconstructed volume")
     ;
 
-    po::options_description reconstruction_desc("Reconstruction options");
     bool retrieve_phase = false;
-    bool tilt = false;
     bool gaussian_lowpass_filter = false;
+    po::options_description preprocessing_desc("Preprocessing options");
+    preprocessing_desc.add_options()
+        ("retrieve-phase", po::bool_switch(&retrieve_phase),
+         "switch to Paganin filter")
+        ("filter", po::value<std::string>()->default_value("shepp"),
+         "Supported filters are: shepp (Shepp-Logan), ramlak (Ram-Lak)")
+        ("gaussian-lowpass-filter", po::bool_switch(&gaussian_lowpass_filter),
+         "enable Gaussian low-pass filter (not verified)")
+    ;
+
+    po::options_description reconstruction_desc("Reconstruction options");
     reconstruction_desc.add_options()
         ("slice-size", po::value<size_t>(),
          "size of the square reconstructed slice in pixels. Default to detector columns.")
         ("preview-size", po::value<size_t>(),
          "size of the cubic reconstructed volume for preview.")
-        ("imageproc-threads", po::value<uint32_t>(),
-         "number of threads used for image processing")
         ("darks", po::value<size_t>()->default_value(10),
          "number of required dark images")
         ("flats", po::value<size_t>()->default_value(10),
@@ -108,8 +115,6 @@ int main(int argc, char** argv) {
          "maximum number of projection groups to be cached in the memory buffer")
         ("retrieve-phase", po::bool_switch(&retrieve_phase),
          "switch to Paganin filter")
-        ("tilt", po::bool_switch(&tilt),
-         "...")
         ("filter", po::value<std::string>()->default_value("shepp"),
          "Supported filters are: shepp (Shepp-Logan), ramlak (Ram-Lak)")
         ("gaussian-lowpass-filter", po::bool_switch(&gaussian_lowpass_filter),
@@ -130,14 +135,22 @@ int main(int argc, char** argv) {
          "...")
     ;
 
+    po::options_description pipeline_desc("Pipeline options");
+    pipeline_desc.add_options()
+        ("imageproc-threads", po::value<uint32_t>(),
+         "number of threads used for image processing")
+    ;
+
     po::options_description all_desc(
         "Allowed options for TOMCAT live 3D reconstruction server");
     all_desc.
         add(general_desc).
-        add(connection_desc).
+        add(communication_desc).
         add(geometry_desc).
+        add(preprocessing_desc).
         add(reconstruction_desc).
-        add(paganin_desc);
+        add(paganin_desc).
+        add(pipeline_desc);
 
     po::variables_map opts;
     po::store(po::parse_command_line(argc, argv, all_desc), opts);
@@ -169,9 +182,6 @@ int main(int argc, char** argv) {
         ? std::nullopt : std::optional<size_t>(opts["slice-size"].as<size_t>());
     auto preview_size = opts["preview-size"].empty()
         ? std::nullopt : std::optional<size_t>(opts["preview-size"].as<size_t>());
-    auto imageproc_threads = opts["imageproc-threads"].empty()
-         ? recastx::recon::Application::defaultImageprocConcurrency() 
-         : opts["imageproc-threads"].as<uint32_t>();
     auto num_darks = opts["darks"].as<size_t>();
     auto num_flats = opts["flats"].as<size_t>();
     auto raw_buffer_size = opts["raw-buffer-size"].as<size_t>();
@@ -183,6 +193,10 @@ int main(int argc, char** argv) {
     auto delta = opts["delta"].as<float>();
     auto beta = opts["beta"].as<float>();
     auto distance = opts["distance"].as<float>();
+
+    auto imageproc_threads = opts["imageproc-threads"].empty()
+         ? recastx::recon::Application::defaultImageprocConcurrency() 
+         : opts["imageproc-threads"].as<uint32_t>();
 
     using namespace std::string_literals;
 
