@@ -31,6 +31,10 @@ RpcClient::RpcClient(const std::string& hostname, int port) {
     reconstruction_stub_ = Reconstruction::NewStub(channel_);
 }
 
+RpcClient::~RpcClient() {
+    stopReconDataStream();
+}
+
 bool RpcClient::setServerState(ServerState_State state) {
     ServerState request;
     request.set_state(state);
@@ -83,13 +87,16 @@ bool RpcClient::setSlice(uint64_t timestamp, const Orientation& orientation) {
 }
 
 void RpcClient::startReconDataStream() {
+    if (streaming_) return;
+
+    streaming_ = true;
     thread_ = std::thread([&]() {
-        streaming_ = true;
         ReconData reply;
 
-        constexpr int min_timeout = 100;
-        constexpr int max_timeout = 2000;
+        constexpr int min_timeout = 1;
+        constexpr int max_timeout = 100;
         int timeout = min_timeout;
+
         while (streaming_) {
             grpc::ClientContext context;
 
@@ -103,7 +110,7 @@ void RpcClient::startReconDataStream() {
             }
             grpc::Status status = reader->Finish();
 
-            if (checkStatus(status)) {
+            if (checkStatus(status, false)) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(timeout));
                 timeout = std::min(2 * timeout, max_timeout);
             } else {
@@ -122,10 +129,12 @@ void RpcClient::stopReconDataStream() {
     }
 }
 
-bool RpcClient::checkStatus(const grpc::Status& status) const {
+bool RpcClient::checkStatus(const grpc::Status& status, bool warn_on_fail) const {
     if (!status.ok()) {
         log::debug("{}: {}", status.error_code(), status.error_message());
-        log::warn("Failed to connect to the reconstruction server!");
+        if (warn_on_fail) {
+            log::warn("Failed to connect to the reconstruction server!");
+        }
         return true;
     }
     return false;

@@ -48,10 +48,10 @@ int main(int argc, char** argv) {
 
     auto& app = Application::instance();
 
-    Scene3d scene;
-
     RpcClient rpc_client(opts["recon-host"].as<std::string>(), opts["rpc-port"].as<int>());
-    scene.setClient(&rpc_client);
+
+    Scene3d scene(&rpc_client);
+
     app.setScene(&scene);
     app.exec();
 

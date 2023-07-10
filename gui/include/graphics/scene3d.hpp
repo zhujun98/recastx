@@ -14,6 +14,7 @@
 #include "graphics/scene.hpp"
 #include "graphics/camera3d.hpp"
 #include "control.pb.h"
+#include "scene.hpp"
 
 namespace recastx::gui {
 
@@ -52,7 +53,7 @@ class Scene3d : public Scene {
 
 public:
 
-    explicit Scene3d();
+    explicit Scene3d(RpcClient* client);
 
     ~Scene3d() override;
 
