@@ -24,8 +24,8 @@
 
 namespace recastx::gui {
 
-Scene3d::Scene3d()
-        : Scene(),
+Scene3d::Scene3d(RpcClient* client)
+        : Scene(client),
           viewport_(new Viewport()),
           viewport_icon_(new Viewport(false)),
           viewport_axiscube_(new Viewport(false)),
@@ -42,6 +42,8 @@ Scene3d::Scene3d()
     camera_ = std::make_unique<Camera>();
 
     scene_status_["tomoUpdateFrameRate"] = 0.;
+
+    client_->startReconDataStream();
 }
 
 Scene3d::~Scene3d() = default;
@@ -73,17 +75,16 @@ void Scene3d::onStateChanged(ServerState_State state) {
     }
 
     if (client_->setServerState(state)) return;
+
     server_state_ = state;
     for (auto item : items_) item->setState(state);
 
     if (state == ServerState_State::ServerState_State_PROCESSING) {
         log::info("Start acquiring & processing data");
-        client_->startReconDataStream();
     } else if (state == ServerState_State::ServerState_State_ACQUIRING) {
         log::info("Start acquiring data");
     } else /* (state == ServerState_State::ServerState_State_READY) */ {
         log::info("Stop acquiring & processing data");
-        client_->stopReconDataStream();
     }
 }
 

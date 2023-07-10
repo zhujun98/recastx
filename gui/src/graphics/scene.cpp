@@ -17,7 +17,7 @@
 
 namespace recastx::gui {
 
-Scene::Scene() = default;
+Scene::Scene(RpcClient* client) : client_(client) {}
 
 Scene::~Scene() = default;
 

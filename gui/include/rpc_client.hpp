@@ -40,17 +40,19 @@ class RpcClient {
     std::unique_ptr<Reconstruction::Stub> reconstruction_stub_;
 
     std::thread thread_;
-    bool streaming_ {false};
+    bool streaming_ = false;
 
     inline static std::queue<ReconData> packets_;
 
-    bool checkStatus(const grpc::Status& status) const;
+    bool checkStatus(const grpc::Status& status, bool warn_on_fail = true) const;
 
   public:
 
     static std::queue<ReconData>& packets();
 
     RpcClient(const std::string& hostname, int port);
+
+    ~RpcClient();
 
     bool setServerState(ServerState_State state);
 

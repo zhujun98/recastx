@@ -21,7 +21,7 @@ ProjectionItem::~ProjectionItem() = default;
 
 void ProjectionItem::renderIm() {
     ImGui::Separator();
-    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "PROJECTION");
+    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "PREPROCESSING");
 
     // Projection downsampling
     ImGui::BeginDisabled(state_ == ServerState_State::ServerState_State_PROCESSING);

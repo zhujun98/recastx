@@ -57,6 +57,7 @@ void Application::init() {
     
     initFilter(col_count, row_count);
     
+    sino_initialized_ = false;
     gpu_buffer_index_ = 0;
     initReconstructor(col_count, row_count);
 
@@ -224,6 +225,7 @@ void Application::startUploading() {
                     recon_->uploadSinograms(gpu_buffer_index_, sino_buffer_.front().data(), chunk_size);
                 }
 
+                sino_initialized_ = true;
                 spdlog::debug("Sinogram uploaded!");
             }
 
@@ -237,14 +239,14 @@ void Application::startUploading() {
 void Application::startReconstructing() {
 
     auto t = std::thread([&] {
-        while (running_) {
-            if (waitForProcessing()) continue;
+        while (running_) {          
             {
                 std::unique_lock<std::mutex> lck(gpu_mtx_);
                 if (gpu_cv_.wait_for(lck, 10ms, [&] { return sino_uploaded_; })) {
                     spdlog::info("Reconstructing preview and slices ...");
                     recon_->reconstructPreview(gpu_buffer_index_, preview_buffer_.back());
                 } else {
+                    if (waitForSinoInitialization()) continue;
                     slice_mediator_.reconOnDemand(recon_.get(), gpu_buffer_index_);
                     continue;
                 }

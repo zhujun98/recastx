@@ -27,7 +27,6 @@ namespace recastx::gui {
 
 class ShaderProgram;
 class Camera;
-class RpcClient;
 
 class Scene : public GraphNode, public InputHandler, public Ticker {
 
@@ -53,11 +52,9 @@ protected:
 
   public:
 
-    explicit Scene();
+    explicit Scene(RpcClient* client);
 
     ~Scene() override;
-
-    void setClient(RpcClient* client) { client_ = client; }
 
     RpcClient* client() { return client_; }
 
