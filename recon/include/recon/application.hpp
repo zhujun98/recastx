@@ -175,6 +175,7 @@ class Application {
     std::unique_ptr<Reconstructor> recon_;
 
     int gpu_buffer_index_ = 0;
+    bool sino_initialized_ = false;
     bool sino_uploaded_ = false;
     std::condition_variable gpu_cv_;
     std::mutex gpu_mtx_;
@@ -228,6 +229,14 @@ class Application {
         }
         return false;
     };
+
+    bool waitForSinoInitialization() const {
+        if (!sino_initialized_) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            return true;
+        }
+        return false;
+    }
 
   public:
 

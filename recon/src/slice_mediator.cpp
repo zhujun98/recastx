@@ -37,7 +37,7 @@ void SliceMediator::update(size_t timestamp, const Orientation& orientation) {
     updated_.insert(sid);
 
     assert(all_slices_.size() <= MAX_NUM_SLICES);
-    spdlog::debug("Orientation of slice {} ({}) updated", sid, timestamp);
+    spdlog::info("Slice {} orientation updated", sid);
 }
 
 void SliceMediator::reconAll(Reconstructor* recon, int gpu_buffer_index) {
@@ -67,6 +67,8 @@ void SliceMediator::reconOnDemand(Reconstructor* recon, int gpu_buffer_index) {
                 recon->reconstructSlice(param.second, gpu_buffer_index, std::get<2>(slice));
                 std::get<1>(slice) = param.first;
                 std::get<0>(slice) = true;
+
+                spdlog::debug("On-demand slice {} ({}) reconstructed", sid, param.first);
             }
 
             updated_.clear();
