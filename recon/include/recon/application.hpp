@@ -155,7 +155,6 @@ class Application {
     std::optional<PaganinConfig> paganin_cfg_;
     std::unique_ptr<Paganin> paganin_;
     
-    FilterConfig filter_cfg_;
     std::unique_ptr<Filter> filter_;
 
     ImageprocParams imgproc_params_;
@@ -257,9 +256,6 @@ class Application {
     template<typename ...Ts>
     void setPaganinParams(Ts... args) { paganin_cfg_ = {std::forward<Ts>(args)...}; }
 
-    template<typename ...Ts>
-    void setFilterParams(Ts... args) { filter_cfg_ = {std::forward<Ts>(args)...}; }
-
     void setProjectionGeometry(BeamShape beam_shape, size_t col_count, size_t row_count,
                                float pixel_width, float pixel_height, 
                                float src2origin, float origin2det, size_t num_angles);
@@ -284,6 +280,8 @@ class Application {
         ProjectionType k, size_t proj_idx, size_t num_rows, size_t num_cols, const char* data); 
 
     void setDownsamplingParams(uint32_t col, uint32_t row);
+
+    void setProjectionFilter(std::string filter_name);
 
     void setSlice(size_t timestamp, const Orientation& orientation);
 

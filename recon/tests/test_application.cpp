@@ -67,7 +67,10 @@ class ApplicationTest : public testing::Test {
     std::unique_ptr<DaqClientInterface> daq_client_;
 
     const RpcServerConfig rpc_cfg {12347};
-    const ImageprocParams imgproc_params {threads_, downsampling_col_, downsampling_row_};
+    const ImageprocParams imgproc_params {
+        threads_, downsampling_col_, downsampling_row_,
+        {filter_name_, gaussian_lowpass_filter_}    
+    };
 
     Application app_;
 
@@ -84,7 +87,6 @@ class ApplicationTest : public testing::Test {
 
     void SetUp() override { 
         app_.setFlatFieldCorrectionParams(num_darks_, num_flats_);
-        app_.setFilterParams(gaussian_lowpass_filter_, filter_name_);
         app_.setProjectionGeometry(recastx::BeamShape::PARALELL, num_cols_, num_rows_,
                                    pixel_width_, pixel_height_, 
                                    src2origin, origin2det, num_angles_);

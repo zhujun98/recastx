@@ -67,6 +67,7 @@ void Application::init() {
     spdlog::info("- Number of projection images per tomogram: {}", proj_geom_.angles.size());
     spdlog::info("- Projection image size: {} ({}) x {} ({})", 
                  col_count, downsampling_col, row_count, downsampling_row);
+    spdlog::info("- Use filter: {}", imgproc_params_.filter.name);
 }
 
 void Application::setProjectionGeometry(BeamShape beam_shape, size_t col_count, size_t row_count,
@@ -293,6 +294,11 @@ void Application::setDownsamplingParams(uint32_t col, uint32_t row) {
     spdlog::debug("Set image downsampling parameters: {} / {}", col, row);
 }
 
+void Application::setProjectionFilter(std::string filter_name) {
+    imgproc_params_.filter.name = std::move(filter_name);
+    spdlog::debug("Set projection filter: {}", filter_name);
+}
+
 void Application::setSlice(size_t timestamp, const Orientation& orientation) {
     slice_mediator_.update(timestamp, orientation);
 }
@@ -454,8 +460,9 @@ void Application::initPaganin(size_t col_count, size_t row_count) {
 }
 
 void Application::initFilter(size_t col_count, size_t row_count) {
+    const auto& flt = imgproc_params_.filter;
     filter_ = std::make_unique<Filter>(
-        filter_cfg_.name, filter_cfg_.gaussian_lowpass_filter, 
+        flt.name, flt.gaussian_lowpass_filter, 
         &raw_buffer_.front()[0], col_count, row_count, imgproc_params_.num_threads);
 }
 

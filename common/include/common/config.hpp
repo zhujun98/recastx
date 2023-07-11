@@ -33,15 +33,17 @@ namespace recastx {
     };
 
     struct ImageprocParams {
+        struct Filter {
+            std::string name;
+            bool gaussian_lowpass_filter;
+        };
+
         uint32_t num_threads;
         uint32_t downsampling_col;
         uint32_t downsampling_row;
+        Filter filter;
     };
 
-    struct FilterConfig {
-        bool gaussian_lowpass_filter;
-        std::string name;
-    };
 
     struct PaganinConfig {
         float pixel_size;

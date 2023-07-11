@@ -44,6 +44,13 @@ grpc::Status ImageprocService::SetDownsamplingParams(grpc::ServerContext* contex
     return grpc::Status::OK;
 }
 
+grpc::Status ImageprocService::SetProjectionFilter(grpc::ServerContext* contest,
+                                                   const ProjectionFilter* params,
+                                                   google::protobuf::Empty* ack) {
+    app_->setProjectionFilter(std::move(params->name()));
+    return grpc::Status::OK;
+}
+
 ReconstructionService::ReconstructionService(Application* app) : app_(app) {}
 
 grpc::Status ReconstructionService::SetSlice(grpc::ServerContext* context, 
