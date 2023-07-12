@@ -277,11 +277,19 @@ private:
     bool fetch(int timeout = -1);
 
     BufferType& front() { return front_; }
-    BufferType& back() { return buffer_[map_.at(chunk_indices_.front())]; }
+    BufferType& back() {
+        return buffer_[map_.at(chunk_indices_.front())];
+    }
 
-    const BufferType& front() const { return front_; }
-    const BufferType& ready() const { return buffer_[map_.at(chunk_indices_.front())]; }
-    const BufferType& back() const { return buffer_[map_.at(chunk_indices_.front())]; }
+    const BufferType& front() const {
+        return front_;
+    }
+    const BufferType& ready() const {
+        return buffer_[map_.at(chunk_indices_.front())];
+    }
+    const BufferType& back() const {
+        return buffer_[map_.at(chunk_indices_.front())];
+    }
 
     size_t capacity() const { 
         assert(this->capacity_ == buffer_.size());
@@ -330,6 +338,10 @@ void MemoryBuffer<T, N>::resize(const std::array<size_t, N>& shape) {
 
 template<typename T, size_t N>
 void MemoryBuffer<T, N>::reset() {
+    std::lock_guard lk(mtx_);
+
+    is_ready_ = false;
+
     std::queue<size_t>().swap(chunk_indices_);
     std::queue<size_t>().swap(unoccupied_);
     map_.clear();
@@ -344,14 +356,12 @@ void MemoryBuffer<T, N>::reset() {
     }
 }
 
-
 template<typename T, size_t N>
 template<typename D>
 void MemoryBuffer<T, N>::fill(const char* raw, size_t index) {
     auto& shape = front_.shape();
     fill<D>(raw, index, {shape[1], shape[2]});
 }
-
 
 template<typename T, size_t N>
 template<typename D>
@@ -441,6 +451,8 @@ bool MemoryBuffer<T, N>::fetch(int timeout) {
             return false;
         }
     }
+
+    assert(!map_.empty());
     front_.swap(buffer_[map_.at(chunk_indices_.front())]);
     pop();
     is_ready_ = false;

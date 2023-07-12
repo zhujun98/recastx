@@ -138,7 +138,6 @@ void Application::pushProjection(const Projection& proj) {
         }
     
         reciprocal_computed_ = true;
-        
         monitor_.resetTimer();
     }
 
