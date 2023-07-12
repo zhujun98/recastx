@@ -34,7 +34,7 @@ IconItem::IconItem(Scene &scene)
     glyph_shader_ = std::make_unique<ShaderProgram>(glyph_vert, glyph_frag);
 
     glyph_renderer_ = std::make_unique<GlyphRenderer>();
-    glyph_renderer_->init(48, 48);
+    glyph_renderer_->init(font_size_, font_size_);
 }
 
 IconItem::~IconItem() = default;
@@ -52,7 +52,8 @@ void IconItem::renderGl(const glm::mat4& /*view*/,
     glyph_shader_->setMat4("view", view_);
     glyph_shader_->setMat4("projection", translate_ * projection);
     glyph_shader_->setVec3("glyphColor", color_);
-    glyph_renderer_->render("TOMCAT", 0.f, 0.f, 0.01f * asp, 0.04f);
+    glyph_renderer_->render("RECAST-X", 0.f, 0.55f, 0.005f * asp, 0.02f);
+    glyph_renderer_->render("@TOMCAT", 0.f, -0.15f, 0.0025f * asp, 0.01f);
 
     glDisable(GL_BLEND);
 }
