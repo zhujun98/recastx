@@ -4,12 +4,12 @@ package recastx;
 import "google/protobuf/empty.proto";
 
 service Imageproc {
-  rpc SetDownsamplingParams (DownsamplingParams) returns (google.protobuf.Empty) {}
+  rpc SetDownsampling (Downsampling) returns (google.protobuf.Empty) {}
 
   rpc SetProjectionFilter (ProjectionFilter) returns (google.protobuf.Empty) {}
 }
 
-message DownsamplingParams {
+message Downsampling {
   uint32 col = 1;
   uint32 row = 2;
 }

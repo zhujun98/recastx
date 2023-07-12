@@ -35,12 +35,12 @@ grpc::Status ControlService::SetScanMode(grpc::ServerContext* context,
 
 ImageprocService::ImageprocService(Application* app) : app_(app) {}
 
-grpc::Status ImageprocService::SetDownsamplingParams(grpc::ServerContext* context, 
-                                                     const DownsamplingParams* params,
-                                                     google::protobuf::Empty* ack) {
+grpc::Status ImageprocService::SetDownsampling(grpc::ServerContext* context, 
+                                               const Downsampling* params,
+                                               google::protobuf::Empty* ack) {
     auto col = params->col();
     auto row = params->row();
-    app_->setDownsamplingParams(col, row);
+    app_->setDownsampling(col, row);
     return grpc::Status::OK;
 }
 

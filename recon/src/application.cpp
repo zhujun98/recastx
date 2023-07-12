@@ -287,11 +287,11 @@ void Application::spin(bool auto_processing) {
     }
 }
 
-void Application::setDownsamplingParams(uint32_t col, uint32_t row) {
+void Application::setDownsampling(uint32_t col, uint32_t row) {
     imgproc_params_.downsampling_col = col;
     imgproc_params_.downsampling_row = row;
 
-    spdlog::debug("Set image downsampling parameters: {} / {}", col, row);
+    spdlog::debug("Set projection downsampling: {} / {}", col, row);
 }
 
 void Application::setProjectionFilter(std::string filter_name) {

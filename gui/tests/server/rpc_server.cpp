@@ -45,10 +45,10 @@ grpc::Status ControlService::SetScanMode(grpc::ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status ImageprocService::SetDownsamplingParams(grpc::ServerContext* context,
-                                                     const DownsamplingParams* params,
-                                                     google::protobuf::Empty* ack) {
-    spdlog::info("Set downsampling parameters: {} / {}", params->col(), params->row());
+grpc::Status ImageprocService::SetDownsampling(grpc::ServerContext* context,
+                                               const Downsampling* params,
+                                               google::protobuf::Empty* ack) {
+    spdlog::info("Set projection downsampling: {} / {}", params->col(), params->row());
     return grpc::Status::OK;
 }
 

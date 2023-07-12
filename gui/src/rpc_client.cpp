@@ -60,8 +60,8 @@ bool RpcClient::setScanMode(ScanMode_Mode mode, uint32_t update_interval) {
     return checkStatus(status);
 }
 
-bool RpcClient::setDownsamplingParams(uint32_t col, uint32_t row) {
-    DownsamplingParams request;
+bool RpcClient::setDownsampling(uint32_t col, uint32_t row) {
+    Downsampling request;
     request.set_col(col);
     request.set_row(row);
 
@@ -69,7 +69,7 @@ bool RpcClient::setDownsamplingParams(uint32_t col, uint32_t row) {
 
     grpc::ClientContext context;
 
-    grpc::Status status = imageproc_stub_->SetDownsamplingParams(&context, request, &reply);
+    grpc::Status status = imageproc_stub_->SetDownsampling(&context, request, &reply);
     return checkStatus(status);
 }
 

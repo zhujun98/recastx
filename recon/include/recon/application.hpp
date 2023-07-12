@@ -279,7 +279,7 @@ class Application {
     void pushProjection(
         ProjectionType k, size_t proj_idx, size_t num_rows, size_t num_cols, const char* data); 
 
-    void setDownsamplingParams(uint32_t col, uint32_t row);
+    void setDownsampling(uint32_t col, uint32_t row);
 
     void setProjectionFilter(std::string filter_name);
 
