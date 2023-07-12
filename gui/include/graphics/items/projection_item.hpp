@@ -9,11 +9,22 @@
 #ifndef GUI_PROJECTIONITEM_HPP
 #define GUI_PROJECTIONITEM_HPP
 
+#include <map>
+#include <string>
+
 #include "graphics/items/graphics_item.hpp"
 
 namespace recastx::gui {
 
 class ProjectionItem : public GraphicsItem {
+
+  public:
+
+    inline static const std::map<std::string, std::string> filter_options {
+            {"shepp", "Shepp-Logan"},
+            {"ramlak", "Ram-Lak"}};
+
+  private:
 
     int downsampling_col_ = 1;
     int downsampling_row_ = 1;
@@ -21,9 +32,13 @@ class ProjectionItem : public GraphicsItem {
     float x_offset_ = 0.f;
     float y_offset_ = 0.f;
 
+    std::string filter_name_;
+
     bool setDownsamplingParams();
 
-public:
+    bool setProjectionFilter();
+
+  public:
 
     explicit ProjectionItem(Scene& scene);
 

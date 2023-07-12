@@ -186,7 +186,7 @@ int main(int argc, char** argv) {
     auto num_flats = opts["flats"].as<size_t>();
     auto raw_buffer_size = opts["raw-buffer-size"].as<size_t>();
 
-    auto filter_name = opts["filter"].as<std::string>();
+    auto imageproc_filter = opts["filter"].as<std::string>();
 
     auto pixel_size = opts["pixel-size"].as<float>();
     auto lambda = opts["lambda"].as<float>();
@@ -203,11 +203,13 @@ int main(int argc, char** argv) {
     recastx::recon::DaqClient daq_client(
         "tcp://"s + daq_hostname + ":"s + std::to_string(daq_port), daq_socket_type);
     recastx::RpcServerConfig rpc_server_cfg {rpc_port};
-    recastx::ImageprocParams imageproc_params {imageproc_threads, downsampling_col, downsampling_row};
+    recastx::ImageprocParams imageproc_params {
+        imageproc_threads, downsampling_col, downsampling_row, 
+        { imageproc_filter, gaussian_lowpass_filter }
+    };
     recastx::recon::Application app(raw_buffer_size, imageproc_params, &daq_client, rpc_server_cfg);
 
     app.setFlatFieldCorrectionParams(num_darks, num_flats);
-    app.setFilterParams(gaussian_lowpass_filter, filter_name);
     if (retrieve_phase) app.setPaganinParams(pixel_size, lambda, delta, beta, distance);
     app.setProjectionGeometry(cone_beam ? recastx::BeamShape::CONE : recastx::BeamShape::PARALELL, 
                               num_cols, num_rows, 1.0f, 1.0f, 0.0f, 0.0f, num_angles);
