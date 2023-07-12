@@ -21,6 +21,7 @@ class Scene;
 
 class IconItem : public GraphicsItem, GraphicsGLItem {
 
+    static constexpr int font_size_ = 72;
     std::unique_ptr<ShaderProgram> glyph_shader_;
     std::unique_ptr<GlyphRenderer> glyph_renderer_;
 
