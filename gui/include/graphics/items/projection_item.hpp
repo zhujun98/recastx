@@ -34,7 +34,7 @@ class ProjectionItem : public GraphicsItem {
 
     std::string filter_name_;
 
-    bool setDownsamplingParams();
+    bool setDownsampling();
 
     bool setProjectionFilter();
 

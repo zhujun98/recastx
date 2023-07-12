@@ -275,7 +275,7 @@ TEST_F(ApplicationTest, TestDownsampling) {
     pushProjection(0, num_angles_);
 
     app_.onStateChanged(ServerState_State::ServerState_State_READY);
-    app_.setDownsamplingParams(2u, 2u);
+    app_.setDownsampling(2u, 2u);
     // FIXME: std::out_of_range in the dtor of ParallelBeamReconstructor
     // app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
     // pushProjection(0, num_angles_);

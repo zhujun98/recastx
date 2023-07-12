@@ -58,7 +58,7 @@ class RpcClient {
 
     bool setScanMode(ScanMode_Mode mode, uint32_t update_interval);
 
-    bool setDownsamplingParams(uint32_t col, uint32_t row);
+    bool setDownsampling(uint32_t col, uint32_t row);
 
     bool setProjectionFilter(const std::string& filter_name);
 

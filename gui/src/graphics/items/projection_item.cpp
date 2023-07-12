@@ -87,11 +87,11 @@ void ProjectionItem::renderIm() {
 }
 
 bool ProjectionItem::updateServerParams() {
-    return setDownsamplingParams() || setProjectionFilter();
+    return setDownsampling() || setProjectionFilter();
 }
 
-bool ProjectionItem::setDownsamplingParams() {
-    return scene_.client()->setDownsamplingParams(downsampling_col_, downsampling_row_);
+bool ProjectionItem::setDownsampling() {
+    return scene_.client()->setDownsampling(downsampling_col_, downsampling_row_);
 }
 
 bool ProjectionItem::setProjectionFilter() {
