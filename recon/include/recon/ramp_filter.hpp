@@ -18,7 +18,7 @@ extern "C" {
 
 namespace recastx::recon {
 
-class Filter {
+class RampFilter {
     std::vector<std::vector<std::complex<float>>> freq_;
     std::vector<float> filter_;
     fftwf_plan fft_plan_;
@@ -30,17 +30,16 @@ class Filter {
     static std::vector<float> frequency(int n);
 
   public:
-    Filter(const std::string& filter_name, 
-           bool gaussian_lowpass_filter, 
-           float* data,
-           int num_cols,
-           int num_rows, 
-           int buffer_size);
+  
+    RampFilter(const std::string& filter_name, 
+               float* data,
+               int num_cols,
+               int num_rows, 
+               int buffer_size);
 
-    ~Filter();
+    ~RampFilter();
 
     void initialize(const std::string& filter_name, 
-                    bool gaussian_lowpass_filter, 
                     float* data, 
                     int buffer_size);
 

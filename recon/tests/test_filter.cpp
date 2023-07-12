@@ -11,14 +11,14 @@
 
 #include <oneapi/tbb.h>
 
-#include "recon/filter.hpp"
+#include "recon/ramp_filter.hpp"
 
 namespace recastx::recon::test {
 
 using ::testing::Pointwise;
 using ::testing::FloatNear;
 
-class FilterTest : public testing::Test {
+class RampFilterTest : public testing::Test {
 
 protected:
 
@@ -36,13 +36,13 @@ protected:
     
 };
 
-TEST_F(FilterTest, TestRamlak) {
-    EXPECT_THAT(Filter::ramlak(4), 
+TEST_F(RampFilterTest, TestRamlak) {
+    EXPECT_THAT(RampFilter::ramlak(4), 
                 Pointwise(FloatNear(1e-6), {0.f, .125f, .25f, .125f}));
-    EXPECT_THAT(Filter::ramlak(5), 
+    EXPECT_THAT(RampFilter::ramlak(5), 
                 Pointwise(FloatNear(1e-6), {0.f, .08f, .16f, .16f, .08f}));
 
-    auto filter = Filter("ramlak", false, src_.data(), cols_, rows_, threads_);
+    auto filter = RampFilter("ramlak", src_.data(), cols_, rows_, threads_);
     arena_.execute([&]{
         tbb::parallel_for(tbb::blocked_range<int>(0, int(src_.size() / pixels_)),
                           [&](const tbb::blocked_range<int> &block) {
@@ -66,13 +66,13 @@ TEST_F(FilterTest, TestRamlak) {
                            0.74781729f, -1.65816408f, 1.09922602f, 1.28556039f, -1.47443961f}));
 }
 
-TEST_F(FilterTest, TestShepp) {
-    EXPECT_THAT(Filter::shepp(4), 
+TEST_F(RampFilterTest, TestShepp) {
+    EXPECT_THAT(RampFilter::shepp(4), 
                 Pointwise(FloatNear(1e-6), {0.f, 0.11253954f, 0.15915494f, 0.11253954f}));
-    EXPECT_THAT(Filter::shepp(5), 
+    EXPECT_THAT(RampFilter::shepp(5), 
                 Pointwise(FloatNear(1e-6), {0.f, 0.07483914f, 0.12109228f, 0.12109228f, 0.07483914f}));
 
-    auto filter = Filter("shepp", false, src_.data(), cols_, rows_, threads_);
+    auto filter = RampFilter("shepp", src_.data(), cols_, rows_, threads_);
     arena_.execute([&]{
         tbb::parallel_for(tbb::blocked_range<int>(0, int(src_.size() / pixels_)),
                           [&](const tbb::blocked_range<int> &block) {

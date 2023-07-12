@@ -35,7 +35,7 @@ foreach(filename IN LISTS SIMPLE_TESTS)
 endforeach()
 
 # filter test
-add_executable(test_filter main.cpp test_filter.cpp ${CMAKE_CURRENT_LIST_DIR}/../src/filter.cpp)
+add_executable(test_filter main.cpp test_filter.cpp ${CMAKE_CURRENT_LIST_DIR}/../src/ramp_filter.cpp)
 target_include_directories(test_filter PRIVATE ${RECON_TEST_INCLUDE_DIRS})
 target_link_libraries(test_filter PRIVATE ${FFTW_FLOAT_LIB} TBB::tbb ${RECON_TEST_COMMON_LIBRARIES})
 gtest_discover_tests(test_filter)

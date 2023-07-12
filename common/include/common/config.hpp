@@ -33,15 +33,14 @@ namespace recastx {
     };
 
     struct ImageprocParams {
-        struct Filter {
+        struct RampFilter {
             std::string name;
-            bool gaussian_lowpass_filter;
         };
 
         uint32_t num_threads;
         uint32_t downsampling_col;
         uint32_t downsampling_row;
-        Filter filter;
+        RampFilter ramp_filter;
     };
 
 

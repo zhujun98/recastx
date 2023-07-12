@@ -35,11 +35,11 @@ extern "C" {
 #include "control.pb.h"
 
 #include "daq_client_interface.hpp"
+#include "ramp_filter.hpp"
 #include "reconstructor_interface.hpp"
 
 namespace recastx::recon {
 
-class Filter;
 class Paganin;
 class RpcServer;
 
@@ -155,7 +155,7 @@ class Application {
     std::optional<PaganinConfig> paganin_cfg_;
     std::unique_ptr<Paganin> paganin_;
     
-    std::unique_ptr<Filter> filter_;
+    std::unique_ptr<RampFilter> ramp_filter_;
 
     ImageprocParams imgproc_params_;
     FlatFieldCorrectionParams flatfield_params_;
@@ -283,7 +283,7 @@ class Application {
 
     void setDownsampling(uint32_t col, uint32_t row);
 
-    void setProjectionFilter(std::string filter_name);
+    void setRampFilter(std::string filter_name);
 
     void setSlice(size_t timestamp, const Orientation& orientation);
 

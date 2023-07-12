@@ -8,25 +8,23 @@
 */
 #include <iostream>
 
-#include "recon/filter.hpp"
+#include "recon/ramp_filter.hpp"
 
 namespace recastx::recon {
 
-Filter::Filter(const std::string& filter_name, 
-               bool gaussian_lowpass_filter,
-               float* data,
-               int num_cols,
-               int num_rows, 
-               int buffer_size) : num_cols_(num_cols), num_rows_(num_rows)  {
-    initialize(filter_name, gaussian_lowpass_filter, data, buffer_size);
+RampFilter::RampFilter(const std::string& filter_name, 
+                       float* data,
+                       int num_cols,
+                       int num_rows, 
+                       int buffer_size) : num_cols_(num_cols), num_rows_(num_rows)  {
+    initialize(filter_name, data, buffer_size);
 }
 
-Filter::~Filter() = default;
+RampFilter::~RampFilter() = default;
 
-void Filter::initialize(const std::string& filter_name, 
-                        bool gaussian_lowpass_filter, 
-                        float* data, 
-                        int buffer_size) {
+void RampFilter::initialize(const std::string& filter_name, 
+                            float* data, 
+                            int buffer_size) {
     freq_ = std::vector<std::vector<std::complex<float>>>(
         buffer_size, std::vector<std::complex<float>>(num_cols_));
 
@@ -43,20 +41,20 @@ void Filter::initialize(const std::string& filter_name,
         FFTW_ESTIMATE);
 
     if (filter_name == "shepp"){
-        filter_ = Filter::shepp(num_cols_);
+        filter_ = RampFilter::shepp(num_cols_);
     } else if (filter_name == "ramlak") {
-        filter_ = Filter::ramlak(num_cols_);
+        filter_ = RampFilter::ramlak(num_cols_);
     } else {
         throw std::invalid_argument("Unsupported filter: " + filter_name);
     }
 
-    if (gaussian_lowpass_filter) {
-        auto filter_lowpass = gaussian(num_cols_, 0.06f);
-        for (int i = 0; i < num_cols_; ++i) filter_[i] *= filter_lowpass[i];
-    }
+    // if (gaussian_lowpass_filter) {
+    //     auto filter_lowpass = gaussian(num_cols_, 0.06f);
+    //     for (int i = 0; i < num_cols_; ++i) filter_[i] *= filter_lowpass[i];
+    // }
 }
 
-void Filter::apply(float *data, int buffer_index) {
+void RampFilter::apply(float *data, int buffer_index) {
     for (int r = 0; r < num_rows_; ++r) {
         auto idx = r * num_cols_;
 
@@ -72,7 +70,7 @@ void Filter::apply(float *data, int buffer_index) {
     }
 }
 
-std::vector<float> Filter::frequency(int n) {
+std::vector<float> RampFilter::frequency(int n) {
     auto ret = std::vector<float>(n);
     int mid = (n + 1) / 2;
     for (int i = 0; i < mid; ++i) ret[i] = static_cast<float>(i) / n;
@@ -80,15 +78,15 @@ std::vector<float> Filter::frequency(int n) {
     return ret;  
 }
 
-std::vector<float> Filter::ramlak(int n) {
-    auto ret = Filter::frequency(n);
+std::vector<float> RampFilter::ramlak(int n) {
+    auto ret = RampFilter::frequency(n);
     float c = 2.f / n; // compensate for unnormalized fft in fftw
     for (int i = 0; i < n; ++i) ret[i] = c * std::abs(ret[i]);
     return ret;
 }
 
-std::vector<float> Filter::shepp(int n) {
-    auto ret = Filter::frequency(n);
+std::vector<float> RampFilter::shepp(int n) {
+    auto ret = RampFilter::frequency(n);
     float c = 2.f / n; // compensate for unnormalized fft in fftw
     for (int i = 1; i < n; ++i) {
         float tmp = M_PI * ret[i];
@@ -97,7 +95,7 @@ std::vector<float> Filter::shepp(int n) {
     return ret;
 }
 
-std::vector<float> Filter::gaussian(int n, float sigma) {
+std::vector<float> RampFilter::gaussian(int n, float sigma) {
     auto result = std::vector<float>(n);
     auto mid = (n + 1) / 2;
 

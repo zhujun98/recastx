@@ -90,15 +90,12 @@ int main(int argc, char** argv) {
     ;
 
     bool retrieve_phase = false;
-    bool gaussian_lowpass_filter = false;
     po::options_description preprocessing_desc("Preprocessing options");
     preprocessing_desc.add_options()
         ("retrieve-phase", po::bool_switch(&retrieve_phase),
          "switch to Paganin filter")
-        ("filter", po::value<std::string>()->default_value("shepp"),
+        ("ramp-filter", po::value<std::string>()->default_value("shepp"),
          "Supported filters are: shepp (Shepp-Logan), ramlak (Ram-Lak)")
-        ("gaussian-lowpass-filter", po::bool_switch(&gaussian_lowpass_filter),
-         "enable Gaussian low-pass filter (not verified)")
     ;
 
     po::options_description reconstruction_desc("Reconstruction options");
@@ -117,8 +114,6 @@ int main(int argc, char** argv) {
          "switch to Paganin filter")
         ("filter", po::value<std::string>()->default_value("shepp"),
          "Supported filters are: shepp (Shepp-Logan), ramlak (Ram-Lak)")
-        ("gaussian-lowpass-filter", po::bool_switch(&gaussian_lowpass_filter),
-         "enable Gaussian low-pass filter (not verified)")
     ;
 
     po::options_description paganin_desc("Paganin options");
@@ -186,7 +181,7 @@ int main(int argc, char** argv) {
     auto num_flats = opts["flats"].as<size_t>();
     auto raw_buffer_size = opts["raw-buffer-size"].as<size_t>();
 
-    auto imageproc_filter = opts["filter"].as<std::string>();
+    auto ramp_filter = opts["ramp-filter"].as<std::string>();
 
     auto pixel_size = opts["pixel-size"].as<float>();
     auto lambda = opts["lambda"].as<float>();
@@ -205,8 +200,7 @@ int main(int argc, char** argv) {
     recastx::recon::AstraReconstructorFactory recon_factory;
     recastx::RpcServerConfig rpc_server_cfg {rpc_port};
     recastx::ImageprocParams imageproc_params {
-        imageproc_threads, downsampling_col, downsampling_row, 
-        { imageproc_filter, gaussian_lowpass_filter }
+        imageproc_threads, downsampling_col, downsampling_row, { ramp_filter }
     };
     recastx::recon::Application app(raw_buffer_size, imageproc_params, &daq_client, &recon_factory, rpc_server_cfg);
 

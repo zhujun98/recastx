@@ -103,7 +103,6 @@ class ApplicationTest : public testing::Test {
     size_t preview_size_ = slice_size_ / 2;
 
     std::string filter_name_ = "shepp";
-    bool gaussian_lowpass_filter_ = false;
     uint32_t threads_ = 2;
 
     std::unique_ptr<DaqClientInterface> daq_client_;
@@ -112,8 +111,7 @@ class ApplicationTest : public testing::Test {
 
     const RpcServerConfig rpc_cfg {12347};
     const ImageprocParams imgproc_params {
-        threads_, downsampling_col_, downsampling_row_,
-        {filter_name_, gaussian_lowpass_filter_}    
+        threads_, downsampling_col_, downsampling_row_, {filter_name_}    
     };
 
     Application app_;

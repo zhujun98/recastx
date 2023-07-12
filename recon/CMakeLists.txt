@@ -42,7 +42,7 @@ set(ASTRA_INCLUDE_DIR ${CMAKE_PREFIX_PATH}/include)
 
 set(RECON_SOURCES
         "src/utils.cpp"
-        "src/filter.cpp"
+        "src/ramp_filter.cpp"
         "src/phase.cpp"
         "src/reconstructor.cpp"
         "src/slice_mediator.cpp"
