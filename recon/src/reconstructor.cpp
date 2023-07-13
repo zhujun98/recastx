@@ -84,7 +84,7 @@ void Uploader::upload(astra::CFloat32ProjectionData3DGPU* dst, const float* src,
 AstraReconstructor::AstraReconstructor(const ProjectionGeometry& p_geom, 
                                        const VolumeGeometry& s_geom, 
                                        const VolumeGeometry& v_geom,
-                                       bool double_buffering) {
+                                       bool double_buffering) : Reconstructor() {
     s_geom_ = makeVolumeGeometry(s_geom);
     s_mem_ = makeVolumeGeometryMemHandle(s_geom);
     s_data_ = std::make_unique<astra::CFloat32VolumeData3DGPU>(s_geom_.get(), s_mem_);
@@ -135,7 +135,6 @@ ParallelBeamReconstructor::ParallelBeamReconstructor(size_t col_count,
                                                      const VolumeGeometry& v_geom,
                                                      bool double_buffering)
         : AstraReconstructor(p_geom, s_geom, v_geom, double_buffering) {
-
     auto& angles = p_geom.angles;
     size_t angle_count = angles.size();
 
@@ -395,10 +394,9 @@ AstraReconstructorFactory::create(size_t col_count,
     if (proj_geom.beam_shape == BeamShape::CONE) {
         return std::make_unique<ConeBeamReconstructor>(
             col_count, row_count, proj_geom, slice_geom, preview_geom, double_buffering);
-    
+    }
     return std::make_unique<ParallelBeamReconstructor>(
         col_count, row_count, proj_geom, slice_geom, preview_geom, double_buffering);
-    }
 }
 
 } // namespace recastx::recon
