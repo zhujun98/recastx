@@ -28,7 +28,7 @@
 #include "astra/VolumeGeometry3D.h"
 
 #include "common/config.hpp"
-#include "tensor.hpp"
+#include "reconstructor_interface.hpp"
 
 namespace recastx::recon {
 
@@ -49,7 +49,7 @@ class Uploader {
     void upload(astra::CFloat32ProjectionData3DGPU* dst, const float* src, size_t n);
 };
 
-class Reconstructor {
+class AstraReconstructor : public Reconstructor {
 
 protected:
 
@@ -73,21 +73,17 @@ protected:
 
 public:
 
-    Reconstructor(const ProjectionGeometry& p_geom, 
-                  const VolumeGeometry& s_geom, 
-                  const VolumeGeometry& v_geom,
-                  bool double_buffer);
+    AstraReconstructor(const ProjectionGeometry& p_geom, 
+                       const VolumeGeometry& s_geom, 
+                       const VolumeGeometry& v_geom,
+                       bool double_buffering);
 
-    virtual ~Reconstructor();
-
-    virtual void reconstructSlice(Orientation x, int buffer_idx, Tensor<float, 2>& buffer) = 0;
-
-    virtual void reconstructPreview(int buffer_idx, Tensor<float, 3>& buffer) = 0;
+    virtual ~AstraReconstructor();
 
     void uploadSinograms(int buffer_idx, const float* data, size_t n);
 };
 
-class ParallelBeamReconstructor : public Reconstructor {
+class ParallelBeamReconstructor : public AstraReconstructor {
 
     std::unique_ptr<astra::CParallelVecProjectionGeometry3D> s_p_geom_;
     std::unique_ptr<astra::CParallelVecProjectionGeometry3D> v_p_geom_;
@@ -111,7 +107,7 @@ public:
 
 };
 
-class ConeBeamReconstructor : public Reconstructor {
+class ConeBeamReconstructor : public AstraReconstructor {
 
     std::unique_ptr<astra::CConeVecProjectionGeometry3D> s_p_geom_;
     std::unique_ptr<astra::CConeVecProjectionGeometry3D> v_p_geom_;
@@ -134,6 +130,20 @@ public:
 
     std::vector<float> fdk_weights();
 };
+
+class AstraReconstructorFactory : public ReconstructorFactory {
+
+public:
+
+    std::unique_ptr<Reconstructor> create(size_t col_count, 
+                                          size_t row_count, 
+                                          ProjectionGeometry proj_geom, 
+                                          VolumeGeometry slice_geom, 
+                                          VolumeGeometry preview_geom,
+                                          bool double_buffering) override;
+
+};
+
 
 } // namespace recastx::recon
 

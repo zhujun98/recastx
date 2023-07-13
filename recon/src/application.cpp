@@ -18,7 +18,6 @@
 #include "recon/filter.hpp"
 #include "recon/phase.hpp"
 #include "recon/preprocessing.hpp"
-#include "recon/reconstructor.hpp"
 #include "recon/rpc_server.hpp"
 #include "common/scoped_timer.hpp"
 
@@ -30,6 +29,7 @@ using namespace std::string_literals;
 Application::Application(size_t raw_buffer_size, 
                          const ImageprocParams& imageproc_params, 
                          DaqClientInterface* daq_client,
+                         ReconstructorFactory* recon_factory,
                          const RpcServerConfig& rpc_config)
      : raw_buffer_(raw_buffer_size),
        imgproc_params_(imageproc_params),
@@ -37,6 +37,7 @@ Application::Application(size_t raw_buffer_size,
        scan_mode_(ScanMode_Mode_DISCRETE),
        scan_update_interval_(K_MIN_SCAN_UPDATE_INTERVAL),
        daq_client_(daq_client),
+       recon_factory_(recon_factory),
        rpc_server_(new RpcServer(rpc_config.port, this)) {}
 
 Application::~Application() { 
@@ -481,14 +482,9 @@ void Application::initReconstructor(size_t col_count, size_t row_count) {
     preview_buffer_.resize({preview_geom_.col_count, preview_geom_.row_count, preview_geom_.slice_count});
     slice_mediator_.resize({slice_geom_.col_count, slice_geom_.row_count});
 
-    bool double_buffer = scan_mode_ == ScanMode_Mode_DISCRETE;
-    if (proj_geom_.beam_shape == BeamShape::CONE) {
-        recon_ = std::make_unique<ConeBeamReconstructor>(
-            col_count, row_count, proj_geom_, slice_geom_, preview_geom_, double_buffer);
-    } else {
-        recon_ = std::make_unique<ParallelBeamReconstructor>(
-            col_count, row_count, proj_geom_, slice_geom_, preview_geom_, double_buffer);
-    }
+    bool double_buffering = scan_mode_ == ScanMode_Mode_DISCRETE;
+    recon_ = recon_factory_->create(
+        col_count, row_count, proj_geom_, slice_geom_, preview_geom_, double_buffering);
 }
 
 void Application::maybeInitFlatFieldBuffer(size_t row_count, size_t col_count) {

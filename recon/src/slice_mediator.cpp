@@ -10,7 +10,6 @@
 
 #include "common/utils.hpp"
 #include "recon/slice_mediator.hpp"
-#include "recon/reconstructor.hpp"
 
 
 namespace recastx::recon {
