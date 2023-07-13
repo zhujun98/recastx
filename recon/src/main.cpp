@@ -202,12 +202,13 @@ int main(int argc, char** argv) {
 
     recastx::recon::DaqClient daq_client(
         "tcp://"s + daq_hostname + ":"s + std::to_string(daq_port), daq_socket_type);
+    recastx::recon::AstraReconstructorFactory recon_factory;
     recastx::RpcServerConfig rpc_server_cfg {rpc_port};
     recastx::ImageprocParams imageproc_params {
         imageproc_threads, downsampling_col, downsampling_row, 
         { imageproc_filter, gaussian_lowpass_filter }
     };
-    recastx::recon::Application app(raw_buffer_size, imageproc_params, &daq_client, rpc_server_cfg);
+    recastx::recon::Application app(raw_buffer_size, imageproc_params, &daq_client, &recon_factory, rpc_server_cfg);
 
     app.setFlatFieldCorrectionParams(num_darks, num_flats);
     if (retrieve_phase) app.setPaganinParams(pixel_size, lambda, delta, beta, distance);

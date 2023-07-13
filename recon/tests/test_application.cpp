@@ -37,6 +37,40 @@ class MockDaqClient : public DaqClientInterface {
     }
 };
 
+class MockReconstructor: public Reconstructor {
+
+  public:
+
+    MockReconstructor(size_t col_count, 
+                      size_t row_count, 
+                      ProjectionGeometry proj_geom, 
+                      VolumeGeometry slice_geom, 
+                      VolumeGeometry preview_geom,
+                      bool double_buffering) {
+    }
+
+    void reconstructSlice(Orientation x, int buffer_idx, Tensor<float, 2>& buffer) override {};
+
+    void reconstructPreview(int buffer_idx, Tensor<float, 3>& buffer) override {};
+
+    void uploadSinograms(int buffer_idx, const float* data, size_t n) override {};
+
+};
+
+class MockReconFactory: public ReconstructorFactory {
+
+  public:
+
+    std::unique_ptr<Reconstructor> create(size_t col_count, 
+                                          size_t row_count, 
+                                          ProjectionGeometry proj_geom, 
+                                          VolumeGeometry slice_geom, 
+                                          VolumeGeometry preview_geom,
+                                          bool double_buffering) {
+    return std::make_unique<MockReconstructor>(
+        col_count, row_count, proj_geom, slice_geom, preview_geom, double_buffering);
+    }
+};
 
 class ApplicationTest : public testing::Test {
 
@@ -66,6 +100,8 @@ class ApplicationTest : public testing::Test {
 
     std::unique_ptr<DaqClientInterface> daq_client_;
 
+    std::unique_ptr<ReconstructorFactory> recon_factory_;
+
     const RpcServerConfig rpc_cfg {12347};
     const ImageprocParams imgproc_params {
         threads_, downsampling_col_, downsampling_row_,
@@ -76,7 +112,8 @@ class ApplicationTest : public testing::Test {
 
     ApplicationTest() : 
             daq_client_(new MockDaqClient()),
-            app_ {buffer_size_, imgproc_params, daq_client_.get(), rpc_cfg} {
+            recon_factory_(new MockReconFactory()),
+            app_ {buffer_size_, imgproc_params, daq_client_.get(), recon_factory_.get(), rpc_cfg} {
         app_.setScanMode(ScanMode_Mode_DISCRETE, num_angles_);
     }
 

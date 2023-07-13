@@ -35,12 +35,12 @@ extern "C" {
 #include "control.pb.h"
 
 #include "daq_client_interface.hpp"
+#include "reconstructor_interface.hpp"
 
 namespace recastx::recon {
 
 class Filter;
 class Paganin;
-class Reconstructor;
 class RpcServer;
 
 namespace details {
@@ -171,6 +171,7 @@ class Application {
     ProjectionGeometry proj_geom_;
     VolumeGeometry slice_geom_;
     VolumeGeometry preview_geom_;
+    ReconstructorFactory* recon_factory_;
     std::unique_ptr<Reconstructor> recon_;
 
     int gpu_buffer_index_ = 0;
@@ -242,6 +243,7 @@ class Application {
     Application(size_t raw_buffer_size,
                 const ImageprocParams& imageproc_params,
                 DaqClientInterface* daq_client,
+                ReconstructorFactory* recon_factory_,
                 const RpcServerConfig& rpc_config); 
 
     ~Application();

@@ -14,12 +14,10 @@
 
 
 #include "buffer.hpp"
+#include "reconstructor_interface.hpp"
 
 
 namespace recastx::recon {
-
-class Reconstructor;
-
 
 class SliceMediator {
 
