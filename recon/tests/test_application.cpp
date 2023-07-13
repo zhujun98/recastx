@@ -39,6 +39,10 @@ class MockDaqClient : public DaqClientInterface {
 
 class MockReconstructor: public Reconstructor {
 
+    size_t upload_counter_;
+    size_t slice_counter_;
+    size_t preview_counter_;
+
   public:
 
     MockReconstructor(size_t col_count, 
@@ -46,15 +50,19 @@ class MockReconstructor: public Reconstructor {
                       ProjectionGeometry proj_geom, 
                       VolumeGeometry slice_geom, 
                       VolumeGeometry preview_geom,
-                      bool double_buffering) {
+                      bool double_buffering)
+         : upload_counter_(0), slice_counter_(0), preview_counter_(0) {
     }
 
-    void reconstructSlice(Orientation x, int buffer_idx, Tensor<float, 2>& buffer) override {};
+    void reconstructSlice(Orientation x, int buffer_idx, Tensor<float, 2>& buffer) override { ++slice_counter_; };
 
-    void reconstructPreview(int buffer_idx, Tensor<float, 3>& buffer) override {};
+    void reconstructPreview(int buffer_idx, Tensor<float, 3>& buffer) override { ++preview_counter_; };
 
-    void uploadSinograms(int buffer_idx, const float* data, size_t n) override {};
+    void uploadSinograms(int buffer_idx, const float* data, size_t n) override { ++upload_counter_; };
 
+    size_t num_uploads() const { return upload_counter_; }
+    size_t num_slices() const { return slice_counter_; }
+    size_t num_previews() const { return preview_counter_; }
 };
 
 class MockReconFactory: public ReconstructorFactory {
@@ -119,7 +127,6 @@ class ApplicationTest : public testing::Test {
 
     ~ApplicationTest() override {
         app_.onStateChanged(ServerState_State::ServerState_State_READY);
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     };
 
     void SetUp() override { 
@@ -268,21 +275,22 @@ TEST_F(ApplicationTest, TestPushProjectionUnordered) {
     pushProjection(0, 1);
 }
 
-TEST_F(ApplicationTest, TestUploading) {
-    app_.startPreprocessing();
-    app_.startUploading();
-    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-}
-
 TEST_F(ApplicationTest, TestReconstructing) {
+    app_.startAcquiring();
     app_.startPreprocessing();
     app_.startUploading();
     app_.startReconstructing();
     app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
 
+    pushDarks(num_darks_);
+    pushFlats(num_flats_);
+    pushProjection(0, num_angles_);
+
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    EXPECT_EQ(dynamic_cast<const MockReconstructor*>(app_.reconstructor())->num_uploads(), 1);
+    EXPECT_EQ(dynamic_cast<const MockReconstructor*>(app_.reconstructor())->num_previews(), 1);
+    EXPECT_EQ(dynamic_cast<const MockReconstructor*>(app_.reconstructor())->num_slices(), 0);
 }
 
 TEST_F(ApplicationTest, TestWithPagagin) {
@@ -293,6 +301,7 @@ TEST_F(ApplicationTest, TestWithPagagin) {
     float distance = 40.f;
     app_.setPaganinParams(pixel_size, lambda, delta, beta, distance);
 
+    app_.startAcquiring();
     app_.startPreprocessing();
     app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
     
@@ -304,6 +313,7 @@ TEST_F(ApplicationTest, TestWithPagagin) {
 
 
 TEST_F(ApplicationTest, TestDownsampling) {
+    app_.startAcquiring();
     app_.startPreprocessing();
     app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
 
@@ -313,9 +323,8 @@ TEST_F(ApplicationTest, TestDownsampling) {
 
     app_.onStateChanged(ServerState_State::ServerState_State_READY);
     app_.setDownsampling(2u, 2u);
-    // FIXME: std::out_of_range in the dtor of ParallelBeamReconstructor
-    // app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
-    // pushProjection(0, num_angles_);
+    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
+    pushProjection(0, num_angles_);
 }
 
 } // namespace recastx::recon::test

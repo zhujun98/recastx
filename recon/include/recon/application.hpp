@@ -305,6 +305,7 @@ class Application {
     const RawImageGroup& flats() const { return flats_; }
     const MemoryBuffer<float, 3>& rawBuffer() const { return raw_buffer_; }
     const TripleTensorBuffer<float, 3>& sinoBuffer() const { return sino_buffer_; }
+    const Reconstructor* reconstructor() const { return recon_.get(); }
 };
 
 } // namespace recastx::recon
