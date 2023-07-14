@@ -35,7 +35,7 @@ extern "C" {
 #include "control.pb.h"
 
 #include "daq_client_interface.hpp"
-#include "ramp_filter.hpp"
+#include "filter_interface.hpp"
 #include "reconstructor_interface.hpp"
 
 namespace recastx::recon {
@@ -155,7 +155,8 @@ class Application {
     std::optional<PaganinConfig> paganin_cfg_;
     std::unique_ptr<Paganin> paganin_;
     
-    std::unique_ptr<RampFilter> ramp_filter_;
+    FilterFactory* ramp_filter_factory_;
+    std::unique_ptr<Filter> ramp_filter_;
 
     ImageprocParams imgproc_params_;
     FlatFieldCorrectionParams flatfield_params_;
@@ -243,7 +244,8 @@ class Application {
     Application(size_t raw_buffer_size,
                 const ImageprocParams& imageproc_params,
                 DaqClientInterface* daq_client,
-                ReconstructorFactory* recon_factory_,
+                FilterFactory* ramp_filter_factory,
+                ReconstructorFactory* recon_factory,
                 const RpcServerConfig& rpc_config); 
 
     ~Application();

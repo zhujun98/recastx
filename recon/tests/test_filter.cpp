@@ -37,17 +37,17 @@ protected:
 };
 
 TEST_F(RampFilterTest, TestRamlak) {
-    EXPECT_THAT(RampFilter::ramlak(4), 
+    EXPECT_THAT(RamlakFilter::generate(4),
                 Pointwise(FloatNear(1e-6), {0.f, .125f, .25f, .125f}));
-    EXPECT_THAT(RampFilter::ramlak(5), 
+    EXPECT_THAT(RamlakFilter::generate(5),
                 Pointwise(FloatNear(1e-6), {0.f, .08f, .16f, .16f, .08f}));
 
-    auto filter = RampFilter("ramlak", src_.data(), cols_, rows_, threads_);
+    auto filter = RampFilterFactory().create("ramlak", src_.data(), cols_, rows_, threads_);
     arena_.execute([&]{
         tbb::parallel_for(tbb::blocked_range<int>(0, int(src_.size() / pixels_)),
                           [&](const tbb::blocked_range<int> &block) {
             for (auto i = block.begin(); i != block.end(); ++i) {
-                filter.apply(&src_[i * pixels_], tbb::this_task_arena::current_thread_index());
+                filter->apply(&src_[i * pixels_], tbb::this_task_arena::current_thread_index());
             }
         });
     });
@@ -67,17 +67,17 @@ TEST_F(RampFilterTest, TestRamlak) {
 }
 
 TEST_F(RampFilterTest, TestShepp) {
-    EXPECT_THAT(RampFilter::shepp(4), 
+    EXPECT_THAT(SheppFilter::generate(4), 
                 Pointwise(FloatNear(1e-6), {0.f, 0.11253954f, 0.15915494f, 0.11253954f}));
-    EXPECT_THAT(RampFilter::shepp(5), 
+    EXPECT_THAT(SheppFilter::generate(5), 
                 Pointwise(FloatNear(1e-6), {0.f, 0.07483914f, 0.12109228f, 0.12109228f, 0.07483914f}));
 
-    auto filter = RampFilter("shepp", src_.data(), cols_, rows_, threads_);
+    auto filter = RampFilterFactory().create("shepp", src_.data(), cols_, rows_, threads_);
     arena_.execute([&]{
         tbb::parallel_for(tbb::blocked_range<int>(0, int(src_.size() / pixels_)),
                           [&](const tbb::blocked_range<int> &block) {
             for (auto i = block.begin(); i != block.end(); ++i) {
-                filter.apply(&src_[i * pixels_], tbb::this_task_arena::current_thread_index());
+                filter->apply(&src_[i * pixels_], tbb::this_task_arena::current_thread_index());
             }
         });
     });

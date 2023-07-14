@@ -37,6 +37,21 @@ class MockDaqClient : public DaqClientInterface {
     }
 };
 
+class MockRampFilter : public Filter {
+
+  public:
+
+    void apply(float* data, int buffer_index) override {}
+};
+
+class MockRampFilterFactory : public FilterFactory {
+
+    std::unique_ptr<Filter> create(const std::string& name, 
+                                   float* data, int num_cols, int num_rows, int buffer_size) override {
+        return std::make_unique<MockRampFilter>();
+    }
+};
+
 class MockReconstructor: public Reconstructor {
 
     size_t upload_counter_;
@@ -106,7 +121,7 @@ class ApplicationTest : public testing::Test {
     uint32_t threads_ = 2;
 
     std::unique_ptr<DaqClientInterface> daq_client_;
-
+    std::unique_ptr<FilterFactory> ramp_filter_factory_;
     std::unique_ptr<ReconstructorFactory> recon_factory_;
 
     const RpcServerConfig rpc_cfg {12347};
@@ -119,7 +134,7 @@ class ApplicationTest : public testing::Test {
     ApplicationTest() : 
             daq_client_(new MockDaqClient()),
             recon_factory_(new MockReconFactory()),
-            app_ {buffer_size_, imgproc_params, daq_client_.get(), recon_factory_.get(), rpc_cfg} {
+            app_ {buffer_size_, imgproc_params, daq_client_.get(), ramp_filter_factory_.get(), recon_factory_.get(), rpc_cfg} {
         app_.setScanMode(ScanMode_Mode_DISCRETE, num_angles_);
     }
 
@@ -308,7 +323,6 @@ TEST_F(ApplicationTest, TestWithPagagin) {
     // FIXME: fix Paganin
     // pushProjection(0, num_angles_);
 }
-
 
 TEST_F(ApplicationTest, TestDownsampling) {
     app_.startAcquiring();

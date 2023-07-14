@@ -28,6 +28,7 @@ using namespace std::string_literals;
 Application::Application(size_t raw_buffer_size, 
                          const ImageprocParams& imageproc_params, 
                          DaqClientInterface* daq_client,
+                         FilterFactory* ramp_filter_factory,
                          ReconstructorFactory* recon_factory,
                          const RpcServerConfig& rpc_config)
      : raw_buffer_(raw_buffer_size),
@@ -36,6 +37,7 @@ Application::Application(size_t raw_buffer_size,
        scan_mode_(ScanMode_Mode_DISCRETE),
        scan_update_interval_(K_MIN_SCAN_UPDATE_INTERVAL),
        daq_client_(daq_client),
+       ramp_filter_factory_(ramp_filter_factory),
        recon_factory_(recon_factory),
        rpc_server_(new RpcServer(rpc_config.port, this)) {}
 
@@ -459,9 +461,8 @@ void Application::initPaganin(size_t col_count, size_t row_count) {
 }
 
 void Application::initFilter(size_t col_count, size_t row_count) {
-    ramp_filter_ = std::make_unique<RampFilter>(
-        imgproc_params_.ramp_filter.name, &raw_buffer_.front()[0], col_count, row_count, 
-        imgproc_params_.num_threads);
+    ramp_filter_ = ramp_filter_factory_->create(imgproc_params_.ramp_filter.name, &raw_buffer_.front()[0], 
+                                                col_count, row_count, imgproc_params_.num_threads);
 }
 
 void Application::initReconstructor(size_t col_count, size_t row_count) {

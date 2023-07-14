@@ -59,7 +59,7 @@ class ImageprocService final : public Imageproc::Service {
 
     grpc::Status SetRampFilter(grpc::ServerContext* contest,
                                const RampFilterParams* params,
-                               google::protobuf::Empty* ack) override;                    
+                               google::protobuf::Empty* ack) override;
 };
 
 class ReconstructionService final : public Reconstruction::Service {

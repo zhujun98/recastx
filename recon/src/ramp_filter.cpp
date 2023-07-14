@@ -12,19 +12,8 @@
 
 namespace recastx::recon {
 
-RampFilter::RampFilter(const std::string& filter_name, 
-                       float* data,
-                       int num_cols,
-                       int num_rows, 
-                       int buffer_size) : num_cols_(num_cols), num_rows_(num_rows)  {
-    initialize(filter_name, data, buffer_size);
-}
-
-RampFilter::~RampFilter() = default;
-
-void RampFilter::initialize(const std::string& filter_name, 
-                            float* data, 
-                            int buffer_size) {
+RampFilter::RampFilter(float* data, int num_cols, int num_rows, int buffer_size)
+         : num_cols_(num_cols), num_rows_(num_rows)  {
     freq_ = std::vector<std::vector<std::complex<float>>>(
         buffer_size, std::vector<std::complex<float>>(num_cols_));
 
@@ -39,20 +28,9 @@ void RampFilter::initialize(const std::string& filter_name,
         reinterpret_cast<fftwf_complex*>(&freq_[0][0]),
         data, 
         FFTW_ESTIMATE);
-
-    if (filter_name == "shepp"){
-        filter_ = RampFilter::shepp(num_cols_);
-    } else if (filter_name == "ramlak") {
-        filter_ = RampFilter::ramlak(num_cols_);
-    } else {
-        throw std::invalid_argument("Unsupported filter: " + filter_name);
-    }
-
-    // if (gaussian_lowpass_filter) {
-    //     auto filter_lowpass = gaussian(num_cols_, 0.06f);
-    //     for (int i = 0; i < num_cols_; ++i) filter_[i] *= filter_lowpass[i];
-    // }
 }
+
+RampFilter::~RampFilter() = default;
 
 void RampFilter::apply(float *data, int buffer_index) {
     for (int r = 0; r < num_rows_; ++r) {
@@ -70,7 +48,7 @@ void RampFilter::apply(float *data, int buffer_index) {
     }
 }
 
-std::vector<float> RampFilter::frequency(int n) {
+RampFilter::DataType RampFilter::frequency(int n) {
     auto ret = std::vector<float>(n);
     int mid = (n + 1) / 2;
     for (int i = 0; i < mid; ++i) ret[i] = static_cast<float>(i) / n;
@@ -78,14 +56,34 @@ std::vector<float> RampFilter::frequency(int n) {
     return ret;  
 }
 
-std::vector<float> RampFilter::ramlak(int n) {
+
+RamlakFilter::RamlakFilter(float* data, int num_cols, int num_rows, int buffer_size)
+        : RampFilter(data, num_cols, num_rows, buffer_size)  {
+    initFilter();
+}
+
+void RamlakFilter::initFilter() {
+    filter_ = RamlakFilter::generate(num_cols_);
+}
+
+RampFilter::DataType RamlakFilter::generate(int n) {
     auto ret = RampFilter::frequency(n);
     float c = 2.f / n; // compensate for unnormalized fft in fftw
     for (int i = 0; i < n; ++i) ret[i] = c * std::abs(ret[i]);
     return ret;
 }
 
-std::vector<float> RampFilter::shepp(int n) {
+
+SheppFilter::SheppFilter(float* data, int num_cols, int num_rows, int buffer_size)
+        : RampFilter(data, num_cols, num_rows, buffer_size)  {
+    initFilter();
+}
+
+void SheppFilter::initFilter() {
+    filter_ = SheppFilter::generate(num_cols_);
+}
+
+RampFilter::DataType SheppFilter::generate(int n) {
     auto ret = RampFilter::frequency(n);
     float c = 2.f / n; // compensate for unnormalized fft in fftw
     for (int i = 1; i < n; ++i) {
@@ -95,18 +93,31 @@ std::vector<float> RampFilter::shepp(int n) {
     return ret;
 }
 
-std::vector<float> RampFilter::gaussian(int n, float sigma) {
-    auto result = std::vector<float>(n);
-    auto mid = (n + 1) / 2;
 
-    auto filter_weight = [=](auto i) {
-        auto norm_freq = (i / (float)mid);
-        return std::exp(-(norm_freq * norm_freq) / (2.0f * sigma * sigma));
-    };
+// std::vector<float> RampFilter::gaussian(int n, float sigma) {
+//     auto result = std::vector<float>(n);
+//     auto mid = (n + 1) / 2;
 
-    for (int i = 1; i < mid; ++i) result[i] = filter_weight(i);
-    for (int j = mid; j < n; ++j) result[j] = filter_weight(2 * mid - j);
-    return result;
+//     auto filter_weight = [=](auto i) {
+//         auto norm_freq = (i / (float)mid);
+//         return std::exp(-(norm_freq * norm_freq) / (2.0f * sigma * sigma));
+//     };
+
+//     for (int i = 1; i < mid; ++i) result[i] = filter_weight(i);
+//     for (int j = mid; j < n; ++j) result[j] = filter_weight(2 * mid - j);
+//     return result;
+// }
+
+
+std::unique_ptr<Filter> 
+RampFilterFactory::create(const std::string& name, 
+                          float* data, int num_cols, int num_rows, int buffer_size) {
+    
+    if (name == "shepp") return std::make_unique<SheppFilter>(data, num_cols, num_rows, buffer_size);
+
+    if (name == "ramlak") return std::make_unique<RamlakFilter>(data, num_cols, num_rows, buffer_size);
+    
+    throw std::invalid_argument("Unknown ramp filter: " + name);
 }
 
 } // namespace recastx::recon
