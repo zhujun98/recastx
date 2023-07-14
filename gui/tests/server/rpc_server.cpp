@@ -46,15 +46,15 @@ grpc::Status ControlService::SetScanMode(grpc::ServerContext* context,
 }
 
 grpc::Status ImageprocService::SetDownsampling(grpc::ServerContext* context,
-                                               const Downsampling* params,
+                                               const DownsamplingParams* params,
                                                google::protobuf::Empty* ack) {
     spdlog::info("Set projection downsampling: {} / {}", params->col(), params->row());
     return grpc::Status::OK;
 }
 
-grpc::Status ImageprocService::SetProjectionFilter(grpc::ServerContext* contest,
-                                                   const ProjectionFilter* params,
-                                                   google::protobuf::Empty* ack) {
+grpc::Status ImageprocService::SetRampFilter(grpc::ServerContext* contest,
+                                             const RampFilterParams* params,
+                                             google::protobuf::Empty* ack) {
     spdlog::info("Set projection filter: {}", params->name());
     return grpc::Status::OK;
 }
