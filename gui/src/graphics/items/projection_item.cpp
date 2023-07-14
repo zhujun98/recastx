@@ -14,7 +14,7 @@
 namespace recastx::gui {
 
 ProjectionItem::ProjectionItem(Scene& scene)
-        : GraphicsItem(scene), filter_name_("shepp") {
+        : GraphicsItem(scene), ramp_filter_name_("shepp") {
     scene.addItem(this);
 }
 
@@ -73,13 +73,13 @@ void ProjectionItem::renderIm() {
     ImGui::DragFloat("Y offset", &y_offset_, 1, -50, 50, "%.1f");
     ImGui::EndDisabled();
 
-    ImGui::Text("Filter: ");
+    ImGui::Text("Ramp filter: ");
     ImGui::SameLine();
-    if (ImGui::BeginCombo("##filter", filter_options.at(filter_name_).c_str())) {
+    if (ImGui::BeginCombo("##Rampfilter", filter_options.at(ramp_filter_name_).c_str())) {
         for (const auto& [k, v] : filter_options) {
-            const bool is_selected = (filter_name_ == k);
+            const bool is_selected = (ramp_filter_name_ == k);
             if (ImGui::Selectable(v.c_str(), is_selected)) {
-                filter_name_ = k;
+                ramp_filter_name_ = k;
             }
         }
         ImGui::EndCombo();
@@ -87,15 +87,15 @@ void ProjectionItem::renderIm() {
 }
 
 bool ProjectionItem::updateServerParams() {
-    return setDownsampling() || setProjectionFilter();
+    return setDownsampling() || setRampFilter();
 }
 
 bool ProjectionItem::setDownsampling() {
     return scene_.client()->setDownsampling(downsampling_col_, downsampling_row_);
 }
 
-bool ProjectionItem::setProjectionFilter() {
-    return scene_.client()->setProjectionFilter(filter_name_);
+bool ProjectionItem::setRampFilter() {
+    return scene_.client()->setRampFilter(ramp_filter_name_);
 }
 
 } // namespace recastx::gui

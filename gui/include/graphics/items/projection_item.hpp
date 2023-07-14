@@ -32,11 +32,11 @@ class ProjectionItem : public GraphicsItem {
     float x_offset_ = 0.f;
     float y_offset_ = 0.f;
 
-    std::string filter_name_;
+    std::string ramp_filter_name_;
 
     bool setDownsampling();
 
-    bool setProjectionFilter();
+    bool setRampFilter();
 
   public:
 

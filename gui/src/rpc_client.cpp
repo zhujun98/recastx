@@ -73,7 +73,7 @@ bool RpcClient::setDownsampling(uint32_t col, uint32_t row) {
     return checkStatus(status);
 }
 
-bool RpcClient::setProjectionFilter(const std::string& filter_name) {
+bool RpcClient::setRampFilter(const std::string& filter_name) {
     RampFilterParams request;
     request.set_name(filter_name);
 

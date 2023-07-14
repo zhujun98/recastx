@@ -60,7 +60,7 @@ class RpcClient {
 
     bool setDownsampling(uint32_t col, uint32_t row);
 
-    bool setProjectionFilter(const std::string& filter_name);
+    bool setRampFilter(const std::string& filter_name);
 
     bool setSlice(uint64_t timestamp, const Orientation& orientation);
 
