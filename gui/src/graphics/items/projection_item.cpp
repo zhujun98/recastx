@@ -75,7 +75,7 @@ void ProjectionItem::renderIm() {
 
     ImGui::Text("Ramp filter: ");
     ImGui::SameLine();
-    if (ImGui::BeginCombo("##Rampfilter", filter_options.at(ramp_filter_name_).c_str())) {
+    if (ImGui::BeginCombo("##RampFilter", filter_options.at(ramp_filter_name_).c_str())) {
         for (const auto& [k, v] : filter_options) {
             const bool is_selected = (ramp_filter_name_ == k);
             if (ImGui::Selectable(v.c_str(), is_selected)) {
