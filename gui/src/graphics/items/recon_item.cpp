@@ -106,7 +106,6 @@ void ReconItem::onWindowSizeChanged(int width, int height) {
 }
 
 void ReconItem::renderIm() {
-    ImGui::Separator();
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "RECONSTRUCTION");
 
     auto& cmd = Colormap::data();

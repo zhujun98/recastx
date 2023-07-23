@@ -23,6 +23,8 @@ struct Style {
     static constexpr float LOGGING_WIDTH = 0.46f;
     static constexpr float LOGGING_HEIGHT = 0.18f;
     static constexpr float TOP_PANEL_HEIGHT = 0.15f;
+    static constexpr float PROJECTION_WIDTH = 0.20f;
+    static constexpr float PROJECTION_HEIGHT = 0.30f;
 
     static void init() {
         ImGui::StyleColorsDark();

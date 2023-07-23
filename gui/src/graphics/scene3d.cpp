@@ -16,6 +16,7 @@
 #include "graphics/items/axiscube_item.hpp"
 #include "graphics/items/axes_item.hpp"
 #include "graphics/items/icon_item.hpp"
+#include "graphics/items/preproc_item.hpp"
 #include "graphics/items/projection_item.hpp"
 #include "graphics/items/statusbar_item.hpp"
 #include "graphics/items/logging_item.hpp"
@@ -31,6 +32,7 @@ Scene3d::Scene3d(RpcClient* client)
           viewport_axiscube_(new Viewport(false)),
           axes_item_(new AxesItem(*this)),
           icon_item_(new IconItem(*this)),
+          preproc_item_(new PreprocItem(*this)),
           projection_item_(new ProjectionItem(*this)),
           recon_item_(new ReconItem(*this)),
           statusbar_item_(new StatusbarItem(*this)),
@@ -168,6 +170,9 @@ void Scene3d::render() {
     ImGui::EndDisabled();
 
     ImGui::Separator();
+    projection_item_->renderIm();
+
+    ImGui::Separator();
 
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "CAMERA");
     ImGui::Checkbox("Fix camera", &fixed_camera_);
@@ -186,12 +191,15 @@ void Scene3d::render() {
     if (ImGui::Button("Perspective")) {
         camera_->setPerspectiveView();
     }
-
     axes_item_->renderIm();
-    projection_item_->renderIm();
+
+    ImGui::Separator();
+    preproc_item_->renderIm();
+    ImGui::Separator();
     recon_item_->renderIm();
     ImGui::Separator();
     statusbar_item_->renderIm();
+    ImGui::Separator();
     logging_item_->renderIm();
 
     ImGui::End();

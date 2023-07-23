@@ -10,92 +10,54 @@
 
 #include "graphics/items/projection_item.hpp"
 #include "graphics/scene.hpp"
+#include "graphics/style.hpp"
 
 namespace recastx::gui {
 
 ProjectionItem::ProjectionItem(Scene& scene)
-        : GraphicsItem(scene), ramp_filter_name_("shepp") {
+        : GraphicsItem(scene) {
     scene.addItem(this);
 }
 
 ProjectionItem::~ProjectionItem() = default;
 
+void ProjectionItem::onWindowSizeChanged(int width, int height) {
+    size_ = {
+            Style::PROJECTION_WIDTH * (float)width,
+            Style::PROJECTION_HEIGHT * (float)height
+    };
+
+    pos_ = {
+            (1.0f - Style::MARGIN - Style::PROJECTION_WIDTH) * (float)width,
+            (1.0f - Style::PROJECTION_HEIGHT - Style::STATUS_BAR_HEIGHT - 2.f * Style::MARGIN) * (float)(height)
+    };
+}
+
 void ProjectionItem::renderIm() {
-    ImGui::Separator();
-    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "PREPROCESSING");
+    ImGui::Checkbox("Show projection", &visible_);
 
-    // Projection downsampling
-    ImGui::BeginDisabled(state_ == ServerState_State::ServerState_State_PROCESSING);
+    if (visible_) {
+        ImGui::SetNextWindowPos(pos_);
+        ImGui::SetNextWindowSize(size_);
+        ImGui::Begin("Raw projection", NULL, ImGuiWindowFlags_NoDecoration);
 
-    ImGui::AlignTextToFramePadding();
-    ImGui::Text("Downsampling:");
-    ImGui::SameLine();
+        std::vector<GLubyte> img(size_.x * size_.y);
 
-    float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
-    ImGui::Text("Col");
-    ImGui::SameLine();
-    if (ImGui::ArrowButton("##col_left", ImGuiDir_Left)) {
-        if (downsampling_col_ > 1) {
-            downsampling_col_--;
-        }
-    }
-    ImGui::SameLine(0.0f, spacing);
-    if (ImGui::ArrowButton("##col_right", ImGuiDir_Right)) {
-        if (downsampling_col_ < 10) {
-            downsampling_col_++;
-        }
-    }
-    ImGui::SameLine();
-    ImGui::Text("%d", downsampling_col_);
-    ImGui::SameLine();
+        GLuint image_texture;
+        glGenTextures(1, &image_texture);
+        glBindTexture(GL_TEXTURE_2D, image_texture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, size_.x, size_.y, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, img.data());
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    ImGui::Text("Row");
-    ImGui::SameLine();
-    if (ImGui::ArrowButton("##row_left", ImGuiDir_Left)) {
-        if (downsampling_row_ > 1) {
-            downsampling_row_--;
-        }
-    }
-    ImGui::SameLine(0.0f, spacing);
-    if (ImGui::ArrowButton("##row_right", ImGuiDir_Right)) {
-        if (downsampling_row_ < 10) {
-            downsampling_row_++;
-        }
-    }
-    ImGui::SameLine();
-    ImGui::Text("%d", downsampling_row_);
+        ImGui::Image((void*)(intptr_t)image_texture, ImVec2(size_.x, size_.y));
 
-    ImGui::EndDisabled();
-
-    // Projection center adjustment
-    ImGui::BeginDisabled(state_ == ServerState_State::ServerState_State_PROCESSING);
-    ImGui::DragFloat("X offset", &x_offset_, 1, -50, 50, "%.1f");
-    ImGui::DragFloat("Y offset", &y_offset_, 1, -50, 50, "%.1f");
-    ImGui::EndDisabled();
-
-    ImGui::Text("Ramp filter: ");
-    ImGui::SameLine();
-    if (ImGui::BeginCombo("##RampFilter", filter_options.at(ramp_filter_name_).c_str())) {
-        for (const auto& [k, v] : filter_options) {
-            const bool is_selected = (ramp_filter_name_ == k);
-            if (ImGui::Selectable(v.c_str(), is_selected)) {
-                ramp_filter_name_ = k;
-            }
-        }
-        ImGui::EndCombo();
+        ImGui::End();
     }
 }
 
 bool ProjectionItem::updateServerParams() {
-    return setDownsampling() || setRampFilter();
-}
-
-bool ProjectionItem::setDownsampling() {
-    return scene_.client()->setDownsampling(downsampling_col_, downsampling_row_);
-}
-
-bool ProjectionItem::setRampFilter() {
-    return scene_.client()->setRampFilter(ramp_filter_name_);
+    return true;
 }
 
 } // namespace recastx::gui
