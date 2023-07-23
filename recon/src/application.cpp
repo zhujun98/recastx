@@ -18,6 +18,7 @@
 #include "recon/phase.hpp"
 #include "recon/preprocessing.hpp"
 #include "recon/rpc_server.hpp"
+#include "recon/slice_mediator.hpp"
 #include "common/scoped_timer.hpp"
 
 namespace recastx::recon {
@@ -32,6 +33,7 @@ Application::Application(size_t raw_buffer_size,
                          ReconstructorFactory* recon_factory,
                          const RpcServerConfig& rpc_config)
      : raw_buffer_(raw_buffer_size),
+       slice_mediator_(new SliceMediator()),
        imgproc_params_(imageproc_params),
        server_state_(ServerState_State_INIT),
        scan_mode_(ScanMode_Mode_DISCRETE),
@@ -249,11 +251,11 @@ void Application::startReconstructing() {
                     recon_->reconstructPreview(gpu_buffer_index_, preview_buffer_.back());
                 } else {
                     if (waitForSinoInitialization()) continue;
-                    slice_mediator_.reconOnDemand(recon_.get(), gpu_buffer_index_);
+                    slice_mediator_->reconOnDemand(recon_.get(), gpu_buffer_index_);
                     continue;
                 }
 
-                slice_mediator_.reconAll(recon_.get(), gpu_buffer_index_);
+                slice_mediator_->reconAll(recon_.get(), gpu_buffer_index_);
 
                 sino_uploaded_ = false;
             }
@@ -301,7 +303,7 @@ void Application::setRampFilter(std::string filter_name) {
 }
 
 void Application::setSlice(size_t timestamp, const Orientation& orientation) {
-    slice_mediator_.update(timestamp, orientation);
+    slice_mediator_->update(timestamp, orientation);
 }
 
 void Application::setScanMode(ScanMode_Mode mode, uint32_t update_interval) {
@@ -344,7 +346,7 @@ std::optional<ReconData> Application::previewData(int timeout) {
 
 std::vector<ReconData> Application::sliceData(int timeout) {
     std::vector<ReconData> ret;
-    auto& buffer = slice_mediator_.allSlices();
+    auto& buffer = slice_mediator_->allSlices();
     if (buffer.fetch(timeout)) {
         for (auto& [k, slice] : buffer.front()) {
             auto& data = std::get<2>(slice);
@@ -357,7 +359,7 @@ std::vector<ReconData> Application::sliceData(int timeout) {
 
 std::vector<ReconData> Application::onDemandSliceData(int timeout) {
     std::vector<ReconData> ret;
-    auto& buffer = slice_mediator_.onDemandSlices();
+    auto& buffer = slice_mediator_->onDemandSlices();
     if (buffer.fetch(timeout)) {
         for (auto& [k, slice] : buffer.front()) {
             if (std::get<0>(slice)) {
@@ -479,7 +481,7 @@ void Application::initReconstructor(size_t col_count, size_t row_count) {
     preview_geom_ = {p_size, p_size, p_size, min_x, max_x, min_y, max_y, min_z, max_z};
 
     preview_buffer_.resize({preview_geom_.col_count, preview_geom_.row_count, preview_geom_.slice_count});
-    slice_mediator_.resize({slice_geom_.col_count, slice_geom_.row_count});
+    slice_mediator_->resize({slice_geom_.col_count, slice_geom_.row_count});
 
     bool double_buffering = scan_mode_ == ScanMode_Mode_DISCRETE;
     recon_ = recon_factory_->create(

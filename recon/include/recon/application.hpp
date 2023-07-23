@@ -27,7 +27,6 @@ extern "C" {
 
 #include "common/config.hpp"
 #include "buffer.hpp"
-#include "slice_mediator.hpp"
 #include "tensor.hpp"
 
 #include "imageproc.pb.h"
@@ -42,6 +41,7 @@ namespace recastx::recon {
 
 class Paganin;
 class RpcServer;
+class SliceMediator;
 
 namespace details {
 
@@ -148,7 +148,7 @@ class Application {
 
     TripleTensorBuffer<ProDtype, 3> sino_buffer_;
 
-    SliceMediator slice_mediator_;
+    std::unique_ptr<SliceMediator> slice_mediator_;
 
     TripleTensorBuffer<ProDtype, 3> preview_buffer_;
 

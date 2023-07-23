@@ -1,8 +1,6 @@
 import numpy as np
 np.set_printoptions(precision=8)
 
-from filter_expected import apply_filter
-
 
 def test_reconstructor_push_data():
     shape = (4, 5)  # (rows, cols)
@@ -23,10 +21,10 @@ def test_reconstructor_push_data():
     flat_avg = np.mean(flats, axis=0, dtype=np.float32)
 
     corrected = -np.log((projections - dark_avg) / (flat_avg - dark_avg))
-    filtered = apply_filter(corrected, "shepp-logan")
-    print(filtered)
+    filtered = corrected + 1.  # mocked filter
+    print("\nFiltered values: \n", filtered)
     sino = np.moveaxis(filtered, 0, 1)
-    print(sino)
+    print("\nSino values: \n", sino)
 
 if __name__ == "__main__":
     test_reconstructor_push_data()
