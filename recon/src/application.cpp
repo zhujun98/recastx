@@ -15,10 +15,10 @@
 
 #include "recon/application.hpp"
 #include "recon/encoder.hpp"
-#include "recon/filter.hpp"
 #include "recon/phase.hpp"
 #include "recon/preprocessing.hpp"
 #include "recon/rpc_server.hpp"
+#include "recon/slice_mediator.hpp"
 #include "common/scoped_timer.hpp"
 
 namespace recastx::recon {
@@ -29,14 +29,17 @@ using namespace std::string_literals;
 Application::Application(size_t raw_buffer_size, 
                          const ImageprocParams& imageproc_params, 
                          DaqClientInterface* daq_client,
+                         FilterFactory* ramp_filter_factory,
                          ReconstructorFactory* recon_factory,
                          const RpcServerConfig& rpc_config)
      : raw_buffer_(raw_buffer_size),
+       slice_mediator_(new SliceMediator()),
        imgproc_params_(imageproc_params),
        server_state_(ServerState_State_INIT),
        scan_mode_(ScanMode_Mode_DISCRETE),
        scan_update_interval_(K_MIN_SCAN_UPDATE_INTERVAL),
        daq_client_(daq_client),
+       ramp_filter_factory_(ramp_filter_factory),
        recon_factory_(recon_factory),
        rpc_server_(new RpcServer(rpc_config.port, this)) {}
 
@@ -68,7 +71,7 @@ void Application::init() {
     spdlog::info("- Number of projection images per tomogram: {}", proj_geom_.angles.size());
     spdlog::info("- Projection image size: {} ({}) x {} ({})", 
                  col_count, downsampling_col, row_count, downsampling_row);
-    spdlog::info("- Use filter: {}", imgproc_params_.filter.name);
+    spdlog::info("- Ramp filter: {}", imgproc_params_.ramp_filter.name);
 }
 
 void Application::setProjectionGeometry(BeamShape beam_shape, size_t col_count, size_t row_count,
@@ -248,11 +251,11 @@ void Application::startReconstructing() {
                     recon_->reconstructPreview(gpu_buffer_index_, preview_buffer_.back());
                 } else {
                     if (waitForSinoInitialization()) continue;
-                    slice_mediator_.reconOnDemand(recon_.get(), gpu_buffer_index_);
+                    slice_mediator_->reconOnDemand(recon_.get(), gpu_buffer_index_);
                     continue;
                 }
 
-                slice_mediator_.reconAll(recon_.get(), gpu_buffer_index_);
+                slice_mediator_->reconAll(recon_.get(), gpu_buffer_index_);
 
                 sino_uploaded_ = false;
             }
@@ -294,13 +297,13 @@ void Application::setDownsampling(uint32_t col, uint32_t row) {
     spdlog::debug("Set projection downsampling: {} / {}", col, row);
 }
 
-void Application::setProjectionFilter(std::string filter_name) {
-    imgproc_params_.filter.name = std::move(filter_name);
-    spdlog::debug("Set projection filter: {}", filter_name);
+void Application::setRampFilter(std::string filter_name) {
+    imgproc_params_.ramp_filter.name = std::move(filter_name);
+    spdlog::debug("Set ramp filter: {}", filter_name);
 }
 
 void Application::setSlice(size_t timestamp, const Orientation& orientation) {
-    slice_mediator_.update(timestamp, orientation);
+    slice_mediator_->update(timestamp, orientation);
 }
 
 void Application::setScanMode(ScanMode_Mode mode, uint32_t update_interval) {
@@ -343,7 +346,7 @@ std::optional<ReconData> Application::previewData(int timeout) {
 
 std::vector<ReconData> Application::sliceData(int timeout) {
     std::vector<ReconData> ret;
-    auto& buffer = slice_mediator_.allSlices();
+    auto& buffer = slice_mediator_->allSlices();
     if (buffer.fetch(timeout)) {
         for (auto& [k, slice] : buffer.front()) {
             auto& data = std::get<2>(slice);
@@ -356,7 +359,7 @@ std::vector<ReconData> Application::sliceData(int timeout) {
 
 std::vector<ReconData> Application::onDemandSliceData(int timeout) {
     std::vector<ReconData> ret;
-    auto& buffer = slice_mediator_.onDemandSlices();
+    auto& buffer = slice_mediator_->onDemandSlices();
     if (buffer.fetch(timeout)) {
         for (auto& [k, slice] : buffer.front()) {
             if (std::get<0>(slice)) {
@@ -394,7 +397,7 @@ void Application::preprocessProjections(oneapi::tbb::task_arena& arena) {
                 else
                     negativeLog(p, num_pixels);
 
-                filter_->apply(p, tbb::this_task_arena::current_thread_index());
+                ramp_filter_->apply(p, tbb::this_task_arena::current_thread_index());
 
                 // TODO: Add FDK scaler for cone beam
             }
@@ -460,10 +463,8 @@ void Application::initPaganin(size_t col_count, size_t row_count) {
 }
 
 void Application::initFilter(size_t col_count, size_t row_count) {
-    const auto& flt = imgproc_params_.filter;
-    filter_ = std::make_unique<Filter>(
-        flt.name, flt.gaussian_lowpass_filter, 
-        &raw_buffer_.front()[0], col_count, row_count, imgproc_params_.num_threads);
+    ramp_filter_ = ramp_filter_factory_->create(imgproc_params_.ramp_filter.name, &raw_buffer_.front()[0], 
+                                                col_count, row_count, imgproc_params_.num_threads);
 }
 
 void Application::initReconstructor(size_t col_count, size_t row_count) {
@@ -480,7 +481,7 @@ void Application::initReconstructor(size_t col_count, size_t row_count) {
     preview_geom_ = {p_size, p_size, p_size, min_x, max_x, min_y, max_y, min_z, max_z};
 
     preview_buffer_.resize({preview_geom_.col_count, preview_geom_.row_count, preview_geom_.slice_count});
-    slice_mediator_.resize({slice_geom_.col_count, slice_geom_.row_count});
+    slice_mediator_->resize({slice_geom_.col_count, slice_geom_.row_count});
 
     bool double_buffering = scan_mode_ == ScanMode_Mode_DISCRETE;
     recon_ = recon_factory_->create(

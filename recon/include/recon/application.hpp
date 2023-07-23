@@ -27,7 +27,6 @@ extern "C" {
 
 #include "common/config.hpp"
 #include "buffer.hpp"
-#include "slice_mediator.hpp"
 #include "tensor.hpp"
 
 #include "imageproc.pb.h"
@@ -35,13 +34,14 @@ extern "C" {
 #include "control.pb.h"
 
 #include "daq_client_interface.hpp"
+#include "filter_interface.hpp"
 #include "reconstructor_interface.hpp"
 
 namespace recastx::recon {
 
-class Filter;
 class Paganin;
 class RpcServer;
+class SliceMediator;
 
 namespace details {
 
@@ -148,14 +148,15 @@ class Application {
 
     TripleTensorBuffer<ProDtype, 3> sino_buffer_;
 
-    SliceMediator slice_mediator_;
+    std::unique_ptr<SliceMediator> slice_mediator_;
 
     TripleTensorBuffer<ProDtype, 3> preview_buffer_;
 
     std::optional<PaganinConfig> paganin_cfg_;
     std::unique_ptr<Paganin> paganin_;
     
-    std::unique_ptr<Filter> filter_;
+    FilterFactory* ramp_filter_factory_;
+    std::unique_ptr<Filter> ramp_filter_;
 
     ImageprocParams imgproc_params_;
     FlatFieldCorrectionParams flatfield_params_;
@@ -243,7 +244,8 @@ class Application {
     Application(size_t raw_buffer_size,
                 const ImageprocParams& imageproc_params,
                 DaqClientInterface* daq_client,
-                ReconstructorFactory* recon_factory_,
+                FilterFactory* ramp_filter_factory,
+                ReconstructorFactory* recon_factory,
                 const RpcServerConfig& rpc_config); 
 
     ~Application();
@@ -283,7 +285,7 @@ class Application {
 
     void setDownsampling(uint32_t col, uint32_t row);
 
-    void setProjectionFilter(std::string filter_name);
+    void setRampFilter(std::string filter_name);
 
     void setSlice(size_t timestamp, const Orientation& orientation);
 

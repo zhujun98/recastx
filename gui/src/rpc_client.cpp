@@ -61,7 +61,7 @@ bool RpcClient::setScanMode(ScanMode_Mode mode, uint32_t update_interval) {
 }
 
 bool RpcClient::setDownsampling(uint32_t col, uint32_t row) {
-    Downsampling request;
+    DownsamplingParams request;
     request.set_col(col);
     request.set_row(row);
 
@@ -73,15 +73,15 @@ bool RpcClient::setDownsampling(uint32_t col, uint32_t row) {
     return checkStatus(status);
 }
 
-bool RpcClient::setProjectionFilter(const std::string& filter_name) {
-    ProjectionFilter request;
+bool RpcClient::setRampFilter(const std::string& filter_name) {
+    RampFilterParams request;
     request.set_name(filter_name);
 
     google::protobuf::Empty reply;
 
     grpc::ClientContext context;
 
-    grpc::Status status = imageproc_stub_->SetProjectionFilter(&context, request, &reply);
+    grpc::Status status = imageproc_stub_->SetRampFilter(&context, request, &reply);
     return checkStatus(status);
 }
 

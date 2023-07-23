@@ -36,7 +36,7 @@ grpc::Status ControlService::SetScanMode(grpc::ServerContext* context,
 ImageprocService::ImageprocService(Application* app) : app_(app) {}
 
 grpc::Status ImageprocService::SetDownsampling(grpc::ServerContext* context, 
-                                               const Downsampling* params,
+                                               const DownsamplingParams* params,
                                                google::protobuf::Empty* ack) {
     auto col = params->col();
     auto row = params->row();
@@ -44,10 +44,10 @@ grpc::Status ImageprocService::SetDownsampling(grpc::ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status ImageprocService::SetProjectionFilter(grpc::ServerContext* contest,
-                                                   const ProjectionFilter* params,
-                                                   google::protobuf::Empty* ack) {
-    app_->setProjectionFilter(std::move(params->name()));
+grpc::Status ImageprocService::SetRampFilter(grpc::ServerContext* contest,
+                                             const RampFilterParams* params,
+                                             google::protobuf::Empty* ack) {
+    app_->setRampFilter(std::move(params->name()));
     return grpc::Status::OK;
 }
 

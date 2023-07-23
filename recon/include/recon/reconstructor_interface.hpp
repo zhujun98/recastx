@@ -9,6 +9,8 @@
 #ifndef RECON_RECONSTRUCTORINTERFACE_H
 #define RECON_RECONSTRUCTORINTERFACE_H
 
+#include <memory>
+
 #include "common/config.hpp"
 #include "tensor.hpp"
 

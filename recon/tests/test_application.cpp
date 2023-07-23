@@ -37,6 +37,30 @@ class MockDaqClient : public DaqClientInterface {
     }
 };
 
+class MockRampFilter : public Filter {
+
+    int num_cols_;
+    int num_rows_;
+
+  public:
+
+    MockRampFilter(int num_cols, int num_rows) : num_cols_(num_cols), num_rows_(num_rows), Filter() {}
+
+    void apply(float* data, int buffer_index) override {
+        for (int i = 0; i < num_cols_ * num_rows_; ++i) {
+            data[i] += 1.f;
+        }
+    }
+};
+
+class MockRampFilterFactory : public FilterFactory {
+
+    std::unique_ptr<Filter> create(const std::string& name, 
+                                   float* data, int num_cols, int num_rows, int buffer_size) override {
+        return std::make_unique<MockRampFilter>(num_cols, num_rows);
+    }
+};
+
 class MockReconstructor: public Reconstructor {
 
     size_t upload_counter_;
@@ -103,25 +127,24 @@ class ApplicationTest : public testing::Test {
     size_t preview_size_ = slice_size_ / 2;
 
     std::string filter_name_ = "shepp";
-    bool gaussian_lowpass_filter_ = false;
     uint32_t threads_ = 2;
 
     std::unique_ptr<DaqClientInterface> daq_client_;
-
+    std::unique_ptr<FilterFactory> ramp_filter_factory_;
     std::unique_ptr<ReconstructorFactory> recon_factory_;
 
     const RpcServerConfig rpc_cfg {12347};
     const ImageprocParams imgproc_params {
-        threads_, downsampling_col_, downsampling_row_,
-        {filter_name_, gaussian_lowpass_filter_}    
+        threads_, downsampling_col_, downsampling_row_, {filter_name_}    
     };
 
     Application app_;
 
     ApplicationTest() : 
             daq_client_(new MockDaqClient()),
+            ramp_filter_factory_(new MockRampFilterFactory()),
             recon_factory_(new MockReconFactory()),
-            app_ {buffer_size_, imgproc_params, daq_client_.get(), recon_factory_.get(), rpc_cfg} {
+            app_ {buffer_size_, imgproc_params, daq_client_.get(), ramp_filter_factory_.get(), recon_factory_.get(), rpc_cfg} {
         app_.setScanMode(ScanMode_Mode_DISCRETE, num_angles_);
     }
 
@@ -199,17 +222,17 @@ TEST_F(ApplicationTest, TestPushProjection) {
 
     auto& projs_front = app_.rawBuffer().front();
     EXPECT_THAT(std::vector<float>(projs_front.begin(), projs_front.begin() + 10), 
-                Pointwise(FloatNear(1e-6), {0.110098f, -0.272487f, 0.133713f, -0.491590f, 0.520265f,
-                                            0.099537f, -0.214807f, 0.464008f, -0.369369f, 0.020631f}));
+                Pointwise(FloatNear(1e-6), { 0.30685282f, -0.60943794f, -0.09861231f, -0.9459102f,  1.f,
+                                            -0.38629436f, -0.7917595f,   0.30685282f, -1.1972246f, -0.60943794f}));
     EXPECT_THAT(std::vector<float>(projs_front.end() - 10, projs_front.end()), 
-                Pointwise(FloatNear(1e-6), { 0.443812f,  0.056262f, -0.205481f,  0.034181f, -0.328773f,
-                                            -0.028346f, -0.080572f, -0.066762f, -0.086848f,  0.262528f}));
+                Pointwise(FloatNear(1e-6), { 0.30685282f, -0.38629436f, -1.0794415f, -0.7917595f, -1.1972246f,
+                                            -0.9459102f,  -1.1972246f,  -1.1972246f, -1.0794415f, -0.38629436f}));
     EXPECT_THAT(std::vector<float>(sino.begin(), sino.begin() + 10), 
-                Pointwise(FloatNear(1e-6), {0.110098f, -0.272487f, 0.133713f, -0.491590f, 0.520265f,
-                                            0.101732f, -0.201946f, 0.119072f, -0.369920f, 0.351062f}));
+                Pointwise(FloatNear(1e-6), { 0.30685282f, -0.60943794f, -0.09861231f, -0.9459102f, 1.f,
+                                            -0.09861231f, -0.7917595f,  -0.38629436f, -1.0794415f, 0.30685282f}));
     EXPECT_THAT(std::vector<float>(sino.end() - 10, sino.end()), 
-                Pointwise(FloatNear(1e-6), {-0.040253f, -0.094602f, -0.078659f, -0.107789f, 0.3213040f,
-                                            -0.028346f, -0.080572f, -0.066762f, -0.086848f, 0.262528f}));
+                Pointwise(FloatNear(1e-6), {-0.7917595f, -1.0794415f, -1.0794415f, -0.9459102f, -0.09861231f,
+                                            -0.9459102f, -1.1972246f, -1.1972246f, -1.0794415f, -0.38629436f}));
 }
 
 TEST_F(ApplicationTest, TestMemoryBufferReset) {
@@ -253,21 +276,20 @@ TEST_F(ApplicationTest, TestPushProjectionUnordered) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     auto& projs_front = app_.rawBuffer().front();
-    // FIXME: unittest fails from now and then
     EXPECT_THAT(std::vector<float>(projs_front.begin(), projs_front.begin() + 10), 
-                Pointwise(FloatNear(1e-6), {0.110098f, -0.272487f, 0.133713f, -0.491590f, 0.520265f,
-                                            0.099537f, -0.214807f, 0.464008f, -0.369369f, 0.020631f}));
+                Pointwise(FloatNear(1e-6), { 0.30685282f, -0.60943794f, -0.09861231f, -0.9459102f,  1.f,
+                                            -0.38629436f, -0.7917595f,   0.30685282f, -1.1972246f, -0.60943794f}));
     EXPECT_THAT(std::vector<float>(projs_front.end() - 10, projs_front.end()), 
-                Pointwise(FloatNear(1e-6), { 0.443812f,  0.056262f, -0.205481f,  0.034181f, -0.328773f,
-                                            -0.028346f, -0.080572f, -0.066762f, -0.086848f,  0.262528f}));
+                Pointwise(FloatNear(1e-6), { 0.30685282f, -0.38629436f, -1.0794415f, -0.7917595f, -1.1972246f,
+                                            -0.9459102f,  -1.1972246f,  -1.1972246f, -1.0794415f, -0.38629436f}));
 
     auto& sino = app_.sinoBuffer().ready();
     EXPECT_THAT(std::vector<float>(sino.begin(), sino.begin() + 10), 
-                Pointwise(FloatNear(1e-6), {0.110098f, -0.272487f, 0.133713f, -0.491590f, 0.520265f,
-                                            0.101732f, -0.201946f, 0.119072f, -0.369920f, 0.351062f}));
+                Pointwise(FloatNear(1e-6), { 0.30685282f, -0.60943794f, -0.09861231f, -0.9459102f, 1.f,
+                                            -0.09861231f, -0.7917595f,  -0.38629436f, -1.0794415f, 0.30685282f}));
     EXPECT_THAT(std::vector<float>(sino.end() - 10, sino.end()), 
-                Pointwise(FloatNear(1e-6), {-0.040253f, -0.094602f, -0.078659f, -0.107789f, 0.3213040f,
-                                            -0.028346f, -0.080572f, -0.066762f, -0.086848f, 0.262528f}));
+                Pointwise(FloatNear(1e-6), {-0.7917595f, -1.0794415f, -1.0794415f, -0.9459102f, -0.09861231f,
+                                            -0.9459102f, -1.1972246f, -1.1972246f, -1.0794415f, -0.38629436f}));
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     pushProjection(num_angles_ + overflow, 2 * num_angles_ - 1);
@@ -310,7 +332,6 @@ TEST_F(ApplicationTest, TestWithPagagin) {
     // FIXME: fix Paganin
     // pushProjection(0, num_angles_);
 }
-
 
 TEST_F(ApplicationTest, TestDownsampling) {
     app_.startAcquiring();
