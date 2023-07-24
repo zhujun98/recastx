@@ -19,14 +19,24 @@
 #include <grpcpp/server_context.h>
 #include "control.grpc.pb.h"
 #include "imageproc.grpc.pb.h"
+#include "projection.grpc.pb.h"
 #include "reconstruction.grpc.pb.h"
 
 namespace recastx::gui::test {
 
+inline constexpr size_t K_RECON_INTERVAL = 200;
+
+class RpcServer;
 
 class ControlService final : public Control::Service {
 
+    ServerState_State state_;
+
+    RpcServer* server_;
+
   public:
+
+    explicit ControlService(RpcServer* server);
 
     grpc::Status SetServerState(grpc::ServerContext* context,
                                 const ServerState* state,
@@ -35,9 +45,13 @@ class ControlService final : public Control::Service {
     grpc::Status SetScanMode(grpc::ServerContext* context,
                              const ScanMode* mode,
                              google::protobuf::Empty* ack) override;
+
+    void updateState(ServerState_State state) { state_ = state; }
 };
 
 class ImageprocService final : public Imageproc::Service {
+
+    ServerState_State state_;
 
   public:
 
@@ -48,9 +62,28 @@ class ImageprocService final : public Imageproc::Service {
     grpc::Status SetRampFilter(grpc::ServerContext* contest,
                                const RampFilterParams* params,
                                google::protobuf::Empty* ack) override;
+
+    void updateState(ServerState_State state) { state_ = state; }
+};
+
+class ProjectionService final : public rpc::Projection::Service {
+
+    ServerState_State state_;
+
+    void setProjectionData(rpc::ProjectionData* data);
+
+  public:
+
+    grpc::Status GetProjectionData(grpc::ServerContext* context,
+                                   const google::protobuf::Empty*,
+                                   grpc::ServerWriter<rpc::ProjectionData>* writer) override;
+
+    void updateState(ServerState_State state) { state_ = state; }
 };
 
 class ReconstructionService final : public Reconstruction::Service {
+
+    ServerState_State state_;
 
     std::thread thread_;
 
@@ -69,6 +102,8 @@ class ReconstructionService final : public Reconstruction::Service {
     grpc::Status GetReconData(grpc::ServerContext* context,
                               const google::protobuf::Empty*,
                               grpc::ServerWriter<ReconData>* writer) override;
+
+    void updateState(ServerState_State state) { state_ = state; }
 };
 
 class RpcServer {
@@ -78,6 +113,7 @@ class RpcServer {
 
     ControlService control_service_;
     ImageprocService imageproc_service_;
+    ProjectionService projection_service_;
     ReconstructionService reconstruction_service_;
 
   public:
@@ -85,6 +121,8 @@ class RpcServer {
     explicit RpcServer(int port);
 
     void start();
+
+    void updateState(ServerState_State state);
 };
 
 

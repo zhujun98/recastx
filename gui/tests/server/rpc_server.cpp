@@ -18,16 +18,20 @@ namespace recastx::gui::test {
 using namespace std::string_literals;
 using namespace std::chrono_literals;
 
+ControlService::ControlService(RpcServer* server) : server_(server) {}
+
 grpc::Status ControlService::SetServerState(grpc::ServerContext* context,
                                             const ServerState* state,
                                             google::protobuf::Empty* ack) {
-    if (state->state() == ServerState_State::ServerState_State_PROCESSING) {
+    state_ = state->state();
+    if (state_ == ServerState_State::ServerState_State_PROCESSING) {
         spdlog::info("Start acquiring & processing data");
-    } else if (state->state() == ServerState_State::ServerState_State_ACQUIRING) {
+    } else if (state_ == ServerState_State::ServerState_State_ACQUIRING) {
         spdlog::info("Start acquiring data");
-    } else if (state->state() == ServerState_State::ServerState_State_READY) {
+    } else if (state_ == ServerState_State::ServerState_State_READY) {
         spdlog::info("Stop acquiring & processing data");
     }
+    server_->updateState(state_);
     return grpc::Status::OK;
 }
 
@@ -59,6 +63,29 @@ grpc::Status ImageprocService::SetRampFilter(grpc::ServerContext* contest,
     return grpc::Status::OK;
 }
 
+grpc::Status ProjectionService::GetProjectionData(grpc::ServerContext* context,
+                                                  const google::protobuf::Empty*,
+                                                  grpc::ServerWriter<rpc::ProjectionData>* writer) {
+    if (state_ == ServerState_State::ServerState_State_PROCESSING
+            || state_ == ServerState_State::ServerState_State_ACQUIRING) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(K_RECON_INTERVAL));
+
+        rpc::ProjectionData data;
+        spdlog::info("Set projection data");
+        setProjectionData(&data);
+        writer->Write(data);
+    }
+
+    return grpc::Status::OK;
+}
+
+void ProjectionService::setProjectionData(rpc::ProjectionData *data) {
+    std::vector<float> vec(1024 * 512);
+    data->set_data(vec.data(), vec.size() * sizeof(float));
+    data->set_col_count(1024);
+    data->set_row_count(512);
+}
+
 grpc::Status ReconstructionService::SetSlice(grpc::ServerContext* context,
                                              const Slice* slice,
                                              google::protobuf::Empty* ack) {
@@ -70,12 +97,15 @@ grpc::Status ReconstructionService::SetSlice(grpc::ServerContext* context,
 grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
                                                  const google::protobuf::Empty*,
                                                  grpc::ServerWriter<ReconData>* writer) {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<int> dist(0, 4);
+    if (state_ == ServerState_State::ServerState_State_PROCESSING) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(K_RECON_INTERVAL));
 
-    ReconData data;
-    while (true) {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<int> dist(0, 4);
+
+        ReconData data;
+        spdlog::info("Set volume data");
         setVolumeData(&data);
         writer->Write(data);
 
@@ -90,10 +120,6 @@ grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
             setSliceData(&data);
             writer->Write(data);
         }
-
-        std::this_thread::sleep_for(200ms);
-
-        break;
     }
 
     return grpc::Status::OK;
@@ -120,7 +146,8 @@ void ReconstructionService::setVolumeData(ReconData* data) {
 }
 
 RpcServer::RpcServer(int port)
-        : address_("0.0.0.0:" + std::to_string(port)) {
+        : address_("0.0.0.0:" + std::to_string(port)),
+          control_service_(this) {
 }
 
 void RpcServer::start() {
@@ -130,10 +157,17 @@ void RpcServer::start() {
     builder.AddListeningPort(address_, grpc::InsecureServerCredentials());
     builder.RegisterService(&control_service_);
     builder.RegisterService(&imageproc_service_);
+    builder.RegisterService(&projection_service_);
     builder.RegisterService(&reconstruction_service_);
 
     server_ = builder.BuildAndStart();
     server_->Wait();
+}
+
+void RpcServer::updateState(ServerState_State state) {
+    imageproc_service_.updateState(state);
+    projection_service_.updateState(state);
+    reconstruction_service_.updateState(state);
 }
 
 } // namespace recastx::gui::test

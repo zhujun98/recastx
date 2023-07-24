@@ -13,7 +13,7 @@
 
 namespace recastx::gui {
 
-class ProjectionItem : public GraphicsItem {
+class ProjectionItem : public GraphicsItem, public GraphicsDataItem {
 
     ImVec2 pos_;
     ImVec2 size_;
@@ -31,6 +31,8 @@ class ProjectionItem : public GraphicsItem {
     void renderIm() override;
 
     bool updateServerParams() override;
+
+    bool consume(const DataType& packet) override;
 };
 
 } // namespace recastx::gui

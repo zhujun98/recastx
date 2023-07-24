@@ -1,0 +1,15 @@
+syntax = "proto3";
+package recastx.rpc;
+
+import "google/protobuf/empty.proto";
+
+service Projection {
+  rpc GetProjectionData (google.protobuf.Empty) returns (stream ProjectionData) {}
+}
+
+message ProjectionData {
+  bytes data = 1;
+  uint32 col_count = 2;
+  uint32 row_count = 3;
+  uint64 index = 4;
+}

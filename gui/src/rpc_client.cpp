@@ -28,11 +28,14 @@ RpcClient::RpcClient(const std::string& hostname, int port) {
 
     control_stub_ = Control::NewStub(channel_);
     imageproc_stub_ = Imageproc::NewStub(channel_);
+    projection_stub_ = rpc::Projection::NewStub(channel_);
     reconstruction_stub_ = Reconstruction::NewStub(channel_);
 }
 
 RpcClient::~RpcClient() {
-    stopReconDataStream();
+    streaming_ = false;
+    if (thread_projection_.joinable()) thread_projection_.join();
+    if (thread_recon_.joinable()) thread_recon_.join();
 }
 
 bool RpcClient::setServerState(ServerState_State state) {
@@ -42,7 +45,7 @@ bool RpcClient::setServerState(ServerState_State state) {
     google::protobuf::Empty reply;
 
     grpc::ClientContext context;
-
+    spdlog::info("called");
     grpc::Status status = control_stub_->SetServerState(&context, request, &reply);
     return checkStatus(status);
 }
@@ -98,47 +101,60 @@ bool RpcClient::setSlice(uint64_t timestamp, const Orientation& orientation) {
     return checkStatus(status);
 }
 
-void RpcClient::startReconDataStream() {
+void RpcClient::start() {
     if (streaming_) return;
-
     streaming_ = true;
-    thread_ = std::thread([&]() {
-        ReconData reply;
 
-        constexpr int min_timeout = 1;
-        constexpr int max_timeout = 100;
+    startReadingProjectionStream();
+    startReadingReconStream();
+}
+
+void RpcClient::startReadingReconStream() {
+    thread_recon_ = std::thread([&]() {
         int timeout = min_timeout;
 
         while (streaming_) {
             grpc::ClientContext context;
 
             google::protobuf::Empty request;
+            ReconData reply;
 
             std::unique_ptr<grpc::ClientReader<ReconData> > reader(
                     reconstruction_stub_->GetReconData(&context, request));
             while(reader->Read(&reply)) {
                 log::debug("Received ReconData");
-                packets_.push(reply);
+                packets_.emplace(std::move(reply));
             }
-            grpc::Status status = reader->Finish();
 
-            if (checkStatus(status, false)) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(timeout));
-                timeout = std::min(2 * timeout, max_timeout);
-            } else {
-                timeout = min_timeout;
-            }
+            updateTimeout(timeout, reader->Finish());
         }
 
-        log::debug("ReconData streaming finished");
+        log::debug("RPC ReconData streaming finished");
     });
 }
 
-void RpcClient::stopReconDataStream() {
-    streaming_ = false;
-    if (thread_.joinable()) {
-        thread_.join();
-    }
+void RpcClient::startReadingProjectionStream() {
+    thread_projection_ = std::thread([&]() {
+        int timeout = min_timeout;
+
+        while (streaming_) {
+            grpc::ClientContext context;
+
+            google::protobuf::Empty request;
+            rpc::ProjectionData reply;
+
+            std::unique_ptr<grpc::ClientReader<rpc::ProjectionData> > reader(
+                    projection_stub_->GetProjectionData(&context, request));
+            while(reader->Read(&reply)) {
+                log::debug("Received ProjectionData");
+                packets_.emplace(std::move(reply));
+            }
+
+            updateTimeout(timeout, reader->Finish());
+        }
+
+        log::debug("RPC ProjectionData streaming finished");
+    });
 }
 
 bool RpcClient::checkStatus(const grpc::Status& status, bool warn_on_fail) const {

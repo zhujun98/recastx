@@ -19,6 +19,7 @@
 
 #include "graphics/graph_node.hpp"
 #include "input_handler.hpp"
+#include "projection.pb.h"
 #include "reconstruction.pb.h"
 #include "control.pb.h"
 
@@ -58,7 +59,7 @@ class GraphicsDataItem {
 
 public:
 
-    using DataType = std::variant<ReconData>;
+    using DataType = std::variant<ReconData, rpc::ProjectionData>;
     virtual bool consume(const DataType& packet) = 0;
 };
 

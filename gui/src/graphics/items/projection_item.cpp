@@ -57,7 +57,16 @@ void ProjectionItem::renderIm() {
 }
 
 bool ProjectionItem::updateServerParams() {
-    return true;
+    return false;
+}
+
+bool ProjectionItem::consume(const DataType& packet) {
+    if (std::holds_alternative<rpc::ProjectionData>(packet)) {
+        const auto& data = std::get<rpc::ProjectionData>(packet);
+        spdlog::info("Received projection data");
+    }
+
+    return false;
 }
 
 } // namespace recastx::gui

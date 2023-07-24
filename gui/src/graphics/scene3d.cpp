@@ -45,7 +45,7 @@ Scene3d::Scene3d(RpcClient* client)
 
     scene_status_["tomoUpdateFrameRate"] = 0.;
 
-    client_->startReconDataStream();
+    client_->start();
 }
 
 Scene3d::~Scene3d() = default;
@@ -75,7 +75,6 @@ void Scene3d::onStateChanged(ServerState_State state) {
             if (item->updateServerParams()) return;
         }
     }
-
     if (client_->setServerState(state)) return;
 
     server_state_ = state;
