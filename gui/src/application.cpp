@@ -72,7 +72,7 @@ Application& Application::instance() {
 
 void Application::setScene(Scene3d* scene) { scene_ = scene; }
 
-void Application::exec() {
+void Application::spin() {
     glfwGetWindowSize(glfw_window_, &width_, &height_);
     scene_->onWindowSizeChanged(width_, height_);
 
