@@ -82,22 +82,9 @@ void Application::spin() {
     glfwGetFramebufferSize(glfw_window_, &display_w, &display_h);
     scene_->onFrameBufferSizeChanged(display_w, display_h);
 
-    double prev_time = glfwGetTime();
     while (!glfwWindowShouldClose(glfw_window_)) {
         glfwPollEvents();
-
-        double curr_time = glfwGetTime();
-        double time_elapsed = curr_time - prev_time;
-        prev_time = curr_time;
-
-        // FIXME: this does not look like a proper event loop
-        const auto time_step = 0.0166666666;
-        while (time_elapsed > time_step) {
-            scene_->tick(time_step);
-            time_elapsed -= time_step;
-        }
-        scene_->tick(time_elapsed);
-
+        scene_->consumeData();
         render();
     }
 }

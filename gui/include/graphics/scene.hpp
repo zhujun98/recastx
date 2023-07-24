@@ -73,7 +73,7 @@ protected:
 
     bool handleKey(int key, int action, int mods) override;
 
-    void tick(double time_elapsed);
+    void consumeData();
 
     void setStatus(const std::string& key, const std::any& value) {
         scene_status_[key] = value;
