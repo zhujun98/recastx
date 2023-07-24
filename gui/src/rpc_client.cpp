@@ -16,7 +16,7 @@ namespace recastx::gui {
 
 using namespace std::string_literals;
 
-std::queue<ReconData>& RpcClient::packets() { return packets_; }
+std::queue<RpcClient::DataType>& RpcClient::packets() { return packets_; }
 
 RpcClient::RpcClient(const std::string& hostname, int port) {
 

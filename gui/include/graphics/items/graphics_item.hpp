@@ -12,6 +12,7 @@
 #include <string>
 #include <unordered_map>
 #include <any>
+#include <variant>
 
 #include <imgui.h>
 #include <glm/glm.hpp>
@@ -57,7 +58,8 @@ class GraphicsDataItem {
 
 public:
 
-    virtual bool consume(const ReconData& packet) = 0;
+    using DataType = std::variant<ReconData>;
+    virtual bool consume(const DataType& packet) = 0;
 };
 
 class GraphicsGLItem {

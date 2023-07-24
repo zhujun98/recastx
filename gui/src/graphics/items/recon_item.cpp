@@ -256,18 +256,21 @@ void ReconItem::setVolumeData(const std::string& data, const std::array<uint32_t
     maybeUpdateMinMaxValues();
 }
 
-bool ReconItem::consume(const ReconData& packet) {
-    if (packet.has_slice()) {
-        auto& data = packet.slice();
-        setSliceData(data.data(), {data.row_count(), data.col_count()}, data.timestamp());
-        return true;
-    }
+bool ReconItem::consume(const DataType& packet) {
+    if (std::holds_alternative<ReconData>(packet)) {
+        const auto& data = std::get<ReconData>(packet);
+        if (data.has_slice()) {
+            auto& slice = data.slice();
+            setSliceData(slice.data(), {slice.row_count(), slice.col_count()}, slice.timestamp());
+            return true;
+        }
 
-    if (packet.has_volume()) {
-        auto& data = packet.volume();
-        setVolumeData(data.data(), {data.row_count(), data.col_count(), data.slice_count()});
-        fps_counter_.update();
-        return true;
+        if (data.has_volume()) {
+            auto& volume = data.volume();
+            setVolumeData(volume.data(), {volume.row_count(), volume.col_count(), volume.slice_count()});
+            fps_counter_.update();
+            return true;
+        }
     }
 
     return false;
