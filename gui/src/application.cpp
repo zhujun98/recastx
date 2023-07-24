@@ -13,6 +13,8 @@
 #include <backends/imgui_impl_glfw.h>
 #include <implot.h>
 
+#include <boost/asio.hpp>
+
 #include "application.hpp"
 #include "graphics/scene3d.hpp"
 #include "graphics/style.hpp"

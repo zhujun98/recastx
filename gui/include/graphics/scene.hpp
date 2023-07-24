@@ -20,7 +20,6 @@
 #include "graphics/items/graphics_item.hpp"
 #include "graphics/graph_node.hpp"
 #include "graphics/viewport.hpp"
-#include "ticker.hpp"
 #include "rpc_client.hpp"
 
 namespace recastx::gui {
@@ -28,7 +27,7 @@ namespace recastx::gui {
 class ShaderProgram;
 class Camera;
 
-class Scene : public GraphNode, public InputHandler, public Ticker {
+class Scene : public GraphNode, public InputHandler {
 
 public:
 
@@ -74,7 +73,7 @@ protected:
 
     bool handleKey(int key, int action, int mods) override;
 
-    void tick(double time_elapsed) override;
+    void tick(double time_elapsed);
 
     void setStatus(const std::string& key, const std::any& value) {
         scene_status_[key] = value;

@@ -18,7 +18,6 @@
 
 #include "graphics/graph_node.hpp"
 #include "input_handler.hpp"
-#include "ticker.hpp"
 #include "reconstruction.pb.h"
 #include "control.pb.h"
 
