@@ -10,6 +10,7 @@
 #define GUI_PROJECTIONITEM_HPP
 
 #include "graphics/items/graphics_item.hpp"
+#include "graphics/projection.hpp"
 
 namespace recastx::gui {
 
@@ -18,7 +19,11 @@ class ProjectionItem : public GraphicsItem, public GraphicsDataItem {
     ImVec2 pos_;
     ImVec2 size_;
 
+    Projection img_;
+
     bool visible_ = true;
+
+    void setProjectionData(const std::string& data, const std::array<uint32_t, 2>& size);
 
   public:
 

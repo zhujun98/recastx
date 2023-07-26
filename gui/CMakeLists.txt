@@ -64,6 +64,7 @@ set(GUI_SOURCES
         "src/graphics/scene3d.cpp"
         "src/graphics/glyph_renderer.cpp"
         "src/graphics/graph_node.cpp"
+        "src/graphics/projection.cpp"
         "src/graphics/shader_program.cpp"
         "src/graphics/slice.cpp"
         "src/graphics/viewport.cpp"

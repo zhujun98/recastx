@@ -10,6 +10,7 @@
 #define GUI_TEST_RPCSERVER_HPP
 
 #include <array>
+#include <random>
 #include <string>
 #include <thread>
 
@@ -22,9 +23,21 @@
 #include "projection.grpc.pb.h"
 #include "reconstruction.grpc.pb.h"
 
+#include "common/config.hpp"
+
 namespace recastx::gui::test {
 
 inline constexpr size_t K_RECON_INTERVAL = 200;
+
+inline std::vector<float> generateRandomVec(size_t s, float min_v = 0.f, float max_v = 1.f) {
+    std::vector<float> vec(s);
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> dist(min_v, max_v);
+    auto f = [&] { return dist(gen); };
+    std::generate(vec.begin(), vec.end(), f);
+    return vec;
+}
 
 class RpcServer;
 
@@ -88,12 +101,15 @@ class ReconstructionService final : public Reconstruction::Service {
     std::thread thread_;
 
     uint64_t timestamp_ {0};
+    std::array<uint64_t, MAX_NUM_SLICES> timestamps_;
 
-    void setSliceData(ReconData* data);
+    void setSliceData(ReconData* data, size_t id);
 
     void setVolumeData(ReconData* data);
 
   public:
+
+    ReconstructionService();
 
     grpc::Status SetSlice(grpc::ServerContext* context,
                           const Slice* slice,

@@ -11,11 +11,12 @@
 #include "graphics/items/projection_item.hpp"
 #include "graphics/scene.hpp"
 #include "graphics/style.hpp"
+#include "logger.hpp"
 
 namespace recastx::gui {
 
 ProjectionItem::ProjectionItem(Scene& scene)
-        : GraphicsItem(scene) {
+        : GraphicsItem(scene), img_(0) {
     scene.addItem(this);
 }
 
@@ -41,16 +42,7 @@ void ProjectionItem::renderIm() {
         ImGui::SetNextWindowSize(size_);
         ImGui::Begin("Raw projection", NULL, ImGuiWindowFlags_NoDecoration);
 
-        std::vector<GLubyte> img(size_.x * size_.y);
-
-        GLuint image_texture;
-        glGenTextures(1, &image_texture);
-        glBindTexture(GL_TEXTURE_2D, image_texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, size_.x, size_.y, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, img.data());
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        ImGui::Image((void*)(intptr_t)image_texture, ImVec2(size_.x, size_.y));
+        ImGui::Image((void*)(intptr_t)img_.texture(), ImVec2(size_.x, size_.y));
 
         ImGui::End();
     }
@@ -63,10 +55,19 @@ bool ProjectionItem::updateServerParams() {
 bool ProjectionItem::consume(const DataType& packet) {
     if (std::holds_alternative<rpc::ProjectionData>(packet)) {
         const auto& data = std::get<rpc::ProjectionData>(packet);
-        spdlog::info("Received projection data");
+
+        setProjectionData(data.data(), {data.row_count(), data.col_count()});
+        log::info("Set projection data");
     }
 
     return false;
+}
+
+void ProjectionItem::setProjectionData(const std::string &data, const std::array<uint32_t, 2> &size) {
+    Projection::DataType proj(size[0] * size[1]);
+    std::memcpy(proj.data(), data.data(), data.size());
+    assert(data.size() == proj.size() * sizeof(Projection::DataType::value_type));
+    img_.setData(std::move(proj), {size[0], size[1]});
 }
 
 } // namespace recastx::gui

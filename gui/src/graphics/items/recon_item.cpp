@@ -190,7 +190,6 @@ void ReconItem::renderGl(const glm::mat4& view,
         return rhs->transparent();
     });
 
-    // FIXME: why do we need to bind and unbind 3D texture?
     volume_->bind();
     for (auto slice : slices) drawSlice(slice, view, projection);
     volume_->unbind();

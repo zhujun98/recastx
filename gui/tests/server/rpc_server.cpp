@@ -6,8 +6,6 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
-#include <random>
-
 #include <spdlog/spdlog.h>
 
 #include "common/utils.hpp"
@@ -80,17 +78,21 @@ grpc::Status ProjectionService::GetProjectionData(grpc::ServerContext* context,
 }
 
 void ProjectionService::setProjectionData(rpc::ProjectionData *data) {
-    std::vector<float> vec(1024 * 512);
-    data->set_data(vec.data(), vec.size() * sizeof(float));
+    auto vec = generateRandomVec(1024 * 512, 0.f, 10.f);
+    data->set_data(vec.data(), vec.size() * sizeof(decltype(vec)::value_type));
     data->set_col_count(1024);
     data->set_row_count(512);
 }
 
+ReconstructionService::ReconstructionService() : timestamps_ {0, 1, 2} {}
+
 grpc::Status ReconstructionService::SetSlice(grpc::ServerContext* context,
                                              const Slice* slice,
                                              google::protobuf::Empty* ack) {
-    spdlog::info("Update slice parameters: {} ({})", sliceIdFromTimestamp(slice->timestamp()), slice->timestamp());
-    timestamp_ = slice->timestamp();
+    uint64_t ts = slice->timestamp();
+    size_t id = sliceIdFromTimestamp(ts);
+    spdlog::info("Update slice parameters: {} ({})", id, ts);
+    timestamps_.at(id) = ts;
     return grpc::Status::OK;
 }
 
@@ -109,15 +111,15 @@ grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
         setVolumeData(&data);
         writer->Write(data);
 
-        for (int i = 0; i < 3; ++i) {
-            setSliceData(&data);
+        for (int i = 0; i < timestamps_.size(); ++i) {
+            setSliceData(&data, i);
             writer->Write(data);
         }
 
         if (dist(gen) == 4) {
             // simulate on-demand slice requested sporadically
             spdlog::info("Set on-demand slice data");
-            setSliceData(&data);
+            setSliceData(&data, 0);
             writer->Write(data);
         }
     }
@@ -125,20 +127,20 @@ grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
     return grpc::Status::OK;
 }
 
-void ReconstructionService::setSliceData(ReconData* data) {
+void ReconstructionService::setSliceData(ReconData* data, size_t id) {
     auto slice = data->mutable_slice();
 
-    std::vector<float> vec(1024 * 512);
-    slice->set_data(vec.data(), vec.size() * sizeof(float));
+    auto vec = generateRandomVec(1024 * 512, 0.f, 1.f + id);
+    slice->set_data(vec.data(), vec.size() * sizeof(decltype(vec)::value_type));
     slice->set_col_count(1024);
     slice->set_row_count(512);
-    slice->set_timestamp(timestamp_);
+    slice->set_timestamp(timestamps_.at(id));
 }
 
 void ReconstructionService::setVolumeData(ReconData* data) {
     auto vol = data->mutable_volume();
 
-    std::vector<float> vec(128 * 128 * 128);
+    auto vec = generateRandomVec(128 * 128 * 128, 0.f, 1.f + MAX_NUM_SLICES - 1);
     vol->set_data(vec.data(), vec.size() * sizeof(float));
     vol->set_col_count(128);
     vol->set_row_count(128);
