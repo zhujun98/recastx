@@ -58,6 +58,7 @@ bool ProjectionItem::consume(const DataType& packet) {
 
         setProjectionData(data.data(), {data.row_count(), data.col_count()});
         log::info("Set projection data");
+        return true;
     }
 
     return false;
