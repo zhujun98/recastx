@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
     Scene3d scene(&rpc_client);
 
     app.setScene(&scene);
-    app.exec();
+    app.spin();
 
     spdlog::info("GUI application closed!");
     return 0;

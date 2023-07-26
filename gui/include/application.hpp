@@ -71,7 +71,7 @@ public:
 
     void setScene(Scene3d* scene);
 
-    void exec();
+    void spin();
 };
 
 }  // namespace recastx::gui

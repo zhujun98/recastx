@@ -14,6 +14,7 @@
 #include <memory>
 #include <queue>
 #include <thread>
+#include <variant>
 
 #include <zmq.hpp>
 
@@ -33,6 +34,10 @@ using namespace std::string_literals;
 
 class RpcClient {
 
+  public:
+
+    using DataType = std::variant<ReconData>;
+
     std::shared_ptr<grpc::Channel> channel_;
 
     std::unique_ptr<Control::Stub> control_stub_;
@@ -42,13 +47,13 @@ class RpcClient {
     std::thread thread_;
     bool streaming_ = false;
 
-    inline static std::queue<ReconData> packets_;
+    inline static std::queue<DataType> packets_;
 
     bool checkStatus(const grpc::Status& status, bool warn_on_fail = true) const;
 
   public:
 
-    static std::queue<ReconData>& packets();
+    static std::queue<DataType>& packets();
 
     RpcClient(const std::string& hostname, int port);
 

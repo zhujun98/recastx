@@ -80,7 +80,7 @@ bool Scene::handleKey(int key, int action, int mods) {
     return false;
 }
 
-void Scene::tick(double /*time_elapsed*/) {
+void Scene::consumeData() {
     auto& packets = RpcClient::packets();
     while (!packets.empty()) {
         auto data = std::move(packets.front());

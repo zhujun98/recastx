@@ -150,7 +150,7 @@ public:
     void setVolumeData(const std::string& data,
                        const std::array<uint32_t, 3>& volume_size);
 
-    bool consume(const ReconData& packet) override;
+    bool consume(const DataType& packet) override;
 
     bool handleMouseButton(int button, int action) override;
 

@@ -20,7 +20,6 @@
 #include "graphics/graph_node.hpp"
 #include "input_handler.hpp"
 #include "path.hpp"
-#include "ticker.hpp"
 
 namespace recastx::gui {
 

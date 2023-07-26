@@ -12,13 +12,13 @@
 #include <string>
 #include <unordered_map>
 #include <any>
+#include <variant>
 
 #include <imgui.h>
 #include <glm/glm.hpp>
 
 #include "graphics/graph_node.hpp"
 #include "input_handler.hpp"
-#include "ticker.hpp"
 #include "reconstruction.pb.h"
 #include "control.pb.h"
 
@@ -58,7 +58,8 @@ class GraphicsDataItem {
 
 public:
 
-    virtual bool consume(const ReconData& packet) = 0;
+    using DataType = std::variant<ReconData>;
+    virtual bool consume(const DataType& packet) = 0;
 };
 
 class GraphicsGLItem {
