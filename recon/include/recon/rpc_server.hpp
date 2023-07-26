@@ -21,6 +21,7 @@
 #include <grpcpp/server_context.h>
 #include "control.grpc.pb.h"
 #include "imageproc.grpc.pb.h"
+#include "projection.grpc.pb.h"
 #include "reconstruction.grpc.pb.h"
 
 namespace recastx::recon {
@@ -62,6 +63,20 @@ class ImageprocService final : public Imageproc::Service {
                                google::protobuf::Empty* ack) override;
 };
 
+class ProjectionService final : public rpc::Projection::Service {
+
+    Application* app_;
+
+  public:
+
+    explicit ProjectionService(Application* app);
+
+    grpc::Status GetProjectionData(grpc::ServerContext* context,
+                                   const google::protobuf::Empty*,
+                                   grpc::ServerWriter<rpc::ProjectionData>* writer) override;
+
+};
+
 class ReconstructionService final : public Reconstruction::Service {
 
     std::thread thread_;
@@ -88,6 +103,7 @@ class RpcServer {
 
     ControlService control_service_;
     ImageprocService imageproc_service_;
+    ProjectionService projection_service_;
     ReconstructionService reconstruction_service_;
 
     std::thread thread_;

@@ -29,9 +29,10 @@ extern "C" {
 #include "buffer.hpp"
 #include "tensor.hpp"
 
-#include "imageproc.pb.h"
-#include "reconstruction.pb.h"
 #include "control.pb.h"
+#include "imageproc.pb.h"
+#include "projection.pb.h"
+#include "reconstruction.pb.h"
 
 #include "daq_client_interface.hpp"
 #include "filter_interface.hpp"
@@ -292,6 +293,8 @@ class Application {
     void setScanMode(ScanMode_Mode mode, uint32_t update_inverval);
 
     void onStateChanged(ServerState_State state);
+
+    std::optional<rpc::ProjectionData> projectionData(int timeout);
 
     std::optional<ReconData> previewData(int timeout);
 

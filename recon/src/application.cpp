@@ -335,6 +335,10 @@ void Application::onStateChanged(ServerState_State state) {
     server_state_ = state;
 }
 
+std::optional<rpc::ProjectionData> Application::projectionData(int timeout) {
+    
+}
+
 std::optional<ReconData> Application::previewData(int timeout) { 
     if (preview_buffer_.fetch(timeout)) {
         auto& data = preview_buffer_.front();
