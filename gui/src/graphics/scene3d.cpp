@@ -138,16 +138,17 @@ void Scene3d::render() {
     ImGui::Separator();
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "SCAN MODE");
 
-    ImGui::BeginDisabled(server_state_ != ServerState_State::ServerState_State_READY);
+    ImGui::BeginDisabled(server_state_ == ServerState_State::ServerState_State_PROCESSING);
+
     static int scan_mode = static_cast<int>(scan_mode_);
     ImGui::RadioButton("Continuous", &scan_mode, static_cast<int>(ScanMode_Mode_CONTINUOUS));
     ImGui::SameLine();
     ImGui::RadioButton("Discrete", &scan_mode, static_cast<int>(ScanMode_Mode_DISCRETE));
     scan_mode_ = ScanMode_Mode(scan_mode);
-    ImGui::EndDisabled();
 
     ImGui::Text("Update interval");
     ImGui::SameLine();
+
     ImGui::BeginDisabled(scan_mode_ != ScanMode_Mode_CONTINUOUS);
     if (ImGui::ArrowButton("##continuous_interval_left", ImGuiDir_Left)) {
         assert(scan_update_interval_ >= K_SCAN_UPDATE_INTERVAL_STEP_SIZE);
@@ -166,6 +167,8 @@ void Scene3d::render() {
     }
     ImGui::SameLine();
     ImGui::Text("%d", scan_update_interval_);
+    ImGui::EndDisabled();
+
     ImGui::EndDisabled();
 
     ImGui::Separator();
