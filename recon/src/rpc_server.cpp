@@ -61,6 +61,7 @@ grpc::Status ProjectionService::GetProjectionData(grpc::ServerContext* context,
     auto proj = app_->projectionData(0);
     if (proj) {
         writer->Write(proj.value());
+        spdlog::debug("Projection data sent");
     }
 
     return grpc::Status::OK;
@@ -89,6 +90,7 @@ grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
         auto slice_data = app_->sliceData(-1);
 
         writer->Write(preview_data.value());
+        spdlog::debug("Preview data sent");
         
         for (const auto& item : slice_data) {
             writer->Write(item);

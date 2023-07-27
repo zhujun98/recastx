@@ -336,7 +336,14 @@ void Application::onStateChanged(ServerState_State state) {
 }
 
 std::optional<rpc::ProjectionData> Application::projectionData(int timeout) {
+    std::vector<float> vec(raw_buffer_.shape()[1] * raw_buffer_.shape()[2]);
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> dist(0.f, 1.f);
+    auto f = [&] { return dist(gen); };
+    std::generate(vec.begin(), vec.end(), f);
     
+    return createProjectionDataPacket(vec, raw_buffer_.shape()[1], raw_buffer_.shape()[2]);
 }
 
 std::optional<ReconData> Application::previewData(int timeout) { 

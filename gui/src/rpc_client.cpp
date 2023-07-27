@@ -45,7 +45,6 @@ bool RpcClient::setServerState(ServerState_State state) {
     google::protobuf::Empty reply;
 
     grpc::ClientContext context;
-    spdlog::info("called");
     grpc::Status status = control_stub_->SetServerState(&context, request, &reply);
     return checkStatus(status);
 }
