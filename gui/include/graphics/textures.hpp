@@ -29,6 +29,9 @@ template <>
 inline GLint InternalFormat<float>() { return GL_R32F; }
 
 template <>
+inline GLint InternalFormat<unsigned short>() { return GL_R16UI; }
+
+template <>
 inline GLint InternalFormat<unsigned char>() { return GL_RGB32F; }
 
 template<typename T>
@@ -38,6 +41,9 @@ template <>
 inline GLenum DataFormat<float>() { return GL_RED; }
 
 template <>
+inline GLenum DataFormat<unsigned short>() { return GL_RED_INTEGER; }
+
+template <>
 inline GLenum DataFormat<unsigned char>() { return GL_RGB; }
 
 template<typename T>
@@ -45,6 +51,9 @@ inline GLenum DataType();
 
 template <>
 inline GLenum DataType<float>() { return GL_FLOAT; }
+
+template <>
+inline GLenum DataType<unsigned short>() { return GL_UNSIGNED_SHORT; }
 
 template <>
 inline GLenum DataType<unsigned char>() { return GL_UNSIGNED_BYTE; }

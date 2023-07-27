@@ -12,6 +12,7 @@
 #include <array>
 #include <vector>
 
+#include "common/config.hpp"
 #include "textures.hpp"
 
 namespace recastx::gui {
@@ -20,7 +21,7 @@ class Projection {
 
   public:
 
-    using DataType = std::vector<float>;
+    using DataType = std::vector<RawDtype>;
     using SizeType = std::array<size_t, 2>;
 
   private:
@@ -29,7 +30,7 @@ class Projection {
     SizeType size_;
     DataType data_;
 
-    ImageTexture<float> texture_;
+    ImageTexture<RawDtype> texture_;
 
   public:
 

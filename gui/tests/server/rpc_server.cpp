@@ -78,7 +78,7 @@ grpc::Status ProjectionService::GetProjectionData(grpc::ServerContext* context,
 }
 
 void ProjectionService::setProjectionData(rpc::ProjectionData *data) {
-    auto vec = generateRandomVec(1024 * 512, 0.f, 10.f);
+    auto vec = generateRandomRawData(1024 * 512, 0, 1000);
     data->set_data(vec.data(), vec.size() * sizeof(decltype(vec)::value_type));
     data->set_col_count(1024);
     data->set_row_count(512);
@@ -130,7 +130,7 @@ grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
 void ReconstructionService::setSliceData(ReconData* data, size_t id) {
     auto slice = data->mutable_slice();
 
-    auto vec = generateRandomVec(1024 * 512, 0.f, 1.f + id);
+    auto vec = generateRandomProcData(1024 * 512, 0.f, 1.f + id);
     slice->set_data(vec.data(), vec.size() * sizeof(decltype(vec)::value_type));
     slice->set_col_count(1024);
     slice->set_row_count(512);
@@ -140,7 +140,7 @@ void ReconstructionService::setSliceData(ReconData* data, size_t id) {
 void ReconstructionService::setVolumeData(ReconData* data) {
     auto vol = data->mutable_volume();
 
-    auto vec = generateRandomVec(128 * 128 * 128, 0.f, 1.f + MAX_NUM_SLICES - 1);
+    auto vec = generateRandomProcData(128 * 128 * 128, 0.f, 1.f + MAX_NUM_SLICES - 1);
     vol->set_data(vec.data(), vec.size() * sizeof(float));
     vol->set_col_count(128);
     vol->set_row_count(128);

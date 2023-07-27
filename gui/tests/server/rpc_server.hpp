@@ -29,11 +29,21 @@ namespace recastx::gui::test {
 
 inline constexpr size_t K_RECON_INTERVAL = 200;
 
-inline std::vector<float> generateRandomVec(size_t s, float min_v = 0.f, float max_v = 1.f) {
-    std::vector<float> vec(s);
+inline std::vector<ProDtype> generateRandomProcData(size_t s, ProDtype min_v = 0.f, ProDtype max_v = 1.f) {
+    std::vector<ProDtype> vec(s);
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_real_distribution<float> dist(min_v, max_v);
+    std::uniform_real_distribution<ProDtype> dist(min_v, max_v);
+    auto f = [&] { return dist(gen); };
+    std::generate(vec.begin(), vec.end(), f);
+    return vec;
+}
+
+inline std::vector<RawDtype> generateRandomRawData(size_t s, RawDtype min_v, RawDtype max_v) {
+    std::vector<RawDtype> vec(s);
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<RawDtype> dist(min_v, max_v);
     auto f = [&] { return dist(gen); };
     std::generate(vec.begin(), vec.end(), f);
     return vec;
