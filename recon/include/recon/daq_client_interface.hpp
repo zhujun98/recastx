@@ -18,14 +18,14 @@ namespace recastx::recon {
 
 enum class ProjectionType : int { DARK = 0, FLAT = 1, PROJECTION = 2, UNKNOWN = 99 };
 
-struct Projection {
+struct ProjectionMessage {
     ProjectionType type;
     size_t index;
     size_t col_count;
     size_t row_count;
     zmq::message_t data;
 
-    Projection(ProjectionType type, size_t index, size_t col_count, size_t row_count, zmq::message_t data) :
+    ProjectionMessage(ProjectionType type, size_t index, size_t col_count, size_t row_count, zmq::message_t data) :
         type(type), index(index), col_count(col_count), row_count(row_count), data(std::move(data)) {}
 
 };
@@ -34,7 +34,7 @@ class DaqClientInterface {
 
   public:
 
-    using BufferType = std::queue<Projection>;
+    using BufferType = std::queue<ProjectionMessage>;
 
   protected:
 
@@ -49,7 +49,7 @@ class DaqClientInterface {
     virtual void startAcquiring() = 0;
     virtual void stopAcquiring() = 0;
 
-    std::optional<Projection> next() {
+    std::optional<ProjectionMessage> next() {
         if (queue_.empty()) return {};
 
         auto ret = std::move(queue_.front());

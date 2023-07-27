@@ -96,7 +96,7 @@ void Application::setReconGeometry(std::optional<size_t> slice_size, std::option
     // initialization is delayed
 }
 
-void Application::pushDark(const Projection& proj) {
+void Application::pushDark(const ProjectionMessage& proj) {
     maybeResetDarkAndFlatAcquisition();
     size_t n = darks_.push(static_cast<const char*>(proj.data.data()));
     if (n % 10 == 0) {
@@ -104,7 +104,7 @@ void Application::pushDark(const Projection& proj) {
     }
 }
 
-void Application::pushFlat(const Projection& proj) {
+void Application::pushFlat(const ProjectionMessage& proj) {
     maybeResetDarkAndFlatAcquisition();
     size_t n = flats_.push(static_cast<const char*>(proj.data.data()));
     if (n % 10 == 0) {
@@ -112,7 +112,7 @@ void Application::pushFlat(const Projection& proj) {
     }
 }
 
-void Application::pushProjection(const Projection& proj) {
+void Application::pushProjection(const ProjectionMessage& proj) {
     if (!reciprocal_computed_) {
         if (darks_.empty() || flats_.empty()) {
             spdlog::warn("Send dark and flat images first! Projection ignored.");

@@ -51,7 +51,7 @@ class DaqClient : public DaqClientInterface {
     void stopAcquiring();
     void startAcquiring();
 
-    std::optional<Projection> next();
+    std::optional<ProjectionMessage> next();
 };
 
 

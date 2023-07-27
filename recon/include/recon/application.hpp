@@ -136,9 +136,9 @@ class Application {
 
     void maybeResetDarkAndFlatAcquisition();
 
-    void pushDark(const Projection& proj);
-    void pushFlat(const Projection& proj);
-    void pushProjection(const Projection& proj);
+    void pushDark(const ProjectionMessage& proj);
+    void pushFlat(const ProjectionMessage& proj);
+    void pushProjection(const ProjectionMessage& proj);
 
     void preprocessProjections(oneapi::tbb::task_arena& arena);
 
