@@ -129,20 +129,19 @@ TEST_F(MemoryBufferTest, TestGeneral) {
     ASSERT_EQ(buffer_.occupied(), 0);
     EXPECT_THROW(buffer_.ready(), std::out_of_range);
 
-    buffer_.fill<RawDtype>(_produceRawData({1, 2, 3, 4, 5, 6}).data(), 0);
+    buffer_.fill<RawDtype>(0, _produceRawData({1, 2, 3, 4, 5, 6}).data());
     ASSERT_EQ(buffer_.occupied(), 1);
-    buffer_.fill<RawDtype>(_produceRawData({6, 1, 5, 1, 4, 1, 
-                                            3, 1, 2, 1, 1, 1}).data(), 1, {2, 6});
-    buffer_.fill<RawDtype>(_produceRawData({1, 1, 2, 1, 3, 1, 
-                                            1, 1, 2, 1, 3, 1,
-                                            4, 1, 5, 1, 6, 1,
-                                            4, 1, 5, 1, 6, 1}).data(), 2, {4, 6});
-    buffer_.fill<RawDtype>(_produceRawData({6, 1, 5, 1, 4, 1, 1,
-                                            6, 1, 5, 1, 4, 1, 1,
-                                            3, 1, 2, 1, 1, 1, 1,
-                                            3, 1, 2, 1, 1, 1, 1,
-                                            1, 1, 1, 1, 1, 1, 1}).data(), 3, {5, 7});
-    EXPECT_EQ(&buffer_.ready(), &buffer_.back());
+    buffer_.fill<RawDtype>(1, _produceRawData({6, 1, 5, 1, 4, 1, 
+                                               3, 1, 2, 1, 1, 1}).data(), {2, 6});
+    buffer_.fill<RawDtype>(2, _produceRawData({1, 1, 2, 1, 3, 1, 
+                                               1, 1, 2, 1, 3, 1,
+                                               4, 1, 5, 1, 6, 1,
+                                               4, 1, 5, 1, 6, 1}).data(), {4, 6});
+    buffer_.fill<RawDtype>(3, _produceRawData({6, 1, 5, 1, 4, 1, 1,
+                                               6, 1, 5, 1, 4, 1, 1,
+                                               3, 1, 2, 1, 1, 1, 1,
+                                               3, 1, 2, 1, 1, 1, 1,
+                                               1, 1, 1, 1, 1, 1, 1}).data(), {5, 7});
     ASSERT_TRUE(buffer_.fetch());
     EXPECT_THAT(buffer_.front(), 
                 Pointwise(FloatNear(1e-6), {1., 2., 3., 4., 5., 6., 
@@ -155,12 +154,12 @@ TEST_F(MemoryBufferTest, TestGeneral) {
 
 TEST_F(MemoryBufferTest, TestBufferFull) {
     for (size_t j = 0; j < shape_[0]; ++j) {
-        buffer_.fill<RawDtype>(_produceRawData({1, 2, 3, 4, 5, 6}).data(), j); 
+        buffer_.fill<RawDtype>(j, _produceRawData({1, 2, 3, 4, 5, 6}).data()); 
     }
     ASSERT_EQ(buffer_.occupied(), 1);
 
     for (size_t j = 0; j < shape_[0]; ++j) {
-        buffer_.fill<RawDtype>(_produceRawData({6, 5, 4, 3, 2, 1}).data(), 4 + j); 
+        buffer_.fill<RawDtype>(4 + j, _produceRawData({6, 5, 4, 3, 2, 1}).data()); 
     }
     ASSERT_EQ(buffer_.occupied(), 1); // group 0 was dropped
     EXPECT_THAT(buffer_.ready(), 
@@ -171,19 +170,16 @@ TEST_F(MemoryBufferTest, TestBufferFull) {
 
     // group 1 was dropped; group 2 was added first and then dropped
     for (size_t j = 0; j < shape_[0] - 1; ++j) {
-        buffer_.fill<RawDtype>(_produceRawData({4, 5, 6, 7, 8, 9}).data(), 
-                               4 * (capacity_ + 2) + j); 
+        buffer_.fill<RawDtype>(4 * (capacity_ + 2) + j, _produceRawData({4, 5, 6, 7, 8, 9}).data()); 
     }
     ASSERT_EQ(buffer_.occupied(), 3);
 
     for (size_t j = 0; j < shape_[0]-1; ++j) {
-        buffer_.fill<RawDtype>(_produceRawData({1, 3, 5, 7, 9, 11}).data(), 
-                               4 * (capacity_ + 1) + j); 
+        buffer_.fill<RawDtype>(4 * (capacity_ + 1) + j, _produceRawData({1, 3, 5, 7, 9, 11}).data()); 
     }
     ASSERT_EQ(buffer_.occupied(), 3);
 
-    buffer_.fill<RawDtype>(_produceRawData({9, 8, 7, 6, 5, 4}).data(), 
-                                           4 * (capacity_ + 2) + shape_[0] - 1); 
+    buffer_.fill<RawDtype>(4 * (capacity_ + 2) + shape_[0] - 1, _produceRawData({9, 8, 7, 6, 5, 4}).data()); 
     ASSERT_EQ(buffer_.occupied(), 1); // group 3 was dropped
     buffer_.fetch();
     EXPECT_THAT(buffer_.front(), 
@@ -197,13 +193,13 @@ TEST_F(MemoryBufferTest, TestSameDataReceivedRepeatedly) {
     for (size_t i = 0; i < 8; ++i) {
         // Attempt to fill the 1st group.
         for (size_t j = 0; j < shape_[0]; ++j) {
-            buffer_.fill<RawDtype>(_produceRawData({1, 2, 3}).data(), j); 
+            buffer_.fill<RawDtype>(j, _produceRawData({1, 2, 3}).data()); 
         }
         if (i % 2 == 0) buffer_.fetch();
 
         // Attempt to fill half of the second group.
         for (size_t j = 0; j < shape_[0] / 2; ++j) {
-            buffer_.fill<RawDtype>(_produceRawData({1, 2, 3}).data(), 4 + j); 
+            buffer_.fill<RawDtype>(4 + j, _produceRawData({1, 2, 3}).data()); 
         }
         if (i % 2 == 1) {
             buffer_.fetch();
@@ -216,7 +212,7 @@ TEST_F(MemoryBufferTest, TestSameDataReceivedRepeatedly) {
 
 TEST_F(MemoryBufferTest, TestReshape) {
     for (size_t j = 0; j < shape_[0]; ++j) {
-        buffer_.fill<RawDtype>(_produceRawData({1, 2, 3, 4, 5, 6}).data(), j); 
+        buffer_.fill<RawDtype>(j, _produceRawData({1, 2, 3, 4, 5, 6}).data()); 
     }
     ASSERT_EQ(buffer_.occupied(), 1);
     EXPECT_THAT(buffer_.shape(), ElementsAre(4, 2, 3));
@@ -229,7 +225,7 @@ TEST_F(MemoryBufferTest, TestReshape) {
     EXPECT_THAT(buffer_.shape(), ElementsAre(4, 3, 4));
     ASSERT_EQ(buffer_.size(), 48);
     for (size_t j = 0; j < new_shape[0]; ++j) {
-        buffer_.fill<RawDtype>(_produceRawData({1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6}).data(), j); 
+        buffer_.fill<RawDtype>(j, _produceRawData({1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6}).data()); 
     }
     ASSERT_EQ(buffer_.occupied(), 1);
 

@@ -147,7 +147,7 @@ void Application::pushProjection(const Projection& proj) {
 
     // TODO: compute the average on the fly instead of storing the data in the buffer
     raw_buffer_.fill<RawDtype>(
-        static_cast<const char*>(proj.data.data()), proj.index, {proj.row_count, proj.col_count});
+        proj.index, static_cast<const char*>(proj.data.data()), {proj.row_count, proj.col_count});
 }
 
 void Application::startAcquiring() {
