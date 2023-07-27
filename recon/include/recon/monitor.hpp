@@ -43,6 +43,8 @@ class Monitor {
 
     void addProjection() { ++num_projections_; }
 
+    size_t numProjections() const { return num_projections_; }
+
     void addTomogram();
 
     void summarize() const;

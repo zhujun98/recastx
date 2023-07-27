@@ -162,12 +162,11 @@ void Application::startAcquiring() {
             }
 
             auto& data = item.value();
-            static size_t counter = 0;
             switch(data.type) {
                 case ProjectionType::PROJECTION: {
                     pushProjection(data);
                     monitor_.addProjection();
-                    if (counter++ % 10 == 0) {
+                    if (monitor_.numProjections() % 10 == 0) {
                         std::this_thread::sleep_for(std::chrono::microseconds(1));
                     }
                     break;
