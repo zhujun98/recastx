@@ -145,13 +145,14 @@ using RawImageData = Tensor<RawDtype, 2>;
 namespace details {
 
 template<typename T>
-inline void copyBuffer(T* dst, const char* src, size_t n) {
-    std::memcpy(dst, src, n * sizeof(T));
+inline void copyBuffer(T* dst, const char* src, size_t count) {
+    std::memcpy(dst, src, count * sizeof(T));
 }
 
 template<typename T>
-inline void copyBuffer(T* dst, const char* src, 
-                       const std::array<size_t, 2>& dst_shape, 
+inline void copyBuffer(T* dst,
+                       const std::array<size_t, 2>& dst_shape,
+                       const char* src,
                        const std::array<size_t, 2>& src_shape) {
     size_t ds_r = src_shape[0] / dst_shape[0];
     size_t ds_c = src_shape[1] / dst_shape[1];
@@ -235,7 +236,7 @@ size_t ImageGroup<T>::push(const char* buffer, const std::array<size_t, 2>& shap
     
     size_t idx = count_++ % this->shape_[0];
     size_t pixels = w * h;
-    details::copyBuffer(&this->data_[idx * pixels], buffer, {h, w}, shape);
+    details::copyBuffer(&this->data_[idx * pixels], {h, w}, buffer, shape);
     return count_;
 }
 
