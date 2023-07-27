@@ -48,6 +48,7 @@ set(RECON_SOURCES
         "src/slice_mediator.cpp"
         "src/daq_client.cpp"
         "src/rpc_server.cpp"
+        "src/monitor.cpp"
         "src/application.cpp"
 )
 
