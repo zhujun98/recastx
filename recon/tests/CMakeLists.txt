@@ -11,34 +11,40 @@ set(RECON_TEST_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/../../common/include
 )
 set(RECON_TEST_COMMON_LIBRARIES spdlog::spdlog gmock gtest)
 
-set(SIMPLE_TESTS test_tensor.cpp 
-                 test_buffer.cpp
-                 test_preprocessing.cpp
+set(TEST_FILES test_tensor.cpp 
+               test_buffer.cpp
+               test_preprocessing.cpp
+               test_slice_mediator.cpp
+               test_ramp_filter.cpp
 )
-foreach(filename IN LISTS SIMPLE_TESTS)
-    get_filename_component(filename ${filename} NAME)
-    string(REPLACE ".cpp" "" targetname ${filename})
+set(TESTS_WITH_TBB test_ramp_filter.cpp)
+set(TESTS_WITH_FFTW test_ramp_filter.cpp)
+foreach(test_file IN LISTS TEST_FILES)
+    get_filename_component(test_filename ${test_file} NAME)
+    string(REPLACE ".cpp" "" targetname ${test_filename})
+    
+    string(REPLACE "test_" "" source_filename ${test_filename})
+    set(source_file ${CMAKE_CURRENT_LIST_DIR}/../src/${source_filename})
 
-    add_executable(${targetname} main.cpp ${filename})
+    if (EXISTS ${source_file})
+        add_executable(${targetname} main.cpp ${test_filename} ${source_file})
+    else()
+        add_executable(${targetname} main.cpp ${test_filename})
+    endif()
+    
     target_include_directories(${targetname} PRIVATE ${RECON_TEST_INCLUDE_DIRS})
     target_link_libraries(${targetname} PRIVATE ${RECON_TEST_COMMON_LIBRARIES})
 
+    if (${test_file} IN_LIST TESTS_WITH_TBB)
+        target_link_libraries(${targetname} PRIVATE TBB::tbb)
+    endif()
+
+    if (${test_file} IN_LIST TESTS_WITH_FFTW)
+        target_link_libraries(${targetname} PRIVATE ${FFTW_FLOAT_LIB})
+    endif()
+
     gtest_discover_tests(${targetname})
 endforeach()
-
-# filter test
-set(TEST_NAME test_filter)
-add_executable(${TEST_NAME} main.cpp test_filter.cpp ${CMAKE_CURRENT_LIST_DIR}/../src/ramp_filter.cpp)
-target_include_directories(${TEST_NAME} PRIVATE ${RECON_TEST_INCLUDE_DIRS})
-target_link_libraries(${TEST_NAME} PRIVATE ${FFTW_FLOAT_LIB} TBB::tbb ${RECON_TEST_COMMON_LIBRARIES})
-gtest_discover_tests(${TEST_NAME})
-
-# mediator test
-set(TEST_NAME test_slicemediator)
-add_executable(${TEST_NAME} main.cpp test_slicemediator.cpp ${CMAKE_CURRENT_LIST_DIR}/../src/slice_mediator.cpp)
-target_include_directories(${TEST_NAME} PRIVATE ${RECON_TEST_INCLUDE_DIRS})
-target_link_libraries(${TEST_NAME} PRIVATE ${RECON_TEST_COMMON_LIBRARIES})
-gtest_discover_tests(${TEST_NAME})
 
 # app test
 set(TEST_NAME test_application)
