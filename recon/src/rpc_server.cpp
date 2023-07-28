@@ -58,7 +58,7 @@ ProjectionService::ProjectionService(Application* app) : app_(app) {}
 grpc::Status ProjectionService::GetProjectionData(grpc::ServerContext* context,
                                                   const google::protobuf::Empty*,
                                                   grpc::ServerWriter<rpc::ProjectionData>* writer) {
-    auto proj = app_->projectionData(0);
+    auto proj = app_->projectionData();
     if (proj) {
         writer->Write(proj.value());
         spdlog::debug("Projection data sent");

@@ -49,6 +49,7 @@ set(RECON_SOURCES
         "src/daq_client.cpp"
         "src/rpc_server.cpp"
         "src/monitor.cpp"
+        "src/projection.cpp"
         "src/application.cpp"
 )
 

@@ -41,7 +41,7 @@ inline ReconData createVolumeDataPacket(const Container& data, uint32_t x, uint3
 template<typename Container>
 inline rpc::ProjectionData createProjectionDataPacket(const Container& data, uint32_t x, uint32_t y) {
     rpc::ProjectionData packet;
-    packet.set_data(data.data(), data.size() * sizeof(typename Container::value_type));
+     packet.set_data(data.data(), data.size() * sizeof(typename Container::value_type));
     packet.set_col_count(x);
     packet.set_row_count(y);
     return packet;

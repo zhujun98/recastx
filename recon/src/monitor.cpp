@@ -30,6 +30,20 @@ void Monitor::resetTimer() {
     tomo_start_ = start_;
 }
 
+void Monitor::countProjection(Projection msg) {
+    ++num_projections_;
+    if (num_projections_ % monitor_projection_every_) {
+        projections_.emplace(std::move(msg));
+    }
+}
+
+std::optional<Projection> Monitor::popProjection() {
+    if (projections_.empty()) return std::nullopt;
+    auto proj = std::move(projections_.front());
+    projections_.pop();
+    return proj;
+}
+
 void Monitor::addTomogram() {
     ++num_tomograms_;
 

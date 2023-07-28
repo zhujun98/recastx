@@ -14,27 +14,30 @@
 
 #include <zmq.hpp>
 
+#include "projection.hpp"
+
 namespace recastx::recon {
 
-enum class ProjectionType : int { DARK = 0, FLAT = 1, PROJECTION = 2, UNKNOWN = 99 };
+namespace daq {
 
-struct ProjectionMessage {
+struct Message {
     ProjectionType type;
     size_t index;
     size_t col_count;
     size_t row_count;
     zmq::message_t data;
 
-    ProjectionMessage(ProjectionType type, size_t index, size_t col_count, size_t row_count, zmq::message_t data) :
+    Message(ProjectionType type, size_t index, size_t col_count, size_t row_count, zmq::message_t data) :
         type(type), index(index), col_count(col_count), row_count(row_count), data(std::move(data)) {}
-
 };
+
+} // namespace daq
 
 class DaqClientInterface {
 
   public:
 
-    using BufferType = std::queue<ProjectionMessage>;
+    using BufferType = std::queue<daq::Message>;
 
   protected:
 
@@ -49,12 +52,12 @@ class DaqClientInterface {
     virtual void startAcquiring() = 0;
     virtual void stopAcquiring() = 0;
 
-    std::optional<ProjectionMessage> next() {
+    [[nodiscard]] std::optional<daq::Message> next() {
         if (queue_.empty()) return {};
 
-        auto ret = std::move(queue_.front());
+        auto proj = std::move(queue_.front());
         queue_.pop();
-        return ret;
+        return proj;
     }
 };
 

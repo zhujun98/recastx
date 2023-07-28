@@ -45,6 +45,7 @@ set(TEST_NAME test_application)
 add_executable(${TEST_NAME} main.cpp test_application.cpp 
         ${CMAKE_CURRENT_LIST_DIR}/../src/application.cpp
         ${CMAKE_CURRENT_LIST_DIR}/../src/monitor.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/../src/projection.cpp
         ${CMAKE_CURRENT_LIST_DIR}/../src/slice_mediator.cpp
         ${CMAKE_CURRENT_LIST_DIR}/../src/phase.cpp
         ${CMAKE_CURRENT_LIST_DIR}/../src/rpc_server.cpp

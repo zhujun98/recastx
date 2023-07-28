@@ -96,23 +96,23 @@ void Application::setReconGeometry(std::optional<size_t> slice_size, std::option
     // initialization is delayed
 }
 
-void Application::pushDark(const ProjectionMessage& proj) {
+void Application::pushDark(const Projection& proj) {
     maybeResetDarkAndFlatAcquisition();
-    size_t n = darks_.push(static_cast<const char*>(proj.data.data()));
+    size_t n = darks_.push(reinterpret_cast<const char*>(proj.data.data()));
     if (n % 10 == 0) {
         spdlog::info("# of darks received: {}", n);
     }
 }
 
-void Application::pushFlat(const ProjectionMessage& proj) {
+void Application::pushFlat(const Projection& proj) {
     maybeResetDarkAndFlatAcquisition();
-    size_t n = flats_.push(static_cast<const char*>(proj.data.data()));
+    size_t n = flats_.push(reinterpret_cast<const char*>(proj.data.data()));
     if (n % 10 == 0) {
         spdlog::info("# of flats received: {}", n);
     }
 }
 
-void Application::pushProjection(const ProjectionMessage& proj) {
+void Application::pushProjection(const Projection& proj) {
     if (!reciprocal_computed_) {
         if (darks_.empty() || flats_.empty()) {
             spdlog::warn("Send dark and flat images first! Projection ignored.");
@@ -147,7 +147,7 @@ void Application::pushProjection(const ProjectionMessage& proj) {
 
     // TODO: compute the average on the fly instead of storing the data in the buffer
     raw_buffer_.fill<RawDtype>(
-        proj.index, static_cast<const char*>(proj.data.data()), {proj.row_count, proj.col_count});
+        proj.index, reinterpret_cast<const char*>(proj.data.data()), {proj.row_count, proj.col_count});
 }
 
 void Application::startAcquiring() {
@@ -161,24 +161,24 @@ void Application::startAcquiring() {
                 continue;
             }
 
-            auto& data = item.value();
-            switch(data.type) {
+            Projection proj(item.value());
+            switch(proj.type) {
                 case ProjectionType::PROJECTION: {
-                    pushProjection(data);
-                    monitor_.addProjection();
+                    pushProjection(proj);
+                    monitor_.countProjection(std::move(proj));
                     if (monitor_.numProjections() % 10 == 0) {
                         std::this_thread::sleep_for(std::chrono::microseconds(1));
                     }
                     break;
                 }
                 case ProjectionType::DARK: {
-                    pushDark(data);
-                    monitor_.addDark();
+                    pushDark(proj);
+                    monitor_.countDark();
                     break;
                 }
                 case ProjectionType::FLAT: {
-                    pushFlat(data);
-                    monitor_.addFlat();
+                    pushFlat(proj);
+                    monitor_.countFlat();
                     break;
                 }
                 default:
@@ -334,15 +334,13 @@ void Application::onStateChanged(ServerState_State state) {
     server_state_ = state;
 }
 
-std::optional<rpc::ProjectionData> Application::projectionData(int timeout) {
-    std::vector<float> vec(raw_buffer_.shape()[1] * raw_buffer_.shape()[2]);
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<float> dist(0.f, 1.f);
-    auto f = [&] { return dist(gen); };
-    std::generate(vec.begin(), vec.end(), f);
-    
-    return createProjectionDataPacket(vec, raw_buffer_.shape()[1], raw_buffer_.shape()[2]);
+std::optional<rpc::ProjectionData> Application::projectionData() {
+    auto proj = monitor_.popProjection();
+    if (proj.has_value()) {
+        auto& v = proj.value();
+        return createProjectionDataPacket(v.data, v.col_count, v.row_count);
+    }
+    return std::nullopt;
 }
 
 std::optional<ReconData> Application::previewData(int timeout) { 
@@ -446,8 +444,7 @@ void Application::onStartProcessing() {
         spdlog::info("- Scan mode: discrete");
     }
 
-    monitor_ = Monitor(proj_geom_.row_count * proj_geom_.col_count * proj_geom_.angles.size() 
-                       * sizeof(RawDtype));
+    monitor_ = Monitor(proj_geom_.row_count * proj_geom_.col_count * proj_geom_.angles.size() * sizeof(RawDtype));
 }
 
 void Application::onStopProcessing() {

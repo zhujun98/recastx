@@ -38,6 +38,7 @@ extern "C" {
 #include "filter_interface.hpp"
 #include "reconstructor_interface.hpp"
 #include "monitor.hpp"
+#include "projection.hpp"
 
 namespace recastx::recon {
 
@@ -136,9 +137,9 @@ class Application {
 
     void maybeResetDarkAndFlatAcquisition();
 
-    void pushDark(const ProjectionMessage& proj);
-    void pushFlat(const ProjectionMessage& proj);
-    void pushProjection(const ProjectionMessage& proj);
+    void pushDark(const Projection& proj);
+    void pushFlat(const Projection& proj);
+    void pushProjection(const Projection& proj);
 
     void preprocessProjections(oneapi::tbb::task_arena& arena);
 
@@ -212,9 +213,6 @@ class Application {
 
     void spin(bool auto_processing=false);
 
-    void pushProjection(
-        ProjectionType k, size_t proj_idx, size_t num_rows, size_t num_cols, const char* data); 
-
     void setDownsampling(uint32_t col, uint32_t row);
 
     void setRampFilter(std::string filter_name);
@@ -225,7 +223,7 @@ class Application {
 
     void onStateChanged(ServerState_State state);
 
-    std::optional<rpc::ProjectionData> projectionData(int timeout);
+    std::optional<rpc::ProjectionData> projectionData();
 
     std::optional<ReconData> previewData(int timeout);
 
