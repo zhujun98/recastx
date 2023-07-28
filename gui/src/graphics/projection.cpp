@@ -6,6 +6,8 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
+#include <algorithm>
+
 #include "graphics/projection.hpp"
 
 namespace recastx::gui {
@@ -19,6 +21,9 @@ int Projection::id() const { return id_; }
 void Projection::setData(DataType&& data, const SizeType& size) {
     data_ = std::move(data);
     size_ = size;
+
+    // TODO: FIXME
+    std::for_each(data_.begin(), data_.end(), [](RawDtype& v) { v *= 100; });
 
     texture_.setData(data_, static_cast<int>(size_[0]), static_cast<int>(size_[1]));
 }

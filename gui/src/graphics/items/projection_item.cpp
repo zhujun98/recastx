@@ -56,7 +56,7 @@ bool ProjectionItem::consume(const DataType& packet) {
     if (std::holds_alternative<rpc::ProjectionData>(packet)) {
         const auto& data = std::get<rpc::ProjectionData>(packet);
 
-        setProjectionData(data.data(), {data.row_count(), data.col_count()});
+        setProjectionData(data.data(), {data.col_count(), data.row_count()});
         log::info("Set projection data");
         return true;
     }
