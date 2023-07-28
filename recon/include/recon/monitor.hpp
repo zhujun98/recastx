@@ -23,8 +23,6 @@ class Projection;
 
 class Monitor {
 
-    std::chrono::time_point<std::chrono::steady_clock> start_;
-
     size_t num_darks_ = 0;
     size_t num_flats_ = 0;
     size_t num_projections_= 0;
@@ -32,15 +30,18 @@ class Monitor {
 
     size_t scan_byte_size_;
 
-    std::chrono::time_point<std::chrono::steady_clock> tomo_start_;
-    static constexpr size_t report_tomo_throughput_every_ = 10;
-
-    static constexpr size_t monitor_projection_every_ = 100;
+    size_t monitor_projection_every_;
     std::queue<Projection> projections_;
+
+    std::chrono::time_point<std::chrono::steady_clock> start_;
+    std::chrono::time_point<std::chrono::steady_clock> tomo_start_;
+    size_t report_tomo_throughput_every_;
 
   public:
 
-    explicit Monitor(size_t scan_byte_size = 0);
+    Monitor(size_t scan_byte_size = 0, 
+            size_t monitor_projection_every = 100,
+            size_t report_tomo_throughput_every = 10);
 
     void reset();
 

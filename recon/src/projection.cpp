@@ -12,8 +12,11 @@
 namespace recastx::recon {
 
 Projection::Projection(const daq::Message& msg) :
-        type(msg.type), index(msg.index), col_count(msg.col_count), row_count(msg.row_count) {
-    data.resize(col_count * row_count);
+        type(msg.type), 
+        index(msg.index), 
+        col_count(msg.col_count), 
+        row_count(msg.row_count), 
+        data(col_count * row_count) {
     std::memcpy(data.data(), msg.data.data(), msg.data.size());
 }
 

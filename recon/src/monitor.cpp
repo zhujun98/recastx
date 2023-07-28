@@ -10,10 +10,14 @@
 
 namespace recastx::recon {
 
-Monitor::Monitor(size_t scan_byte_size) : 
-    start_(std::chrono::steady_clock::now()),
+Monitor::Monitor(size_t scan_byte_size, 
+                 size_t monitor_projection_every,
+                 size_t report_tomo_throughput_every) : 
     scan_byte_size_(scan_byte_size),
-    tomo_start_(start_) {
+    monitor_projection_every_(monitor_projection_every),
+    start_(std::chrono::steady_clock::now()),
+    tomo_start_(start_),
+    report_tomo_throughput_every_(report_tomo_throughput_every) {
 }
 
 void Monitor::reset() {

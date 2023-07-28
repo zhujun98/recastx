@@ -37,11 +37,11 @@ extern "C" {
 #include "daq_client_interface.hpp"
 #include "filter_interface.hpp"
 #include "reconstructor_interface.hpp"
-#include "monitor.hpp"
 #include "projection.hpp"
 
 namespace recastx::recon {
 
+class Monitor;
 class Paganin;
 class RpcServer;
 class SliceMediator;
@@ -120,7 +120,7 @@ class Application {
 
     // It's not a State because there might be race conditions.
     bool running_ = true;
-    Monitor monitor_;
+    std::unique_ptr<Monitor> monitor_;
 
     DaqClientInterface* daq_client_;
     std::unique_ptr<RpcServer> rpc_server_;
@@ -146,6 +146,7 @@ class Application {
     void onStartProcessing();
     void onStopProcessing();
     void onStartAcquiring();
+    void onStopAcquiring();
 
     bool waitForAcquiring() const {
         if (server_state_ != ServerState_State::ServerState_State_ACQUIRING 
