@@ -38,8 +38,8 @@ Application::Application(size_t raw_buffer_size,
        ramp_filter_factory_(ramp_filter_factory),
        imgproc_params_(imageproc_params),
        recon_factory_(recon_factory),
-       server_state_(ServerState_State_INIT),
-       scan_mode_(ScanMode_Mode_DISCRETE),
+       server_state_(rpc::ServerState_State_INIT),
+       scan_mode_(rpc::ScanMode_Mode_DISCRETE),
        scan_update_interval_(K_MIN_SCAN_UPDATE_INTERVAL),
        monitor_(new Monitor()),
        daq_client_(daq_client),
@@ -166,7 +166,7 @@ void Application::startAcquiring() {
             Projection proj(item.value());
             switch(proj.type) {
                 case ProjectionType::PROJECTION: {
-                    if (server_state_ == ServerState_State::ServerState_State_PROCESSING) {
+                    if (server_state_ == rpc::ServerState_State_PROCESSING) {
                         pushProjection(proj);
                     }
                     monitor_->countProjection(std::move(proj));
@@ -177,14 +177,14 @@ void Application::startAcquiring() {
                     break;
                 }
                 case ProjectionType::DARK: {
-                    if (server_state_ == ServerState_State::ServerState_State_PROCESSING) {
+                    if (server_state_ == rpc::ServerState_State_PROCESSING) {
                         pushDark(proj);
                     }
                     monitor_->countDark();
                     break;
                 }
                 case ProjectionType::FLAT: {
-                    if (server_state_ == ServerState_State::ServerState_State_PROCESSING) {
+                    if (server_state_ == rpc::ServerState_State_PROCESSING) {
                         pushFlat(proj);
                     }
                     monitor_->countFlat();
@@ -226,7 +226,7 @@ void Application::startUploading() {
             spdlog::info("Uploading sinograms to GPU ...");
             size_t chunk_size = sino_buffer_.front().shape()[0];
             {
-                if (scan_mode_ == ScanMode_Mode_DISCRETE) {
+                if (scan_mode_ == rpc::ScanMode_Mode_DISCRETE) {
                     recon_->uploadSinograms(1 - gpu_buffer_index_, sino_buffer_.front().data(), chunk_size);
                     std::lock_guard<std::mutex> lck(gpu_mtx_);
                     gpu_buffer_index_ = 1 - gpu_buffer_index_;
@@ -289,7 +289,7 @@ void Application::spin(bool auto_processing) {
     rpc_server_->start();
 
     if (auto_processing) {
-        onStateChanged(ServerState_State::ServerState_State_PROCESSING);
+        onStateChanged(rpc::ServerState_State_PROCESSING);
     }
 
     // TODO: start the event loop in the main thread
@@ -314,11 +314,11 @@ void Application::setSlice(size_t timestamp, const Orientation& orientation) {
     slice_mediator_->update(timestamp, orientation);
 }
 
-void Application::setScanMode(ScanMode_Mode mode, uint32_t update_interval) {
+void Application::setScanMode(rpc::ScanMode_Mode mode, uint32_t update_interval) {
     scan_mode_ = mode;
     scan_update_interval_ = update_interval;
     
-    if (mode == ScanMode_Mode_DISCRETE) {
+    if (mode == rpc::ScanMode_Mode_DISCRETE) {
         spdlog::debug("Set scan mode: {}", static_cast<int>(mode));
     } else {
         spdlog::debug("Set scan mode: {}, update interval {}", 
@@ -326,20 +326,20 @@ void Application::setScanMode(ScanMode_Mode mode, uint32_t update_interval) {
     }
 }
 
-void Application::onStateChanged(ServerState_State state) {
+void Application::onStateChanged(rpc::ServerState_State state) {
     if (server_state_ == state) {
         spdlog::debug("Server already in state: {}", static_cast<int>(state));
         return;
     }
 
-    if (state == ServerState_State::ServerState_State_PROCESSING) {
+    if (state == rpc::ServerState_State_PROCESSING) {
         onStartProcessing();
-    } else if (state == ServerState_State::ServerState_State_ACQUIRING) {
+    } else if (state == rpc::ServerState_State_ACQUIRING) {
         onStartAcquiring();
-    } else if (state == ServerState_State::ServerState_State_READY) {
-        if (server_state_ == ServerState_State::ServerState_State_ACQUIRING) {
+    } else if (state == rpc::ServerState_State_READY) {
+        if (server_state_ == rpc::ServerState_State_ACQUIRING) {
             onStopAcquiring();
-        } else if (server_state_ == ServerState_State::ServerState_State_PROCESSING){
+        } else if (server_state_ == rpc::ServerState_State_PROCESSING){
             onStopProcessing();
         }
     }
@@ -356,7 +356,7 @@ std::optional<rpc::ProjectionData> Application::projectionData() {
     return std::nullopt;
 }
 
-std::optional<ReconData> Application::previewData(int timeout) { 
+std::optional<rpc::ReconData> Application::previewData(int timeout) { 
     if (preview_buffer_.fetch(timeout)) {
         auto& data = preview_buffer_.front();
         auto [x, y, z] = data.shape();
@@ -365,8 +365,8 @@ std::optional<ReconData> Application::previewData(int timeout) {
     return std::nullopt;
 }
 
-std::vector<ReconData> Application::sliceData(int timeout) {
-    std::vector<ReconData> ret;
+std::vector<rpc::ReconData> Application::sliceData(int timeout) {
+    std::vector<rpc::ReconData> ret;
     auto& buffer = slice_mediator_->allSlices();
     if (buffer.fetch(timeout)) {
         for (auto& [k, slice] : buffer.front()) {
@@ -378,8 +378,8 @@ std::vector<ReconData> Application::sliceData(int timeout) {
     return ret;
 }
 
-std::vector<ReconData> Application::onDemandSliceData(int timeout) {
-    std::vector<ReconData> ret;
+std::vector<rpc::ReconData> Application::onDemandSliceData(int timeout) {
+    std::vector<rpc::ReconData> ret;
     auto& buffer = slice_mediator_->onDemandSlices();
     if (buffer.fetch(timeout)) {
         for (auto& [k, slice] : buffer.front()) {
@@ -450,10 +450,10 @@ void Application::onStartProcessing() {
 
     spdlog::info("Start acquiring and processing data:");
 
-    if (scan_mode_ == ScanMode_Mode_CONTINUOUS) {
+    if (scan_mode_ == rpc::ScanMode_Mode_CONTINUOUS) {
         spdlog::info("- Scan mode: continuous");
         spdlog::info("- Update interval: {}", scan_update_interval_);
-    } else if (scan_mode_ == ScanMode_Mode_DISCRETE) {
+    } else if (scan_mode_ == rpc::ScanMode_Mode_DISCRETE) {
         spdlog::info("- Scan mode: discrete");
     }
 
@@ -508,7 +508,7 @@ void Application::initReconstructor(size_t col_count, size_t row_count) {
     preview_buffer_.resize({preview_geom_.col_count, preview_geom_.row_count, preview_geom_.slice_count});
     slice_mediator_->resize({slice_geom_.col_count, slice_geom_.row_count});
 
-    bool double_buffering = scan_mode_ == ScanMode_Mode_DISCRETE;
+    bool double_buffering = scan_mode_ == rpc::ScanMode_Mode_DISCRETE;
     recon_ = recon_factory_->create(
         col_count, row_count, proj_geom_, slice_geom_, preview_geom_, double_buffering);
 }
@@ -543,7 +543,7 @@ void Application::maybeInitFlatFieldBuffer(size_t row_count, size_t col_count) {
 }
 
 void Application::maybeInitReconBuffer(size_t col_count, size_t row_count) {
-    size_t chunk_size = (scan_mode_ == ScanMode_Mode_CONTINUOUS 
+    size_t chunk_size = (scan_mode_ == rpc::ScanMode_Mode_CONTINUOUS 
                          ? scan_update_interval_ : proj_geom_.angles.size());
     auto shape = raw_buffer_.shape();
     if (shape[0] != chunk_size || shape[1] != row_count || shape[2] != col_count) {

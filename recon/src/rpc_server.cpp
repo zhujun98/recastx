@@ -20,14 +20,14 @@ using namespace std::string_literals;
 ControlService::ControlService(Application* app) : app_(app) {}
 
 grpc::Status ControlService::SetServerState(grpc::ServerContext* context, 
-                                            const ServerState* state,
+                                            const rpc::ServerState* state,
                                             google::protobuf::Empty* ack) {
     app_->onStateChanged(state->state());
     return grpc::Status::OK;
 }
 
 grpc::Status ControlService::SetScanMode(grpc::ServerContext* context,
-                                         const ScanMode* mode,
+                                         const rpc::ScanMode* mode,
                                          google::protobuf::Empty* ack) {
     app_->setScanMode(mode->mode(), mode->update_interval());
     return grpc::Status::OK;
@@ -37,7 +37,7 @@ grpc::Status ControlService::SetScanMode(grpc::ServerContext* context,
 ImageprocService::ImageprocService(Application* app) : app_(app) {}
 
 grpc::Status ImageprocService::SetDownsampling(grpc::ServerContext* context, 
-                                               const DownsamplingParams* params,
+                                               const rpc::DownsamplingParams* params,
                                                google::protobuf::Empty* ack) {
     auto col = params->col();
     auto row = params->row();
@@ -46,7 +46,7 @@ grpc::Status ImageprocService::SetDownsampling(grpc::ServerContext* context,
 }
 
 grpc::Status ImageprocService::SetRampFilter(grpc::ServerContext* contest,
-                                             const RampFilterParams* params,
+                                             const rpc::RampFilterParams* params,
                                              google::protobuf::Empty* ack) {
     app_->setRampFilter(std::move(params->name()));
     return grpc::Status::OK;
@@ -71,7 +71,7 @@ grpc::Status ProjectionService::GetProjectionData(grpc::ServerContext* context,
 ReconstructionService::ReconstructionService(Application* app) : app_(app) {}
 
 grpc::Status ReconstructionService::SetSlice(grpc::ServerContext* context, 
-                                             const Slice* slice,
+                                             const rpc::Slice* slice,
                                              google::protobuf::Empty* ack) {
     Orientation orient;
     std::copy(slice->orientation().begin(), slice->orientation().end(), orient.begin());
@@ -81,7 +81,7 @@ grpc::Status ReconstructionService::SetSlice(grpc::ServerContext* context,
 
 grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
                                                  const google::protobuf::Empty*,
-                                                 grpc::ServerWriter<ReconData>* writer) {
+                                                 grpc::ServerWriter<rpc::ReconData>* writer) {
     // - Do not block because slice request needs to be responsive
     // - If the number of the logical threads are more than the number of the physical threads, 
     //   the preview_data could always have value.

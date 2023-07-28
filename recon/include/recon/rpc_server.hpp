@@ -28,7 +28,7 @@ namespace recastx::recon {
 
 class Application;
 
-class ControlService final : public Control::Service {
+class ControlService final : public rpc::Control::Service {
 
     Application* app_;
 
@@ -37,16 +37,16 @@ class ControlService final : public Control::Service {
     explicit ControlService(Application* app);
 
     grpc::Status SetServerState(grpc::ServerContext* context, 
-                                const ServerState* state,
+                                const rpc::ServerState* state,
                                 google::protobuf::Empty* ack) override;
 
     grpc::Status SetScanMode(grpc::ServerContext* context,
-                             const ScanMode* mode,
+                             const rpc::ScanMode* mode,
                              google::protobuf::Empty* ack) override;
 
 };
 
-class ImageprocService final : public Imageproc::Service {
+class ImageprocService final : public rpc::Imageproc::Service {
 
     Application* app_;
 
@@ -55,11 +55,11 @@ class ImageprocService final : public Imageproc::Service {
     explicit ImageprocService(Application* app);
 
     grpc::Status SetDownsampling(grpc::ServerContext* context, 
-                                 const DownsamplingParams* params,
+                                 const rpc::DownsamplingParams* params,
                                  google::protobuf::Empty* ack) override;
 
     grpc::Status SetRampFilter(grpc::ServerContext* contest,
-                               const RampFilterParams* params,
+                               const rpc::RampFilterParams* params,
                                google::protobuf::Empty* ack) override;
 };
 
@@ -77,7 +77,7 @@ class ProjectionService final : public rpc::Projection::Service {
 
 };
 
-class ReconstructionService final : public Reconstruction::Service {
+class ReconstructionService final : public rpc::Reconstruction::Service {
 
     std::thread thread_;
 
@@ -88,12 +88,12 @@ class ReconstructionService final : public Reconstruction::Service {
     explicit ReconstructionService(Application* app);
 
     grpc::Status SetSlice(grpc::ServerContext* context,
-                          const Slice* slice,
+                          const rpc::Slice* slice,
                           google::protobuf::Empty* ack) override;
 
     grpc::Status GetReconData(grpc::ServerContext* context,
                               const google::protobuf::Empty*,
-                              grpc::ServerWriter<ReconData>* writer) override;
+                              grpc::ServerWriter<rpc::ReconData>* writer) override;
 };
 
 class RpcServer {

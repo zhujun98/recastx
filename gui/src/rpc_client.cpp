@@ -26,10 +26,10 @@ RpcClient::RpcClient(const std::string& hostname, int port) {
                                          grpc::InsecureChannelCredentials(),
                                          ch_args);
 
-    control_stub_ = Control::NewStub(channel_);
-    imageproc_stub_ = Imageproc::NewStub(channel_);
+    control_stub_ = rpc::Control::NewStub(channel_);
+    imageproc_stub_ = rpc::Imageproc::NewStub(channel_);
     projection_stub_ = rpc::Projection::NewStub(channel_);
-    reconstruction_stub_ = Reconstruction::NewStub(channel_);
+    reconstruction_stub_ = rpc::Reconstruction::NewStub(channel_);
 }
 
 RpcClient::~RpcClient() {
@@ -38,8 +38,8 @@ RpcClient::~RpcClient() {
     if (thread_recon_.joinable()) thread_recon_.join();
 }
 
-bool RpcClient::setServerState(ServerState_State state) {
-    ServerState request;
+bool RpcClient::setServerState(rpc::ServerState_State state) {
+    rpc::ServerState request;
     request.set_state(state);
 
     google::protobuf::Empty reply;
@@ -49,8 +49,8 @@ bool RpcClient::setServerState(ServerState_State state) {
     return checkStatus(status);
 }
 
-bool RpcClient::setScanMode(ScanMode_Mode mode, uint32_t update_interval) {
-    ScanMode request;
+bool RpcClient::setScanMode(rpc::ScanMode_Mode mode, uint32_t update_interval) {
+    rpc::ScanMode request;
     request.set_mode(mode);
     request.set_update_interval(update_interval);
 
@@ -63,7 +63,7 @@ bool RpcClient::setScanMode(ScanMode_Mode mode, uint32_t update_interval) {
 }
 
 bool RpcClient::setDownsampling(uint32_t col, uint32_t row) {
-    DownsamplingParams request;
+    rpc::DownsamplingParams request;
     request.set_col(col);
     request.set_row(row);
 
@@ -76,7 +76,7 @@ bool RpcClient::setDownsampling(uint32_t col, uint32_t row) {
 }
 
 bool RpcClient::setRampFilter(const std::string& filter_name) {
-    RampFilterParams request;
+    rpc::RampFilterParams request;
     request.set_name(filter_name);
 
     google::protobuf::Empty reply;
@@ -88,7 +88,7 @@ bool RpcClient::setRampFilter(const std::string& filter_name) {
 }
 
 bool RpcClient::setSlice(uint64_t timestamp, const Orientation& orientation) {
-    Slice request;
+    rpc::Slice request;
     request.set_timestamp(timestamp);
     for (auto v : orientation) request.add_orientation(v);
 
@@ -116,9 +116,9 @@ void RpcClient::startReadingReconStream() {
             grpc::ClientContext context;
 
             google::protobuf::Empty request;
-            ReconData reply;
+            rpc::ReconData reply;
 
-            std::unique_ptr<grpc::ClientReader<ReconData> > reader(
+            std::unique_ptr<grpc::ClientReader<rpc::ReconData> > reader(
                     reconstruction_stub_->GetReconData(&context, request));
             while(reader->Read(&reply)) {
                 log::debug("Received ReconData");

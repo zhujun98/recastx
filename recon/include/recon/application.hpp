@@ -114,8 +114,8 @@ class Application {
     std::condition_variable gpu_cv_;
     std::mutex gpu_mtx_;
 
-    ServerState_State server_state_;
-    ScanMode_Mode scan_mode_;
+    rpc::ServerState_State server_state_;
+    rpc::ScanMode_Mode scan_mode_;
     uint32_t scan_update_interval_;
 
     // It's not a State because there might be race conditions.
@@ -149,8 +149,8 @@ class Application {
     void onStopAcquiring();
 
     bool waitForAcquiring() const {
-        if (server_state_ != ServerState_State::ServerState_State_ACQUIRING 
-                && server_state_ != ServerState_State_PROCESSING) {
+        if (server_state_ != rpc::ServerState_State_ACQUIRING 
+                && server_state_ != rpc::ServerState_State_PROCESSING) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
             return true;
         }
@@ -158,7 +158,7 @@ class Application {
     }
 
     bool waitForProcessing() const {
-        if (server_state_ != ServerState_State::ServerState_State_PROCESSING) {
+        if (server_state_ != rpc::ServerState_State_PROCESSING) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
             return true;
         }
@@ -220,17 +220,17 @@ class Application {
 
     void setSlice(size_t timestamp, const Orientation& orientation);
 
-    void setScanMode(ScanMode_Mode mode, uint32_t update_inverval);
+    void setScanMode(rpc::ScanMode_Mode mode, uint32_t update_inverval);
 
-    void onStateChanged(ServerState_State state);
+    void onStateChanged(rpc::ServerState_State state);
 
     std::optional<rpc::ProjectionData> projectionData();
 
-    std::optional<ReconData> previewData(int timeout);
+    std::optional<rpc::ReconData> previewData(int timeout);
 
-    std::vector<ReconData> sliceData(int timeout);
+    std::vector<rpc::ReconData> sliceData(int timeout);
 
-    std::vector<ReconData> onDemandSliceData(int timeout);
+    std::vector<rpc::ReconData> onDemandSliceData(int timeout);
 
     size_t numAngles() const { return proj_geom_.angles.size(); };
 

@@ -17,8 +17,8 @@
 namespace recastx::recon {
 
 template<typename Container>
-inline ReconData createSliceDataPacket(const Container& data, uint32_t x, uint32_t y, uint64_t timestamp) {
-    ReconData packet;
+inline rpc::ReconData createSliceDataPacket(const Container& data, uint32_t x, uint32_t y, uint64_t timestamp) {
+    rpc::ReconData packet;
     auto slice = packet.mutable_slice();
     slice->set_data(data.data(), data.size() * sizeof(typename Container::value_type));
     slice->set_col_count(x);
@@ -28,8 +28,8 @@ inline ReconData createSliceDataPacket(const Container& data, uint32_t x, uint32
 }
 
 template<typename Container>
-inline ReconData createVolumeDataPacket(const Container& data, uint32_t x, uint32_t y, uint32_t z) {
-    ReconData packet;
+inline rpc::ReconData createVolumeDataPacket(const Container& data, uint32_t x, uint32_t y, uint32_t z) {
+    rpc::ReconData packet;
     auto volume = packet.mutable_volume();
     volume->set_data(data.data(), data.size() * sizeof(typename Container::value_type));
     volume->set_col_count(x);

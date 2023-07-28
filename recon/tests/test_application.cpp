@@ -145,11 +145,11 @@ class ApplicationTest : public testing::Test {
             ramp_filter_factory_(new MockRampFilterFactory()),
             recon_factory_(new MockReconFactory()),
             app_ {buffer_size_, imgproc_params, daq_client_.get(), ramp_filter_factory_.get(), recon_factory_.get(), rpc_cfg} {
-        app_.setScanMode(ScanMode_Mode_DISCRETE, num_angles_);
+        app_.setScanMode(rpc::ScanMode_Mode_DISCRETE, num_angles_);
     }
 
     ~ApplicationTest() override {
-        app_.onStateChanged(ServerState_State::ServerState_State_READY);
+        app_.onStateChanged(rpc::ServerState_State_READY);
     };
 
     void SetUp() override { 
@@ -203,7 +203,7 @@ class ApplicationTest : public testing::Test {
 TEST_F(ApplicationTest, TestPushProjection) {
     app_.startAcquiring();
     app_.startPreprocessing();
-    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
+    app_.onStateChanged(rpc::ServerState_State_PROCESSING);
 
     pushDarks(num_darks_);
     pushFlats(num_flats_);
@@ -238,7 +238,7 @@ TEST_F(ApplicationTest, TestPushProjection) {
 TEST_F(ApplicationTest, TestMemoryBufferReset) {
     app_.startAcquiring();
     app_.startPreprocessing();
-    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
+    app_.onStateChanged(rpc::ServerState_State_PROCESSING);
 
     pushDarks(num_darks_);
     pushFlats(num_flats_);
@@ -258,7 +258,7 @@ TEST_F(ApplicationTest, TestMemoryBufferReset) {
 TEST_F(ApplicationTest, TestPushProjectionUnordered) {
     app_.startAcquiring();
     app_.startPreprocessing();
-    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
+    app_.onStateChanged(rpc::ServerState_State_PROCESSING);
     
     pushDarks(num_darks_);
     pushFlats(num_flats_);
@@ -302,7 +302,7 @@ TEST_F(ApplicationTest, TestReconstructing) {
     app_.startPreprocessing();
     app_.startUploading();
     app_.startReconstructing();
-    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
+    app_.onStateChanged(rpc::ServerState_State_PROCESSING);
 
     pushDarks(num_darks_);
     pushFlats(num_flats_);
@@ -326,7 +326,7 @@ TEST_F(ApplicationTest, TestWithPagagin) {
 
     app_.startAcquiring();
     app_.startPreprocessing();
-    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
+    app_.onStateChanged(rpc::ServerState_State_PROCESSING);
     
     // pushDarks(num_darks_);
     // pushFlats(num_flats_);
@@ -336,15 +336,15 @@ TEST_F(ApplicationTest, TestWithPagagin) {
 TEST_F(ApplicationTest, TestDownsampling) {
     app_.startAcquiring();
     app_.startPreprocessing();
-    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
+    app_.onStateChanged(rpc::ServerState_State_PROCESSING);
 
     pushDarks(num_darks_);
     pushFlats(num_flats_);
     pushProjection(0, num_angles_);
 
-    app_.onStateChanged(ServerState_State::ServerState_State_READY);
+    app_.onStateChanged(rpc::ServerState_State_READY);
     app_.setDownsampling(2u, 2u);
-    app_.onStateChanged(ServerState_State::ServerState_State_PROCESSING);
+    app_.onStateChanged(rpc::ServerState_State_PROCESSING);
     pushProjection(0, num_angles_);
 }
 
