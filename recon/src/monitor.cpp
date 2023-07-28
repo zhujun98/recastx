@@ -22,6 +22,8 @@ void Monitor::reset() {
     num_projections_ = 0;
     num_tomograms_ = 0;
 
+    std::queue<Projection>().swap(projections_);
+
     resetTimer();
 }
 
@@ -32,7 +34,7 @@ void Monitor::resetTimer() {
 
 void Monitor::countProjection(Projection msg) {
     ++num_projections_;
-    if (num_projections_ % monitor_projection_every_) {
+    if (num_projections_ % monitor_projection_every_ == 0) {
         projections_.emplace(std::move(msg));
     }
 }
