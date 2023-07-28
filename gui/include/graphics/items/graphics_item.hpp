@@ -35,7 +35,7 @@ protected:
 
     Scene& scene_;
 
-    ServerState_State state_;
+    rpc::ServerState_State state_;
 
 public:
 
@@ -47,7 +47,7 @@ public:
 
     virtual void onWindowSizeChanged(int width, int height);
 
-    virtual void setState(ServerState_State state) { state_ = state; }
+    virtual void setState(rpc::ServerState_State state) { state_ = state; }
 
     virtual bool updateServerParams() { return false; }
 
@@ -59,7 +59,7 @@ class GraphicsDataItem {
 
 public:
 
-    using DataType = std::variant<ReconData, rpc::ProjectionData>;
+    using DataType = std::variant<rpc::ReconData, rpc::ProjectionData>;
     virtual bool consume(const DataType& packet) = 0;
 };
 

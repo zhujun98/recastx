@@ -38,8 +38,8 @@ Scene3d::Scene3d(RpcClient* client)
           statusbar_item_(new StatusbarItem(*this)),
           logging_item_(new LoggingItem(*this)),
           axiscube_item_(new AxiscubeItem(*this)),
-          server_state_(ServerState_State::ServerState_State_READY),
-          scan_mode_(ScanMode_Mode_CONTINUOUS),
+          server_state_(rpc::ServerState_State::ServerState_State_READY),
+          scan_mode_(rpc::ScanMode_Mode_CONTINUOUS),
           scan_update_interval_(K_MIN_SCAN_UPDATE_INTERVAL) {
     camera_ = std::make_unique<Camera>();
 
@@ -68,8 +68,8 @@ void Scene3d::onFrameBufferSizeChanged(int width, int height) {
                            h);
 }
 
-void Scene3d::onStateChanged(ServerState_State state) {
-    if (state == ServerState_State_PROCESSING || state == ServerState_State_ACQUIRING) {
+void Scene3d::onStateChanged(rpc::ServerState_State state) {
+    if (state == rpc::ServerState_State_PROCESSING || state == rpc::ServerState_State_ACQUIRING) {
         if (updateServerParams()) return;
         for (auto item : items_) {
             if (item->updateServerParams()) return;
@@ -80,9 +80,9 @@ void Scene3d::onStateChanged(ServerState_State state) {
     server_state_ = state;
     for (auto item : items_) item->setState(state);
 
-    if (state == ServerState_State::ServerState_State_PROCESSING) {
+    if (state == rpc::ServerState_State::ServerState_State_PROCESSING) {
         log::info("Start acquiring & processing data");
-    } else if (state == ServerState_State::ServerState_State_ACQUIRING) {
+    } else if (state == rpc::ServerState_State::ServerState_State_ACQUIRING) {
         log::info("Start acquiring data");
     } else /* (state == ServerState_State::ServerState_State_READY) */ {
         log::info("Stop acquiring & processing data");
@@ -108,9 +108,9 @@ void Scene3d::render() {
     ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.2f, 0.6f, 0.6f));
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.2f, 0.7f, 0.7f));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.2f, 0.8f, 0.8f));
-    ImGui::BeginDisabled(server_state_ == ServerState_State::ServerState_State_ACQUIRING ||
-                         server_state_ == ServerState_State::ServerState_State_PROCESSING);
-    if (ImGui::Button("Acquire")) onStateChanged(ServerState_State::ServerState_State_ACQUIRING);
+    ImGui::BeginDisabled(server_state_ == rpc::ServerState_State::ServerState_State_ACQUIRING ||
+                         server_state_ == rpc::ServerState_State::ServerState_State_PROCESSING);
+    if (ImGui::Button("Acquire")) onStateChanged(rpc::ServerState_State::ServerState_State_ACQUIRING);
     ImGui::EndDisabled();
     ImGui::PopStyleColor(3);
     ImGui::SameLine();
@@ -118,9 +118,9 @@ void Scene3d::render() {
     ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.3f, 0.6f, 0.6f));
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.3f, 0.7f, 0.7f));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.3f, 0.8f, 0.8f));
-    ImGui::BeginDisabled(server_state_ == ServerState_State::ServerState_State_PROCESSING ||
-                         server_state_ == ServerState_State::ServerState_State_ACQUIRING);
-    if (ImGui::Button("Process")) onStateChanged(ServerState_State::ServerState_State_PROCESSING);
+    ImGui::BeginDisabled(server_state_ == rpc::ServerState_State::ServerState_State_PROCESSING ||
+                         server_state_ == rpc::ServerState_State::ServerState_State_ACQUIRING);
+    if (ImGui::Button("Process")) onStateChanged(rpc::ServerState_State::ServerState_State_PROCESSING);
     ImGui::EndDisabled();
     ImGui::PopStyleColor(3);
     ImGui::SameLine();
@@ -128,9 +128,9 @@ void Scene3d::render() {
     ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.0f, 0.6f, 0.6f));
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.0f, 0.7f, 0.7f));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.0f, 0.8f, 0.8f));
-    ImGui::BeginDisabled(server_state_ != ServerState_State::ServerState_State_PROCESSING &&
-                         server_state_ != ServerState_State::ServerState_State_ACQUIRING);
-    if (ImGui::Button("Stop")) onStateChanged(ServerState_State::ServerState_State_READY);
+    ImGui::BeginDisabled(server_state_ != rpc::ServerState_State::ServerState_State_PROCESSING &&
+                         server_state_ != rpc::ServerState_State::ServerState_State_ACQUIRING);
+    if (ImGui::Button("Stop")) onStateChanged(rpc::ServerState_State::ServerState_State_READY);
     ImGui::EndDisabled();
     ImGui::PopStyleColor(3);
 
@@ -138,18 +138,18 @@ void Scene3d::render() {
     ImGui::Separator();
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "SCAN MODE");
 
-    ImGui::BeginDisabled(server_state_ == ServerState_State::ServerState_State_PROCESSING);
+    ImGui::BeginDisabled(server_state_ == rpc::ServerState_State::ServerState_State_PROCESSING);
 
     static int scan_mode = static_cast<int>(scan_mode_);
-    ImGui::RadioButton("Continuous", &scan_mode, static_cast<int>(ScanMode_Mode_CONTINUOUS));
+    ImGui::RadioButton("Continuous", &scan_mode, static_cast<int>(rpc::ScanMode_Mode_CONTINUOUS));
     ImGui::SameLine();
-    ImGui::RadioButton("Discrete", &scan_mode, static_cast<int>(ScanMode_Mode_DISCRETE));
-    scan_mode_ = ScanMode_Mode(scan_mode);
+    ImGui::RadioButton("Discrete", &scan_mode, static_cast<int>(rpc::ScanMode_Mode_DISCRETE));
+    scan_mode_ = rpc::ScanMode_Mode(scan_mode);
 
     ImGui::Text("Update interval");
     ImGui::SameLine();
 
-    ImGui::BeginDisabled(scan_mode_ != ScanMode_Mode_CONTINUOUS);
+    ImGui::BeginDisabled(scan_mode_ != rpc::ScanMode_Mode_CONTINUOUS);
     if (ImGui::ArrowButton("##continuous_interval_left", ImGuiDir_Left)) {
         assert(scan_update_interval_ >= K_SCAN_UPDATE_INTERVAL_STEP_SIZE);
         scan_update_interval_ -= K_SCAN_UPDATE_INTERVAL_STEP_SIZE;

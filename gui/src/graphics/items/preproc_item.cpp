@@ -23,8 +23,8 @@ PreprocItem::~PreprocItem() = default;
 void PreprocItem::renderIm() {
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "PREPROCESSING");
 
-    ImGui::BeginDisabled(state_ == ServerState_State::ServerState_State_PROCESSING ||
-                         state_ == ServerState_State::ServerState_State_ACQUIRING);
+    ImGui::BeginDisabled(state_ == rpc::ServerState_State::ServerState_State_PROCESSING ||
+                         state_ == rpc::ServerState_State::ServerState_State_ACQUIRING);
 
     ImGui::AlignTextToFramePadding();
     ImGui::Text("Downsampling:");
@@ -66,7 +66,7 @@ void PreprocItem::renderIm() {
 
     ImGui::EndDisabled();
 
-    ImGui::BeginDisabled(state_ == ServerState_State::ServerState_State_PROCESSING);
+    ImGui::BeginDisabled(state_ == rpc::ServerState_State::ServerState_State_PROCESSING);
 
     ImGui::DragFloat("X offset", &x_offset_, 1, -50, 50, "%.1f");
     ImGui::DragFloat("Y offset", &y_offset_, 1, -50, 50, "%.1f");

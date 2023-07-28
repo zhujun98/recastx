@@ -43,11 +43,11 @@ class Scene3d : public Scene {
 
     std::unique_ptr<AxiscubeItem> axiscube_item_;
 
-    ServerState_State server_state_;
-    ScanMode_Mode  scan_mode_;
+    rpc::ServerState_State server_state_;
+    rpc::ScanMode_Mode  scan_mode_;
     uint32_t scan_update_interval_;
 
-    void onStateChanged(ServerState_State state);
+    void onStateChanged(rpc::ServerState_State state);
 
     bool updateServerParams();
 

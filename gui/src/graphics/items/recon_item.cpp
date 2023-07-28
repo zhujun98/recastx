@@ -255,8 +255,8 @@ void ReconItem::setVolumeData(const std::string& data, const std::array<uint32_t
 }
 
 bool ReconItem::consume(const DataType& packet) {
-    if (std::holds_alternative<ReconData>(packet)) {
-        const auto& data = std::get<ReconData>(packet);
+    if (std::holds_alternative<rpc::ReconData>(packet)) {
+        const auto& data = std::get<rpc::ReconData>(packet);
         if (data.has_slice()) {
             auto& slice = data.slice();
             setSliceData(slice.data(), {slice.row_count(), slice.col_count()}, slice.timestamp());

@@ -19,14 +19,14 @@ using namespace std::chrono_literals;
 ControlService::ControlService(RpcServer* server) : server_(server) {}
 
 grpc::Status ControlService::SetServerState(grpc::ServerContext* context,
-                                            const ServerState* state,
+                                            const rpc::ServerState* state,
                                             google::protobuf::Empty* ack) {
     state_ = state->state();
-    if (state_ == ServerState_State::ServerState_State_PROCESSING) {
+    if (state_ == rpc::ServerState_State::ServerState_State_PROCESSING) {
         spdlog::info("Start acquiring & processing data");
-    } else if (state_ == ServerState_State::ServerState_State_ACQUIRING) {
+    } else if (state_ == rpc::ServerState_State::ServerState_State_ACQUIRING) {
         spdlog::info("Start acquiring data");
-    } else if (state_ == ServerState_State::ServerState_State_READY) {
+    } else if (state_ == rpc::ServerState_State::ServerState_State_READY) {
         spdlog::info("Stop acquiring & processing data");
     }
     server_->updateState(state_);
@@ -34,12 +34,12 @@ grpc::Status ControlService::SetServerState(grpc::ServerContext* context,
 }
 
 grpc::Status ControlService::SetScanMode(grpc::ServerContext* context,
-                                         const ScanMode* mode,
+                                         const rpc::ScanMode* mode,
                                          google::protobuf::Empty* ack) {
     std::string mode_str;
-    if (mode->mode() == ScanMode_Mode_CONTINUOUS) {
+    if (mode->mode() == rpc::ScanMode_Mode_CONTINUOUS) {
         mode_str = "continuous";
-    } else if (mode->mode() == ScanMode_Mode_DISCRETE) {
+    } else if (mode->mode() == rpc::ScanMode_Mode_DISCRETE) {
         mode_str = "discrete";
     }
     spdlog::info("Set scan mode: {} / {}", mode_str, mode->update_interval());
@@ -48,14 +48,14 @@ grpc::Status ControlService::SetScanMode(grpc::ServerContext* context,
 }
 
 grpc::Status ImageprocService::SetDownsampling(grpc::ServerContext* context,
-                                               const DownsamplingParams* params,
+                                               const rpc::DownsamplingParams* params,
                                                google::protobuf::Empty* ack) {
     spdlog::info("Set projection downsampling: {} / {}", params->col(), params->row());
     return grpc::Status::OK;
 }
 
 grpc::Status ImageprocService::SetRampFilter(grpc::ServerContext* contest,
-                                             const RampFilterParams* params,
+                                             const rpc::RampFilterParams* params,
                                              google::protobuf::Empty* ack) {
     spdlog::info("Set projection filter: {}", params->name());
     return grpc::Status::OK;
@@ -64,8 +64,8 @@ grpc::Status ImageprocService::SetRampFilter(grpc::ServerContext* contest,
 grpc::Status ProjectionService::GetProjectionData(grpc::ServerContext* context,
                                                   const google::protobuf::Empty*,
                                                   grpc::ServerWriter<rpc::ProjectionData>* writer) {
-    if (state_ == ServerState_State::ServerState_State_PROCESSING
-            || state_ == ServerState_State::ServerState_State_ACQUIRING) {
+    if (state_ == rpc::ServerState_State::ServerState_State_PROCESSING
+            || state_ == rpc::ServerState_State::ServerState_State_ACQUIRING) {
         std::this_thread::sleep_for(std::chrono::milliseconds(K_RECON_INTERVAL));
 
         rpc::ProjectionData data;
@@ -87,7 +87,7 @@ void ProjectionService::setProjectionData(rpc::ProjectionData *data) {
 ReconstructionService::ReconstructionService() : timestamps_ {0, 1, 2} {}
 
 grpc::Status ReconstructionService::SetSlice(grpc::ServerContext* context,
-                                             const Slice* slice,
+                                             const rpc::Slice* slice,
                                              google::protobuf::Empty* ack) {
     uint64_t ts = slice->timestamp();
     size_t id = sliceIdFromTimestamp(ts);
@@ -98,15 +98,15 @@ grpc::Status ReconstructionService::SetSlice(grpc::ServerContext* context,
 
 grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
                                                  const google::protobuf::Empty*,
-                                                 grpc::ServerWriter<ReconData>* writer) {
-    if (state_ == ServerState_State::ServerState_State_PROCESSING) {
+                                                 grpc::ServerWriter<rpc::ReconData>* writer) {
+    if (state_ == rpc::ServerState_State::ServerState_State_PROCESSING) {
         std::this_thread::sleep_for(std::chrono::milliseconds(K_RECON_INTERVAL));
 
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_int_distribution<int> dist(0, 4);
 
-        ReconData data;
+        rpc::ReconData data;
         spdlog::info("Set volume data");
         setVolumeData(&data);
         writer->Write(data);
@@ -127,7 +127,7 @@ grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
     return grpc::Status::OK;
 }
 
-void ReconstructionService::setSliceData(ReconData* data, size_t id) {
+void ReconstructionService::setSliceData(rpc::ReconData* data, size_t id) {
     auto slice = data->mutable_slice();
 
     auto vec = generateRandomProcData(1024 * 512, 0.f, 1.f + id);
@@ -137,7 +137,7 @@ void ReconstructionService::setSliceData(ReconData* data, size_t id) {
     slice->set_timestamp(timestamps_.at(id));
 }
 
-void ReconstructionService::setVolumeData(ReconData* data) {
+void ReconstructionService::setVolumeData(rpc::ReconData* data) {
     auto vol = data->mutable_volume();
 
     auto vec = generateRandomProcData(128 * 128 * 128, 0.f, 1.f + MAX_NUM_SLICES - 1);
@@ -166,7 +166,7 @@ void RpcServer::start() {
     server_->Wait();
 }
 
-void RpcServer::updateState(ServerState_State state) {
+void RpcServer::updateState(rpc::ServerState_State state) {
     imageproc_service_.updateState(state);
     projection_service_.updateState(state);
     reconstruction_service_.updateState(state);

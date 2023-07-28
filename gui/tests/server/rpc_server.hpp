@@ -51,9 +51,9 @@ inline std::vector<RawDtype> generateRandomRawData(size_t s, RawDtype min_v, Raw
 
 class RpcServer;
 
-class ControlService final : public Control::Service {
+class ControlService final : public rpc::Control::Service {
 
-    ServerState_State state_;
+    rpc::ServerState_State state_;
 
     RpcServer* server_;
 
@@ -62,36 +62,36 @@ class ControlService final : public Control::Service {
     explicit ControlService(RpcServer* server);
 
     grpc::Status SetServerState(grpc::ServerContext* context,
-                                const ServerState* state,
+                                const rpc::ServerState* state,
                                 google::protobuf::Empty* ack) override;
 
     grpc::Status SetScanMode(grpc::ServerContext* context,
-                             const ScanMode* mode,
+                             const rpc::ScanMode* mode,
                              google::protobuf::Empty* ack) override;
 
-    void updateState(ServerState_State state) { state_ = state; }
+    void updateState(rpc::ServerState_State state) { state_ = state; }
 };
 
-class ImageprocService final : public Imageproc::Service {
+class ImageprocService final : public rpc::Imageproc::Service {
 
-    ServerState_State state_;
+    rpc::ServerState_State state_;
 
   public:
 
     grpc::Status SetDownsampling(grpc::ServerContext* context,
-                                 const DownsamplingParams* params,
+                                 const rpc::DownsamplingParams* params,
                                  google::protobuf::Empty* ack) override;
 
     grpc::Status SetRampFilter(grpc::ServerContext* contest,
-                               const RampFilterParams* params,
+                               const rpc::RampFilterParams* params,
                                google::protobuf::Empty* ack) override;
 
-    void updateState(ServerState_State state) { state_ = state; }
+    void updateState(rpc::ServerState_State state) { state_ = state; }
 };
 
 class ProjectionService final : public rpc::Projection::Service {
 
-    ServerState_State state_;
+    rpc::ServerState_State state_;
 
     void setProjectionData(rpc::ProjectionData* data);
 
@@ -101,35 +101,35 @@ class ProjectionService final : public rpc::Projection::Service {
                                    const google::protobuf::Empty*,
                                    grpc::ServerWriter<rpc::ProjectionData>* writer) override;
 
-    void updateState(ServerState_State state) { state_ = state; }
+    void updateState(rpc::ServerState_State state) { state_ = state; }
 };
 
-class ReconstructionService final : public Reconstruction::Service {
+  class ReconstructionService final : public rpc::Reconstruction::Service {
 
-    ServerState_State state_;
+    rpc::ServerState_State state_;
 
     std::thread thread_;
 
     uint64_t timestamp_ {0};
     std::array<uint64_t, MAX_NUM_SLICES> timestamps_;
 
-    void setSliceData(ReconData* data, size_t id);
+    void setSliceData(rpc::ReconData* data, size_t id);
 
-    void setVolumeData(ReconData* data);
+    void setVolumeData(rpc::ReconData* data);
 
   public:
 
     ReconstructionService();
 
     grpc::Status SetSlice(grpc::ServerContext* context,
-                          const Slice* slice,
+                          const rpc::Slice* slice,
                           google::protobuf::Empty* ack) override;
 
     grpc::Status GetReconData(grpc::ServerContext* context,
                               const google::protobuf::Empty*,
-                              grpc::ServerWriter<ReconData>* writer) override;
+                              grpc::ServerWriter<rpc::ReconData>* writer) override;
 
-    void updateState(ServerState_State state) { state_ = state; }
+    void updateState(rpc::ServerState_State state) { state_ = state; }
 };
 
 class RpcServer {
@@ -148,7 +148,7 @@ class RpcServer {
 
     void start();
 
-    void updateState(ServerState_State state);
+    void updateState(rpc::ServerState_State state);
 };
 
 

@@ -37,7 +37,7 @@ class RpcClient {
 
   public:
 
-    using DataType = std::variant<ReconData, rpc::ProjectionData>;
+    using DataType = std::variant<rpc::ReconData, rpc::ProjectionData>;
 
     static constexpr int min_timeout = 1;
     static constexpr int max_timeout = 100;
@@ -46,10 +46,10 @@ class RpcClient {
 
     std::shared_ptr<grpc::Channel> channel_;
 
-    std::unique_ptr<Control::Stub> control_stub_;
-    std::unique_ptr<Imageproc::Stub> imageproc_stub_;
+    std::unique_ptr<rpc::Control::Stub> control_stub_;
+    std::unique_ptr<rpc::Imageproc::Stub> imageproc_stub_;
     std::unique_ptr<rpc::Projection::Stub> projection_stub_;
-    std::unique_ptr<Reconstruction::Stub> reconstruction_stub_;
+    std::unique_ptr<rpc::Reconstruction::Stub> reconstruction_stub_;
 
     std::thread thread_projection_;
     std::thread thread_recon_;
@@ -80,9 +80,9 @@ class RpcClient {
 
     ~RpcClient();
 
-    bool setServerState(ServerState_State state);
+    bool setServerState(rpc::ServerState_State state);
 
-    bool setScanMode(ScanMode_Mode mode, uint32_t update_interval);
+    bool setScanMode(rpc::ScanMode_Mode mode, uint32_t update_interval);
 
     bool setDownsampling(uint32_t col, uint32_t row);
 
