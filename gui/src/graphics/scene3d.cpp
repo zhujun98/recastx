@@ -16,6 +16,7 @@
 #include "graphics/items/axiscube_item.hpp"
 #include "graphics/items/axes_item.hpp"
 #include "graphics/items/icon_item.hpp"
+#include "graphics/items/preproc_item.hpp"
 #include "graphics/items/projection_item.hpp"
 #include "graphics/items/statusbar_item.hpp"
 #include "graphics/items/logging_item.hpp"
@@ -31,6 +32,7 @@ Scene3d::Scene3d(RpcClient* client)
           viewport_axiscube_(new Viewport(false)),
           axes_item_(new AxesItem(*this)),
           icon_item_(new IconItem(*this)),
+          preproc_item_(new PreprocItem(*this)),
           projection_item_(new ProjectionItem(*this)),
           recon_item_(new ReconItem(*this)),
           statusbar_item_(new StatusbarItem(*this)),
@@ -43,7 +45,7 @@ Scene3d::Scene3d(RpcClient* client)
 
     scene_status_["tomoUpdateFrameRate"] = 0.;
 
-    client_->startReconDataStream();
+    client_->start();
 }
 
 Scene3d::~Scene3d() = default;
@@ -73,7 +75,6 @@ void Scene3d::onStateChanged(ServerState_State state) {
             if (item->updateServerParams()) return;
         }
     }
-
     if (client_->setServerState(state)) return;
 
     server_state_ = state;
@@ -137,16 +138,17 @@ void Scene3d::render() {
     ImGui::Separator();
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "SCAN MODE");
 
-    ImGui::BeginDisabled(server_state_ != ServerState_State::ServerState_State_READY);
+    ImGui::BeginDisabled(server_state_ == ServerState_State::ServerState_State_PROCESSING);
+
     static int scan_mode = static_cast<int>(scan_mode_);
     ImGui::RadioButton("Continuous", &scan_mode, static_cast<int>(ScanMode_Mode_CONTINUOUS));
     ImGui::SameLine();
     ImGui::RadioButton("Discrete", &scan_mode, static_cast<int>(ScanMode_Mode_DISCRETE));
     scan_mode_ = ScanMode_Mode(scan_mode);
-    ImGui::EndDisabled();
 
     ImGui::Text("Update interval");
     ImGui::SameLine();
+
     ImGui::BeginDisabled(scan_mode_ != ScanMode_Mode_CONTINUOUS);
     if (ImGui::ArrowButton("##continuous_interval_left", ImGuiDir_Left)) {
         assert(scan_update_interval_ >= K_SCAN_UPDATE_INTERVAL_STEP_SIZE);
@@ -167,6 +169,11 @@ void Scene3d::render() {
     ImGui::Text("%d", scan_update_interval_);
     ImGui::EndDisabled();
 
+    ImGui::EndDisabled();
+
+    ImGui::Separator();
+    projection_item_->renderIm();
+
     ImGui::Separator();
 
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "CAMERA");
@@ -186,12 +193,15 @@ void Scene3d::render() {
     if (ImGui::Button("Perspective")) {
         camera_->setPerspectiveView();
     }
-
     axes_item_->renderIm();
-    projection_item_->renderIm();
+
+    ImGui::Separator();
+    preproc_item_->renderIm();
+    ImGui::Separator();
     recon_item_->renderIm();
     ImGui::Separator();
     statusbar_item_->renderIm();
+    ImGui::Separator();
     logging_item_->renderIm();
 
     ImGui::End();

@@ -29,6 +29,9 @@ template <>
 inline GLint InternalFormat<float>() { return GL_R32F; }
 
 template <>
+inline GLint InternalFormat<unsigned short>() { return GL_R16UI; }
+
+template <>
 inline GLint InternalFormat<unsigned char>() { return GL_RGB32F; }
 
 template<typename T>
@@ -38,6 +41,9 @@ template <>
 inline GLenum DataFormat<float>() { return GL_RED; }
 
 template <>
+inline GLenum DataFormat<unsigned short>() { return GL_RED_INTEGER; }
+
+template <>
 inline GLenum DataFormat<unsigned char>() { return GL_RGB; }
 
 template<typename T>
@@ -45,6 +51,9 @@ inline GLenum DataType();
 
 template <>
 inline GLenum DataType<float>() { return GL_FLOAT; }
+
+template <>
+inline GLenum DataType<unsigned short>() { return GL_UNSIGNED_SHORT; }
 
 template <>
 inline GLenum DataType<unsigned char>() { return GL_UNSIGNED_BYTE; }
@@ -64,6 +73,8 @@ public:
 
     virtual void bind() const = 0;
     virtual void unbind() const = 0;
+
+    GLuint texture() const { return texture_id_; }
 };
 
 template <typename T = unsigned char>
@@ -272,6 +283,69 @@ public:
     void unbind() const override {
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_3D, 0);
+    }
+};
+
+template <typename T = unsigned char>
+class ImageTexture : public Texture {
+
+    int x_;
+    int y_;
+
+    void genTexture(const std::vector<T>& data) {
+        glBindTexture(GL_TEXTURE_2D, texture_id_);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, detail::InternalFormat<T>(), x_, y_, 0,
+                     detail::DataFormat<T>(), detail::DataType<T>(), data.data());
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
+  public:
+
+    ImageTexture() : Texture(), x_(1), y_(1) {
+        glGenTextures(1, &texture_id_);
+
+        std::vector<T> data(x_ * y_, 0);
+        genTexture(data);
+    };
+
+    ~ImageTexture() override {
+        glDeleteTextures(1, &texture_id_);
+    }
+
+    ImageTexture(ImageTexture&& other) noexcept {
+        x_ = other.x_;
+        y_ = other.y_;
+        texture_id_ = other.texture_id_;
+        other.texture_id_ = -1;
+    }
+
+    ImageTexture& operator=(ImageTexture&& other) noexcept {
+        x_ = other.x_;
+        y_ = other.y_;
+        texture_id_ = other.texture_id_;
+        other.texture_id_ = -1;
+    }
+
+    void setData(const std::vector<T>& data, int x, int y) {
+        x_ = x;
+        y_ = y;
+        assert((int)data.size() == x * y);
+        genTexture(data);
+    }
+
+    void bind() const override {
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, texture_id_);
+    }
+
+    void unbind() const override {
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, 0);
     }
 };
 

@@ -106,7 +106,6 @@ void ReconItem::onWindowSizeChanged(int width, int height) {
 }
 
 void ReconItem::renderIm() {
-    ImGui::Separator();
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "RECONSTRUCTION");
 
     auto& cmd = Colormap::data();
@@ -191,7 +190,6 @@ void ReconItem::renderGl(const glm::mat4& view,
         return rhs->transparent();
     });
 
-    // FIXME: why do we need to bind and unbind 3D texture?
     volume_->bind();
     for (auto slice : slices) drawSlice(slice, view, projection);
     volume_->unbind();

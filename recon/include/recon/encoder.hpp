@@ -11,31 +11,39 @@
 
 #include "buffer.hpp"
 #include "slice_mediator.hpp"
+#include "projection.pb.h"
 #include "reconstruction.pb.h"
 
 namespace recastx::recon {
 
-template<typename T>
-inline ReconData createSliceDataPacket(const T& data, uint32_t x, uint32_t y, uint64_t timestamp) {
+template<typename Container>
+inline ReconData createSliceDataPacket(const Container& data, uint32_t x, uint32_t y, uint64_t timestamp) {
     ReconData packet;
     auto slice = packet.mutable_slice();
-    // TODO: change 'float' to 'ValueType'
-    slice->set_data(data.data(), data.size() * sizeof(float));
+    slice->set_data(data.data(), data.size() * sizeof(typename Container::value_type));
     slice->set_col_count(x);
     slice->set_row_count(y);
     slice->set_timestamp(timestamp);
     return packet;
 }
 
-template<typename T>
-inline ReconData createVolumeDataPacket(const T& data, uint32_t x, uint32_t y, uint32_t z) {
+template<typename Container>
+inline ReconData createVolumeDataPacket(const Container& data, uint32_t x, uint32_t y, uint32_t z) {
     ReconData packet;
     auto volume = packet.mutable_volume();
-    // TODO: change 'float' to 'ValueType'
-    volume->set_data(data.data(), data.size() * sizeof(float));
+    volume->set_data(data.data(), data.size() * sizeof(typename Container::value_type));
     volume->set_col_count(x);
     volume->set_row_count(y);
     volume->set_slice_count(z);
+    return packet;
+}
+
+template<typename Container>
+inline rpc::ProjectionData createProjectionDataPacket(const Container& data, uint32_t x, uint32_t y) {
+    rpc::ProjectionData packet;
+     packet.set_data(data.data(), data.size() * sizeof(typename Container::value_type));
+    packet.set_col_count(x);
+    packet.set_row_count(y);
     return packet;
 }
 

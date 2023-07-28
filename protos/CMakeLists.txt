@@ -7,9 +7,10 @@
 # The full license is in the file LICENSE, distributed with this software.
 # -----------------------------------------------------------------------------
 add_library(recastx_grpc_proto OBJECT
-        imageproc.proto
-        reconstruction.proto
         control.proto
+        imageproc.proto
+        projection.proto
+        reconstruction.proto
 )
 target_link_libraries(recastx_grpc_proto
     PUBLIC

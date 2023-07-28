@@ -9,34 +9,21 @@
 #ifndef GUI_PROJECTIONITEM_HPP
 #define GUI_PROJECTIONITEM_HPP
 
-#include <map>
-#include <string>
-
 #include "graphics/items/graphics_item.hpp"
+#include "graphics/projection.hpp"
 
 namespace recastx::gui {
 
-class ProjectionItem : public GraphicsItem {
+class ProjectionItem : public GraphicsItem, public GraphicsDataItem {
 
-  public:
+    ImVec2 pos_;
+    ImVec2 size_;
 
-    inline static const std::map<std::string, std::string> filter_options {
-            {"shepp", "Shepp-Logan"},
-            {"ramlak", "Ram-Lak"}};
+    Projection img_;
 
-  private:
+    bool visible_ = true;
 
-    int downsampling_col_ = 1;
-    int downsampling_row_ = 1;
-
-    float x_offset_ = 0.f;
-    float y_offset_ = 0.f;
-
-    std::string ramp_filter_name_;
-
-    bool setDownsampling();
-
-    bool setRampFilter();
+    void setProjectionData(const std::string& data, const std::array<uint32_t, 2>& size);
 
   public:
 
@@ -44,9 +31,13 @@ class ProjectionItem : public GraphicsItem {
 
     ~ProjectionItem() override;
 
+    void onWindowSizeChanged(int width, int height) override;
+
     void renderIm() override;
 
     bool updateServerParams() override;
+
+    bool consume(const DataType& packet) override;
 };
 
 } // namespace recastx::gui

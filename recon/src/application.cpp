@@ -15,6 +15,7 @@
 
 #include "recon/application.hpp"
 #include "recon/encoder.hpp"
+#include "recon/monitor.hpp"
 #include "recon/phase.hpp"
 #include "recon/preprocessing.hpp"
 #include "recon/rpc_server.hpp"
@@ -34,13 +35,14 @@ Application::Application(size_t raw_buffer_size,
                          const RpcServerConfig& rpc_config)
      : raw_buffer_(raw_buffer_size),
        slice_mediator_(new SliceMediator()),
+       ramp_filter_factory_(ramp_filter_factory),
        imgproc_params_(imageproc_params),
+       recon_factory_(recon_factory),
        server_state_(ServerState_State_INIT),
        scan_mode_(ScanMode_Mode_DISCRETE),
        scan_update_interval_(K_MIN_SCAN_UPDATE_INTERVAL),
+       monitor_(new Monitor()),
        daq_client_(daq_client),
-       ramp_filter_factory_(ramp_filter_factory),
-       recon_factory_(recon_factory),
        rpc_server_(new RpcServer(rpc_config.port, this)) {}
 
 Application::~Application() { 
@@ -98,7 +100,7 @@ void Application::setReconGeometry(std::optional<size_t> slice_size, std::option
 
 void Application::pushDark(const Projection& proj) {
     maybeResetDarkAndFlatAcquisition();
-    size_t n = darks_.push(static_cast<const char*>(proj.data.data()));
+    size_t n = darks_.push(reinterpret_cast<const char*>(proj.data.data()));
     if (n % 10 == 0) {
         spdlog::info("# of darks received: {}", n);
     }
@@ -106,7 +108,7 @@ void Application::pushDark(const Projection& proj) {
 
 void Application::pushFlat(const Projection& proj) {
     maybeResetDarkAndFlatAcquisition();
-    size_t n = flats_.push(static_cast<const char*>(proj.data.data()));
+    size_t n = flats_.push(reinterpret_cast<const char*>(proj.data.data()));
     if (n % 10 == 0) {
         spdlog::info("# of flats received: {}", n);
     }
@@ -142,12 +144,12 @@ void Application::pushProjection(const Projection& proj) {
         }
     
         reciprocal_computed_ = true;
-        monitor_.resetTimer();
+        monitor_->resetTimer();
     }
 
     // TODO: compute the average on the fly instead of storing the data in the buffer
     raw_buffer_.fill<RawDtype>(
-        static_cast<const char*>(proj.data.data()), proj.index, {proj.row_count, proj.col_count});
+        proj.index, reinterpret_cast<const char*>(proj.data.data()), {proj.row_count, proj.col_count});
 }
 
 void Application::startAcquiring() {
@@ -161,25 +163,31 @@ void Application::startAcquiring() {
                 continue;
             }
 
-            auto& data = item.value();
-            static size_t counter = 0;
-            switch(data.type) {
+            Projection proj(item.value());
+            switch(proj.type) {
                 case ProjectionType::PROJECTION: {
-                    pushProjection(data);
-                    monitor_.addProjection();
-                    if (counter++ % 10 == 0) {
+                    if (server_state_ == ServerState_State::ServerState_State_PROCESSING) {
+                        pushProjection(proj);
+                    }
+                    monitor_->countProjection(std::move(proj));
+                    // TODO: could be removed
+                    if (monitor_->numProjections() % 10 == 0) {
                         std::this_thread::sleep_for(std::chrono::microseconds(1));
                     }
                     break;
                 }
                 case ProjectionType::DARK: {
-                    pushDark(data);
-                    monitor_.addDark();
+                    if (server_state_ == ServerState_State::ServerState_State_PROCESSING) {
+                        pushDark(proj);
+                    }
+                    monitor_->countDark();
                     break;
                 }
                 case ProjectionType::FLAT: {
-                    pushFlat(data);
-                    monitor_.addFlat();
+                    if (server_state_ == ServerState_State::ServerState_State_PROCESSING) {
+                        pushFlat(proj);
+                    }
+                    monitor_->countFlat();
                     break;
                 }
                 default:
@@ -261,7 +269,7 @@ void Application::startReconstructing() {
             }
             
             spdlog::debug("Preview and slices reconstructed!");
-            monitor_.addTomogram();
+            monitor_->addTomogram();
 
             preview_buffer_.prepare();
         }
@@ -329,10 +337,23 @@ void Application::onStateChanged(ServerState_State state) {
     } else if (state == ServerState_State::ServerState_State_ACQUIRING) {
         onStartAcquiring();
     } else if (state == ServerState_State::ServerState_State_READY) {
-        onStopProcessing();
+        if (server_state_ == ServerState_State::ServerState_State_ACQUIRING) {
+            onStopAcquiring();
+        } else if (server_state_ == ServerState_State::ServerState_State_PROCESSING){
+            onStopProcessing();
+        }
     }
     
     server_state_ = state;
+}
+
+std::optional<rpc::ProjectionData> Application::projectionData() {
+    auto proj = monitor_->popProjection();
+    if (proj.has_value()) {
+        auto& v = proj.value();
+        return createProjectionDataPacket(v.data, v.col_count, v.row_count);
+    }
+    return std::nullopt;
 }
 
 std::optional<ReconData> Application::previewData(int timeout) { 
@@ -436,21 +457,25 @@ void Application::onStartProcessing() {
         spdlog::info("- Scan mode: discrete");
     }
 
-    monitor_ = Monitor(proj_geom_.row_count * proj_geom_.col_count * proj_geom_.angles.size() 
-                       * sizeof(RawDtype));
+    size_t s = proj_geom_.row_count * proj_geom_.col_count * proj_geom_.angles.size() * sizeof(RawDtype);
+    monitor_.reset(new Monitor(s));
 }
 
 void Application::onStopProcessing() {
     daq_client_->stopAcquiring();
     spdlog::info("Stop acquiring and processing data");
 
-    monitor_.summarize();
+    monitor_->summarize();
 }
 
 void Application::onStartAcquiring() {
-    init();
     daq_client_->startAcquiring();
     spdlog::info("Start acquiring data");
+}
+
+void Application::onStopAcquiring() {
+    daq_client_->stopAcquiring();
+    spdlog::info("Stop acquiring data");
 }
 
 void Application::initPaganin(size_t col_count, size_t row_count) {

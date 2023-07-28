@@ -10,92 +10,65 @@
 
 #include "graphics/items/projection_item.hpp"
 #include "graphics/scene.hpp"
+#include "graphics/style.hpp"
+#include "logger.hpp"
 
 namespace recastx::gui {
 
 ProjectionItem::ProjectionItem(Scene& scene)
-        : GraphicsItem(scene), ramp_filter_name_("shepp") {
+        : GraphicsItem(scene), img_(0) {
     scene.addItem(this);
 }
 
 ProjectionItem::~ProjectionItem() = default;
 
+void ProjectionItem::onWindowSizeChanged(int width, int height) {
+    size_ = {
+            Style::PROJECTION_WIDTH * (float)width,
+            Style::PROJECTION_HEIGHT * (float)height
+    };
+
+    pos_ = {
+            (1.0f - Style::MARGIN - Style::PROJECTION_WIDTH) * (float)width,
+            (1.0f - Style::PROJECTION_HEIGHT - Style::STATUS_BAR_HEIGHT - 2.f * Style::MARGIN) * (float)(height)
+    };
+}
+
 void ProjectionItem::renderIm() {
-    ImGui::Separator();
-    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "PREPROCESSING");
+    ImGui::Checkbox("Show projection", &visible_);
 
-    // Projection downsampling
-    ImGui::BeginDisabled(state_ == ServerState_State::ServerState_State_PROCESSING);
+    if (visible_) {
+        ImGui::SetNextWindowPos(pos_);
+        ImGui::SetNextWindowSize(size_);
+        ImGui::Begin("Raw projection", NULL, ImGuiWindowFlags_NoDecoration);
 
-    ImGui::AlignTextToFramePadding();
-    ImGui::Text("Downsampling:");
-    ImGui::SameLine();
+        ImGui::Image((void*)(intptr_t)img_.texture(), ImVec2(size_.x, size_.y));
 
-    float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
-    ImGui::Text("Col");
-    ImGui::SameLine();
-    if (ImGui::ArrowButton("##col_left", ImGuiDir_Left)) {
-        if (downsampling_col_ > 1) {
-            downsampling_col_--;
-        }
-    }
-    ImGui::SameLine(0.0f, spacing);
-    if (ImGui::ArrowButton("##col_right", ImGuiDir_Right)) {
-        if (downsampling_col_ < 10) {
-            downsampling_col_++;
-        }
-    }
-    ImGui::SameLine();
-    ImGui::Text("%d", downsampling_col_);
-    ImGui::SameLine();
-
-    ImGui::Text("Row");
-    ImGui::SameLine();
-    if (ImGui::ArrowButton("##row_left", ImGuiDir_Left)) {
-        if (downsampling_row_ > 1) {
-            downsampling_row_--;
-        }
-    }
-    ImGui::SameLine(0.0f, spacing);
-    if (ImGui::ArrowButton("##row_right", ImGuiDir_Right)) {
-        if (downsampling_row_ < 10) {
-            downsampling_row_++;
-        }
-    }
-    ImGui::SameLine();
-    ImGui::Text("%d", downsampling_row_);
-
-    ImGui::EndDisabled();
-
-    // Projection center adjustment
-    ImGui::BeginDisabled(state_ == ServerState_State::ServerState_State_PROCESSING);
-    ImGui::DragFloat("X offset", &x_offset_, 1, -50, 50, "%.1f");
-    ImGui::DragFloat("Y offset", &y_offset_, 1, -50, 50, "%.1f");
-    ImGui::EndDisabled();
-
-    ImGui::Text("Ramp filter: ");
-    ImGui::SameLine();
-    if (ImGui::BeginCombo("##RampFilter", filter_options.at(ramp_filter_name_).c_str())) {
-        for (const auto& [k, v] : filter_options) {
-            const bool is_selected = (ramp_filter_name_ == k);
-            if (ImGui::Selectable(v.c_str(), is_selected)) {
-                ramp_filter_name_ = k;
-            }
-        }
-        ImGui::EndCombo();
+        ImGui::End();
     }
 }
 
 bool ProjectionItem::updateServerParams() {
-    return setDownsampling() || setRampFilter();
+    return false;
 }
 
-bool ProjectionItem::setDownsampling() {
-    return scene_.client()->setDownsampling(downsampling_col_, downsampling_row_);
+bool ProjectionItem::consume(const DataType& packet) {
+    if (std::holds_alternative<rpc::ProjectionData>(packet)) {
+        const auto& data = std::get<rpc::ProjectionData>(packet);
+
+        setProjectionData(data.data(), {data.col_count(), data.row_count()});
+        log::info("Set projection data");
+        return true;
+    }
+
+    return false;
 }
 
-bool ProjectionItem::setRampFilter() {
-    return scene_.client()->setRampFilter(ramp_filter_name_);
+void ProjectionItem::setProjectionData(const std::string &data, const std::array<uint32_t, 2> &size) {
+    Projection::DataType proj(size[0] * size[1]);
+    std::memcpy(proj.data(), data.data(), data.size());
+    assert(data.size() == proj.size() * sizeof(Projection::DataType::value_type));
+    img_.setData(std::move(proj), {size[0], size[1]});
 }
 
 } // namespace recastx::gui

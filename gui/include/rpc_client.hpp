@@ -26,6 +26,7 @@
 #include <grpcpp/security/credentials.h>
 #include "control.grpc.pb.h"
 #include "imageproc.grpc.pb.h"
+#include "projection.grpc.pb.h"
 #include "reconstruction.grpc.pb.h"
 
 namespace recastx::gui {
@@ -36,20 +37,40 @@ class RpcClient {
 
   public:
 
-    using DataType = std::variant<ReconData>;
+    using DataType = std::variant<ReconData, rpc::ProjectionData>;
+
+    static constexpr int min_timeout = 1;
+    static constexpr int max_timeout = 100;
+
+  private:
 
     std::shared_ptr<grpc::Channel> channel_;
 
     std::unique_ptr<Control::Stub> control_stub_;
     std::unique_ptr<Imageproc::Stub> imageproc_stub_;
+    std::unique_ptr<rpc::Projection::Stub> projection_stub_;
     std::unique_ptr<Reconstruction::Stub> reconstruction_stub_;
 
-    std::thread thread_;
+    std::thread thread_projection_;
+    std::thread thread_recon_;
     bool streaming_ = false;
 
     inline static std::queue<DataType> packets_;
 
-    bool checkStatus(const grpc::Status& status, bool warn_on_fail = true) const;
+    inline void updateTimeout(int& timeout, const grpc::Status& status) {
+        if (checkStatus(status, false)) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(timeout));
+            timeout = std::min(2 * timeout, max_timeout);
+        } else {
+            timeout = min_timeout;
+        }
+    }
+
+    void startReadingProjectionStream();
+
+    void startReadingReconStream();
+
+    [[nodiscard]] bool checkStatus(const grpc::Status& status, bool warn_on_fail = true) const;
 
   public:
 
@@ -69,9 +90,7 @@ class RpcClient {
 
     bool setSlice(uint64_t timestamp, const Orientation& orientation);
 
-    void startReconDataStream();
-
-    void stopReconDataStream();
+    void start();
 };
 
 }  // namespace recastx::gui

@@ -33,6 +33,7 @@ grpc::Status ControlService::SetScanMode(grpc::ServerContext* context,
     return grpc::Status::OK;
 }
 
+
 ImageprocService::ImageprocService(Application* app) : app_(app) {}
 
 grpc::Status ImageprocService::SetDownsampling(grpc::ServerContext* context, 
@@ -50,6 +51,22 @@ grpc::Status ImageprocService::SetRampFilter(grpc::ServerContext* contest,
     app_->setRampFilter(std::move(params->name()));
     return grpc::Status::OK;
 }
+
+
+ProjectionService::ProjectionService(Application* app) : app_(app) {}
+
+grpc::Status ProjectionService::GetProjectionData(grpc::ServerContext* context,
+                                                  const google::protobuf::Empty*,
+                                                  grpc::ServerWriter<rpc::ProjectionData>* writer) {
+    auto proj = app_->projectionData();
+    if (proj) {
+        writer->Write(proj.value());
+        spdlog::debug("Projection data sent");
+    }
+
+    return grpc::Status::OK;
+}
+
 
 ReconstructionService::ReconstructionService(Application* app) : app_(app) {}
 
@@ -73,6 +90,7 @@ grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
         auto slice_data = app_->sliceData(-1);
 
         writer->Write(preview_data.value());
+        spdlog::debug("Preview data sent");
         
         for (const auto& item : slice_data) {
             writer->Write(item);
@@ -97,9 +115,10 @@ grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
 
 RpcServer::RpcServer(int port, Application* app)
         : address_("0.0.0.0:" + std::to_string(port)), 
-          control_service_(app),
-          imageproc_service_(app),
-          reconstruction_service_(app)  {
+    control_service_(app),
+    imageproc_service_(app),
+    projection_service_(app),
+    reconstruction_service_(app)  {
 }
 
 void RpcServer::start() {
@@ -110,6 +129,7 @@ void RpcServer::start() {
         builder.AddListeningPort(address_, grpc::InsecureServerCredentials());
         builder.RegisterService(&control_service_);
         builder.RegisterService(&imageproc_service_);
+        builder.RegisterService(&projection_service_);
         builder.RegisterService(&reconstruction_service_);
 
         server_ = builder.BuildAndStart();

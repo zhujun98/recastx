@@ -207,8 +207,9 @@ inline void copyBuffer(T* dst, const char* src, const std::array<size_t, 2>& sha
 }
 
 template<typename T, typename D>
-inline void copyBuffer(T* dst, const char* src,
+inline void copyBuffer(T* dst, 
                        const std::array<size_t, 2>& dst_shape,
+                       const char* src,
                        const std::array<size_t, 2>& src_shape) {
     if (src_shape == dst_shape) copyBuffer<T, D>(dst, src, dst_shape);
 
@@ -259,6 +260,16 @@ private:
 
     void pop();
 
+    template<typename D>
+    void fillImp(size_t buffer_idx, 
+                 size_t data_idx,
+                 const char* src,
+                 const std::array<size_t, N-1>& src_shape);
+
+    void registerChunk(size_t idx);
+
+    void update(size_t buffer_idx, size_t chunk_idx);
+
   public:
 
     explicit MemoryBuffer(size_t capacity);
@@ -269,15 +280,15 @@ private:
     void reset();
 
     template<typename D>
-    void fill(const char* raw, size_t index);
+    void fill(size_t index, const char* src);
 
     template<typename D>
-    void fill(const char* raw, size_t index, const std::array<size_t, N-1>& src_shape);
+    void fill(size_t index, const char* src, const std::array<size_t, N-1>& shape);
 
     bool fetch(int timeout = -1);
 
     BufferType& front() { return front_; }
-    BufferType& back() {
+    BufferType& ready() {
         return buffer_[map_.at(chunk_indices_.front())];
     }
 
@@ -285,9 +296,6 @@ private:
         return front_;
     }
     const BufferType& ready() const {
-        return buffer_[map_.at(chunk_indices_.front())];
-    }
-    const BufferType& back() const {
         return buffer_[map_.at(chunk_indices_.front())];
     }
 
@@ -358,39 +366,31 @@ void MemoryBuffer<T, N>::reset() {
 
 template<typename T, size_t N>
 template<typename D>
-void MemoryBuffer<T, N>::fill(const char* raw, size_t index) {
+void MemoryBuffer<T, N>::fill(size_t index, const char* src) {
     auto& shape = front_.shape();
-    fill<D>(raw, index, {shape[1], shape[2]});
+    fill<D>(index, src, {shape[1], shape[2]});
 }
 
 template<typename T, size_t N>
 template<typename D>
-void MemoryBuffer<T, N>::fill(
-        const char* raw, size_t index, const std::array<size_t, N-1>& src_shape) {
-
-    size_t chunk_size = shape()[0];
+void MemoryBuffer<T, N>::fill(size_t index, const char* src, const std::array<size_t, N-1>& shape) {
+    size_t chunk_size = front_.shape()[0];
     size_t chunk_idx = index / chunk_size;
     size_t data_idx = index % chunk_size;
     std::lock_guard lk(mtx_);
 
     if (chunk_indices_.empty()) {
-        chunk_indices_.push(chunk_idx);
-        size_t buffer_idx = unoccupied_.front();
-        map_[chunk_idx] = buffer_idx;
-        unoccupied_.pop();
+        registerChunk(chunk_idx);
     } else if (chunk_idx > chunk_indices_.back()) {
         for (size_t i = chunk_indices_.back() + 1; i <= chunk_idx; ++i) {
             if (unoccupied_.empty()) {
                 int idx = chunk_indices_.front();
                 this->pop();
 #if (VERBOSITY >= 1)
-                spdlog::warn("Memory buffer is full! Group {} dropped!", idx);
+                spdlog::warn("Memory buffer is full! Chunk {} dropped!", idx);
 #endif
             }
-            chunk_indices_.push(i);
-            size_t buffer_idx = unoccupied_.front();
-            map_[i] = buffer_idx;
-            unoccupied_.pop();
+            registerChunk(i);
         }
     } else if (chunk_idx < chunk_indices_.front()) {
 
@@ -403,35 +403,13 @@ void MemoryBuffer<T, N>::fill(
     }
 
     size_t buffer_idx = map_[chunk_idx];
-
-    float* data = buffer_[buffer_idx].data();
-    std::array<size_t, N-1> dst_shape;
-    auto& buffer_shape = front_.shape();
-    std::copy(buffer_shape.begin() + 1, buffer_shape.end(), dst_shape.begin());
-    size_t data_size = std::accumulate(dst_shape.begin(), dst_shape.end(), 1, std::multiplies<>());
-    details::copyBuffer<T, D>(&data[data_idx * data_size], raw, dst_shape, src_shape);
-
-    ++counter_[buffer_idx];
-    // Caveat: We do not track the data indices. Therefore, if data with the same
-    //         frame idx arrives repeatedly, it will still fill the chunk.
-    if (counter_[buffer_idx] == buffer_shape[0]) {
-        // Remove earlier chunks, no matter they are ready or not.
-        size_t idx = chunk_indices_.front();
-        while (chunk_idx != idx) {
-            pop();
-#if (VERBOSITY >= 1)
-            spdlog::warn("Chunk {} is ready! Earlier chunks {} dropped!", chunk_idx, idx);
-#endif
-            idx = chunk_indices_.front();
-        }
-        is_ready_ = true;
-        cv_.notify_one();
-    }
+    fillImp<D>(buffer_idx, data_idx, src, shape);
+    update(buffer_idx, chunk_idx);
 
 #if (VERBOSITY >= 2)
     // Outdated data are excluded.
     ++data_received_;
-    if (data_received_ % buffer_shape[0] == 0) {
+    if (data_received_ % chunk_size == 0) {
         spdlog::info("{}/{} groups in the memory buffer are occupied", 
                      occupied(), buffer_.size());
     }
@@ -453,11 +431,53 @@ bool MemoryBuffer<T, N>::fetch(int timeout) {
     }
 
     assert(!map_.empty());
-    front_.swap(buffer_[map_.at(chunk_indices_.front())]);
+    front_.swap(ready());
     pop();
     is_ready_ = false;
     
     return true;
+}
+
+template<typename T, size_t N>
+template<typename D>
+void MemoryBuffer<T, N>::fillImp(size_t buffer_idx, 
+                                 size_t data_idx,
+                                 const char* src,
+                                 const std::array<size_t, N-1>& src_shape) {
+    float* data = buffer_[buffer_idx].data();
+    std::array<size_t, N-1> dst_shape;
+    auto& buffer_shape = front_.shape();
+    std::copy(buffer_shape.begin() + 1, buffer_shape.end(), dst_shape.begin());
+    size_t data_size = std::accumulate(dst_shape.begin(), dst_shape.end(), 1, std::multiplies<>());
+    details::copyBuffer<T, D>(&data[data_idx * data_size], dst_shape, src, src_shape);
+}
+
+template<typename T, size_t N>
+void MemoryBuffer<T, N>::registerChunk(size_t idx) {
+    chunk_indices_.push(idx);
+    map_[idx] = unoccupied_.front();
+    unoccupied_.pop();
+}
+
+template<typename T, size_t N>
+void MemoryBuffer<T, N>::update(size_t buffer_idx, size_t chunk_idx) {
+    ++counter_[buffer_idx];
+
+    // Caveat: We do not track the data indices. Therefore, if data with the same
+    //         frame idx arrives repeatedly, it will still fill the chunk.
+    if (counter_[buffer_idx] == front_.shape()[0]) {
+        // Remove earlier chunks, no matter they are ready or not.
+        size_t idx = chunk_indices_.front();
+        while (chunk_idx != idx) {
+            pop();
+#if (VERBOSITY >= 1)
+            spdlog::warn("Chunk {} is ready! Earlier chunks {} dropped!", chunk_idx, idx);
+#endif
+            idx = chunk_indices_.front();
+        }
+        is_ready_ = true;
+        cv_.notify_one();
+    }
 }
 
 } // namespace recastx::recon
