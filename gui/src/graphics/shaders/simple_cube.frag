@@ -3,9 +3,9 @@ R"glsl(
 
 in vec3 faceColor;
 
-out vec4 fragColor;
+out vec4 fColor;
 
 void main() {
-    fragColor = vec4(faceColor, 1.0f);
+    fColor = vec4(faceColor, 1.0f);
 }
 )glsl"
