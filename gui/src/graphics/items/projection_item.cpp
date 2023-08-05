@@ -32,6 +32,8 @@ void ProjectionItem::onWindowSizeChanged(int width, int height) {
             (1.0f - Style::MARGIN - Style::PROJECTION_WIDTH) * (float)width,
             (1.0f - Style::PROJECTION_HEIGHT - Style::STATUS_BAR_HEIGHT - 2.f * Style::MARGIN) * (float)(height)
     };
+
+    img_size_ = {size_.x - 2 * img_margin_, size_.y - 2 * img_margin_};
 }
 
 void ProjectionItem::renderIm() {
@@ -40,11 +42,13 @@ void ProjectionItem::renderIm() {
     if (visible_) {
         ImGui::SetNextWindowPos(pos_);
         ImGui::SetNextWindowSize(size_);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(img_margin_, img_margin_));
         ImGui::Begin("Raw projection", NULL, ImGuiWindowFlags_NoDecoration);
 
-        ImGui::Image((void*)(intptr_t)img_.texture(), ImVec2(size_.x, size_.y));
+        ImGui::Image((void*)(intptr_t)img_.texture(), img_size_);
 
         ImGui::End();
+        ImGui::PopStyleVar();
     }
 }
 

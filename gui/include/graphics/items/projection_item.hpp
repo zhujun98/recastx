@@ -11,6 +11,7 @@
 
 #include "graphics/items/graphics_item.hpp"
 #include "graphics/projection.hpp"
+#include "graphics/shader_program.hpp"
 
 namespace recastx::gui {
 
@@ -20,6 +21,10 @@ class ProjectionItem : public GraphicsItem, public GraphicsDataItem {
     ImVec2 size_;
 
     Projection img_;
+    ImVec2 img_size_;
+    static constexpr size_t img_margin_ = 5;
+
+    std::unique_ptr<ShaderProgram> shader_;
 
     bool visible_ = true;
 
