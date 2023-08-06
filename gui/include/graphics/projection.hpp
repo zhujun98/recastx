@@ -41,6 +41,9 @@ class Projection {
 
     void setData(DataType&& data, const SizeType& size);
 
+    void bind() const;
+    void unbind() const;
+
     [[nodiscard]] GLuint texture() const { return texture_.texture(); }
 };
 

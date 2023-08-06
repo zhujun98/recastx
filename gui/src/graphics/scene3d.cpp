@@ -150,6 +150,7 @@ void Scene3d::render() {
     ImGui::EndDisabled();
 
     ImGui::Separator();
+    projection_item_->renderGl();
     projection_item_->renderIm();
 
     ImGui::Separator();
