@@ -19,13 +19,13 @@
 
 #include "graphics/items/graphics_item.hpp"
 #include "graphics/graph_node.hpp"
-#include "graphics/viewport.hpp"
 #include "rpc_client.hpp"
 
 namespace recastx::gui {
 
 class ShaderProgram;
 class Camera;
+class Viewport;
 
 class Scene : public GraphNode, public InputHandler {
 
@@ -35,11 +35,14 @@ public:
 
 protected:
 
+    std::unique_ptr<Viewport> vp_;
+
     std::unique_ptr<ShaderProgram> program_;
     std::unique_ptr<Camera> camera_;
     RpcClient* client_;
 
     std::vector<GraphicsItem*> items_;
+    std::vector<GraphicsGLItem*> gl_items_;
     std::vector<GraphicsDataItem*> data_items_;
 
     ImVec2 pos_;
@@ -57,7 +60,15 @@ protected:
 
     RpcClient* client() { return client_; }
 
-    virtual void onFrameBufferSizeChanged(int width, int height) = 0;
+    void useViewport();
+
+    [[nodiscard]] const glm::mat4& projectionMatrix() const;
+
+    [[nodiscard]] const glm::mat4& viewMatrix() const;
+
+    [[nodiscard]] float cameraDistance() const;
+
+    void onFramebufferSizeChanged(int width, int height);
 
     void onWindowSizeChanged(int width, int height);
 

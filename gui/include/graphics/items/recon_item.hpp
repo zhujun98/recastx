@@ -137,9 +137,9 @@ public:
 
     void renderIm() override;
 
-    void renderGl(const glm::mat4& view,
-                  const glm::mat4& projection,
-                  const RenderParams& params) override;
+    void onFramebufferSizeChanged(int width, int height) override;
+
+    void renderGl() override;
 
     bool updateServerParams() override;
 

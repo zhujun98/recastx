@@ -71,9 +71,9 @@ public:
 
 public:
 
-    virtual void renderGl(const glm::mat4& view,
-                          const glm::mat4& projection,
-                          const RenderParams& params) = 0;
+    virtual void onFramebufferSizeChanged(int width, int height) = 0;
+
+    virtual void renderGl() = 0;
 };
 
 } // namespace recastx::gui

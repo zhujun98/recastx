@@ -160,9 +160,9 @@ void ReconItem::renderIm() {
     scene_.setStatus("tomoUpdateFrameRate", fps_counter_.frameRate());
 }
 
-void ReconItem::renderGl(const glm::mat4& view,
-                         const glm::mat4& projection,
-                         const RenderParams& /*params*/) {
+void ReconItem::onFramebufferSizeChanged(int /* width */, int /* height */) {}
+
+void ReconItem::renderGl() {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -175,6 +175,9 @@ void ReconItem::renderGl(const glm::mat4& view,
     slice_shader_->setFloat("maxValue", max_val_);
 
     cm_.bind();
+
+    const auto& projection = scene_.projectionMatrix();
+    const auto& view = scene_.viewMatrix();
 
     matrix_ = projection * view;
 

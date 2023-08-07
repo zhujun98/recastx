@@ -15,14 +15,17 @@
 #include "graphics/glyph_renderer.hpp"
 #include "graphics/primitives.hpp"
 #include "graphics/scene.hpp"
+#include "graphics/style.hpp"
+#include "graphics/viewport.hpp"
 
 namespace recastx::gui {
 
 AxiscubeItem::AxiscubeItem(Scene &scene)
         : GraphicsItem(scene),
+          vp_(new Viewport(false)),
           text_color_(glm::vec3(1.f, 1.f, 1.f)),
           top_(glm::translate(glm::vec3(-0.2f, 0.2f, 0.501f))
-               * glm::rotate(glm::radians(-90.f), glm::vec3(0.0f, .0f, 1.0f))){
+               * glm::rotate(glm::radians(-90.f), glm::vec3(0.0f, .0f, 1.0f))) {
     scene.addItem(this);
 
     glGenVertexArrays(1, &vao_);
@@ -62,12 +65,24 @@ AxiscubeItem::~AxiscubeItem() = default;
 
 void AxiscubeItem::renderIm() {}
 
-void AxiscubeItem::renderGl(const glm::mat4& view,
-                            const glm::mat4& projection,
-                            const RenderParams& /*params*/) {
+void AxiscubeItem::onFramebufferSizeChanged(int width, int height) {
+    int h = static_cast<int>(Style::TOP_PANEL_HEIGHT * (float)height);
+    int w = h;
+    vp_->update(width - w - int(Style::MARGIN * (float)width),
+                height - h - int(Style::MARGIN * (float)height),
+                w,
+                h);
+}
+
+void AxiscubeItem::renderGl() {
+    vp_->use();
+
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    const auto& projection = vp_->projection();
+    const auto& view = scene_.viewMatrix();
 
     shader_->use();
     shader_->setMat4("view", view);
@@ -86,6 +101,8 @@ void AxiscubeItem::renderGl(const glm::mat4& view,
 
     glDisable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
+
+    scene_.useViewport();
 }
 
 } // namespace recastx::gui

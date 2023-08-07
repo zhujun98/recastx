@@ -47,16 +47,16 @@ void AxesItem::renderIm() {
     ImGui::Checkbox("Show axes", &visible_);
 }
 
-void AxesItem::renderGl(const glm::mat4& view,
-                        const glm::mat4& projection,
-                        const RenderParams& params) {
+void AxesItem::onFramebufferSizeChanged(int /* width */, int /* height */) {}
+
+void AxesItem::renderGl() {
     if (!visible_) return;
 
     shader_->use();
 
-    shader_->setFloat("scale", std::any_cast<float>(params.at("distance")));
-    shader_->setMat4("view", view);
-    shader_->setMat4("projection", projection);
+    shader_->setFloat("scale", scene_.cameraDistance());
+    shader_->setMat4("view", scene_.viewMatrix());
+    shader_->setMat4("projection", scene_.projectionMatrix());
 
     glBindVertexArray(vao_);
     glLineWidth(3.0f);
