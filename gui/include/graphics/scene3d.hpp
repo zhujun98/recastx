@@ -29,10 +29,6 @@ class LoggingItem;
 
 class Scene3d : public Scene {
 
-    std::unique_ptr<Viewport> viewport_;
-    std::unique_ptr<Viewport> viewport_icon_;
-    std::unique_ptr<Viewport> viewport_axiscube_;
-
     std::unique_ptr<AxesItem> axes_item_;
     std::unique_ptr<IconItem> icon_item_;
     std::unique_ptr<PreprocItem> preproc_item_;
@@ -58,8 +54,6 @@ public:
     explicit Scene3d(RpcClient* client);
 
     ~Scene3d() override;
-
-    void onFrameBufferSizeChanged(int width, int height) override;
 
     void render() override;
 };

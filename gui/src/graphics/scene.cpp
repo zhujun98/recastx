@@ -14,10 +14,12 @@
 #include "graphics/camera3d.hpp"
 #include "graphics/shader_program.hpp"
 #include "graphics/style.hpp"
+#include "graphics/viewport.hpp"
 
 namespace recastx::gui {
 
-Scene::Scene(RpcClient* client) : client_(client) {}
+Scene::Scene(RpcClient* client)
+    : vp_(new Viewport()), client_(client) {}
 
 Scene::~Scene() = default;
 
@@ -36,8 +38,32 @@ void Scene::onWindowSizeChanged(int width, int height) {
     }
 }
 
+void Scene::useViewport() {
+    vp_->use();
+}
+
+const glm::mat4& Scene::projectionMatrix() const { return vp_->projection(); }
+
+const glm::mat4& Scene::viewMatrix() const { return camera_->matrix(); }
+
+float Scene::cameraDistance() const { return camera_->distance(); }
+
+void Scene::onFramebufferSizeChanged(int width, int height) {
+    vp_->update(0, 0, width, height);
+
+    for (auto& item : gl_items_) {
+        item->onFramebufferSizeChanged(width, height);
+    }
+}
+
 void Scene::addItem(GraphicsItem* item) {
     items_.push_back(item);
+
+    auto gl_item = dynamic_cast<GraphicsGLItem*>(item);
+    if (gl_item != nullptr) {
+        gl_items_.push_back(gl_item);
+    }
+
     auto data_item = dynamic_cast<GraphicsDataItem*>(item);
     if (data_item != nullptr) {
         data_items_.push_back(data_item);

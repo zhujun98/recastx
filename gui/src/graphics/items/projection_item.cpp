@@ -9,15 +9,49 @@
 #include <imgui.h>
 
 #include "graphics/items/projection_item.hpp"
+#include "graphics/aesthetics.hpp"
+#include "graphics/framebuffer.hpp"
 #include "graphics/scene.hpp"
+#include "graphics/shader_program.hpp"
 #include "graphics/style.hpp"
 #include "logger.hpp"
 
 namespace recastx::gui {
 
 ProjectionItem::ProjectionItem(Scene& scene)
-        : GraphicsItem(scene), img_(0) {
+        : GraphicsItem(scene),
+          img_(0),
+          fb_(new Framebuffer),
+          cm_(new Colormap) {
     scene.addItem(this);
+
+    static constexpr float s = 1.0f;
+    static constexpr GLfloat square[] = {
+        -s, -s, 0.0f, 0.0f, 0.0f,
+        -s,  s, 0.0f, 0.0f, 1.0f,
+         s,  s, 0.0f, 1.0f, 1.0f,
+         s, -s, 0.0f, 1.0f, 0.0f};
+
+    glGenVertexArrays(1, &vao_);
+    glBindVertexArray(vao_);
+    glGenBuffers(1, &vbo_);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(square), square, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    auto vert =
+#include "../shaders/projection.vert"
+    ;
+    auto frag =
+#include "../shaders/projection.frag"
+    ;
+
+    shader_ = std::make_unique<ShaderProgram>(vert, frag);
+
+    cm_->set(ImPlotColormap_Greys);
 }
 
 ProjectionItem::~ProjectionItem() = default;
@@ -40,12 +74,40 @@ void ProjectionItem::renderIm() {
     if (visible_) {
         ImGui::SetNextWindowPos(pos_);
         ImGui::SetNextWindowSize(size_);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(padding_, padding_));
         ImGui::Begin("Raw projection", NULL, ImGuiWindowFlags_NoDecoration);
 
-        ImGui::Image((void*)(intptr_t)img_.texture(), ImVec2(size_.x, size_.y));
+        ImGui::Image((void*)(intptr_t)fb_->texture(), ImVec2(fb_->width(), fb_->height()));
 
         ImGui::End();
+        ImGui::PopStyleVar();
     }
+}
+
+void ProjectionItem::onFramebufferSizeChanged(int width, int height) {
+    int w = static_cast<int>(Style::PROJECTION_WIDTH * width) - 2 * padding_;
+    int h = static_cast<int>(Style::PROJECTION_HEIGHT * height) - 2 * padding_;
+
+    fb_->prepareForRescale(w, h);
+}
+
+void ProjectionItem::renderGl() {
+    shader_->use();
+    shader_->setInt("colormap", 0);
+    shader_->setInt("projectionTexture", 1);
+
+    fb_->bind();
+    cm_->bind();
+    img_.bind();
+    glBindVertexArray(vao_);
+    glViewport(0, 0, fb_->width(), fb_->height());
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    glBindVertexArray(0);
+    img_.unbind();
+    cm_->unbind();
+    fb_->unbind();
+
+    scene_.useViewport();
 }
 
 bool ProjectionItem::updateServerParams() {

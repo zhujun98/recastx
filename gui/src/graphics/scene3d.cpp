@@ -12,7 +12,6 @@
 
 #include "graphics/scene3d.hpp"
 #include "graphics/camera3d.hpp"
-#include "graphics/style.hpp"
 #include "graphics/items/axiscube_item.hpp"
 #include "graphics/items/axes_item.hpp"
 #include "graphics/items/icon_item.hpp"
@@ -27,9 +26,6 @@ namespace recastx::gui {
 
 Scene3d::Scene3d(RpcClient* client)
         : Scene(client),
-          viewport_(new Viewport()),
-          viewport_icon_(new Viewport(false)),
-          viewport_axiscube_(new Viewport(false)),
           axes_item_(new AxesItem(*this)),
           icon_item_(new IconItem(*this)),
           preproc_item_(new PreprocItem(*this)),
@@ -49,24 +45,6 @@ Scene3d::Scene3d(RpcClient* client)
 }
 
 Scene3d::~Scene3d() = default;
-
-void Scene3d::onFrameBufferSizeChanged(int width, int height) {
-    viewport_->update(0, 0, width, height);
-
-    int h = static_cast<int>(Style::TOP_PANEL_HEIGHT * (float)height);
-    int w = h;
-    viewport_axiscube_->update(width - w - int(Style::MARGIN * (float)width),
-                               height - h - int(Style::MARGIN * (float)height),
-                               w,
-                               h);
-
-    w = static_cast<int>(Style::ICON_WIDTH * (float)width);
-    h = static_cast<int>(Style::ICON_HEIGHT* (float)height);
-    viewport_icon_->update(int(Style::MARGIN * (float)width),
-                           height - h - int(Style::MARGIN * (float)height),
-                           w,
-                           h);
-}
 
 void Scene3d::onStateChanged(rpc::ServerState_State state) {
     if (state == rpc::ServerState_State_PROCESSING || state == rpc::ServerState_State_ACQUIRING) {
@@ -172,6 +150,7 @@ void Scene3d::render() {
     ImGui::EndDisabled();
 
     ImGui::Separator();
+    projection_item_->renderGl();
     projection_item_->renderIm();
 
     ImGui::Separator();
@@ -206,21 +185,9 @@ void Scene3d::render() {
 
     ImGui::End();
 
-    viewport_->use();
-    GraphicsGLItem::RenderParams params;
-    params["distance"] = camera_->distance();
-    const auto& view = camera_->matrix();
-    const auto& projection = viewport_->projection();
-    axes_item_->renderGl(view, projection, params);
-    recon_item_->renderGl(view, projection, params);
-
-    viewport_icon_->use();
-    params["aspectRatio"] = viewport_icon_->aspectRatio();
-    icon_item_->renderGl(view, viewport_icon_->projection(), params);
-
-    viewport_axiscube_->use();
-    params["aspectRatio"] = viewport_axiscube_->aspectRatio();
-    axiscube_item_->renderGl(view, viewport_axiscube_->projection(), params);
+    for (auto& item: gl_items_) {
+        item->renderGl();
+    }
 }
 
 } // namespace recastx::gui

@@ -28,4 +28,7 @@ void Projection::setData(DataType&& data, const SizeType& size) {
     texture_.setData(data_, static_cast<int>(size_[0]), static_cast<int>(size_[1]));
 }
 
+void Projection::bind() const { texture_.bind(); }
+void Projection::unbind() const { texture_.unbind(); }
+
 } // namespace recastx::gui

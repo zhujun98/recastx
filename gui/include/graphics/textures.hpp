@@ -339,12 +339,12 @@ class ImageTexture : public Texture {
     }
 
     void bind() const override {
-        glActiveTexture(GL_TEXTURE3);
+        glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture_id_);
     }
 
     void unbind() const override {
-        glActiveTexture(GL_TEXTURE3);
+        glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 };

@@ -62,6 +62,7 @@ set(GUI_SOURCES
         "src/graphics/camera3d.cpp"
         "src/graphics/scene.cpp"
         "src/graphics/scene3d.cpp"
+        "src/graphics/framebuffer.cpp"
         "src/graphics/glyph_renderer.cpp"
         "src/graphics/graph_node.cpp"
         "src/graphics/projection.cpp"

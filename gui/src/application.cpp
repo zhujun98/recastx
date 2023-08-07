@@ -78,7 +78,7 @@ void Application::spin() {
 
     int display_w, display_h;
     glfwGetFramebufferSize(glfw_window_, &display_w, &display_h);
-    scene_->onFrameBufferSizeChanged(display_w, display_h);
+    scene_->onFramebufferSizeChanged(display_w, display_h);
 
     while (!glfwWindowShouldClose(glfw_window_)) {
         glfwPollEvents();
@@ -116,7 +116,7 @@ void Application::registerCallbacks() {
     });
 
     glfwSetFramebufferSizeCallback(glfw_window_, [](GLFWwindow* /*window*/, int width, int height) {
-        instance().scene_->onFrameBufferSizeChanged(width, height);
+        instance().scene_->onFramebufferSizeChanged(width, height);
     });
 
     glfwSetMouseButtonCallback(glfw_window_, mouseButtonCallback);

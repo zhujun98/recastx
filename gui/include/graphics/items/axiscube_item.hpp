@@ -18,6 +18,7 @@ namespace recastx::gui {
 
 class GlyphRenderer;
 class Scene;
+class Viewport;
 
 class AxiscubeItem : public GraphicsItem, public GraphicsGLItem {
 
@@ -27,6 +28,8 @@ class AxiscubeItem : public GraphicsItem, public GraphicsGLItem {
 
     std::unique_ptr<ShaderProgram> glyph_shader_;
     std::unique_ptr<GlyphRenderer> glyph_renderer_;
+
+    std::unique_ptr<Viewport> vp_;
 
     glm::vec3 text_color_;
     glm::mat4 top_;
@@ -39,9 +42,9 @@ public:
 
     void renderIm() override;
 
-    void renderGl(const glm::mat4& view,
-                  const glm::mat4& projection,
-                  const RenderParams& params) override;
+    void onFramebufferSizeChanged(int width, int height) override;
+
+    void renderGl() override;
 };
 
 }  // namespace recastx::gui

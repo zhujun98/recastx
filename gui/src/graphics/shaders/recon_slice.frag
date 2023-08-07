@@ -1,10 +1,10 @@
 R"glsl(
 #version 330
 
-in vec2 aSliceCoord;
-in vec3 aVolumeCoord;
+in vec2 sliceCoord;
+in vec3 volumeCoord;
 
-out vec4 fragColor;
+out vec4 fColor;
 
 uniform sampler2D sliceData;
 uniform sampler1D colormap;
@@ -25,20 +25,20 @@ void main() {
         value = 1.f;
     } else {
         if (empty == 1) {
-            value = remapMinMax(texture(volumeData, aVolumeCoord).x, minValue, maxValue);
+            value = remapMinMax(texture(volumeData, volumeCoord).x, minValue, maxValue);
         } else {
-            value = remapMinMax(texture(sliceData, aSliceCoord).x, minValue, maxValue);
+            value = remapMinMax(texture(sliceData, sliceCoord).x, minValue, maxValue);
         }
     }
 
-    fragColor = vec4(texture(colormap, value).xyz, 1.0f);
+    fColor = vec4(texture(colormap, value).xyz, 1.0f);
 
     if (empty == 1) {
-        fragColor.a = 0.75f;
+        fColor.a = 0.75f;
     }
 
     if (hovered == 1) {
-        fragColor += vec4(0.3f);
+        fColor += vec4(0.3f);
     }
 }
 )glsl"

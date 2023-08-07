@@ -36,8 +36,6 @@ void StatusbarItem::renderIm() {
     ImGui::Checkbox("Show status bar", &visible_);
 
     if (visible_) {
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.06f, 0.06f, 0.06f, 0.02f));
-
         ImGui::SetNextWindowPos(pos_);
         ImGui::SetNextWindowSize(size_);
 
@@ -49,8 +47,6 @@ void StatusbarItem::renderIm() {
                     std::any_cast<double>(scene_.getStatus("tomoUpdateFrameRate")));
 
         ImGui::End();
-
-        ImGui::PopStyleColor();
     }
 }
 

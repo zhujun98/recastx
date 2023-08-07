@@ -35,7 +35,6 @@ void LoggingItem::renderIm() {
         ImGui::SetNextWindowSize(size_);
 
         ImGui::Begin("Logging", NULL, ImGuiWindowFlags_NoDecoration);
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.06f, 0.06f, 0.06f, 0.02f));
 
         // Main window
         ImGui::AlignTextToFramePadding();
@@ -72,7 +71,6 @@ void LoggingItem::renderIm() {
         if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
             ImGui::SetScrollHereY(1.0f);
 
-        ImGui::PopStyleColor();
         ImGui::EndChild();
         ImGui::End();
     }

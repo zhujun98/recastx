@@ -14,12 +14,24 @@
 
 namespace recastx::gui {
 
-class ProjectionItem : public GraphicsItem, public GraphicsDataItem {
+class Colormap;
+class Framebuffer;
+class ShaderProgram;
+
+class ProjectionItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDataItem {
 
     ImVec2 pos_;
     ImVec2 size_;
 
     Projection img_;
+    static constexpr int padding_ = 5;
+
+    GLuint vao_;
+    GLuint vbo_;
+    std::unique_ptr<ShaderProgram> shader_;
+    std::unique_ptr<Framebuffer> fb_;
+
+    std::unique_ptr<Colormap> cm_;
 
     bool visible_ = true;
 
@@ -34,6 +46,10 @@ class ProjectionItem : public GraphicsItem, public GraphicsDataItem {
     void onWindowSizeChanged(int width, int height) override;
 
     void renderIm() override;
+
+    void onFramebufferSizeChanged(int width, int height) override;
+
+    void renderGl() override;
 
     bool updateServerParams() override;
 

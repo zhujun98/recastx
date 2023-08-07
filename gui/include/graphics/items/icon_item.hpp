@@ -18,8 +18,11 @@ namespace recastx::gui {
 
 class GlyphRenderer;
 class Scene;
+class Viewport;
 
-class IconItem : public GraphicsItem, GraphicsGLItem {
+class IconItem : public GraphicsItem, public GraphicsGLItem {
+
+    std::unique_ptr<Viewport> vp_;
 
     static constexpr int font_size_ = 72;
     std::unique_ptr<ShaderProgram> glyph_shader_;
@@ -38,9 +41,9 @@ public:
 
     void renderIm() override;
 
-    void renderGl(const glm::mat4& view,
-                  const glm::mat4& projection,
-                  const RenderParams& params) override;
+    void onFramebufferSizeChanged(int width, int height) override;
+
+    void renderGl() override;
 };
 
 }  // namespace recastx::gui
