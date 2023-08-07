@@ -24,19 +24,20 @@ class Framebuffer {
     int width_;
     int height_;
 
+    bool rescale_required_ {false};
+
   public:
 
     Framebuffer(int width = 1, int height = 1);
 
     ~Framebuffer();
 
-    void bind() const {
-        glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
-    }
+    void prepareForRescale(int width, int height);
 
-    void unbind() const {
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    }
+    void rescale();
+
+    void bind();
+    void unbind() const;
 
     GLuint texture() const { return texture_; }
 

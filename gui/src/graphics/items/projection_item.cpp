@@ -21,15 +21,16 @@ namespace recastx::gui {
 ProjectionItem::ProjectionItem(Scene& scene)
         : GraphicsItem(scene),
           img_(0),
-          fb_(new Framebuffer(400, 400)),
+          fb_(new Framebuffer),
           cm_(new Colormap) {
     scene.addItem(this);
 
+    static constexpr float s = 1.0f;
     static constexpr GLfloat square[] = {
-        -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-        -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-         1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-         1.0f, -1.0f, 0.0f, 1.0f, 0.0f};
+        -s, -s, 0.0f, 0.0f, 0.0f,
+        -s,  s, 0.0f, 0.0f, 1.0f,
+         s,  s, 0.0f, 1.0f, 1.0f,
+         s, -s, 0.0f, 1.0f, 0.0f};
 
     glGenVertexArrays(1, &vao_);
     glBindVertexArray(vao_);
@@ -65,8 +66,6 @@ void ProjectionItem::onWindowSizeChanged(int width, int height) {
             (1.0f - Style::MARGIN - Style::PROJECTION_WIDTH) * (float)width,
             (1.0f - Style::PROJECTION_HEIGHT - Style::STATUS_BAR_HEIGHT - 2.f * Style::MARGIN) * (float)(height)
     };
-
-    img_size_ = {size_.x - 2 * img_margin_, size_.y - 2 * img_margin_};
 }
 
 void ProjectionItem::renderIm() {
@@ -75,10 +74,10 @@ void ProjectionItem::renderIm() {
     if (visible_) {
         ImGui::SetNextWindowPos(pos_);
         ImGui::SetNextWindowSize(size_);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(img_margin_, img_margin_));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(padding_, padding_));
         ImGui::Begin("Raw projection", NULL, ImGuiWindowFlags_NoDecoration);
 
-        ImGui::Image((void*)(intptr_t)fb_->texture(), img_size_);
+        ImGui::Image((void*)(intptr_t)fb_->texture(), ImVec2(fb_->width(), fb_->height()));
 
         ImGui::End();
         ImGui::PopStyleVar();
@@ -86,7 +85,10 @@ void ProjectionItem::renderIm() {
 }
 
 void ProjectionItem::onFramebufferSizeChanged(int width, int height) {
+    int w = static_cast<int>(Style::PROJECTION_WIDTH * width) - 2 * padding_;
+    int h = static_cast<int>(Style::PROJECTION_HEIGHT * height) - 2 * padding_;
 
+    fb_->prepareForRescale(w, h);
 }
 
 void ProjectionItem::renderGl() {
