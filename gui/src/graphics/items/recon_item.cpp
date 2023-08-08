@@ -160,6 +160,8 @@ void ReconItem::renderGl() {
     }
     volume_->unbind();
 
+    volume_->render(view, projection, min_val_, max_val_);
+
     cm_.unbind();
 
     wireframe_->render(view, projection);

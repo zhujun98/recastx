@@ -15,6 +15,8 @@
 
 namespace recastx::gui {
 
+class ShaderProgram;
+
 class Volume {
 
   public:
@@ -29,6 +31,10 @@ class Volume {
 
     VolumeTexture<float> texture_;
 
+    GLuint vao_;
+    GLuint vbo_;
+    std::unique_ptr<ShaderProgram> shader_;
+
     std::array<float, 2> min_max_vals_ {0.f, 0.f};
 
     void updateMinMaxVal();
@@ -39,6 +45,11 @@ public:
     ~Volume();
 
     void setData(DataType&& data, const SizeType& size);
+
+    void render(const glm::mat4& view,
+                const glm::mat4& projection,
+                float min_v,
+                float max_v);
 
     void bind() const;
 
