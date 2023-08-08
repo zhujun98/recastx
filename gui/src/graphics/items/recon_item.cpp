@@ -23,11 +23,14 @@
 #include "graphics/camera3d.hpp"
 #include "graphics/primitives.hpp"
 #include "graphics/style.hpp"
+#include "graphics/wireframe.hpp"
 #include "logger.hpp"
 
 namespace recastx::gui {
 
-ReconItem::ReconItem(Scene& scene) : GraphicsItem(scene) {
+ReconItem::ReconItem(Scene& scene)
+        : GraphicsItem(scene),
+          wireframe_(new Wireframe) {
     scene.addItem(this);
 
     glGenVertexArrays(1, &slice_vao_);
@@ -47,19 +50,6 @@ ReconItem::ReconItem(Scene& scene) : GraphicsItem(scene) {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
     glEnableVertexAttribArray(0);
 
-    glGenVertexArrays(1, &wireframe_vao_);
-    glBindVertexArray(wireframe_vao_);
-    glGenBuffers(1, &wireframe_ebo_);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, wireframe_ebo_);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(primitives::wireframe_cube_indices),
-                 primitives::wireframe_cube_indices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glGenBuffers(1, &wireframe_vbo_);
-    glBindBuffer(GL_ARRAY_BUFFER, wireframe_vbo_);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(primitives::wireframe_cube),
-                 primitives::wireframe_cube, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
     auto slice_vert =
 #include "../shaders/recon_slice.vert"
         ;
@@ -67,14 +57,6 @@ ReconItem::ReconItem(Scene& scene) : GraphicsItem(scene) {
 #include "../shaders/recon_slice.frag"
         ;
     slice_shader_ = std::make_unique<ShaderProgram>(slice_vert, slice_frag);
-
-    auto wireframe_vert =
-#include "../shaders/wireframe_cube.vert"
-        ;
-    auto wireframe_frag =
-#include "../shaders/wireframe_cube.frag"
-        ;
-    wireframe_shader_ = std::make_unique<ShaderProgram>(wireframe_vert, wireframe_frag);
 
     initSlices();
     initVolume();
@@ -84,10 +66,6 @@ ReconItem::ReconItem(Scene& scene) : GraphicsItem(scene) {
 ReconItem::~ReconItem() {
     glDeleteVertexArrays(1, &slice_vao_);
     glDeleteBuffers(1, &slice_vbo_);
-
-    glDeleteVertexArrays(1, &wireframe_vao_);
-    glDeleteBuffers(1, &wireframe_vbo_);
-    glDeleteBuffers(1, &wireframe_ebo_);
 
     glDeleteVertexArrays(1, &rotation_axis_vao_);
     glDeleteBuffers(1, &rotation_axis_vbo_);
@@ -199,22 +177,16 @@ void ReconItem::renderGl() {
 
     cm_.unbind();
 
-    wireframe_shader_->use();
-    wireframe_shader_->setMat4("view", view);
-    wireframe_shader_->setMat4("projection", projection);
-    wireframe_shader_->setVec4("color", glm::vec4(1.f, 1.f, 1.f, 0.2f));
-
-    glBindVertexArray(wireframe_vao_);
-    glLineWidth(3.f);
-    glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, nullptr);
+    wireframe_->render(view, projection);
 
     glDisable(GL_DEPTH_TEST);
 
     if (drag_machine_ != nullptr && drag_machine_->type() == DragType::rotator) {
         auto& rotator = *(SliceRotator*)drag_machine_.get();
-        wireframe_shader_->setMat4(
+        // FIXME: fix the hack
+        wireframe_->shader()->setMat4(
                 "view", view * glm::translate(rotator.rot_base) * glm::scale(rotator.rot_end - rotator.rot_base));
-        wireframe_shader_->setVec4("color", glm::vec4(1.f, 1.f, 1.f, 1.f));
+        wireframe_->shader()->setVec4("color", glm::vec4(1.f, 1.f, 1.f, 1.f));
         glBindVertexArray(rotation_axis_vao_);
         glLineWidth(10.f);
         glDrawArrays(GL_LINES, 0, 2);

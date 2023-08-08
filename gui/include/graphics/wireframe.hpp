@@ -6,8 +6,8 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
-#ifndef GUI_AXES_H
-#define GUI_AXES_H
+#ifndef GUI_WIREFEAME_H
+#define GUI_WIREFEAME_H
 
 #include <memory>
 
@@ -18,20 +18,27 @@ namespace recastx::gui {
 
 class ShaderProgram;
 
-class Axes {
+class Wireframe {
 
     GLuint vao_;
     GLuint vbo_;
+    GLuint ebo_;
     std::unique_ptr<ShaderProgram> shader_;
+
+    glm::vec4 color_;
+    float lw_;
 
   public:
 
-    Axes();
-    ~Axes();
+    explicit Wireframe(const glm::vec4& color = glm::vec4(1.f, 1.f, 1.f, 0.2f),
+                       float line_width = 3.f);
+    ~Wireframe();
 
-    void render(const glm::mat4& view, const glm::mat4& projection, float scale);
+    void render(const glm::mat4& view, const glm::mat4& projection);
+
+    ShaderProgram* shader() { return shader_.get(); }
 };
 
 } // namespace recastx::gui
 
-#endif //GUI_AXES_H
+#endif //GUI_WIREFEAME_H
