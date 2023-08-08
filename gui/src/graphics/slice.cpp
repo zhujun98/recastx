@@ -9,14 +9,37 @@
 #include <algorithm>
 
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 
 #include "graphics/slice.hpp"
+#include "graphics/primitives.hpp"
+#include "graphics/shader_program.hpp"
 
 namespace recastx::gui {
 
-Slice::Slice(int slice_id) : id_(slice_id) {}
+Slice::Slice(int slice_id) : id_(slice_id) {
+    glGenVertexArrays(1, &vao_);
+    glBindVertexArray(vao_);
+    glGenBuffers(1, &vbo_);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(primitives::square), primitives::square,
+                 GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glEnableVertexAttribArray(0);
 
-Slice::~Slice() = default;
+    auto vert =
+#include "shaders/recon_slice.vert"
+    ;
+    auto frag =
+#include "shaders/recon_slice.frag"
+    ;
+    shader_ = std::make_unique<ShaderProgram>(vert, frag);
+}
+
+Slice::~Slice() {
+    glDeleteVertexArrays(1, &vao_);
+    glDeleteBuffers(1, &vbo_);
+};
 
 int Slice::id() const { return id_; }
 
@@ -29,12 +52,34 @@ void Slice::setData(DataType&& data, const SizeType& size) {
     texture_.setData(data_, static_cast<int>(size_[0]), static_cast<int>(size_[1]));
 }
 
-void Slice::bind() const { texture_.bind(); }
-void Slice::unbind() const { texture_.unbind(); }
+void Slice::render(const glm::mat4& view,
+                   const glm::mat4& projection,
+                   float min_v,
+                   float max_v) {
+    shader_->use();
+    shader_->setInt("colormap", 0);
+    shader_->setInt("sliceData", 1);
+    shader_->setInt("volumeData", 2);
+    shader_->setFloat("minValue", min_v);
+    shader_->setFloat("maxValue", max_v);
+    shader_->setMat4("view", view);
+    shader_->setMat4("projection", projection);
+    shader_->setMat4("orientationMatrix", orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0)));
+    shader_->setBool("hovered", hovered());
+    shader_->setBool("empty", data_.empty());
+
+    texture_.bind();
+    glBindVertexArray(vao_);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    texture_.unbind();
+}
 
 bool Slice::empty() const { return data_.empty(); }
+
 bool Slice::hovered() const { return hovered_; }
+
 bool Slice::inactive() const { return inactive_; }
+
 bool Slice::transparent() const { return hovered_ || data_.empty(); }
 
 void Slice::setHovered(bool state) {

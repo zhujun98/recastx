@@ -28,13 +28,13 @@ Wireframe::Wireframe(const glm::vec4& color, float line_width)
                  primitives::wireframe_cube, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-    auto wireframe_vert =
+    auto vert =
 #include "shaders/wireframe_cube.vert"
     ;
-    auto wireframe_frag =
+    auto frag =
 #include "shaders/wireframe_cube.frag"
     ;
-    shader_ = std::make_unique<ShaderProgram>(wireframe_vert, wireframe_frag);
+    shader_ = std::make_unique<ShaderProgram>(vert, frag);
 }
 
 Wireframe::~Wireframe() {

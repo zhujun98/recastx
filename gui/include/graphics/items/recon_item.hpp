@@ -20,7 +20,6 @@
 #include "graphics/aesthetics.hpp"
 #include "graphics/scene.hpp"
 #include "graphics/shader_program.hpp"
-#include "graphics/slice.hpp"
 #include "graphics/textures.hpp"
 #include "graphics/volume.hpp"
 #include "utils.hpp"
@@ -28,6 +27,7 @@
 namespace recastx::gui {
 
 class FpsCounter;
+class Slice;
 class Wireframe;
 
 class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDataItem {
@@ -82,10 +82,6 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
     std::vector<std::pair<uint64_t, std::unique_ptr<Slice>>> slices_;
     std::unique_ptr<Volume> volume_;
 
-    GLuint slice_vao_;
-    GLuint slice_vbo_;
-    std::unique_ptr<ShaderProgram> slice_shader_;
-
     std::unique_ptr<Wireframe> wireframe_;
 
     GLuint rotation_axis_vao_;
@@ -120,8 +116,6 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
     void updateHoveringSlice(float x, float y);
 
     void maybeSwitchDragMachine(DragType type);
-
-    void drawSlice(Slice* slice, const glm::mat4& view, const glm::mat4& projection);
 
     void maybeUpdateMinMaxValues();
 

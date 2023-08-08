@@ -20,6 +20,8 @@
 
 namespace recastx::gui {
 
+class ShaderProgram;
+
 class Slice {
 
   public:
@@ -35,6 +37,10 @@ class Slice {
     DataType data_;
 
     SliceTexture<float> texture_;
+
+    GLuint vao_;
+    GLuint vbo_;
+    std::unique_ptr<ShaderProgram> shader_;
 
     bool hovered_ = false;
     bool inactive_ = false;
@@ -54,13 +60,17 @@ class Slice {
 
     void setData(DataType&& data, const SizeType& size);
 
-    void bind() const;
-
-    void unbind() const;
+    void render(const glm::mat4& view,
+                const glm::mat4& projection,
+                float min_v,
+                float max_v);
 
     [[nodiscard]] bool empty() const;
+
     [[nodiscard]] bool hovered() const;
+
     [[nodiscard]] bool inactive() const;
+
     [[nodiscard]] bool transparent() const;
 
     void setHovered(bool state);
@@ -74,6 +84,7 @@ class Slice {
     Orient4Type& orientation4();
 
     [[nodiscard]] const DataType& data() const;
+
     [[nodiscard]] const std::array<float, 2>& minMaxVals() const;
 };
 
