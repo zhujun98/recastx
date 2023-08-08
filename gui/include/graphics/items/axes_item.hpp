@@ -12,19 +12,17 @@
 #include <memory>
 
 #include "graphics/items/graphics_item.hpp"
-#include "graphics/shader_program.hpp"
 
 namespace recastx::gui {
 
 class Scene;
+class Axes;
 
 class AxesItem : public GraphicsItem, public GraphicsGLItem {
 
-    GLuint vao_;
-    GLuint vbo_;
-    std::unique_ptr<ShaderProgram> shader_;
-
     bool visible_ = true;
+
+    std::unique_ptr<Axes> axes_;
 
 public:
 
