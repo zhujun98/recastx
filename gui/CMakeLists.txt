@@ -59,6 +59,7 @@ set(GUI_SOURCES
         "src/path.cpp"
         "src/utils.cpp"
         "src/graphics/aesthetics.cpp"
+        "src/graphics/axes.cpp"
         "src/graphics/camera3d.cpp"
         "src/graphics/scene.cpp"
         "src/graphics/scene3d.cpp"

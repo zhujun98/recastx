@@ -24,15 +24,6 @@ inline constexpr GLfloat square[] = {
         1.0f, 1.0f, 0.0f,
         1.0f, 0.0f, 0.0f};
 
-inline constexpr GLfloat axes[] = {
-        0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-        1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // x
-        0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, // y
-        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-        0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f  // z
-};
-
 inline constexpr GLfloat axiscube[] = {
         -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1.0f,
          0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1.0f,
