@@ -182,6 +182,11 @@ void ReconItem::renderGl() {
     glDisable(GL_DEPTH_TEST);
 
     if (drag_machine_ != nullptr && drag_machine_->type() == DragType::rotator) {
+        auto& rotator = *(SliceRotator*)drag_machine_.get();
+        // FIXME: fix the hack
+        wireframe_->shader()->setMat4(
+                "view", view * glm::translate(rotator.rot_base) * glm::scale(rotator.rot_end - rotator.rot_base));
+        wireframe_->shader()->setVec4("color", glm::vec4(1.f, 1.f, 1.f, 1.f));
         glBindVertexArray(rotation_axis_vao_);
         glLineWidth(10.f);
         glDrawArrays(GL_LINES, 0, 2);

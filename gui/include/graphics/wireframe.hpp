@@ -35,6 +35,8 @@ class Wireframe {
     ~Wireframe();
 
     void render(const glm::mat4& view, const glm::mat4& projection);
+
+    ShaderProgram* shader() { return shader_.get(); }
 };
 
 } // namespace recastx::gui
