@@ -25,6 +25,7 @@ class ProjectionItem : public GraphicsItem, public GraphicsGLItem, public Graphi
 
     Projection img_;
     static constexpr int padding_ = 5;
+    ImVec2 img_display_size_;
 
     GLuint vao_;
     GLuint vbo_;
