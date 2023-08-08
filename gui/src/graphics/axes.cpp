@@ -43,6 +43,11 @@ Axes::Axes() {
     shader_ = std::make_unique<ShaderProgram>(vert, frag);
 }
 
+Axes::~Axes() {
+    glDeleteVertexArrays(1, &vao_);
+    glDeleteBuffers(1, &vbo_);
+}
+
 void Axes::render(const glm::mat4& view, const glm::mat4& projection, float scale) {
     shader_->use();
 

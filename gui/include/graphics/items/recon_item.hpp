@@ -28,6 +28,7 @@
 namespace recastx::gui {
 
 class FpsCounter;
+class Wireframe;
 
 class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDataItem {
 
@@ -85,13 +86,10 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
     GLuint slice_vbo_;
     std::unique_ptr<ShaderProgram> slice_shader_;
 
+    std::unique_ptr<Wireframe> wireframe_;
+
     GLuint rotation_axis_vao_;
     GLuint rotation_axis_vbo_;
-
-    GLuint wireframe_vao_;
-    GLuint wireframe_vbo_;
-    GLuint wireframe_ebo_;
-    std::unique_ptr<ShaderProgram> wireframe_shader_;
 
     std::unique_ptr<DragMachine> drag_machine_;
     Slice* dragged_slice_ = nullptr;
