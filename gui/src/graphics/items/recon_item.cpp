@@ -22,6 +22,7 @@
 #include "graphics/aesthetics.hpp"
 #include "graphics/camera3d.hpp"
 #include "graphics/primitives.hpp"
+#include "graphics/slice.hpp"
 #include "graphics/style.hpp"
 #include "graphics/wireframe.hpp"
 #include "logger.hpp"
@@ -33,15 +34,6 @@ ReconItem::ReconItem(Scene& scene)
           wireframe_(new Wireframe) {
     scene.addItem(this);
 
-    glGenVertexArrays(1, &slice_vao_);
-    glBindVertexArray(slice_vao_);
-    glGenBuffers(1, &slice_vbo_);
-    glBindBuffer(GL_ARRAY_BUFFER, slice_vbo_);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(primitives::square), primitives::square,
-                 GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-    glEnableVertexAttribArray(0);
-
     glGenVertexArrays(1, &rotation_axis_vao_);
     glBindVertexArray(rotation_axis_vao_);
     glGenBuffers(1, &rotation_axis_vbo_);
@@ -50,23 +42,12 @@ ReconItem::ReconItem(Scene& scene)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
     glEnableVertexAttribArray(0);
 
-    auto slice_vert =
-#include "../shaders/recon_slice.vert"
-        ;
-    auto slice_frag =
-#include "../shaders/recon_slice.frag"
-        ;
-    slice_shader_ = std::make_unique<ShaderProgram>(slice_vert, slice_frag);
-
     initSlices();
     initVolume();
     maybeUpdateMinMaxValues();
 }
 
 ReconItem::~ReconItem() {
-    glDeleteVertexArrays(1, &slice_vao_);
-    glDeleteBuffers(1, &slice_vbo_);
-
     glDeleteVertexArrays(1, &rotation_axis_vao_);
     glDeleteBuffers(1, &rotation_axis_vbo_);
 }
@@ -145,13 +126,6 @@ void ReconItem::renderGl() {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    slice_shader_->use();
-    slice_shader_->setInt("colormap", 0);
-    slice_shader_->setInt("sliceData", 1);
-    slice_shader_->setInt("volumeData", 2);
-    slice_shader_->setFloat("minValue", min_val_);
-    slice_shader_->setFloat("maxValue", max_val_);
-
     cm_.bind();
 
     const auto& projection = scene_.projectionMatrix();
@@ -172,7 +146,7 @@ void ReconItem::renderGl() {
     });
 
     volume_->bind();
-    for (auto slice : slices) drawSlice(slice, view, projection);
+    for (auto slice : slices) slice->render(view, projection, min_val_, max_val_);
     volume_->unbind();
 
     cm_.unbind();
@@ -392,21 +366,6 @@ void ReconItem::maybeSwitchDragMachine(ReconItem::DragType type) {
                 break;
         }
     }
-}
-
-void ReconItem::drawSlice(Slice* slice, const glm::mat4& view, const glm::mat4& projection) {
-    slice->bind();
-
-    slice_shader_->setMat4("view", view);
-    slice_shader_->setMat4("projection", projection);
-    slice_shader_->setMat4("orientationMatrix", slice->orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0)));
-    slice_shader_->setBool("hovered", slice->hovered());
-    slice_shader_->setBool("empty", slice->empty());
-
-    glBindVertexArray(slice_vao_);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-    slice->unbind();
 }
 
 void ReconItem::maybeUpdateMinMaxValues() {
