@@ -66,6 +66,11 @@ void ProjectionItem::onWindowSizeChanged(int width, int height) {
             (1.0f - Style::MARGIN - Style::PROJECTION_WIDTH) * (float)width,
             (1.0f - Style::PROJECTION_HEIGHT - Style::STATUS_BAR_HEIGHT - 2.f * Style::MARGIN) * (float)(height)
     };
+
+    img_display_size_ = {
+            size_.x - 2 * padding_,
+            size_.y - 2 * padding_,
+    };
 }
 
 void ProjectionItem::renderIm() {
@@ -77,7 +82,7 @@ void ProjectionItem::renderIm() {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(padding_, padding_));
         ImGui::Begin("Raw projection", NULL, ImGuiWindowFlags_NoDecoration);
 
-        ImGui::Image((void*)(intptr_t)fb_->texture(), ImVec2(fb_->width(), fb_->height()));
+        ImGui::Image((void*)(intptr_t)fb_->texture(), img_display_size_);
 
         ImGui::End();
         ImGui::PopStyleVar();
