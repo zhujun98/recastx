@@ -84,7 +84,6 @@ void ReconItem::renderIm() {
     ImGui::DragFloatRange2("Min / Max", &min_val_, &max_val_, step_size,
                            std::numeric_limits<float>::lowest(), // min() does not work
                            std::numeric_limits<float>::max());
-
     ImGui::AlignTextToFramePadding();
     ImGui::Text("Slices: ");
     ImGui::SameLine();
@@ -148,20 +147,8 @@ void ReconItem::renderGl() {
 
     matrix_ = projection * view;
 
-    std::vector<Slice*> slices;
-    for (auto& [slice_id, slice] : slices_) {
-        if (!slice->visible()) continue;
-        slices.push_back(slice.get());
-    }
-    std::sort(slices.begin(), slices.end(), [](auto& lhs, auto& rhs) -> bool {
-        if (rhs->transparent() == lhs->transparent()) {
-            return rhs->id() < lhs->id();
-        }
-        return rhs->transparent();
-    });
-
     volume_->bind();
-    for (auto slice : slices) {
+    for (auto slice : sortedSlices()) {
         slice->render(view, projection, min_val_, max_val_);
     }
     volume_->unbind();
@@ -370,6 +357,21 @@ void ReconItem::updateHoveringSlice(float x, float y) {
     } else {
         hovered_slice_ = nullptr;
     }
+}
+
+std::vector<Slice*> ReconItem::sortedSlices() const {
+    std::vector<Slice*> sorted;
+    for (auto& [slice_id, slice] : slices_) {
+        if (!slice->visible()) continue;
+        sorted.push_back(slice.get());
+    }
+    std::sort(sorted.begin(), sorted.end(), [](auto& lhs, auto& rhs) -> bool {
+        if (rhs->transparent() == lhs->transparent()) {
+            return rhs->id() < lhs->id();
+        }
+        return rhs->transparent();
+    });
+    return sorted;
 }
 
 void ReconItem::maybeSwitchDragMachine(ReconItem::DragType type) {

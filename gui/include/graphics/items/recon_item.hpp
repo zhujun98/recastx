@@ -124,6 +124,8 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
 
     void updateHoveringSlice(float x, float y);
 
+    std::vector<Slice*> sortedSlices() const;
+
     void maybeSwitchDragMachine(DragType type);
 
     void maybeUpdateMinMaxValues();
