@@ -68,8 +68,9 @@ void PreprocItem::renderIm() {
 
     ImGui::BeginDisabled(state_ == rpc::ServerState_State::ServerState_State_PROCESSING);
 
-    ImGui::DragFloat("X offset", &x_offset_, 1, -50, 50, "%.1f");
-    ImGui::DragFloat("Y offset", &y_offset_, 1, -50, 50, "%.1f");
+    // TODO: implement reconstruction with offsets
+//    ImGui::DragFloat("X offset", &x_offset_, 1, -50, 50, "%.1f");
+//    ImGui::DragFloat("Y offset", &y_offset_, 1, -50, 50, "%.1f");
 
     ImGui::Text("Ramp filter: ");
     ImGui::SameLine();
