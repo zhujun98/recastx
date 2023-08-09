@@ -55,13 +55,14 @@ void Volume::setData(DataType&& data, const SizeType& size) {
 void Volume::render(const glm::mat4& view,
                     const glm::mat4& projection,
                     float min_v,
-                    float max_v) {
+                    float max_v,
+                    float alpha) {
     shader_->use();
     shader_->setInt("colormap", 0);
     shader_->setInt("volumeData", 2);
     shader_->setMat4("view", view);
     shader_->setMat4("projection", projection);
-    shader_->setFloat("alpha", 0.2);
+    shader_->setFloat("alpha", alpha);
     shader_->setFloat("minValue", min_v);
     shader_->setFloat("maxValue", max_v);
 

@@ -99,6 +99,12 @@ void ReconItem::renderIm() {
         updateServerSliceParams();
     }
 
+    ImGui::Checkbox("Show volume", &show_volume_);
+    ImGui::SameLine();
+    ImGui::BeginDisabled(!show_volume_);
+    ImGui::SliderFloat("Alpha", &volume_alpha_, 0.0f, 1.0f);
+    ImGui::EndDisabled();
+
     ImGui::Checkbox("Show slice histograms", &show_statistics_);
     if (show_statistics_) {
         ImGui::SetNextWindowPos(st_win_pos_);
@@ -160,7 +166,9 @@ void ReconItem::renderGl() {
     }
     volume_->unbind();
 
-    volume_->render(view, projection, min_val_, max_val_);
+    if (show_volume_) {
+        volume_->render(view, projection, min_val_, max_val_, volume_alpha_);
+    }
 
     cm_.unbind();
 

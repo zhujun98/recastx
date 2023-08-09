@@ -102,6 +102,9 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
     float min_val_;
     float max_val_;
 
+    bool show_volume_ = false;
+    float volume_alpha_ = 0.2f;
+
     glm::mat4 matrix_;
 
     bool show_statistics_ = true;
