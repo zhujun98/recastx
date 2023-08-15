@@ -61,8 +61,7 @@ bool Camera::handleMouseMoved(float x, float y) {
 }
 
 bool Camera::handleKey(int key, int action, int /* mods */) {
-    // TODO: Implement press and hold
-    if (action == GLFW_PRESS) {
+    if (action == GLFW_REPEAT || action == GLFW_PRESS) {
         switch (key) {
             case GLFW_KEY_A:
                 adjustYaw(-key_sensitivity_);
@@ -80,11 +79,15 @@ bool Camera::handleKey(int key, int action, int /* mods */) {
                 adjustPitch(-key_sensitivity_);
                 view_.reset();
                 return true;
-            case GLFW_KEY_SPACE:
-                setPerspectiveView();
-                return true;
             default:
                 break;
+        }
+
+        if (action == GLFW_PRESS) {
+            if (key == GLFW_KEY_SPACE) {
+                setPerspectiveView();
+                return true;
+            }
         }
     }
     return false;
