@@ -72,6 +72,7 @@ void PreprocItem::renderIm() {
 //    ImGui::DragFloat("X offset", &x_offset_, 1, -50, 50, "%.1f");
 //    ImGui::DragFloat("Y offset", &y_offset_, 1, -50, 50, "%.1f");
 
+    ImGui::AlignTextToFramePadding();
     ImGui::Text("Ramp filter: ");
     ImGui::SameLine();
     if (ImGui::BeginCombo("##RampFilter", filter_options.at(ramp_filter_name_).c_str())) {

@@ -78,8 +78,6 @@ bool Slice::empty() const { return data_.empty(); }
 
 bool Slice::hovered() const { return hovered_; }
 
-bool Slice::inactive() const { return inactive_; }
-
 bool Slice::transparent() const { return hovered_ || data_.empty(); }
 
 void Slice::setHovered(bool state) {

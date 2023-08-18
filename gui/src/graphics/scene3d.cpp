@@ -124,6 +124,7 @@ void Scene3d::render() {
     ImGui::RadioButton("Discrete", &scan_mode, static_cast<int>(rpc::ScanMode_Mode_DISCRETE));
     scan_mode_ = rpc::ScanMode_Mode(scan_mode);
 
+    ImGui::AlignTextToFramePadding();
     ImGui::Text("Update interval");
     ImGui::SameLine();
 
@@ -157,19 +158,19 @@ void Scene3d::render() {
 
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "CAMERA");
     ImGui::Checkbox("Fix camera", &fixed_camera_);
-    if (ImGui::Button("X-Y")) {
-        camera_->setTopView();
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("Y-Z")) {
+    if (ImGui::Button("Y-Z##CAMERA")) {
         camera_->setFrontView();
     }
     ImGui::SameLine();
-    if (ImGui::Button("X-Z")) {
+    if (ImGui::Button("X-Z##CAMERA")) {
         camera_->setSideView();
     }
     ImGui::SameLine();
-    if (ImGui::Button("Perspective")) {
+    if (ImGui::Button("X-Y##CAMERA")) {
+        camera_->setTopView();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Perspective##CAMERA")) {
         camera_->setPerspectiveView();
     }
     axes_item_->renderIm();

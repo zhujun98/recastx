@@ -30,6 +30,8 @@ class Slice {
     using SizeType = std::array<size_t, 2>;
     using Orient4Type = glm::mat4;
 
+    friend class ReconItem;
+
   private:
 
     int id_ = -1;
@@ -43,7 +45,7 @@ class Slice {
     std::unique_ptr<ShaderProgram> shader_;
 
     bool hovered_ = false;
-    bool inactive_ = false;
+    bool visible_ = true;
 
     std::array<float, 2> min_max_vals_ {0.f, 0.f};
 
@@ -69,7 +71,9 @@ class Slice {
 
     [[nodiscard]] bool hovered() const;
 
-    [[nodiscard]] bool inactive() const;
+    [[nodiscard]] bool visible() const { return visible_; }
+
+    void show(bool visible) { visible_ = visible; }
 
     [[nodiscard]] bool transparent() const;
 

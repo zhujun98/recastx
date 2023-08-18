@@ -169,7 +169,11 @@ TBD: a data adaptor should be needed
 - *Auto Levels*: Check to enable automatically setting color levels of the displayed objects.
     - *Min*: Minimum colormap value.
     - *Max*: Maximum colormap value.
-- *Reset slices*: Click to reset the positions and orientations of all the slices.
+- *Slices*
+  - *Y-Z*: Toggle the visibility of the slice in the y-z plane.
+  - *X-Z*: Toggle the visibility of the slice in the x-z plane.
+  - *X-Y*: Toggle the visibility of the slice in the x-y plane.
+  - *Reset*: Click to reset the positions and orientations of all the slices.
 
 **Manipulating 3D model with mouse and keyboard:**
 
