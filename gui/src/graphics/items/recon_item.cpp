@@ -85,7 +85,16 @@ void ReconItem::renderIm() {
                            std::numeric_limits<float>::lowest(), // min() does not work
                            std::numeric_limits<float>::max());
 
-    if(ImGui::Button("Reset slices")) {
+    ImGui::AlignTextToFramePadding();
+    ImGui::Text("Slices: ");
+    ImGui::SameLine();
+    ImGui::Checkbox("Y-Z##RECON", &slices_[Slice_YZ].second->visible_);
+    ImGui::SameLine();
+    ImGui::Checkbox("X-Z##RECON", &slices_[Slice_XZ].second->visible_);
+    ImGui::SameLine();
+    ImGui::Checkbox("X-Y##RECON", &slices_[Slice_XY].second->visible_);
+    ImGui::SameLine();
+    if(ImGui::Button("Reset")) {
         initSlices();
         updateServerSliceParams();
     }
@@ -135,7 +144,7 @@ void ReconItem::renderGl() {
 
     std::vector<Slice*> slices;
     for (auto& [slice_id, slice] : slices_) {
-        if (slice->inactive()) continue;
+        if (!slice->visible()) continue;
         slices.push_back(slice.get());
     }
     std::sort(slices.begin(), slices.end(), [](auto& lhs, auto& rhs) -> bool {
@@ -146,7 +155,9 @@ void ReconItem::renderGl() {
     });
 
     volume_->bind();
-    for (auto slice : slices) slice->render(view, projection, min_val_, max_val_);
+    for (auto slice : slices) {
+        slice->render(view, projection, min_val_, max_val_);
+    }
     volume_->unbind();
 
     cm_.unbind();
@@ -296,17 +307,17 @@ void ReconItem::initSlices() {
     assert(slices_.size() == MAX_NUM_SLICES);
 
     // slice along axis 0 = x
-    slices_[0].second->setOrientation(glm::vec3(0.0f, -1.0f, -1.0f),
+    slices_[Slice_YZ].second->setOrientation(glm::vec3(0.0f, -1.0f, -1.0f),
                                       glm::vec3(0.0f, 2.0f, 0.0f),
                                       glm::vec3(0.0f, 0.0f, 2.0f));
 
     // slice along axis 1 = y
-    slices_[1].second->setOrientation(glm::vec3(-1.0f, 0.0f, -1.0f),
+    slices_[Slice_XZ].second->setOrientation(glm::vec3(-1.0f, 0.0f, -1.0f),
                                       glm::vec3(2.0f, 0.0f, 0.0f),
                                       glm::vec3(0.0f, 0.0f, 2.0f));
 
     // slice along axis 2 = z
-    slices_[2].second->setOrientation(glm::vec3(-1.0f, -1.0f, 0.0f),
+    slices_[Slice_XY].second->setOrientation(glm::vec3(-1.0f, -1.0f, 0.0f),
                                       glm::vec3(2.0f, 0.0f, 0.0f),
                                       glm::vec3(0.0f, 2.0f, 0.0f));
 }
@@ -330,7 +341,7 @@ void ReconItem::updateHoveringSlice(float x, float y) {
     float best_z = std::numeric_limits<float>::max();
     for (auto& slice : slices_) {
         Slice* ptr = slice.second.get();
-        if (ptr->inactive()) continue;
+        if (!ptr->visible()) continue;
         ptr->setHovered(false);
         auto maybe_point = intersectionPoint(inv_matrix, ptr->orientation4(), glm::vec2(x, y));
         if (std::get<0>(maybe_point)) {

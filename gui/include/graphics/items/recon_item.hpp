@@ -34,6 +34,12 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
 
     enum class DragType : int { none, rotator, translator};
 
+    enum {
+        Slice_YZ = 0,
+        Slice_XZ = 1,
+        Slice_XY = 2
+    };
+
     class DragMachine {
 
       protected:
