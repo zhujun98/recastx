@@ -12,7 +12,6 @@
 #include <map>
 #include <unordered_set>
 
-
 #include "buffer.hpp"
 #include "reconstructor_interface.hpp"
 

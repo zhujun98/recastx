@@ -12,6 +12,7 @@
 #include <cassert>
 #include <chrono>
 #include <condition_variable>
+#include <iostream>
 #include <map>
 #include <numeric>
 #include <queue>
@@ -25,28 +26,41 @@
 
 namespace recastx::recon {
 
+using namespace std::chrono_literals;
+
 template<typename T>
-class TripleBufferInterface {
+class BufferInterface {
 
-public:
+  protected:
 
-    using BufferType = T;
+    T front_;
 
-private:
+    std::mutex mtx_;
+    std::condition_variable cv_;
+
+    // Something beyond the normal swap might be needed.
+    virtual void swap(T& v1, T& v2) noexcept { v1.swap(v2); };
+
+  public:
+
+    BufferInterface() = default;
+    virtual ~BufferInterface() = default;
+
+    T& front() { return front_; }
+    const T& front() const { return front_; }
+
+    virtual bool fetch(int timeout = -1) = 0;
+};
+
+template<typename T>
+class TripleBufferInterface : public BufferInterface<T> {
 
     bool is_ready_ = false;
-    std::condition_variable cv_;
 
 protected:
 
-    std::mutex mtx_;
-
     T back_;
     T ready_;
-    T front_;
-
-    // Something beyond the normal swap might be needed.
-    virtual void swap(BufferType& v1, BufferType& v2) noexcept = 0;
 
 public:
 
@@ -59,31 +73,27 @@ public:
     TripleBufferInterface(TripleBufferInterface&&) = delete;
     TripleBufferInterface& operator=(TripleBufferInterface&&) = delete;
     
-    bool fetch(int timeout = -1);
+    bool fetch(int timeout = -1) override;
 
     virtual void prepare();
 
-    T& front() { return front_; }
-    T& back() { return back_; };
-
-    const T& front() const { return front_; }
     const T& ready() const { return ready_; }
+
+    T& back() { return back_; };
     const T& back() const { return back_; };
 };
 
 template<typename T>
 bool TripleBufferInterface<T>::fetch(int timeout) {
-    using namespace std::chrono_literals;
-
-    std::unique_lock lk(mtx_);
+    std::unique_lock lk(this->mtx_);
     if (timeout < 0) {
-        cv_.wait(lk, [this] { return is_ready_; });
+        this->cv_.wait(lk, [this] { return is_ready_; });
     } else {
-        if (!(cv_.wait_for(lk, timeout * 1ms, [this] { return is_ready_; }))) {
+        if (!(this->cv_.wait_for(lk, timeout * 1ms, [this] { return is_ready_; }))) {
             return false;
         }
     }
-    swap(front_, ready_);
+    this->swap(this->front_, ready_);
     is_ready_ = false;
     return true;
 }
@@ -91,11 +101,11 @@ bool TripleBufferInterface<T>::fetch(int timeout) {
 template<typename T>
 void TripleBufferInterface<T>::prepare() {
     {
-        std::lock_guard lk(mtx_);
-        swap(ready_, back_);
+        std::lock_guard lk(this->mtx_);
+        this->swap(ready_, back_);
         is_ready_ = true;    
     }
-    cv_.notify_one();
+    this->cv_.notify_one();
 }
 
 
@@ -107,10 +117,6 @@ public:
     using BufferType = Tensor<T, N>;
     using ValueType = typename BufferType::value_type;
     using ShapeType = typename BufferType::ShapeType;
-
-protected:
-
-    void swap(BufferType& c1, BufferType& c2) noexcept override { c1.swap(c2); }
 
 public:
 
@@ -230,20 +236,69 @@ inline void copyBuffer(T* dst,
 
 } // details
 
-template<typename T, size_t N>
-class MemoryBuffer {
+template<typename T>
+class ImageBuffer : public BufferInterface<Tensor<T, 2>> {
 
-public:
+  public:
+
+    using BufferType = Tensor<T, 2>;
+    using ValueType = typename BufferType::ValueType;
+    using ShapeType = typename BufferType::ShapeType;
+
+  private:
+
+    // Caveat: images can have different shapes
+    std::queue<BufferType> buffer_;
+
+    void pop() { buffer_.pop(); }
+
+  public:
+
+    ImageBuffer() = default;
+
+    ~ImageBuffer() override = default;
+
+    template<typename... Args>
+    void emplace(Args&&... args) {
+        buffer_.emplace(std::forward<Args>(args)...);
+        this->cv_.notify_one();
+    };
+
+    bool fetch(int timeout = -1) override;
+};
+
+template<typename T>
+bool ImageBuffer<T>::fetch(int timeout) {
+    std::unique_lock lk(this->mtx_);
+    if (timeout < 0) {
+        this->cv_.wait(lk, [this] { return !buffer_.empty(); });
+    } else {
+        if (!(this->cv_.wait_for(lk, timeout * 1ms, [this] { return !buffer_.empty(); }))) {
+            return false;
+        }
+    }
+
+    this->swap(this->front_, buffer_.front());
+    pop();
+    
+    return true;
+}
+
+
+template<typename T, size_t N>
+class MemoryBuffer : public BufferInterface<Tensor<T, N>> {
+
+  public:
 
     using BufferType = Tensor<T, N>;
     using ValueType = typename BufferType::ValueType;
+    using ShapeType = typename BufferType::ShapeType;
 
-private:
+  private:
 
     std::queue<size_t> chunk_indices_;
     std::unordered_map<size_t, size_t> map_;
 
-    BufferType front_;
     std::deque<BufferType> buffer_;
     std::queue<size_t> unoccupied_;
     std::vector<size_t> counter_;
@@ -254,8 +309,6 @@ private:
     size_t data_received_ = 0;
 #endif
 
-    std::mutex mtx_;
-    std::condition_variable cv_;
     bool is_ready_ = false;
 
     void pop();
@@ -273,7 +326,8 @@ private:
   public:
 
     explicit MemoryBuffer(size_t capacity);
-    ~MemoryBuffer() = default;
+
+    ~MemoryBuffer() override = default;
 
     void resize(const std::array<size_t, N>& shape);
 
@@ -285,19 +339,10 @@ private:
     template<typename D>
     void fill(size_t index, const char* src, const std::array<size_t, N-1>& shape);
 
-    bool fetch(int timeout = -1);
+    bool fetch(int timeout = -1) override;
 
-    BufferType& front() { return front_; }
-    BufferType& ready() {
-        return buffer_[map_.at(chunk_indices_.front())];
-    }
-
-    const BufferType& front() const {
-        return front_;
-    }
-    const BufferType& ready() const {
-        return buffer_[map_.at(chunk_indices_.front())];
-    }
+    BufferType& ready() { return buffer_[map_.at(chunk_indices_.front())]; }
+    const BufferType& ready() const { return buffer_[map_.at(chunk_indices_.front())]; }
 
     size_t capacity() const { 
         assert(this->capacity_ == buffer_.size());
@@ -309,9 +354,9 @@ private:
         return this->capacity_ - unoccupied_.size();
     }
 
-    const std::array<size_t, N>& shape() const { return front_.shape(); }
+    const ShapeType& shape() const { return this->front_.shape(); }
 
-    size_t size() const { return front_.size(); }
+    size_t size() const { return this->front_.size(); }
 };
 
 template<typename T, size_t N>
@@ -341,12 +386,12 @@ void MemoryBuffer<T, N>::resize(const std::array<size_t, N>& shape) {
     reset();
 
     for (size_t i = 0; i < capacity_; ++i) buffer_[i].resize(shape);
-    front_.resize(shape);
+    this->front_.resize(shape);
 }
 
 template<typename T, size_t N>
 void MemoryBuffer<T, N>::reset() {
-    std::lock_guard lk(mtx_);
+    std::lock_guard lk(this->mtx_);
 
     is_ready_ = false;
 
@@ -367,17 +412,17 @@ void MemoryBuffer<T, N>::reset() {
 template<typename T, size_t N>
 template<typename D>
 void MemoryBuffer<T, N>::fill(size_t index, const char* src) {
-    auto& shape = front_.shape();
+    auto& shape = this->front_.shape();
     fill<D>(index, src, {shape[1], shape[2]});
 }
 
 template<typename T, size_t N>
 template<typename D>
 void MemoryBuffer<T, N>::fill(size_t index, const char* src, const std::array<size_t, N-1>& shape) {
-    size_t chunk_size = front_.shape()[0];
+    size_t chunk_size = this->front_.shape()[0];
     size_t chunk_idx = index / chunk_size;
     size_t data_idx = index % chunk_size;
-    std::lock_guard lk(mtx_);
+    std::lock_guard lk(this->mtx_);
 
     if (chunk_indices_.empty()) {
         registerChunk(chunk_idx);
@@ -419,19 +464,17 @@ void MemoryBuffer<T, N>::fill(size_t index, const char* src, const std::array<si
 
 template<typename T, size_t N>
 bool MemoryBuffer<T, N>::fetch(int timeout) {
-    using namespace std::chrono_literals;
-
-    std::unique_lock lk(mtx_);
+    std::unique_lock lk(this->mtx_);
     if (timeout < 0) {
-        cv_.wait(lk, [this] { return is_ready_; });
+        this->cv_.wait(lk, [this] { return is_ready_; });
     } else {
-        if (!(cv_.wait_for(lk, timeout * 1ms, [this] { return is_ready_; }))) {
+        if (!(this->cv_.wait_for(lk, timeout * 1ms, [this] { return is_ready_; }))) {
             return false;
         }
     }
 
     assert(!map_.empty());
-    front_.swap(ready());
+    this->swap(this->front_, ready());
     pop();
     is_ready_ = false;
     
@@ -446,7 +489,7 @@ void MemoryBuffer<T, N>::fillImp(size_t buffer_idx,
                                  const std::array<size_t, N-1>& src_shape) {
     float* data = buffer_[buffer_idx].data();
     std::array<size_t, N-1> dst_shape;
-    auto& buffer_shape = front_.shape();
+    auto& buffer_shape = this->front_.shape();
     std::copy(buffer_shape.begin() + 1, buffer_shape.end(), dst_shape.begin());
     size_t data_size = std::accumulate(dst_shape.begin(), dst_shape.end(), 1, std::multiplies<>());
     details::copyBuffer<T, D>(&data[data_idx * data_size], dst_shape, src, src_shape);
@@ -465,7 +508,7 @@ void MemoryBuffer<T, N>::update(size_t buffer_idx, size_t chunk_idx) {
 
     // Caveat: We do not track the data indices. Therefore, if data with the same
     //         frame idx arrives repeatedly, it will still fill the chunk.
-    if (counter_[buffer_idx] == front_.shape()[0]) {
+    if (counter_[buffer_idx] == this->front_.shape()[0]) {
         // Remove earlier chunks, no matter they are ready or not.
         size_t idx = chunk_indices_.front();
         while (chunk_idx != idx) {
@@ -476,7 +519,7 @@ void MemoryBuffer<T, N>::update(size_t buffer_idx, size_t chunk_idx) {
             idx = chunk_indices_.front();
         }
         is_ready_ = true;
-        cv_.notify_one();
+        this->cv_.notify_one();
     }
 }
 

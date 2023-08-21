@@ -14,26 +14,22 @@
 namespace recastx::recon::test {
 
 TEST(MonitorTest, TestGeneral) {
-    const size_t monitor_projection_every = 5;
-    Monitor mon(1, monitor_projection_every, 10);
+    Monitor mon(1, 10);
 
-    mon.countDark();
-    mon.countFlat();
+    for (size_t i = 0; i < 3; ++i) mon.countDark();
+    ASSERT_EQ(mon.numDarks(), 3);
 
-    for (size_t i = 0; i < monitor_projection_every - 1; ++i) {
-        mon.countProjection(daq::Message(ProjectionType::PROJECTION, i, 2, 2, zmq::message_t()));
-    }
-    ASSERT_FALSE(mon.popProjection().has_value());
+    for (size_t i = 0; i < 4; ++i) mon.countFlat();
+    ASSERT_EQ(mon.numFlats(), 4);
 
-    mon.countProjection(daq::Message(ProjectionType::PROJECTION, 4, 2, 2, zmq::message_t()));
-    ASSERT_TRUE(mon.popProjection().has_value());
-
-    mon.addTomogram();
+    for (size_t i = 0; i < 5; ++i) mon.countProjection();
+    ASSERT_EQ(mon.numProjections(), 5);
+    
+    mon.countTomogram();
 
     mon.summarize();
 
     mon.reset();
-    ASSERT_FALSE(mon.popProjection().has_value()); 
 }
 
 }

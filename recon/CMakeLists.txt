@@ -45,11 +45,11 @@ set(RECON_SOURCES
         "src/ramp_filter.cpp"
         "src/phase.cpp"
         "src/reconstructor.cpp"
+        "src/projection_mediator.cpp"
         "src/slice_mediator.cpp"
         "src/daq_client.cpp"
         "src/rpc_server.cpp"
         "src/monitor.cpp"
-        "src/projection.cpp"
         "src/application.cpp"
 )
 
