@@ -57,6 +57,21 @@ public:
     [[nodiscard]] double frameRate();
 };
 
+inline std::ostream& operator<<(std::ostream& stream, const glm::vec3& v) {
+    stream << "(" << v[0] << ", " << v[1] << ", " << v[2] << ")";
+    return stream;
+}
+
+inline std::ostream& operator<<(std::ostream& stream, const glm::vec4& v) {
+    stream << "(" << v[0] << ", " << v[1] << ", " << v[2] << ", "<< v[3] << ")";
+    return stream;
+}
+
+inline std::ostream& operator<<(std::ostream& stream, const glm::mat4& m) {
+    stream << "[" << m[0] << ", " << m[1] << ", " << m[2] << ", "<< m[3] << "]";
+    return stream;
+}
+
 } // namespace recastx::gui
 
 #endif //GUI_UTILS_H

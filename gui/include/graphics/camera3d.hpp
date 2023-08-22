@@ -25,15 +25,17 @@ namespace recastx::gui {
 
 class Camera : public InputHandler {
 
-    glm::vec3 pos_;
     glm::vec3 target_;
-    glm::vec3 up_;
-    glm::vec3 right_;
+    glm::vec3 pos0_;
+    glm::vec3 front0_;
+    glm::vec3 up0_;
+    glm::vec3 right0_;
+    std::optional<float> distance_ { std::nullopt };
 
     glm::mat4 rotation_;
-    std::optional<glm::mat4> view_ {std::nullopt};
+    std::optional<glm::mat4> view_ { std::nullopt };
 
-    float mouse_scroll_sensitivity_ = 0.1f;
+    float mouse_scroll_sensitivity_ = 0.05f;
     float mouse_move_sensitivity_ = 3.f;
     float key_sensitivity_ = 0.2f;
 
@@ -43,18 +45,17 @@ class Camera : public InputHandler {
     bool dragging_ = false;
 
     void adjustPitch(float offset);
-
     void adjustYaw(float offset);
 
   public:
 
-    Camera();
+    explicit Camera(const glm::vec3& target = glm::vec3 {0.f, 0.f, 0.f});
 
     virtual ~Camera();
 
     [[nodiscard]] const glm::mat4& matrix();
 
-    [[nodiscard]] float distance() const;
+    [[nodiscard]] float distance();
 
     bool handleMouseButton(int button, int action) override;
     bool handleScroll(float offset) override;
