@@ -128,6 +128,10 @@ class Application {
     DaqClientInterface* daq_client_;
     std::unique_ptr<RpcServer> rpc_server_;
 
+    void init();
+
+    void initParams();
+
     void initPaganin(size_t col_count, size_t row_count);
 
     void initFilter(size_t col_count, size_t row_count);
@@ -187,7 +191,6 @@ class Application {
 
     ~Application();
 
-    void init();
 
     template<typename ...Ts>
     void setFlatFieldCorrectionParams(Ts... args) {

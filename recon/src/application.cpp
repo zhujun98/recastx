@@ -51,33 +51,6 @@ Application::~Application() {
     running_ = false; 
 }
 
-void Application::init() {
-    uint32_t downsampling_col = imgproc_params_.downsampling_col;
-    uint32_t downsampling_row = imgproc_params_.downsampling_row;
-    size_t col_count = proj_geom_.col_count / downsampling_col;
-    size_t row_count = proj_geom_.row_count / downsampling_row;
-
-    maybeInitFlatFieldBuffer(row_count, col_count);
-
-    maybeInitReconBuffer(col_count, row_count);
-
-    initPaganin(col_count, row_count);
-    
-    initFilter(col_count, row_count);
-    
-    sino_initialized_ = false;
-    gpu_buffer_index_ = 0;
-    initReconstructor(col_count, row_count);
-
-    spdlog::info("Initial parameters for real-time 3D tomographic reconstruction:");
-    spdlog::info("- Number of required dark images: {}", flatfield_params_.num_darks);
-    spdlog::info("- Number of required flat images: {}", flatfield_params_.num_flats);
-    spdlog::info("- Number of projection images per tomogram: {}", proj_geom_.angles.size());
-    spdlog::info("- Projection image size: {} ({}) x {} ({})", 
-                 col_count, downsampling_col, row_count, downsampling_row);
-    spdlog::info("- Ramp filter: {}", imgproc_params_.ramp_filter.name);
-}
-
 void Application::setProjectionGeometry(BeamShape beam_shape, size_t col_count, size_t row_count,
                                         float pixel_width, float pixel_height,
                                         float src2origin, float origin2det, size_t num_angles) {
@@ -356,7 +329,7 @@ std::optional<rpc::ProjectionData> Application::getProjectionData(int timeout) {
     auto& buffer = proj_mediator_->projections();
     if (buffer.fetch(timeout)) {
         auto& data = buffer.front();
-        auto [x, y] = data.shape();
+        auto [y, x] = data.shape();
         return createProjectionDataPacket(data, x, y);
     }
     return std::nullopt;
@@ -465,8 +438,6 @@ void Application::onStartProcessing() {
 
     size_t s = proj_geom_.row_count * proj_geom_.col_count * proj_geom_.angles.size() * sizeof(RawDtype);
     monitor_.reset(new Monitor(s));
-
-    proj_mediator_->setFilter(group_size_);
 }
 
 void Application::onStopProcessing() {
@@ -477,6 +448,8 @@ void Application::onStopProcessing() {
 }
 
 void Application::onStartAcquiring() {
+    initParams();
+
     daq_client_->startAcquiring();
     spdlog::info("Start acquiring data");
 }
@@ -484,6 +457,42 @@ void Application::onStartAcquiring() {
 void Application::onStopAcquiring() {
     daq_client_->stopAcquiring();
     spdlog::info("Stop acquiring data");
+}
+
+void Application::init() {
+    initParams();
+
+    uint32_t downsampling_col = imgproc_params_.downsampling_col;
+    uint32_t downsampling_row = imgproc_params_.downsampling_row;
+    size_t col_count = proj_geom_.col_count / downsampling_col;
+    size_t row_count = proj_geom_.row_count / downsampling_row;
+
+    maybeInitFlatFieldBuffer(row_count, col_count);
+
+    maybeInitReconBuffer(col_count, row_count);
+
+    initPaganin(col_count, row_count);
+    
+    initFilter(col_count, row_count);
+    
+    initReconstructor(col_count, row_count);
+
+    spdlog::info("Initial parameters for real-time 3D tomographic reconstruction:");
+    spdlog::info("- Number of required dark images: {}", flatfield_params_.num_darks);
+    spdlog::info("- Number of required flat images: {}", flatfield_params_.num_flats);
+    spdlog::info("- Number of projection images per tomogram: {}", proj_geom_.angles.size());
+    spdlog::info("- Projection image size: {} ({}) x {} ({})", 
+                 col_count, downsampling_col, row_count, downsampling_row);
+    spdlog::info("- Ramp filter: {}", imgproc_params_.ramp_filter.name);
+}
+
+void Application::initParams() {
+    group_size_ = (scan_mode_ == rpc::ScanMode_Mode_CONTINUOUS 
+                   ? scan_update_interval_ : proj_geom_.angles.size());
+    proj_mediator_->setFilter(group_size_);
+
+    sino_initialized_ = false;
+    gpu_buffer_index_ = 0;
 }
 
 void Application::initPaganin(size_t col_count, size_t row_count) {
@@ -551,8 +560,6 @@ void Application::maybeInitFlatFieldBuffer(size_t row_count, size_t col_count) {
 }
 
 void Application::maybeInitReconBuffer(size_t col_count, size_t row_count) {
-    group_size_ = (scan_mode_ == rpc::ScanMode_Mode_CONTINUOUS 
-                   ? scan_update_interval_ : proj_geom_.angles.size());
     auto shape = raw_buffer_.shape();
     if (shape[0] != group_size_ || shape[1] != row_count || shape[2] != col_count) {
         raw_buffer_.resize({group_size_, row_count, col_count});

@@ -280,7 +280,6 @@ bool ImageBuffer<T>::fetch(int timeout) {
 
     this->swap(this->front_, buffer_.front());
     pop();
-    
     return true;
 }
 
