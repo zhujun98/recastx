@@ -14,7 +14,10 @@
 #include <cassert>
 #include <cstring>
 #include <numeric>
+#include <stdexcept>
 #include <unordered_set>
+
+#include <fmt/core.h>
 
 #include "common/config.hpp"
 
@@ -27,27 +30,39 @@ class Tensor {
 public:
 
     using ShapeType = std::array<size_t, N>;
+    using ContainerType = std::vector<T>;
     using ValueType = T;
+
+    using value_type = typename ContainerType::value_type;
+    using iterator = typename ContainerType::iterator;
+    using const_iterator = typename ContainerType::const_iterator;
+
+private:
+
+    static size_t size(const ShapeType& shape) {
+        return std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>());
+    }
 
 protected:
 
     ShapeType shape_;
-    std::vector<T> data_;
+    ContainerType data_;
 
 public:
 
-    using value_type = typename std::vector<T>::value_type;
-    using iterator = typename std::vector<T>::iterator;
-    using const_iterator = typename std::vector<T>::const_iterator;
+    Tensor() { shape_.fill(0); };
 
-    Tensor() {
-        shape_.fill(0);
-    };
+    explicit Tensor(const ShapeType& shape) : shape_(shape), data_(size(shape)) {}
 
-    explicit Tensor(const ShapeType& shape)
-        : shape_(shape), 
-          data_(std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>())) {}
-;
+    Tensor(const ShapeType& shape, std::initializer_list<T> ilist) : shape_(shape) {
+        size_t s = size(shape);
+        if (s != ilist.size()) {
+            throw std::runtime_error(fmt::format(
+                "Tensor shape does not match size of the initializer list: {} and {}", s, ilist.size()));
+        }
+        data_.reserve(s);
+        for (auto v : ilist) data_.emplace_back(v);
+    }
 
     virtual ~Tensor() = default; 
 
@@ -68,29 +83,26 @@ public:
         return *this;
     }
 
-    virtual Tensor& operator=(std::initializer_list<T> ilist) {
-        std::copy(ilist.begin(), ilist.end(), data_.begin());
-        return *this;
-    } 
-
     void swap(Tensor& other) noexcept {
         data_.swap(other.data_);
         shape_.swap(other.shape_);
     }
 
     void resize(const ShapeType& shape) {
-        data_.resize(std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>()));
+        data_.resize(size(shape));
         shape_ = shape;
     }
 
     void resize(const ShapeType& shape, T value) {
-        data_.resize(std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>()), value);
+        data_.resize(size(shape), value);
     }
 
+    // TODO: make it a free function
     // FIXME: specialize for N == 1
     template<typename R = T>
     void average(Tensor<R, N-1>& out) const;
 
+    // TODO: make it a free function
     // FIXME: specialize for N == 1
     template<typename R = T>
     Tensor<R, N-1> average() const;
@@ -184,7 +196,11 @@ private:
 public:
 
     ImageGroup() = default;
+
     explicit ImageGroup(const ShapeType& shape) : Tensor<T, 3>(shape) {};
+
+    ImageGroup(const ShapeType& shape, std::initializer_list<T> ilist)
+        : Tensor<T, 3>(shape, ilist), count_(shape[0]) {}
 
     ~ImageGroup() override = default; 
 
@@ -200,12 +216,6 @@ public:
         Tensor<T, 3>::operator=(std::move(other));
         count_ = other.count_;
         other.count_ = 0;
-        return *this;
-    }
-
-    ImageGroup& operator=(std::initializer_list<T> ilist) override {
-        Tensor<T, 3>::operator=(ilist);
-        count_ = this->shape_[0];
         return *this;
     }
 

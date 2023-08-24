@@ -11,7 +11,7 @@ set(RECON_TEST_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/../../common/include
 )
 set(RECON_SRC_FILE_DIR ${CMAKE_CURRENT_LIST_DIR}/../src/)
 
-set(RECON_TEST_COMMON_LIBRARIES spdlog::spdlog gmock gtest)
+set(RECON_TEST_COMMON_LIBRARIES spdlog::spdlog fmt::fmt gmock gtest)
 
 set(TEST_FILES test_tensor.cpp 
                test_buffer.cpp

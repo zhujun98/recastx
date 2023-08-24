@@ -40,7 +40,7 @@ TEST(TripleTensorBufferTest, TestPrepareAndFetch) {
     std::initializer_list<float> data1 {1.f, 2.f, 1.f, 2.f, 1.f, 2.f};
     std::initializer_list<float> data2 {3.f, 4.f, 3.f, 4.f, 3.f, 4.f};
     
-    b2f.back() = data1;
+    std::copy(data1.begin(), data1.end(), b2f.back().begin());
     b2f.prepare();
     EXPECT_THAT(b2f.ready(), Pointwise(FloatNear(1e-6), data1));
     ASSERT_TRUE(b2f.fetch());
@@ -49,7 +49,7 @@ TEST(TripleTensorBufferTest, TestPrepareAndFetch) {
     ASSERT_FALSE(b2f.fetch(0)); // test timeout
     ASSERT_FALSE(b2f.fetch(1)); // test timeout
 
-    b2f.back() = data2;
+    std::copy(data2.begin(), data2.end(), b2f.back().begin());
     b2f.prepare();
     EXPECT_THAT(b2f.ready(), Pointwise(FloatNear(1e-6), data2));
 }

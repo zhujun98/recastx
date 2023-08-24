@@ -73,6 +73,7 @@ target_link_libraries(${RECON_LIB}
         PUBLIC 
                 cppzmq
                 spdlog::spdlog
+                fmt::fmt
                 Eigen3::Eigen
                 astra-toolbox
                 recastx_grpc_proto
