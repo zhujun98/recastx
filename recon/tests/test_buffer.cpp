@@ -131,7 +131,7 @@ class MemoryBufferTest : public testing::Test {
 
 protected:
 
-    size_t capacity_ = 3;
+    int capacity_ = 3;
     std::array<size_t, 3> shape_ {4, 2, 3};
 
     MemoryBuffer<float, 3> buffer_ {capacity_};
@@ -140,6 +140,12 @@ protected:
         buffer_.resize(shape_);
     }
 };
+
+TEST_F(MemoryBufferTest, TestConstructor) {
+    using Buffer = MemoryBuffer<float, 3>;
+    EXPECT_THROW(Buffer(-1), std::runtime_error);
+}
+
 
 TEST_F(MemoryBufferTest, TestGeneral) {
 

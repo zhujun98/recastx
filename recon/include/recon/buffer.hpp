@@ -12,7 +12,6 @@
 #include <cassert>
 #include <chrono>
 #include <condition_variable>
-#include <iostream>
 #include <map>
 #include <numeric>
 #include <queue>
@@ -20,6 +19,7 @@
 #include <type_traits>
 
 #include <spdlog/spdlog.h>
+#include <fmt/core.h>
 
 #include "common/config.hpp"
 #include "tensor.hpp"
@@ -307,7 +307,7 @@ class MemoryBuffer : public BufferInterface<Tensor<T, N>> {
     std::queue<size_t> unoccupied_;
     std::vector<size_t> counter_;
 
-    size_t capacity_ = 0;
+    size_t capacity_;
 
 #if (VERBOSITY >= 2)
     size_t data_received_ = 0;
@@ -329,7 +329,7 @@ class MemoryBuffer : public BufferInterface<Tensor<T, N>> {
 
   public:
 
-    explicit MemoryBuffer(size_t capacity);
+    explicit MemoryBuffer(int capacity);
 
     ~MemoryBuffer() override = default;
 
@@ -377,7 +377,13 @@ void MemoryBuffer<T, N>::pop() {
 }
 
 template<typename T, size_t N>
-MemoryBuffer<T, N>::MemoryBuffer(size_t capacity) : capacity_(capacity) {
+MemoryBuffer<T, N>::MemoryBuffer(int capacity) {
+    if (capacity <= 0) {
+        throw std::runtime_error(fmt::format("'capacity' must be positive. Actual: {}", capacity));
+    } else {
+        capacity_ = static_cast<size_t>(capacity);
+    }
+
     for (size_t i = 0; i < capacity_; ++i) {
         buffer_.push_back(BufferType {});
         counter_.push_back(0);
