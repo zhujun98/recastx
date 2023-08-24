@@ -126,12 +126,30 @@ TEST(ImageBufferTest, TestGeneral) {
     }
 }
 
+TEST(ImageBufferTest, TestCapacity) {
+    {
+        ImageBuffer<uint16_t> buffer(-1);
+        for (size_t i = 0; i < 10; ++i) {
+            buffer.emplace(std::array<size_t, 2>{2, 2}, std::vector<uint16_t> {1, 2, 3, 4});
+        }
+        for (size_t i = 0; i < 10; ++i) ASSERT_TRUE(buffer.fetch());
+    }
+    {
+        ImageBuffer<uint16_t> buffer(1);
+        buffer.emplace(std::array<size_t, 2>{2, 2}, std::vector<uint16_t> {1, 2, 3, 4});
+        buffer.emplace(std::array<size_t, 2>{2, 2}, std::vector<uint16_t> {4, 3, 2, 1});
+        ASSERT_TRUE(buffer.fetch());
+        ASSERT_THAT(buffer.front(), ElementsAre(4, 3, 2, 1));
+        ASSERT_FALSE(buffer.fetch(0));
+    }
+}
+
 
 class MemoryBufferTest : public testing::Test {
 
 protected:
 
-    size_t capacity_ = 3;
+    int capacity_ = 3;
     std::array<size_t, 3> shape_ {4, 2, 3};
 
     MemoryBuffer<float, 3> buffer_ {capacity_};
@@ -140,6 +158,12 @@ protected:
         buffer_.resize(shape_);
     }
 };
+
+TEST_F(MemoryBufferTest, TestConstructor) {
+    using Buffer = MemoryBuffer<float, 3>;
+    EXPECT_THROW(Buffer(-1), std::runtime_error);
+}
+
 
 TEST_F(MemoryBufferTest, TestGeneral) {
 

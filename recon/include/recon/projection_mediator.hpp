@@ -27,7 +27,7 @@ class ProjectionMediator {
     
     using ImageType = typename ImageBuffer<RawDtype>::BufferType;
 
-    ProjectionMediator();
+    ProjectionMediator(int capacity = 0);
 
     ~ProjectionMediator();
 
