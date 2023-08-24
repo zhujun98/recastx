@@ -265,6 +265,11 @@ class ImageBuffer : public BufferInterface<Tensor<T, 2>> {
     };
 
     bool fetch(int timeout = -1) override;
+
+    void reset() {
+        std::lock_guard lk(this->mtx_);
+        std::queue<BufferType>().swap(buffer_);
+    }
 };
 
 template<typename T>

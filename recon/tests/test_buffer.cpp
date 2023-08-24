@@ -109,13 +109,21 @@ TEST(SliceBufferTest, TestOnDemand) {
 
 
 TEST(ImageBufferTest, TestGeneral) {
-    ImageBuffer<uint16_t> buffer;
-    ASSERT_FALSE(buffer.fetch(0));
+    {
+        ImageBuffer<uint16_t> buffer;
+        ASSERT_FALSE(buffer.fetch(0));
 
-    buffer.emplace(std::array<size_t, 2>{2, 3}, std::vector<uint16_t> {1, 2, 3, 4, 5, 6});
-    ASSERT_TRUE(buffer.fetch());
-    ASSERT_THAT(buffer.front(), ElementsAre(1, 2, 3, 4, 5, 6));
-    ASSERT_FALSE(buffer.fetch(0));
+        buffer.emplace(std::array<size_t, 2>{2, 3}, std::vector<uint16_t> {1, 2, 3, 4, 5, 6});
+        ASSERT_TRUE(buffer.fetch());
+        ASSERT_THAT(buffer.front(), ElementsAre(1, 2, 3, 4, 5, 6));
+        ASSERT_FALSE(buffer.fetch(0));
+    }
+    {
+        ImageBuffer<uint16_t> buffer;
+        buffer.emplace(std::array<size_t, 2>{2, 3}, std::vector<uint16_t> {1, 2, 3, 4, 5, 6});
+        buffer.reset();
+        ASSERT_FALSE(buffer.fetch(0));
+    }
 }
 
 

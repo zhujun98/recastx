@@ -29,7 +29,8 @@ void ProjectionMediator::setFilter(int monitor_every, int monitor_index) {
     if (monitor_index < 0) {
         monitor_index_ = 0;
     } else {
-        monitor_index_ = monitor_index < monitor_every_ ? static_cast<size_t>(monitor_index) : monitor_every_ - 1;
+        size_t index = static_cast<size_t>(monitor_index);
+        monitor_index_ = index < monitor_every_ ? index : monitor_every_ - 1;
     }
 }
 

@@ -35,6 +35,10 @@ class ProjectionMediator {
 
     void setFilter(int monitor_every, int monitor_index = 0);
 
+    void reset() { 
+        projections_.reset(); 
+    }
+
     ImageBuffer<RawDtype>& projections() { return projections_; }
 };
 

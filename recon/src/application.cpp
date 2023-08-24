@@ -444,6 +444,7 @@ void Application::onStopProcessing() {
     daq_client_->stopAcquiring();
     spdlog::info("Stop acquiring and processing data");
 
+    proj_mediator_->reset();
     monitor_->summarize();
 }
 
@@ -457,6 +458,8 @@ void Application::onStartAcquiring() {
 void Application::onStopAcquiring() {
     daq_client_->stopAcquiring();
     spdlog::info("Stop acquiring data");
+
+    proj_mediator_->reset();
 }
 
 void Application::init() {
