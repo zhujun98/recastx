@@ -239,6 +239,8 @@ inline void copyBuffer(T* dst,
 template<typename T>
 class ImageBuffer : public BufferInterface<Tensor<T, 2>> {
 
+    size_t capacity_;
+
   public:
 
     using BufferType = Tensor<T, 2>;
@@ -254,12 +256,18 @@ class ImageBuffer : public BufferInterface<Tensor<T, 2>> {
 
   public:
 
-    ImageBuffer() = default;
+    ImageBuffer(int capacity = 0)
+         : capacity_(capacity < 0 ? 0 : static_cast<size_t>(capacity)) {
+    }
 
     ~ImageBuffer() override = default;
 
     template<typename... Args>
     void emplace(Args&&... args) {
+        if (capacity_ > 0 && buffer_.size() == capacity_) {
+            std::lock_guard lk(this->mtx_);
+            pop();
+        }
         buffer_.emplace(std::forward<Args>(args)...);
         this->cv_.notify_one();
     };

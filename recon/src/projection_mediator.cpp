@@ -13,7 +13,10 @@
 
 namespace recastx::recon {
 
-ProjectionMediator::ProjectionMediator() : monitor_every_{1}, monitor_index_{0} {
+ProjectionMediator::ProjectionMediator(int capacity)
+     : monitor_every_{1}, 
+       monitor_index_{0},
+       projections_(capacity) {
 }
 
 ProjectionMediator::~ProjectionMediator() = default;
