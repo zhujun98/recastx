@@ -54,14 +54,20 @@ public:
 
     explicit Tensor(const ShapeType& shape) : shape_(shape), data_(size(shape)) {}
 
-    Tensor(const ShapeType& shape, std::initializer_list<T> ilist) : shape_(shape) {
-        size_t s = size(shape);
-        if (s != ilist.size()) {
+    Tensor(const ShapeType& shape, const std::vector<T>& data) : shape_(shape), data_(data) {
+        size_t s = size(shape_);
+        if (s != data_.size()) {
             throw std::runtime_error(fmt::format(
-                "Tensor shape does not match size of the initializer list: {} and {}", s, ilist.size()));
+                "Tensor shape does not match size of the initializer list: {} and {}", s, data_.size()));
         }
-        data_.reserve(s);
-        for (auto v : ilist) data_.emplace_back(v);
+    }
+
+    Tensor(ShapeType&& shape, std::vector<T>&& data) : shape_(std::move(shape)), data_(std::move(data)) {
+        size_t s = size(shape_);
+        if (s != data_.size()) {
+            throw std::runtime_error(fmt::format(
+                "Tensor shape does not match size of the initializer list: {} and {}", s, data_.size()));
+        }
     }
 
     virtual ~Tensor() = default; 
