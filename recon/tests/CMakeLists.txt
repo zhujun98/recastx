@@ -16,6 +16,7 @@ set(RECON_TEST_COMMON_LIBRARIES spdlog::spdlog fmt::fmt gmock gtest)
 set(TEST_FILES test_tensor.cpp 
                test_buffer.cpp
                test_preprocessing.cpp
+               test_projection_mediator.cpp
                test_slice_mediator.cpp
                test_ramp_filter.cpp
                test_monitor.cpp
@@ -34,10 +35,6 @@ foreach(test_file IN LISTS TEST_FILES)
         set(src_files ${test_filename} ${source_file})
     else()
         set(src_files ${test_filename})
-    endif()
-
-    if (${targetname} STREQUAL "test_monitor")
-        list(APPEND src_files ${RECON_SRC_FILE_DIR}/projection.cpp)
     endif()
 
     add_executable(${targetname} main.cpp ${src_files})
@@ -65,7 +62,7 @@ set(TEST_NAME test_application)
 add_executable(${TEST_NAME} main.cpp test_application.cpp 
         ${RECON_SRC_FILE_DIR}/application.cpp
         ${RECON_SRC_FILE_DIR}/monitor.cpp
-        ${RECON_SRC_FILE_DIR}/projection.cpp
+        ${RECON_SRC_FILE_DIR}/projection_mediator.cpp
         ${RECON_SRC_FILE_DIR}/slice_mediator.cpp
         ${RECON_SRC_FILE_DIR}/phase.cpp
         ${RECON_SRC_FILE_DIR}/rpc_server.cpp

@@ -11,10 +11,8 @@
 namespace recastx::recon {
 
 Monitor::Monitor(size_t scan_byte_size, 
-                 size_t monitor_projection_every,
                  size_t report_tomo_throughput_every) : 
     scan_byte_size_(scan_byte_size),
-    monitor_projection_every_(monitor_projection_every),
     start_(std::chrono::steady_clock::now()),
     tomo_start_(start_),
     report_tomo_throughput_every_(report_tomo_throughput_every) {
@@ -26,8 +24,6 @@ void Monitor::reset() {
     num_projections_ = 0;
     num_tomograms_ = 0;
 
-    std::queue<Projection>().swap(projections_);
-
     resetTimer();
 }
 
@@ -36,21 +32,8 @@ void Monitor::resetTimer() {
     tomo_start_ = start_;
 }
 
-void Monitor::countProjection(Projection msg) {
-    ++num_projections_;
-    if (num_projections_ % monitor_projection_every_ == 0) {
-        projections_.emplace(std::move(msg));
-    }
-}
 
-std::optional<Projection> Monitor::popProjection() {
-    if (projections_.empty()) return std::nullopt;
-    auto proj = std::move(projections_.front());
-    projections_.pop();
-    return proj;
-}
-
-void Monitor::addTomogram() {
+void Monitor::countTomogram() {
     ++num_tomograms_;
 
     if (num_tomograms_ % report_tomo_throughput_every_ == 0) {

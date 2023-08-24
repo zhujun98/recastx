@@ -58,7 +58,7 @@ ProjectionService::ProjectionService(Application* app) : app_(app) {}
 grpc::Status ProjectionService::GetProjectionData(grpc::ServerContext* context,
                                                   const google::protobuf::Empty*,
                                                   grpc::ServerWriter<rpc::ProjectionData>* writer) {
-    auto proj = app_->projectionData();
+    auto proj = app_->getProjectionData(100);
     if (proj) {
         writer->Write(proj.value());
         spdlog::debug("Projection data sent");
@@ -85,9 +85,9 @@ grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
     // - Do not block because slice request needs to be responsive
     // - If the number of the logical threads are more than the number of the physical threads, 
     //   the preview_data could always have value.
-    auto preview_data = app_->previewData(0);
+    auto preview_data = app_->getPreviewData(0);
     if (preview_data) {
-        auto slice_data = app_->sliceData(-1);
+        auto slice_data = app_->getSliceData(-1);
 
         writer->Write(preview_data.value());
         spdlog::debug("Preview data sent");
@@ -98,7 +98,7 @@ grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
             spdlog::debug("Slice data {} ({}) sent", sliceIdFromTimestamp(ts), ts);
         }
     } else {
-        auto slice_data = app_->onDemandSliceData(10);
+        auto slice_data = app_->getOnDemandSliceData(10);
 
         if (!slice_data.empty()) {
             for (const auto& item : slice_data) {

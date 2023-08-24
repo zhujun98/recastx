@@ -43,6 +43,7 @@ namespace recastx::recon {
 
 class Monitor;
 class Paganin;
+class ProjectionMediator;
 class RpcServer;
 class SliceMediator;
 
@@ -70,6 +71,7 @@ class Application {
 
   private:
 
+    size_t group_size_;
     // Why did I choose ProDtype over RawDtype?
     MemoryBuffer<ProDtype, 3> raw_buffer_;
 
@@ -81,6 +83,7 @@ class Application {
 
     TripleTensorBuffer<ProDtype, 3> sino_buffer_;
 
+    std::unique_ptr<ProjectionMediator> proj_mediator_;
     std::unique_ptr<SliceMediator> slice_mediator_;
 
     TripleTensorBuffer<ProDtype, 3> preview_buffer_;
@@ -125,6 +128,10 @@ class Application {
     DaqClientInterface* daq_client_;
     std::unique_ptr<RpcServer> rpc_server_;
 
+    void init();
+
+    void initParams();
+
     void initPaganin(size_t col_count, size_t row_count);
 
     void initFilter(size_t col_count, size_t row_count);
@@ -137,9 +144,9 @@ class Application {
 
     void maybeResetDarkAndFlatAcquisition();
 
-    void pushDark(const Projection& proj);
-    void pushFlat(const Projection& proj);
-    void pushProjection(const Projection& proj);
+    void pushDark(const Projection<>& proj);
+    void pushFlat(const Projection<>& proj);
+    void pushProjection(const Projection<>& proj);
 
     void preprocessProjections(oneapi::tbb::task_arena& arena);
 
@@ -184,7 +191,6 @@ class Application {
 
     ~Application();
 
-    void init();
 
     template<typename ...Ts>
     void setFlatFieldCorrectionParams(Ts... args) {
@@ -224,13 +230,13 @@ class Application {
 
     void onStateChanged(rpc::ServerState_State state);
 
-    std::optional<rpc::ProjectionData> projectionData();
+    std::optional<rpc::ProjectionData> getProjectionData(int timeout);
 
-    std::optional<rpc::ReconData> previewData(int timeout);
+    std::optional<rpc::ReconData> getPreviewData(int timeout);
 
-    std::vector<rpc::ReconData> sliceData(int timeout);
+    std::vector<rpc::ReconData> getSliceData(int timeout);
 
-    std::vector<rpc::ReconData> onDemandSliceData(int timeout);
+    std::vector<rpc::ReconData> getOnDemandSliceData(int timeout);
 
     size_t numAngles() const { return proj_geom_.angles.size(); };
 

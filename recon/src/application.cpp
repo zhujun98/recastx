@@ -18,6 +18,7 @@
 #include "recon/monitor.hpp"
 #include "recon/phase.hpp"
 #include "recon/preprocessing.hpp"
+#include "recon/projection_mediator.hpp"
 #include "recon/rpc_server.hpp"
 #include "recon/slice_mediator.hpp"
 #include "common/scoped_timer.hpp"
@@ -34,6 +35,7 @@ Application::Application(size_t raw_buffer_size,
                          ReconstructorFactory* recon_factory,
                          const RpcServerConfig& rpc_config)
      : raw_buffer_(raw_buffer_size),
+       proj_mediator_(new ProjectionMediator()),
        slice_mediator_(new SliceMediator()),
        ramp_filter_factory_(ramp_filter_factory),
        imgproc_params_(imageproc_params),
@@ -47,33 +49,6 @@ Application::Application(size_t raw_buffer_size,
 
 Application::~Application() { 
     running_ = false; 
-} 
-
-void Application::init() {
-    uint32_t downsampling_col = imgproc_params_.downsampling_col;
-    uint32_t downsampling_row = imgproc_params_.downsampling_row;
-    size_t col_count = proj_geom_.col_count / downsampling_col;
-    size_t row_count = proj_geom_.row_count / downsampling_row;
-
-    maybeInitFlatFieldBuffer(row_count, col_count);
-
-    maybeInitReconBuffer(col_count, row_count);
-
-    initPaganin(col_count, row_count);
-    
-    initFilter(col_count, row_count);
-    
-    sino_initialized_ = false;
-    gpu_buffer_index_ = 0;
-    initReconstructor(col_count, row_count);
-
-    spdlog::info("Initial parameters for real-time 3D tomographic reconstruction:");
-    spdlog::info("- Number of required dark images: {}", flatfield_params_.num_darks);
-    spdlog::info("- Number of required flat images: {}", flatfield_params_.num_flats);
-    spdlog::info("- Number of projection images per tomogram: {}", proj_geom_.angles.size());
-    spdlog::info("- Projection image size: {} ({}) x {} ({})", 
-                 col_count, downsampling_col, row_count, downsampling_row);
-    spdlog::info("- Ramp filter: {}", imgproc_params_.ramp_filter.name);
 }
 
 void Application::setProjectionGeometry(BeamShape beam_shape, size_t col_count, size_t row_count,
@@ -98,7 +73,7 @@ void Application::setReconGeometry(std::optional<size_t> slice_size, std::option
     // initialization is delayed
 }
 
-void Application::pushDark(const Projection& proj) {
+void Application::pushDark(const Projection<>& proj) {
     maybeResetDarkAndFlatAcquisition();
     size_t n = darks_.push(reinterpret_cast<const char*>(proj.data.data()));
     if (n % 10 == 0) {
@@ -106,7 +81,7 @@ void Application::pushDark(const Projection& proj) {
     }
 }
 
-void Application::pushFlat(const Projection& proj) {
+void Application::pushFlat(const Projection<>& proj) {
     maybeResetDarkAndFlatAcquisition();
     size_t n = flats_.push(reinterpret_cast<const char*>(proj.data.data()));
     if (n % 10 == 0) {
@@ -114,7 +89,7 @@ void Application::pushFlat(const Projection& proj) {
     }
 }
 
-void Application::pushProjection(const Projection& proj) {
+void Application::pushProjection(const Projection<>& proj) {
     if (!reciprocal_computed_) {
         if (darks_.empty() || flats_.empty()) {
             spdlog::warn("Send dark and flat images first! Projection ignored.");
@@ -149,7 +124,7 @@ void Application::pushProjection(const Projection& proj) {
 
     // TODO: compute the average on the fly instead of storing the data in the buffer
     raw_buffer_.fill<RawDtype>(
-        proj.index, reinterpret_cast<const char*>(proj.data.data()), {proj.row_count, proj.col_count});
+        proj.index, reinterpret_cast<const char*>(proj.data.data()), proj.data.shape());
 }
 
 void Application::startAcquiring() {
@@ -169,11 +144,14 @@ void Application::startAcquiring() {
                     if (server_state_ == rpc::ServerState_State_PROCESSING) {
                         pushProjection(proj);
                     }
-                    monitor_->countProjection(std::move(proj));
+
+                    monitor_->countProjection();
                     // TODO: could be removed
                     if (monitor_->numProjections() % 10 == 0) {
                         std::this_thread::sleep_for(std::chrono::microseconds(1));
                     }
+
+                    proj_mediator_->emplace(std::move(proj));
                     break;
                 }
                 case ProjectionType::DARK: {
@@ -269,7 +247,7 @@ void Application::startReconstructing() {
             }
             
             spdlog::debug("Preview and slices reconstructed!");
-            monitor_->addTomogram();
+            monitor_->countTomogram();
 
             preview_buffer_.prepare();
         }
@@ -347,16 +325,17 @@ void Application::onStateChanged(rpc::ServerState_State state) {
     server_state_ = state;
 }
 
-std::optional<rpc::ProjectionData> Application::projectionData() {
-    auto proj = monitor_->popProjection();
-    if (proj.has_value()) {
-        auto& v = proj.value();
-        return createProjectionDataPacket(v.data, v.col_count, v.row_count);
+std::optional<rpc::ProjectionData> Application::getProjectionData(int timeout) {
+    auto& buffer = proj_mediator_->projections();
+    if (buffer.fetch(timeout)) {
+        auto& data = buffer.front();
+        auto [y, x] = data.shape();
+        return createProjectionDataPacket(data, x, y);
     }
     return std::nullopt;
 }
 
-std::optional<rpc::ReconData> Application::previewData(int timeout) { 
+std::optional<rpc::ReconData> Application::getPreviewData(int timeout) { 
     if (preview_buffer_.fetch(timeout)) {
         auto& data = preview_buffer_.front();
         auto [x, y, z] = data.shape();
@@ -365,7 +344,7 @@ std::optional<rpc::ReconData> Application::previewData(int timeout) {
     return std::nullopt;
 }
 
-std::vector<rpc::ReconData> Application::sliceData(int timeout) {
+std::vector<rpc::ReconData> Application::getSliceData(int timeout) {
     std::vector<rpc::ReconData> ret;
     auto& buffer = slice_mediator_->allSlices();
     if (buffer.fetch(timeout)) {
@@ -378,7 +357,7 @@ std::vector<rpc::ReconData> Application::sliceData(int timeout) {
     return ret;
 }
 
-std::vector<rpc::ReconData> Application::onDemandSliceData(int timeout) {
+std::vector<rpc::ReconData> Application::getOnDemandSliceData(int timeout) {
     std::vector<rpc::ReconData> ret;
     auto& buffer = slice_mediator_->onDemandSlices();
     if (buffer.fetch(timeout)) {
@@ -446,8 +425,8 @@ void Application::preprocessProjections(oneapi::tbb::task_arena& arena) {
 
 void Application::onStartProcessing() {
     init();
-    daq_client_->startAcquiring();
 
+    daq_client_->startAcquiring();
     spdlog::info("Start acquiring and processing data:");
 
     if (scan_mode_ == rpc::ScanMode_Mode_CONTINUOUS) {
@@ -465,10 +444,13 @@ void Application::onStopProcessing() {
     daq_client_->stopAcquiring();
     spdlog::info("Stop acquiring and processing data");
 
+    proj_mediator_->reset();
     monitor_->summarize();
 }
 
 void Application::onStartAcquiring() {
+    initParams();
+
     daq_client_->startAcquiring();
     spdlog::info("Start acquiring data");
 }
@@ -476,6 +458,44 @@ void Application::onStartAcquiring() {
 void Application::onStopAcquiring() {
     daq_client_->stopAcquiring();
     spdlog::info("Stop acquiring data");
+
+    proj_mediator_->reset();
+}
+
+void Application::init() {
+    initParams();
+
+    uint32_t downsampling_col = imgproc_params_.downsampling_col;
+    uint32_t downsampling_row = imgproc_params_.downsampling_row;
+    size_t col_count = proj_geom_.col_count / downsampling_col;
+    size_t row_count = proj_geom_.row_count / downsampling_row;
+
+    maybeInitFlatFieldBuffer(row_count, col_count);
+
+    maybeInitReconBuffer(col_count, row_count);
+
+    initPaganin(col_count, row_count);
+    
+    initFilter(col_count, row_count);
+    
+    initReconstructor(col_count, row_count);
+
+    spdlog::info("Initial parameters for real-time 3D tomographic reconstruction:");
+    spdlog::info("- Number of required dark images: {}", flatfield_params_.num_darks);
+    spdlog::info("- Number of required flat images: {}", flatfield_params_.num_flats);
+    spdlog::info("- Number of projection images per tomogram: {}", proj_geom_.angles.size());
+    spdlog::info("- Projection image size: {} ({}) x {} ({})", 
+                 col_count, downsampling_col, row_count, downsampling_row);
+    spdlog::info("- Ramp filter: {}", imgproc_params_.ramp_filter.name);
+}
+
+void Application::initParams() {
+    group_size_ = (scan_mode_ == rpc::ScanMode_Mode_CONTINUOUS 
+                   ? scan_update_interval_ : proj_geom_.angles.size());
+    proj_mediator_->setFilter(group_size_);
+
+    sino_initialized_ = false;
+    gpu_buffer_index_ = 0;
 }
 
 void Application::initPaganin(size_t col_count, size_t row_count) {
@@ -543,12 +563,10 @@ void Application::maybeInitFlatFieldBuffer(size_t row_count, size_t col_count) {
 }
 
 void Application::maybeInitReconBuffer(size_t col_count, size_t row_count) {
-    size_t chunk_size = (scan_mode_ == rpc::ScanMode_Mode_CONTINUOUS 
-                         ? scan_update_interval_ : proj_geom_.angles.size());
     auto shape = raw_buffer_.shape();
-    if (shape[0] != chunk_size || shape[1] != row_count || shape[2] != col_count) {
-        raw_buffer_.resize({chunk_size, row_count, col_count});
-        sino_buffer_.resize({chunk_size, row_count, col_count});
+    if (shape[0] != group_size_ || shape[1] != row_count || shape[2] != col_count) {
+        raw_buffer_.resize({group_size_, row_count, col_count});
+        sino_buffer_.resize({group_size_, row_count, col_count});
         spdlog::debug("Reconstruction buffers resized");
     }
     raw_buffer_.reset();

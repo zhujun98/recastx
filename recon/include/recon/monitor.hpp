@@ -10,16 +10,12 @@
 #define RECON_MONITOR_H
 
 #include <chrono>
-#include <optional>
-#include <queue>
 
 #include <spdlog/spdlog.h>
 
 #include "daq_client_interface.hpp"
 
 namespace recastx::recon {
-
-class Projection;
 
 class Monitor {
 
@@ -30,17 +26,13 @@ class Monitor {
 
     size_t scan_byte_size_;
 
-    size_t monitor_projection_every_;
-    std::queue<Projection> projections_;
-
     std::chrono::time_point<std::chrono::steady_clock> start_;
     std::chrono::time_point<std::chrono::steady_clock> tomo_start_;
     size_t report_tomo_throughput_every_;
 
   public:
 
-    Monitor(size_t scan_byte_size = 0, 
-            size_t monitor_projection_every = 100,
+    Monitor(size_t scan_byte_size = 0,
             size_t report_tomo_throughput_every = 10);
 
     void reset();
@@ -48,18 +40,16 @@ class Monitor {
     void resetTimer();
 
     void countDark() { ++num_darks_; }
-
     void countFlat() { ++num_flats_; }
+    void countProjection() { ++num_projections_; }
 
-    void countProjection(Projection msg);
-
-    std::optional<Projection> popProjection();
-
-    size_t numProjections() const { return num_projections_; }
-
-    void addTomogram();
+    void countTomogram();
 
     void summarize() const;
+  
+    size_t numDarks() const { return num_darks_; }
+    size_t numFlats() const { return num_flats_; }
+    size_t numProjections() const { return num_projections_; }
 };
 
 } // namespace recastx::recon

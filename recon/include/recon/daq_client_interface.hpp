@@ -14,9 +14,9 @@
 
 #include <zmq.hpp>
 
-#include "projection.hpp"
-
 namespace recastx::recon {
+
+enum class ProjectionType : int { DARK = 0, FLAT = 1, PROJECTION = 2, UNKNOWN = 99 };
 
 namespace daq {
 
