@@ -105,7 +105,7 @@ class TripleTensorBuffer : public TripleBufferInterface<Tensor<T, N>> {
 public:
 
     using BufferType = Tensor<T, N>;
-    using ValueType = typename BufferType::ValueType;
+    using ValueType = typename BufferType::value_type;
     using ShapeType = typename BufferType::ShapeType;
 
 protected:

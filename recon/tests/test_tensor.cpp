@@ -19,68 +19,50 @@ using ::testing::ElementsAre;
 
 TEST(TestTensor, TestConstructor) {
     {
-        Tensor<float, 1> t1f({3});
-        EXPECT_THAT(t1f.shape(), ElementsAre(3));
-        EXPECT_EQ(t1f.size(), 3);
+        Tensor<float, 1> tf({3});
+        EXPECT_THAT(tf.shape(), ElementsAre(3));
+        EXPECT_EQ(tf.size(), 3);
     }
     {
-        Tensor<float, 2> t2f({3, 2});
-        EXPECT_THAT(t2f.shape(), ElementsAre(3, 2));
-        EXPECT_EQ(t2f.size(), 6);
-
-        t2f = {1, 1, 1, 2, 2, 2};
-
-        Tensor<float, 2> t2f_c(t2f);
-        ASSERT_THAT(t2f_c.shape(), ElementsAre(3, 2));
-        EXPECT_THAT(t2f_c, ElementsAre(1, 1, 1, 2, 2, 2));
-
-        Tensor<float, 2> t2f_c2;
-        t2f_c2 = t2f;
-        ASSERT_THAT(t2f_c2.shape(), ElementsAre(3, 2));
-        EXPECT_THAT(t2f_c2, ElementsAre(1, 1, 1, 2, 2, 2));
-
-        Tensor<float, 2> t2f_m(std::move(t2f));
-        ASSERT_THAT(t2f_m.shape(), ElementsAre(3, 2));
-        EXPECT_THAT(t2f_m, ElementsAre(1, 1, 1, 2, 2, 2));
-        ASSERT_THAT(t2f.shape(), ElementsAre(0, 0));
-        EXPECT_THAT(t2f, ElementsAre());
-
-        Tensor<float, 2> t2f_m2(t2f_m);
-        t2f_m2 = std::move(t2f_m);
-        ASSERT_THAT(t2f_m2.shape(), ElementsAre(3, 2));
-        EXPECT_THAT(t2f_m2, ElementsAre(1, 1, 1, 2, 2, 2));
-        ASSERT_THAT(t2f_m.shape(), ElementsAre(0, 0));
-        EXPECT_THAT(t2f_m, ElementsAre());
-    }
-}
-
-TEST(TestTensor, TestAssignment) {
-    {
-        Tensor<float, 1> t1f({3});
-        t1f = {1, 2, 3};
-        EXPECT_THAT(t1f, ElementsAre(1, 2, 3));
+        Tensor<float, 2> tf({2, 4});
+        EXPECT_THAT(tf.shape(), ElementsAre(2, 4));
+        EXPECT_EQ(tf.size(), 8);
     }
     {
-        Tensor<float, 2> t2f({3, 2});
-        t2f = {1, 1, 1, 2, 2, 2};
-        EXPECT_THAT(t2f, ElementsAre(1, 1, 1, 2, 2, 2));
-        EXPECT_THAT(t2f.shape(), ElementsAre(3, 2));
-
-        // t2f = {1, 1, 1, 2, 2, 2, 2}; // segfault
-
-        t2f = {1, 1, 1, 3, 3};
-        EXPECT_THAT(t2f, ElementsAre(1, 1, 1, 3, 3, 2));
+        using TS = Tensor<float, 2>;
+        EXPECT_THROW(TS({2, 2}, {1, 2, 3}), std::runtime_error);
     }
     {
-        Tensor<float, 2> t2f;
-        EXPECT_THAT(t2f.shape(), ElementsAre(0, 0));
-        // t2f = {1, 2, 3}; // segfault because shape is (0, 0)
+        Tensor<float, 2> tf({3, 2}, {1, 1, 1, 2, 2, 2});
+        EXPECT_THAT(tf.shape(), ElementsAre(3, 2));
+        EXPECT_EQ(tf.size(), 6);
+
+        Tensor<float, 2> tf_c(tf);
+        ASSERT_THAT(tf_c.shape(), ElementsAre(3, 2));
+        EXPECT_THAT(tf_c, ElementsAre(1, 1, 1, 2, 2, 2));
+
+        Tensor<float, 2> tf_c2;
+        tf_c2 = tf;
+        ASSERT_THAT(tf_c2.shape(), ElementsAre(3, 2));
+        EXPECT_THAT(tf_c2, ElementsAre(1, 1, 1, 2, 2, 2));
+
+        Tensor<float, 2> tf_m(std::move(tf));
+        ASSERT_THAT(tf_m.shape(), ElementsAre(3, 2));
+        EXPECT_THAT(tf_m, ElementsAre(1, 1, 1, 2, 2, 2));
+        ASSERT_THAT(tf.shape(), ElementsAre(0, 0));
+        EXPECT_THAT(tf, ElementsAre());
+
+        Tensor<float, 2> tf_m2(tf_m);
+        tf_m2 = std::move(tf_m);
+        ASSERT_THAT(tf_m2.shape(), ElementsAre(3, 2));
+        EXPECT_THAT(tf_m2, ElementsAre(1, 1, 1, 2, 2, 2));
+        ASSERT_THAT(tf_m.shape(), ElementsAre(0, 0));
+        EXPECT_THAT(tf_m, ElementsAre());
     }
 }
 
 TEST(TensorTest, TestReshape) {
-    Tensor<float, 2> t2f({3, 2});
-    t2f = {1, 1, 1, 2, 2, 2};
+    Tensor<float, 2> t2f({3, 2}, {1, 1, 1, 2, 2, 2});
     t2f.resize({1, 4});
     EXPECT_THAT(t2f, ElementsAre(1, 1, 1, 2));
     ASSERT_THAT(t2f.shape(), ElementsAre(1, 4));
@@ -91,8 +73,7 @@ TEST(TensorTest, TestReshape) {
 }
 
 TEST(TestTensor, TestAverage) {
-    Tensor<float, 2> t2({2, 3});
-    t2 = {1, 1, 1, 2, 2, 2};
+    Tensor<float, 2> t2({2, 3}, {1, 1, 1, 2, 2, 2});
     auto ret2 = t2.average();
     EXPECT_THAT(ret2, ElementsAre(1.5, 1.5, 1.5));
 
@@ -104,42 +85,45 @@ TEST(TestTensor, TestAverage) {
 }
 
 TEST(TestImageGroup, TestConstructor) {
-    RawImageGroup g1({1, 3, 2});
-    ASSERT_TRUE(g1.empty());
-    ASSERT_FALSE(g1.full());
+    {
+        RawImageGroup g({1, 3, 2});
+        ASSERT_TRUE(g.empty());
+        ASSERT_FALSE(g.full());
+    }
+    {
+        RawImageGroup g({1, 3, 2}, {1, 1, 1, 1, 1, 1});
+        EXPECT_THAT(g, ElementsAre(1, 1, 1, 1, 1, 1));
+        ASSERT_TRUE(g.full());
 
-    g1 = {1, 1, 1, 1, 1, 1};
-    EXPECT_THAT(g1, ElementsAre(1, 1, 1, 1, 1, 1));
-    ASSERT_TRUE(g1.full());
+        RawImageGroup g_m(std::move(g));
+        EXPECT_THAT(g_m, ElementsAre(1, 1, 1, 1, 1, 1));
+        ASSERT_TRUE(g_m.full());
+        EXPECT_THAT(g, ElementsAre());
+        ASSERT_TRUE(g.empty());
 
-    RawImageGroup g1_m(std::move(g1));
-    EXPECT_THAT(g1_m, ElementsAre(1, 1, 1, 1, 1, 1));
-    ASSERT_TRUE(g1_m.full());
-    EXPECT_THAT(g1, ElementsAre());
-    ASSERT_TRUE(g1.empty());
-
-    RawImageGroup g1_m2(g1_m);
-    g1_m2 = std::move(g1_m);
-    EXPECT_THAT(g1_m2, ElementsAre(1, 1, 1, 1, 1, 1));
-    ASSERT_TRUE(g1_m2.full());
-    EXPECT_THAT(g1_m, ElementsAre());
-    ASSERT_TRUE(g1_m.empty());  
+        RawImageGroup g_m2(g_m);
+        g_m2 = std::move(g_m);
+        EXPECT_THAT(g_m2, ElementsAre(1, 1, 1, 1, 1, 1));
+        ASSERT_TRUE(g_m2.full());
+        EXPECT_THAT(g_m, ElementsAre());
+        ASSERT_TRUE(g_m.empty()); 
+    }
 }
 
 TEST(TestImageGroup, TestPushToRaw) {
     RawImageGroup g1({4, 3, 2});
-    using value_type = typename RawImageGroup::value_type;
+    using ValueType = typename RawImageGroup::ValueType;
 
     {
-        value_type x[6] = {0, 0, 0, 0, 0, 0};
+        ValueType x[6] = {0, 0, 0, 0, 0, 0};
         g1.push(reinterpret_cast<char*>(x));
         ASSERT_FALSE(g1.empty());
         ASSERT_FALSE(g1.full());
     }
 
     for (size_t i = 1; i < g1.shape()[0]; ++i) {
-        auto v = static_cast<value_type>(i);
-        value_type x[6] = {v, v, v, v, v, v};
+        auto v = static_cast<ValueType>(i);
+        ValueType x[6] = {v, v, v, v, v, v};
         g1.push(reinterpret_cast<char*>(x));
     }
     ASSERT_TRUE(g1.full());
@@ -150,7 +134,7 @@ TEST(TestImageGroup, TestPushToRaw) {
 
     // test overwritten
     {
-        value_type x[6] = {4, 4, 4, 4, 4, 4};
+        ValueType x[6] = {4, 4, 4, 4, 4, 4};
         g1.push(reinterpret_cast<char*>(x));
         ASSERT_TRUE(g1.full());
         EXPECT_THAT(g1, ElementsAre(4, 4, 4, 4, 4, 4, 
@@ -167,9 +151,9 @@ TEST(TestImageGroup, TestPushToRaw) {
 
 TEST(TestImageGroup, TestPushToRawWithDowmsampling) {
     RawImageGroup g1({4, 2, 3});
-    using value_type = typename RawImageGroup::value_type;
+    using ValueType = typename RawImageGroup::ValueType;
 
-    value_type x1[28] = {
+    ValueType x1[28] = {
         1, 2, 3, 4, 5, 6, 7,
         2, 3, 4, 5, 6, 7, 8,
         3, 4, 5, 6, 7, 8, 9,
@@ -177,7 +161,7 @@ TEST(TestImageGroup, TestPushToRawWithDowmsampling) {
     };
     g1.push(reinterpret_cast<char*>(x1), {4, 7});
 
-    value_type x2[24] = {
+    ValueType x2[24] = {
         1, 2, 3, 4, 5, 6,
         2, 3, 4, 5, 6, 7,
         3, 4, 5, 6, 7, 8,
@@ -185,13 +169,13 @@ TEST(TestImageGroup, TestPushToRawWithDowmsampling) {
     };
     g1.push(reinterpret_cast<char*>(x2), {4, 6});
     
-    value_type x3[12] = {
+    ValueType x3[12] = {
         1, 2, 3, 4, 5, 6,
         2, 3, 4, 5, 6, 7
     };
     g1.push(reinterpret_cast<char*>(x3), {2, 6});
     
-    value_type x4[12] = {
+    ValueType x4[12] = {
         1, 2, 3,
         2, 3, 4,
         3, 4, 5,
@@ -207,7 +191,7 @@ TEST(TestImageGroup, TestPushToRawWithDowmsampling) {
 
 TEST(TestImageGroup, TestPushToPro) {
     ProImageGroup g1({2, 3, 2});
-    ProImageGroup::value_type x[6] = {1, 2, 3, 4, 5, 6};
+    ProImageGroup::ValueType x[6] = {1, 2, 3, 4, 5, 6};
     g1.push(reinterpret_cast<char*>(x));
     EXPECT_THAT(g1, ElementsAre(1.f, 2.f, 3.f, 4.f, 5.f, 6.f, 
                                 0.f, 0.f, 0.f, 0.f, 0.f, 0.f));

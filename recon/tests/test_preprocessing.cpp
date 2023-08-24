@@ -21,13 +21,12 @@ using ::testing::FloatNear;
 
 TEST(TestPreprocessing, TestDownsample) {
     {
-        ProImageData src ({4, 4});
-        src = {
+        ProImageData src ({4, 4}, {
             0, 1, 2, 3,
             1, 2, 3, 4,
             2, 3, 4, 5,
             3, 4, 5, 6
-        };
+        });
         ProImageData dst ({2, 2});
         downsample(src, dst);
         EXPECT_THAT(dst, ElementsAreArray({
@@ -36,8 +35,7 @@ TEST(TestPreprocessing, TestDownsample) {
         }));
     }
     {
-        ProImageData src ({7, 5});
-        src = {
+        ProImageData src ({7, 5}, {
             0, 1, 2, 3, 4,
             1, 2, 3, 4, 5,
             2, 3, 4, 5, 6,
@@ -45,7 +43,7 @@ TEST(TestPreprocessing, TestDownsample) {
             4, 5, 6, 7, 8,
             5, 6, 7, 8, 9,
             6, 7, 8, 9, 10,
-        };
+        });
         ProImageData dst ({3, 2});
         downsample(src, dst);
         EXPECT_THAT(dst, ElementsAreArray({
@@ -58,18 +56,16 @@ TEST(TestPreprocessing, TestDownsample) {
 
 TEST(TestPreprocessing, TestComputeReciprocal) {
     std::array<size_t, 2> shape {4, 3};
-    RawImageGroup darks({3, shape[0], shape[1]});
-    darks = {
+    RawImageGroup darks({3, shape[0], shape[1]}, {
         4, 1, 1, 2, 0, 9, 7, 4, 3, 8, 6, 8, 
         1, 7, 3, 0, 6, 6, 0, 8, 1, 8, 4, 2, 
         2, 4, 6, 0, 9, 5, 8, 3, 4, 2, 2, 0
-    };
-    RawImageGroup flats({3, shape[0], shape[1]});
-    flats = {
+    });
+    RawImageGroup flats({3, shape[0], shape[1]}, {
         1, 9, 5, 1, 7, 9, 0, 6, 7, 1, 5, 6, 
         2, 4, 8, 1, 3, 9, 5, 6, 1, 1, 1, 7, 
         9, 9, 4, 1, 6, 8, 6, 9, 2, 4, 9, 4
-    };
+    });
 
     auto [dark_avg, reciprocal] = computeReciprocal(darks, flats);
 
