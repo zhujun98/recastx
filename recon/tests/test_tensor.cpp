@@ -20,44 +20,61 @@ using ::testing::ElementsAre;
 TEST(TestTensor, TestConstructor) {
     {
         Tensor<float, 1> tf({3});
-        EXPECT_THAT(tf.shape(), ElementsAre(3));
-        EXPECT_EQ(tf.size(), 3);
+        ASSERT_THAT(tf.shape(), ElementsAre(3));
+        ASSERT_EQ(tf.size(), 3);
     }
     {
         Tensor<float, 2> tf({2, 4});
-        EXPECT_THAT(tf.shape(), ElementsAre(2, 4));
-        EXPECT_EQ(tf.size(), 8);
+        ASSERT_THAT(tf.shape(), ElementsAre(2, 4));
+        ASSERT_EQ(tf.size(), 8);
     }
     {
         using TS = Tensor<float, 2>;
         EXPECT_THROW(TS({2, 2}, {1, 2, 3}), std::runtime_error);
+
+        const std::vector<float> data {1, 2, 3};
+        EXPECT_THROW(TS({2, 2}, data), std::runtime_error);
+    }
+    {
+        const std::vector<float> data {1, 2, 3, 4};
+        Tensor<float, 2> tf({2, 2}, data);
+        ASSERT_THAT(tf.shape(), ElementsAre(2, 2));
+        ASSERT_THAT(tf, ElementsAre(1, 2, 3, 4));
+        ASSERT_THAT(data, ElementsAre(1, 2, 3, 4));
+    }
+    {
+        std::vector<float> data {1, 2, 3, 4};
+        Tensor<float, 2> tf({2, 2}, std::move(data));
+        ASSERT_THAT(tf.shape(), ElementsAre(2, 2));
+        ASSERT_THAT(tf, ElementsAre(1, 2, 3, 4));
+        ASSERT_TRUE(data.empty());
     }
     {
         Tensor<float, 2> tf({3, 2}, {1, 1, 1, 2, 2, 2});
-        EXPECT_THAT(tf.shape(), ElementsAre(3, 2));
-        EXPECT_EQ(tf.size(), 6);
+        ASSERT_THAT(tf.shape(), ElementsAre(3, 2));
+        ASSERT_THAT(tf.size(), 6);
 
         Tensor<float, 2> tf_c(tf);
         ASSERT_THAT(tf_c.shape(), ElementsAre(3, 2));
-        EXPECT_THAT(tf_c, ElementsAre(1, 1, 1, 2, 2, 2));
+        ASSERT_THAT(tf_c, ElementsAre(1, 1, 1, 2, 2, 2));
 
         Tensor<float, 2> tf_c2;
         tf_c2 = tf;
         ASSERT_THAT(tf_c2.shape(), ElementsAre(3, 2));
-        EXPECT_THAT(tf_c2, ElementsAre(1, 1, 1, 2, 2, 2));
+        ASSERT_THAT(tf_c2, ElementsAre(1, 1, 1, 2, 2, 2));
 
         Tensor<float, 2> tf_m(std::move(tf));
         ASSERT_THAT(tf_m.shape(), ElementsAre(3, 2));
-        EXPECT_THAT(tf_m, ElementsAre(1, 1, 1, 2, 2, 2));
+        ASSERT_THAT(tf_m, ElementsAre(1, 1, 1, 2, 2, 2));
         ASSERT_THAT(tf.shape(), ElementsAre(0, 0));
-        EXPECT_THAT(tf, ElementsAre());
+        ASSERT_THAT(tf, ElementsAre());
 
         Tensor<float, 2> tf_m2(tf_m);
         tf_m2 = std::move(tf_m);
         ASSERT_THAT(tf_m2.shape(), ElementsAre(3, 2));
-        EXPECT_THAT(tf_m2, ElementsAre(1, 1, 1, 2, 2, 2));
+        ASSERT_THAT(tf_m2, ElementsAre(1, 1, 1, 2, 2, 2));
         ASSERT_THAT(tf_m.shape(), ElementsAre(0, 0));
-        EXPECT_THAT(tf_m, ElementsAre());
+        ASSERT_THAT(tf_m, ElementsAre());
     }
 }
 
