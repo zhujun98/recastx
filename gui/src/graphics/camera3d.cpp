@@ -53,9 +53,10 @@ bool Camera::handleScroll(float offset) {
 }
 
 bool Camera::handleMouseMoved(float x, float y) {
-    if (prev_y_ < -1.0f) {
+    if (!initialized_) {
         prev_x_ = x;
         prev_y_ = y;
+        initialized_ = true;
     }
 
     float x_offset = x - prev_x_;

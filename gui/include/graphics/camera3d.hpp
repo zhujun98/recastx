@@ -36,11 +36,12 @@ class Camera : public InputHandler {
     std::optional<glm::mat4> view_ { std::nullopt };
 
     float mouse_scroll_sensitivity_ = 0.05f;
-    float mouse_move_sensitivity_ = 3.f;
+    float mouse_move_sensitivity_ = 5.f;
     float key_sensitivity_ = 0.2f;
 
-    float prev_x_ = -1.1f;
-    float prev_y_ = -1.1f;
+    bool initialized_ = false;
+    float prev_x_ = 0.f;
+    float prev_y_ = 0.f;
 
     bool dragging_ = false;
 

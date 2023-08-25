@@ -188,7 +188,7 @@ std::array<float, 2> Application::normalizeCursorPos(GLFWwindow* window, double 
     int h = 0;
     glfwGetWindowSize(window, &w, &h);
 
-    xpos = (2.0 * (xpos / w) - 1.0) * (static_cast<double>(w) / h);
+    xpos = (2.0 * (xpos / w) - 1.0) * w / h;
     ypos = 2.0 * (ypos / h) - 1.0;
     return {static_cast<float>(xpos), static_cast<float>(ypos)};
 }
