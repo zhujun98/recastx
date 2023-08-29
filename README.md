@@ -1,6 +1,6 @@
 # RECAST-X
 
-**REC**onstruction of **A**rbitrary **S**lices in **T**omography - **X**
+**REC**onstruction of **A**rbitrary **S**labs in **T**omography - **X**
 
 **Authors**: Jun Zhu <zhujun981661@gmail.com>
 
