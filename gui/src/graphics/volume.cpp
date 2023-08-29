@@ -10,6 +10,8 @@
 #include "graphics/primitives.hpp"
 #include "graphics/shader_program.hpp"
 
+#include "utils.hpp"
+
 namespace recastx::gui {
 
 Volume::Volume() : size_({128, 128, 128}) {
@@ -20,11 +22,12 @@ Volume::Volume() : size_({128, 128, 128}) {
     glBindVertexArray(vao_);
     glGenBuffers(1, &vbo_);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(primitives::cube), primitives::cube, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glBufferData(GL_ARRAY_BUFFER,
+                 sizeof(VolumeSlicer::DataType::value_type) * slicer_.slices().size(),
+                 0,
+                 GL_DYNAMIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
 
     auto vert =
 #include "shaders/recon_volume.vert"
@@ -66,9 +69,21 @@ void Volume::render(const glm::mat4& view,
     shader_->setFloat("minValue", min_v);
     shader_->setFloat("maxValue", max_v);
 
+    auto view_dir = glm::vec3(-view[0][2], -view[1][2], -view[2][2]);
+    slicer_.update(view_dir);
+
     texture_.bind();
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_);
+    auto count = static_cast<int>(slicer_.slices().size());
+    glBufferSubData(GL_ARRAY_BUFFER,
+                    0,
+                    sizeof(VolumeSlicer::DataType::value_type) * count,
+                    slicer_.slices().data());
+
     glBindVertexArray(vao_);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glDrawArrays(GL_TRIANGLES, 0, count);
+
     texture_.unbind();
 }
 

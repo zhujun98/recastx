@@ -24,6 +24,6 @@ void main() {
         value = remapMinMax(texture(volumeData, volumeCoord).x, minValue, maxValue);
     }
 
-    fColor = vec4(texture(colormap, value).xyz, alpha);
+    fColor = vec4(texture(colormap, value).xyz, alpha * value);
 }
 )glsl"
