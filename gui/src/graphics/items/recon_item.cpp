@@ -24,6 +24,7 @@
 #include "graphics/primitives.hpp"
 #include "graphics/slice.hpp"
 #include "graphics/style.hpp"
+#include "graphics/volume.hpp"
 #include "graphics/wireframe.hpp"
 #include "logger.hpp"
 
@@ -31,7 +32,8 @@ namespace recastx::gui {
 
 ReconItem::ReconItem(Scene& scene)
         : GraphicsItem(scene),
-          wireframe_(new Wireframe) {
+          volume_(new Volume{}),
+          wireframe_(new Wireframe{}) {
     scene.addItem(this);
 
     glGenVertexArrays(1, &rotation_axis_vao_);
@@ -43,7 +45,6 @@ ReconItem::ReconItem(Scene& scene)
     glEnableVertexAttribArray(0);
 
     initSlices();
-    initVolume();
     maybeUpdateMinMaxValues();
 }
 
@@ -328,10 +329,6 @@ bool ReconItem::updateServerSliceParams() {
         }
     }
     return false;
-}
-
-void ReconItem::initVolume() {
-    volume_ = std::make_unique<Volume>();
 }
 
 void ReconItem::updateHoveringSlice(float x, float y) {

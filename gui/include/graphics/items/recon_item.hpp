@@ -21,13 +21,13 @@
 #include "graphics/scene.hpp"
 #include "graphics/shader_program.hpp"
 #include "graphics/textures.hpp"
-#include "graphics/volume.hpp"
 #include "utils.hpp"
 
 namespace recastx::gui {
 
 class FpsCounter;
 class Slice;
+class Volume;
 class Wireframe;
 
 class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDataItem {
@@ -119,8 +119,6 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
     void initSlices();
 
     bool updateServerSliceParams();
-
-    void initVolume();
 
     void updateHoveringSlice(float x, float y);
 
