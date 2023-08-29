@@ -174,6 +174,8 @@ TBD: a data adaptor should be needed
   - *X-Z*: Toggle the visibility of the slice in the x-z plane.
   - *X-Y*: Toggle the visibility of the slice in the x-y plane.
   - *Reset*: Click to reset the positions and orientations of all the slices.
+- *Show volume*: Check to display the low-resolution 3D volume.
+  - *Alpha*: Opacity of the low-resolution 3D volume.
 
 **Manipulating 3D model with mouse and keyboard:**
 
