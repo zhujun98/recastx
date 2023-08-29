@@ -49,8 +49,6 @@ Application::Application() {
     if (gl3wInit()) {
         throw std::runtime_error("Failed to initialize OpenGL!");
     }
-    // Do we need them?
-//    glEnable(GL_MULTISAMPLE);
 
     initImgui();
     registerCallbacks();
