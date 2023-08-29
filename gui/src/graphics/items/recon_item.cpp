@@ -101,7 +101,9 @@ void ReconItem::renderIm() {
     ImGui::Checkbox("Show volume", &show_volume_);
     ImGui::SameLine();
     ImGui::BeginDisabled(!show_volume_);
+    ImGui::PushItemWidth(-40);
     ImGui::SliderFloat("Alpha", &volume_alpha_, 0.0f, 1.0f);
+    ImGui::PopItemWidth();
     ImGui::EndDisabled();
 
     ImGui::Checkbox("Show slice histograms", &show_statistics_);
