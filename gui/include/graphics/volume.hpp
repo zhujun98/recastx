@@ -16,7 +16,7 @@
 
 namespace recastx::gui {
 
-inline constexpr size_t K_NUM_SLICES = 32;
+inline constexpr size_t K_NUM_SLICES = 128;
 
 class VolumeSlicer {
   public:
