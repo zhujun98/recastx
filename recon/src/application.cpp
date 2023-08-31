@@ -91,7 +91,7 @@ void Application::pushFlat(const Projection<>& proj) {
 
 void Application::pushProjection(const Projection<>& proj) {
     if (!reciprocal_computed_) {
-        if (darks_.empty() || flats_.empty()) {
+        if (darks_.empty() && flats_.empty()) {
             spdlog::warn("Send dark and flat images first! Projection ignored.");
             return;
         }
