@@ -53,16 +53,16 @@ void Monitor::countTomogram() {
         // The number for the first <report_tomo_throughput_every_> tomograms 
         // underestimates the throughput! 
         auto end = std::chrono::steady_clock::now();
-        float dt = std::chrono::duration_cast<std::chrono::microseconds>(
+        size_t dt = std::chrono::duration_cast<std::chrono::microseconds>(
             end -  tomo_start_).count();
-        float throughput = scan_byte_size_ * report_tomo_throughput_every_ / dt;
+        double throughput = scan_byte_size_ * report_tomo_throughput_every_ / dt;
         spdlog::info("[Bench] Reconstruction throughput: {:.1f} (MB/s)", throughput);
         tomo_start_ = end;
     }
 }
 
 void Monitor::summarize() const {
-    float dt = std::chrono::duration_cast<std::chrono::microseconds>(
+    size_t dt = std::chrono::duration_cast<std::chrono::microseconds>(
         std::chrono::steady_clock::now() -  start_).count();
     float throughput = scan_byte_size_ * num_tomograms_ / dt;
 

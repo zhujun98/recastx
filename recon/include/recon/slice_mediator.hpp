@@ -58,7 +58,7 @@ public:
 
     SliceBufferType& onDemandSlices() { return ondemand_slices_; }
 
-    const ParamType& params() const { return params_; }
+    [[nodiscard]] const ParamType& params() const { return params_; }
 };
 
 } // namespace recastx::recon

@@ -32,7 +32,7 @@ struct Projection {
     }
 
     template<std::enable_if_t<std::is_same<T, RawDtype>::value, bool> = true>
-    Projection(const daq::Message& msg) :
+    explicit Projection(const daq::Message& msg) :
             type(msg.type), 
             index(msg.index),
             data({msg.row_count, msg.col_count}) {

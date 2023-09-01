@@ -6,8 +6,6 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
-#include <cassert>
-
 #include "recon/projection_mediator.hpp"
 #include "recon/projection.hpp"
 
@@ -32,7 +30,7 @@ void ProjectionMediator::setFilter(int monitor_every, int monitor_index) {
     if (monitor_index < 0) {
         monitor_index_ = 0;
     } else {
-        size_t index = static_cast<size_t>(monitor_index);
+        auto index = static_cast<size_t>(monitor_index);
         monitor_index_ = index < monitor_every_ ? index : monitor_every_ - 1;
     }
 }

@@ -191,7 +191,7 @@ public:
 
     const ShapeType& shape() const { return shape_; }
 
-    size_t size() const { return data_.size(); }
+    [[nodiscard]] size_t size() const { return data_.size(); }
 };
 
 using ProImageData = Tensor<ProDtype, 2>;
