@@ -34,23 +34,41 @@ inline void downsample(const ProImageData& src, ProImageData& dst) {
     }
 }
 
+namespace details {
+    inline ProImageData computeReciprocal(const ProImageData& dark_avg, const ProImageData& flat_avg) {
+        const auto& shape = dark_avg.shape();
+        ProImageData reciprocal {shape};
+        for (size_t i = 0; i < shape[0] * shape[1]; ++i) {
+            if (dark_avg[i] == flat_avg[i]) {
+                reciprocal[i] = 1.0f;
+            } else {
+                reciprocal[i] = 1.0f / (flat_avg[i] - dark_avg[i]);
+            }
+        }
+        return reciprocal;
+    }
+} // namespace details
+
 inline std::pair<ProImageData, ProImageData> computeReciprocal(
         const std::vector<RawImageData>& darks, const std::vector<RawImageData>& flats) {
+    assert(!darks.empty() || !flats.empty());
+
+    if (darks.empty()) {
+        auto flat_avg = math::average<ProDtype>(flats);
+        auto dark_avg = flat_avg * 0;
+        return {dark_avg, details::computeReciprocal(dark_avg, flat_avg)};
+    }
+
+    if (flats.empty()) {
+        auto dark_avg = math::average<ProDtype>(darks);
+        auto flat_avg = dark_avg + 1;
+        return {dark_avg, details::computeReciprocal(dark_avg, flat_avg)};
+    } 
 
     auto dark_avg = math::average<ProDtype>(darks);
     auto flat_avg = math::average<ProDtype>(flats);
+    return {dark_avg, details::computeReciprocal(dark_avg, flat_avg)};
 
-    const auto& shape = dark_avg.shape();
-    ProImageData reciprocal {shape};
-    for (size_t i = 0; i < shape[0] * shape[1]; ++i) {
-        if (dark_avg[i] == flat_avg[i]) {
-            reciprocal[i] = 1.0f;
-        } else {
-            reciprocal[i] = 1.0f / (flat_avg[i] - dark_avg[i]);
-        }
-    }
-
-    return {dark_avg, reciprocal};
 }
 
 inline void flatField(float* data, 

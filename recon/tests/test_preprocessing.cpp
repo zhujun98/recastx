@@ -55,31 +55,55 @@ TEST(TestPreprocessing, TestDownsample) {
 }
 
 TEST(TestPreprocessing, TestComputeReciprocal) {
-    std::array<size_t, 2> shape {4, 3};
-    std::vector<RawImageData> darks;
-    std::vector<RawImageData> flats;
 
     using ValueType = RawImageData::ValueType;
-    darks.emplace_back(shape, std::vector<ValueType>{4, 1, 1, 2, 0, 9, 7, 4, 3, 8, 6, 8});
-    darks.emplace_back(shape, std::vector<ValueType>{1, 7, 3, 0, 6, 6, 0, 8, 1, 8, 4, 2});
-    darks.emplace_back(shape, std::vector<ValueType>{2, 4, 6, 0, 9, 5, 8, 3, 4, 2, 2, 0});
-    
-    flats.emplace_back(shape, std::vector<ValueType>{1, 9, 5, 1, 7, 9, 0, 6, 7, 1, 5, 6});
-    flats.emplace_back(shape, std::vector<ValueType>{2, 4, 8, 1, 3, 9, 5, 6, 1, 1, 1, 7});
-    flats.emplace_back(shape, std::vector<ValueType>{9, 9, 4, 1, 6, 8, 6, 9, 2, 4, 9, 4});
+    {
+        std::array<size_t, 2> shape {4, 3};
+        std::vector<RawImageData> darks;
+        darks.emplace_back(shape, std::vector<ValueType>{4, 1, 1, 2, 0, 9, 7, 4, 3, 8, 6, 8});
+        darks.emplace_back(shape, std::vector<ValueType>{1, 7, 3, 0, 6, 6, 0, 8, 1, 8, 4, 2});
+        darks.emplace_back(shape, std::vector<ValueType>{2, 4, 6, 0, 9, 5, 8, 3, 4, 2, 2, 0});
+        
+        std::vector<RawImageData> flats;
+        flats.emplace_back(shape, std::vector<ValueType>{1, 9, 5, 1, 7, 9, 0, 6, 7, 1, 5, 6});
+        flats.emplace_back(shape, std::vector<ValueType>{2, 4, 8, 1, 3, 9, 5, 6, 1, 1, 1, 7});
+        flats.emplace_back(shape, std::vector<ValueType>{9, 9, 4, 1, 6, 8, 6, 9, 2, 4, 9, 4});
 
-    auto [dark_avg, reciprocal] = computeReciprocal(darks, flats);
+        auto [dark_avg, reciprocal] = computeReciprocal(darks, flats);
 
-    EXPECT_THAT(dark_avg, ElementsAreArray({
-        2.33333333, 4.,        3.33333333,
-        0.66666667, 5.,        6.66666667,
-        5.,         5.,        2.66666667,
-        6.,         4.,        3.33333333}));
-    EXPECT_THAT(reciprocal, Pointwise(FloatNear(1e-6), {
-        0.59999996,  0.29999998, 0.42857143,
-        3.0000002,   2.9999986,  0.5,
-        -0.75000006, 0.5,        1.5000004,
-        -0.25,       1.,         0.42857143}));
+        EXPECT_THAT(dark_avg, ElementsAreArray({
+            2.33333333, 4.,        3.33333333,
+            0.66666667, 5.,        6.66666667,
+            5.,         5.,        2.66666667,
+            6.,         4.,        3.33333333}));
+        EXPECT_THAT(reciprocal, Pointwise(FloatNear(1e-6), {
+            0.59999996,  0.29999998, 0.42857143,
+            3.0000002,   2.9999986,  0.5,
+            -0.75000006, 0.5,        1.5000004,
+            -0.25,       1.,         0.42857143}));
+    }
+    {
+        std::array<size_t, 2> shape {2, 3};
+        std::vector<RawImageData> darks;
+
+        std::vector<RawImageData> flats;
+        flats.emplace_back(shape, std::vector<ValueType>(6, 2));
+
+        auto [dark_avg, reciprocal] = computeReciprocal(darks, flats);
+        EXPECT_THAT(dark_avg, ElementsAreArray({0., 0., 0., 0., 0., 0.}));
+        EXPECT_THAT(reciprocal, ElementsAreArray({0.5, 0.5, 0.5, 0.5, 0.5, 0.5}));
+    }
+    {
+        std::array<size_t, 2> shape {2, 3};
+        std::vector<RawImageData> darks;
+        darks.emplace_back(shape, std::vector<ValueType>(6, 2));
+
+        std::vector<RawImageData> flats;
+
+        auto [dark_avg, reciprocal] = computeReciprocal(darks, flats);
+        EXPECT_THAT(dark_avg, ElementsAreArray({2., 2., 2., 2., 2., 2.}));
+        EXPECT_THAT(reciprocal, ElementsAreArray({1., 1., 1., 1., 1., 1.}));
+    }
 }
 
 } // namespace recastx::recon::test
