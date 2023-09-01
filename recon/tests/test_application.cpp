@@ -119,8 +119,6 @@ class ApplicationTest : public testing::Test {
     uint32_t downsampling_col_ = 1;
     uint32_t downsampling_row_ = 1;
 
-    size_t num_darks_ = 4;
-    size_t num_flats_ = 6;
     size_t buffer_size_ = 100;
     size_t num_angles_ = 16;
     size_t slice_size_ = num_cols_;
@@ -132,6 +130,9 @@ class ApplicationTest : public testing::Test {
     std::unique_ptr<DaqClientInterface> daq_client_;
     std::unique_ptr<FilterFactory> ramp_filter_factory_;
     std::unique_ptr<ReconstructorFactory> recon_factory_;
+
+    size_t num_darks_ = 4;
+    size_t num_flats_ = 6;
 
     const RpcServerConfig rpc_cfg {12347};
     const ImageprocParams imgproc_params {
@@ -153,7 +154,6 @@ class ApplicationTest : public testing::Test {
     };
 
     void SetUp() override { 
-        app_.setFlatFieldCorrectionParams(num_darks_, num_flats_);
         app_.setProjectionGeometry(recastx::BeamShape::PARALELL, num_cols_, num_rows_,
                                    pixel_width_, pixel_height_, 
                                    src2origin, origin2det, num_angles_);

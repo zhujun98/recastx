@@ -15,6 +15,9 @@ namespace recastx {
     inline constexpr uint32_t K_MIN_SCAN_UPDATE_INTERVAL = 16;
     inline constexpr uint32_t K_MAX_SCAN_UPDATE_INTERVAL = 128;
 
+    inline constexpr size_t k_MAX_NUM_DARKS = 1000;
+    inline constexpr size_t k_MAX_NUM_FLATS = 1000;
+
     using Orientation = std::array<float, 9>;
 
 
@@ -25,11 +28,6 @@ namespace recastx {
 
     struct RpcServerConfig {
         int port;
-    };
-
-    struct FlatFieldCorrectionParams {
-        size_t num_darks;
-        size_t num_flats;
     };
 
     struct ImageprocParams {

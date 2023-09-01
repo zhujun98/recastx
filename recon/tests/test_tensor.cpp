@@ -89,129 +89,131 @@ TEST(TensorTest, TestReshape) {
     EXPECT_THAT(t2f, ElementsAre(1, 1, 1, 2, 6, 6));
 }
 
-TEST(TestTensor, TestAverage) {
-    Tensor<float, 2> t2({2, 3}, {1, 1, 1, 2, 2, 2});
-    auto ret2 = t2.average();
-    EXPECT_THAT(ret2, ElementsAre(1.5, 1.5, 1.5));
-
-    Tensor<uint16_t, 3> t3({4, 3, 2});
-    std::fill(t3.begin(), t3.begin() + 12, 1);
-    std::fill(t3.begin() + 12, t3.end(), 2);
-    auto ret3 = t3.average<float>();
-    EXPECT_THAT(ret3, ElementsAre(1.5, 1.5, 1.5, 1.5, 1.5, 1.5));
-}
-
-TEST(TestImageGroup, TestConstructor) {
+TEST(TestTensor, TestScalarArithmetic) {
     {
-        RawImageGroup g({1, 3, 2});
-        ASSERT_TRUE(g.empty());
-        ASSERT_FALSE(g.full());
+        using TensorType = Tensor<uint16_t, 2>;
+        auto t = TensorType({2, 2}, {2, 2, 3, 3});
+        {
+            TensorType ret = t + 1.f;
+            EXPECT_THAT(ret, ElementsAre(3, 3, 4, 4));
+            ret += 1.f;
+            EXPECT_THAT(ret, ElementsAre(4, 4, 5, 5));
+        }
+        {
+            TensorType ret = t - 1.f;
+            EXPECT_THAT(ret, ElementsAre(1, 1, 2, 2));
+            ret -= 1.f;
+            EXPECT_THAT(ret, ElementsAre(0, 0, 1, 1));
+
+        }
+        {
+            TensorType ret = t / 2.f;
+            EXPECT_THAT(ret, ElementsAre(1, 1, 1, 1));
+            ret /= 2.f;
+            EXPECT_THAT(ret, ElementsAre(0, 0, 0, 0));
+        }
+        {
+            TensorType ret = t * 2.f;
+            EXPECT_THAT(ret, ElementsAre(4, 4, 6, 6));
+            ret *= 2.f;
+            EXPECT_THAT(ret, ElementsAre(8, 8, 12, 12));
+        }
     }
     {
-        RawImageGroup g({1, 3, 2}, {1, 1, 1, 1, 1, 1});
-        EXPECT_THAT(g, ElementsAre(1, 1, 1, 1, 1, 1));
-        ASSERT_TRUE(g.full());
-
-        RawImageGroup g_m(std::move(g));
-        EXPECT_THAT(g_m, ElementsAre(1, 1, 1, 1, 1, 1));
-        ASSERT_TRUE(g_m.full());
-        EXPECT_THAT(g, ElementsAre());
-        ASSERT_TRUE(g.empty());
-
-        RawImageGroup g_m2(g_m);
-        g_m2 = std::move(g_m);
-        EXPECT_THAT(g_m2, ElementsAre(1, 1, 1, 1, 1, 1));
-        ASSERT_TRUE(g_m2.full());
-        EXPECT_THAT(g_m, ElementsAre());
-        ASSERT_TRUE(g_m.empty()); 
+        using TensorType = Tensor<float, 2>;
+        auto t = TensorType({2, 2}, {2.f, 2.f, 3.f, 3.f});
+        {
+            TensorType ret = t + 1;
+            EXPECT_THAT(ret, ElementsAre(3.f, 3.f, 4.f, 4.f));
+            ret += 1;
+            EXPECT_THAT(ret, ElementsAre(4.f, 4.f, 5.f, 5.f));
+        }
+        {
+            TensorType ret = t - 1;
+            EXPECT_THAT(ret, ElementsAre(1.f, 1.f, 2.f, 2.f));
+            ret -= 1;
+            EXPECT_THAT(ret, ElementsAre(0.f, 0.f, 1.f, 1.f));
+        }
+        {
+            TensorType ret = t / 2;
+            EXPECT_THAT(ret, ElementsAre(1.f, 1.f, 1.5f, 1.5f));
+            ret /= 2;
+            EXPECT_THAT(ret, ElementsAre(0.5f, 0.5f, 0.75f, 0.75f));
+        }
+        {
+            TensorType ret = t * 2;
+            EXPECT_THAT(ret, ElementsAre(4.f, 4.f, 6.f, 6.f));
+            ret *= 2;
+            EXPECT_THAT(ret, ElementsAre(8.f, 8.f, 12.f, 12.f));
+        }
     }
 }
 
-TEST(TestImageGroup, TestPushToRaw) {
-    RawImageGroup g1({4, 3, 2});
-    using ValueType = typename RawImageGroup::ValueType;
+TEST(TestTensor, TestVectorArithmetic) {
+    {
+        using TensorType = Tensor<int, 2>;
+        auto t1 = TensorType({2, 2}, {1, 2, 3, 4});
+        auto t2 = TensorType({2, 2}, {4, 3, 2, 1});
+        auto t3 = TensorType({2, 2}, {1, -1, 1, -1});
+
+        {
+            TensorType ret = t1 + t2 + t3;
+            EXPECT_THAT(ret, ElementsAre(6, 4, 6, 4));
+            ret += t1;
+            EXPECT_THAT(ret, ElementsAre(7, 6, 9, 8));
+        }
+        {
+            TensorType ret = t1 - t2 - t3;
+            EXPECT_THAT(ret, ElementsAre(-4, 0, 0, 4));
+            ret -= t1;
+            EXPECT_THAT(ret, ElementsAre(-5, -2, -3, 0));
+        }
+    }
+    {
+        using TensorType = Tensor<float, 2>;
+        auto t1 = TensorType({2, 2}, {1.f, 2.f, 3.f, 4.f});
+        auto t2 = TensorType({2, 2}, {4.f, 3.f, 2.f, 1.f});
+        auto t3 = TensorType({2, 2}, {1.f, -1.f, 1.f, -1.f});
+
+        {
+            TensorType ret = t1 + t2 + t3;
+            EXPECT_THAT(ret, ElementsAre(6.f, 4.f, 6.f, 4.f));
+            ret += t1;
+            EXPECT_THAT(ret, ElementsAre(7.f, 6.f, 9.f, 8.f));
+        }
+        {
+            TensorType ret = t1 - t2 - t3;
+            EXPECT_THAT(ret, ElementsAre(-4.f, 0.f, 0.f, 4.f));
+            ret -= t1;
+            EXPECT_THAT(ret, ElementsAre(-5.f, -2.f, -3.f, 0.f));
+        }
+    }
+}
+
+TEST(TestMath, TestAverage) {
+    std::array<size_t, 2> s{2, 3};
+    std::vector<Tensor<uint16_t, 2>> src;
+    src.emplace_back(s, std::vector<uint16_t>(6, 1));
+    src.emplace_back(s, std::vector<uint16_t>(6, 2));
+    src.emplace_back(s, std::vector<uint16_t>(6, 65535));
 
     {
-        ValueType x[6] = {0, 0, 0, 0, 0, 0};
-        g1.push(reinterpret_cast<char*>(x));
-        ASSERT_FALSE(g1.empty());
-        ASSERT_FALSE(g1.full());
+        Tensor<float, 2> dst = math::average<float>(src);
+        EXPECT_THAT(dst, ElementsAre(21846.f, 21846.f, 21846.f, 21846.f, 21846.f, 21846.f));
     }
-
-    for (size_t i = 1; i < g1.shape()[0]; ++i) {
-        auto v = static_cast<ValueType>(i);
-        ValueType x[6] = {v, v, v, v, v, v};
-        g1.push(reinterpret_cast<char*>(x));
-    }
-    ASSERT_TRUE(g1.full());
-    EXPECT_THAT(g1, ElementsAre(0, 0, 0, 0, 0, 0, 
-                                1, 1, 1, 1, 1, 1, 
-                                2, 2, 2, 2, 2, 2, 
-                                3, 3, 3, 3, 3, 3));
-
-    // test overwritten
     {
-        ValueType x[6] = {4, 4, 4, 4, 4, 4};
-        g1.push(reinterpret_cast<char*>(x));
-        ASSERT_TRUE(g1.full());
-        EXPECT_THAT(g1, ElementsAre(4, 4, 4, 4, 4, 4, 
-                                    1, 1, 1, 1, 1, 1, 
-                                    2, 2, 2, 2, 2, 2, 
-                                    3, 3, 3, 3, 3, 3));
+        Tensor<float, 2> dst(s);
+        math::average(src, dst);
+        EXPECT_THAT(dst, ElementsAre(21846.f, 21846.f, 21846.f, 21846.f, 21846.f, 21846.f));
     }
-
-    // test reset
-    g1.reset();
-    ASSERT_TRUE(g1.empty());
-    ASSERT_FALSE(g1.full());
+    {
+        Tensor<double, 2> dst = math::average(src);
+        EXPECT_THAT(dst, ElementsAre(21846., 21846., 21846., 21846., 21846., 21846.));
+    }
+    {
+        Tensor<uint16_t, 2> dst = math::average<uint16_t>(src);
+        EXPECT_THAT(dst, ElementsAre(0, 0, 0, 0, 0, 0));
+    }
 }
 
-TEST(TestImageGroup, TestPushToRawWithDowmsampling) {
-    RawImageGroup g1({4, 2, 3});
-    using ValueType = typename RawImageGroup::ValueType;
-
-    ValueType x1[28] = {
-        1, 2, 3, 4, 5, 6, 7,
-        2, 3, 4, 5, 6, 7, 8,
-        3, 4, 5, 6, 7, 8, 9,
-        4, 5, 6, 7, 8, 9, 10
-    };
-    g1.push(reinterpret_cast<char*>(x1), {4, 7});
-
-    ValueType x2[24] = {
-        1, 2, 3, 4, 5, 6,
-        2, 3, 4, 5, 6, 7,
-        3, 4, 5, 6, 7, 8,
-        4, 5, 6, 7, 8, 9
-    };
-    g1.push(reinterpret_cast<char*>(x2), {4, 6});
-    
-    ValueType x3[12] = {
-        1, 2, 3, 4, 5, 6,
-        2, 3, 4, 5, 6, 7
-    };
-    g1.push(reinterpret_cast<char*>(x3), {2, 6});
-    
-    ValueType x4[12] = {
-        1, 2, 3,
-        2, 3, 4,
-        3, 4, 5,
-        4, 5, 6
-    };
-    g1.push(reinterpret_cast<char*>(x4), {4, 3});
-    
-    EXPECT_THAT(g1, ElementsAre(1, 3, 5, 3, 5, 7, 
-                                1, 3, 5, 3, 5, 7, 
-                                1, 3, 5, 2, 4, 6, 
-                                1, 2, 3, 3, 4, 5));
-}
-
-TEST(TestImageGroup, TestPushToPro) {
-    ProImageGroup g1({2, 3, 2});
-    ProImageGroup::ValueType x[6] = {1, 2, 3, 4, 5, 6};
-    g1.push(reinterpret_cast<char*>(x));
-    EXPECT_THAT(g1, ElementsAre(1.f, 2.f, 3.f, 4.f, 5.f, 6.f, 
-                                0.f, 0.f, 0.f, 0.f, 0.f, 0.f));
-}
-
-}
+} // namespace recastx::recon::test

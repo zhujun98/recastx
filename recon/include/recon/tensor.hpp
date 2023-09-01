@@ -103,16 +103,6 @@ public:
         data_.resize(size(shape), value);
     }
 
-    // TODO: make it a free function
-    // FIXME: specialize for N == 1
-    template<typename R = T>
-    void average(Tensor<R, N-1>& out) const;
-
-    // TODO: make it a free function
-    // FIXME: specialize for N == 1
-    template<typename R = T>
-    Tensor<R, N-1> average() const;
-
     T& operator[](size_t pos) { return data_[pos]; }
 
     const T& operator[](size_t pos) const { return data_[pos]; }
@@ -127,38 +117,122 @@ public:
     iterator end() { return data_.end(); }
     const_iterator end() const { return data_.end(); }
 
+    Tensor<T, N>& operator+=(const Tensor<T, N>& rhs) {
+        for (size_t i = 0; i < data_.size(); ++i) {
+            data_[i] += rhs.data_[i];
+        }
+        return *this;
+    }
+
+    Tensor<T, N>& operator+=(T rhs) {
+        for (size_t i = 0; i < data_.size(); ++i) {
+            data_[i] += rhs;
+        }
+        return *this;
+    }
+
+    Tensor<T, N>& operator-=(const Tensor<T, N>& rhs) {
+        for (size_t i = 0; i < data_.size(); ++i) {
+            data_[i] -= rhs.data_[i];
+        }
+        return *this;
+    }
+
+    Tensor<T, N>& operator-=(T rhs) {
+        for (size_t i = 0; i < data_.size(); ++i) {
+            data_[i] -= rhs;
+        }
+        return *this;
+    }
+
+    Tensor<T, N>& operator*=(T rhs) {
+        for (size_t i = 0; i < data_.size(); ++i) {
+            data_[i] *= rhs;
+        }
+        return *this;
+    }
+
+    Tensor<T, N>& operator/=(T rhs) {
+        for (size_t i = 0; i < data_.size(); ++i) {
+            data_[i] /= rhs;
+        }
+        return *this;
+    }
+
+    friend Tensor<T, N> operator+(Tensor<T, N> lhs, const Tensor<T, N>& rhs) {
+        lhs += rhs;
+        return lhs;
+    }
+
+    friend Tensor<T, N> operator+(Tensor<T, N> lhs, T rhs) {
+        lhs += rhs;
+        return lhs;
+    }
+
+    friend Tensor<T, N> operator-(Tensor<T, N> lhs, const Tensor<T, N>& rhs) {
+        lhs -= rhs;
+        return lhs;
+    }
+
+    friend Tensor<T, N> operator-(Tensor<T, N> lhs, T rhs) {
+        lhs -= rhs;
+        return lhs;
+    }
+
+    friend Tensor<T, N> operator*(Tensor<T, N> lhs, T rhs) {
+        lhs *= rhs;
+        return lhs;
+    }
+
+    friend Tensor<T, N> operator/(Tensor<T, N> lhs, T rhs) {
+        lhs /= rhs;
+        return lhs;
+    }
+
     const ShapeType& shape() const { return shape_; }
 
     size_t size() const { return data_.size(); }
 };
 
-template<typename T, size_t N>
-template<typename R>
-void Tensor<T, N>::average(Tensor<R, N-1>& out) const {
-    size_t size = std::accumulate(shape_.begin() + 1, shape_.end(), 1, std::multiplies<>());
-    for (size_t j = 0; j < size; ++j) out[j] = static_cast<R>(data_[j]);
-    
-    for (size_t i = 1; i < shape_[0]; ++i) {
-        for (size_t j = 0, s = i * size ; j < size; ++j) {
-            out[j] += static_cast<R>(data_[s + j]);
-        }
-    }
-
-    for (size_t j = 0; j < size; ++j) out[j] /= shape_[0];
-}
-
-template<typename T, size_t N>
-template<typename R>
-Tensor<R, N-1> Tensor<T, N>::average() const {
-    std::array<size_t, N-1> shape;
-    std::copy(shape_.begin() + 1, shape_.end(), shape.begin());
-    Tensor<R, N-1> out(shape);
-    average(out);
-    return out;
-}
-
 using ProImageData = Tensor<ProDtype, 2>;
 using RawImageData = Tensor<RawDtype, 2>;
+
+namespace math {
+
+namespace details {
+    template<typename R, typename T, size_t N>
+    inline void average(const std::vector<Tensor<T, N>>& src, Tensor<R, N>& dst) {
+        const auto& shape = dst.shape();
+        size_t size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>());
+        
+        for (const auto& v : src) {
+            for (size_t i = 0; i < size; ++i) {
+                dst[i] += static_cast<R>(v[i]);
+            }
+        }
+
+        dst /= static_cast<R>(src.size());
+    }
+}
+
+// FIXME: specialize for N == 1
+template<typename R, typename T, size_t N>
+inline void average(const std::vector<Tensor<T, N>>& src, Tensor<R, N>& dst) {
+    assert(!src.empty());
+    assert(src[0].shape() == dst.shape());
+    details::average(src, dst);
+}
+
+template<typename R = void, typename T, size_t N>
+inline auto average(const std::vector<Tensor<T, N>>& src) {
+    assert(!src.empty());
+    using ReturnType = std::conditional_t<std::is_same<R, void>::value, double, R>;
+    Tensor<ReturnType, N> dst(src[0].shape());
+    details::average(src, dst);
+    return dst;
+} 
+
+} // namespace math
 
 namespace details {
 
@@ -186,78 +260,6 @@ inline void copyBuffer(T* dst,
 }
 
 } // details
-
-template<typename T>
-class ImageGroup : public Tensor<T, 3> {
-
-public:
-
-    using typename Tensor<T, 3>::ShapeType;
-    using typename Tensor<T, 3>::ValueType;
-
-private:
-
-    size_t count_ = 0;
-
-public:
-
-    ImageGroup() = default;
-
-    explicit ImageGroup(const ShapeType& shape) : Tensor<T, 3>(shape) {};
-
-    ImageGroup(const ShapeType& shape, std::initializer_list<T> ilist)
-        : Tensor<T, 3>(shape, ilist), count_(shape[0]) {}
-
-    ~ImageGroup() override = default; 
-
-    ImageGroup(const ImageGroup& other) = default;
-    ImageGroup& operator=(const ImageGroup& other) = default;
-
-    ImageGroup(ImageGroup&& other) noexcept
-             : Tensor<T, 3>(std::move(other)), count_(other.count_) {
-        other.count_ = 0;
-    }
-
-    ImageGroup& operator=(ImageGroup&& other) noexcept {
-        Tensor<T, 3>::operator=(std::move(other));
-        count_ = other.count_;
-        other.count_ = 0;
-        return *this;
-    }
-
-    size_t push(const char* buffer);
-    size_t push(const char* buffer, const std::array<size_t, 2>& shape);
-
-    void reset() { count_ = 0; }
-
-    bool full() const { return count_ >= this->shape_[0]; }
-
-    bool empty() const { return count_ == 0; }
-
-};
-
-template<typename T>
-size_t ImageGroup<T>::push(const char* buffer) {
-    const size_t idx = count_++ % this->shape_[0];
-    const size_t pixels = this->shape_[1] * this->shape_[2];
-    details::copyBuffer(&this->data_[idx * pixels], buffer, pixels);
-    return count_;
-}
-
-template<typename T>
-size_t ImageGroup<T>::push(const char* buffer, const std::array<size_t, 2>& shape) {
-    size_t h = this->shape_[1];
-    size_t w = this->shape_[2];
-    if (shape[0] == h && shape[1] == w) return push(buffer);
-    
-    size_t idx = count_++ % this->shape_[0];
-    size_t pixels = w * h;
-    details::copyBuffer(&this->data_[idx * pixels], {h, w}, buffer, shape);
-    return count_;
-}
-
-using ProImageGroup = ImageGroup<ProDtype>;
-using RawImageGroup = ImageGroup<RawDtype>;
 
 } // namespace recastx::recon
 

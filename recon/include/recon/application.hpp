@@ -75,8 +75,8 @@ class Application {
     // Why did I choose ProDtype over RawDtype?
     MemoryBuffer<ProDtype, 3> raw_buffer_;
 
-    RawImageGroup darks_;
-    RawImageGroup flats_;
+    std::vector<RawImageData> darks_;
+    std::vector<RawImageData> flats_;
     ProImageData dark_avg_;
     ProImageData reciprocal_;
     bool reciprocal_computed_ = false;
@@ -95,7 +95,6 @@ class Application {
     std::unique_ptr<Filter> ramp_filter_;
 
     ImageprocParams imgproc_params_;
-    FlatFieldCorrectionParams flatfield_params_;
 
     std::optional<size_t> slice_size_;
     std::optional<size_t> preview_size_;
@@ -144,8 +143,6 @@ class Application {
 
     void maybeResetDarkAndFlatAcquisition();
 
-    void pushDark(const Projection<>& proj);
-    void pushFlat(const Projection<>& proj);
     void pushProjection(const Projection<>& proj);
 
     void preprocessProjections(oneapi::tbb::task_arena& arena);
@@ -190,12 +187,6 @@ class Application {
                 const RpcServerConfig& rpc_config); 
 
     ~Application();
-
-
-    template<typename ...Ts>
-    void setFlatFieldCorrectionParams(Ts... args) {
-        flatfield_params_ = {std::forward<Ts>(args)...};
-    }
 
     template<typename ...Ts>
     void setPaganinParams(Ts... args) { paganin_cfg_ = {std::forward<Ts>(args)...}; }
@@ -242,8 +233,8 @@ class Application {
 
     // for unittest
 
-    const RawImageGroup& darks() const { return darks_; }
-    const RawImageGroup& flats() const { return flats_; }
+    const std::vector<RawImageData>& darks() const { return darks_; }
+    const std::vector<RawImageData>& flats() const { return flats_; }
     const MemoryBuffer<float, 3>& rawBuffer() const { return raw_buffer_; }
     const TripleTensorBuffer<float, 3>& sinoBuffer() const { return sino_buffer_; }
     const Reconstructor* reconstructor() const { return recon_.get(); }
