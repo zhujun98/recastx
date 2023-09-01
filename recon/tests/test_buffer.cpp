@@ -43,7 +43,7 @@ TEST(TripleTensorBufferTest, TestPrepareAndFetch) {
     std::copy(data1.begin(), data1.end(), b2f.back().begin());
     b2f.prepare();
     EXPECT_THAT(b2f.ready(), Pointwise(FloatNear(1e-6), data1));
-    ASSERT_TRUE(b2f.fetch());
+    ASSERT_TRUE(b2f.fetch(-1));
     EXPECT_THAT(b2f.front(), Pointwise(FloatNear(1e-6), data1));
 
     ASSERT_FALSE(b2f.fetch(0)); // test timeout
@@ -76,7 +76,7 @@ TEST(SliceBufferTest, TestNonOnDemand) {
 
     sbf.prepare();
     for (auto& [k, slice] : sbf.back()) ASSERT_TRUE(std::get<0>(slice));
-    sbf.fetch();
+    sbf.fetch(-1);
     for (auto& [k, slice] : sbf.front()) ASSERT_TRUE(std::get<0>(slice));
 }
 
@@ -97,11 +97,11 @@ TEST(SliceBufferTest, TestOnDemand) {
     }
 
     sbf.prepare();
-    sbf.fetch();
+    sbf.fetch(-1);
     for (auto& [k, slice] : sbf.front()) ASSERT_TRUE(std::get<0>(slice));
 
     sbf.prepare();
-    sbf.fetch();
+    sbf.fetch(-1);
     // "ready" status reset
     for (auto& [k, slice] : sbf.ready()) ASSERT_FALSE(std::get<0>(slice));
     for (auto& [k, slice] : sbf.front()) ASSERT_FALSE(std::get<0>(slice));
@@ -114,7 +114,7 @@ TEST(ImageBufferTest, TestGeneral) {
         ASSERT_FALSE(buffer.fetch(0));
 
         buffer.emplace(std::array<size_t, 2>{2, 3}, std::vector<uint16_t> {1, 2, 3, 4, 5, 6});
-        ASSERT_TRUE(buffer.fetch());
+        ASSERT_TRUE(buffer.fetch(-1));
         ASSERT_THAT(buffer.front(), ElementsAre(1, 2, 3, 4, 5, 6));
         ASSERT_FALSE(buffer.fetch(0));
     }
@@ -132,13 +132,13 @@ TEST(ImageBufferTest, TestCapacity) {
         for (size_t i = 0; i < 10; ++i) {
             buffer.emplace(std::array<size_t, 2>{2, 2}, std::vector<uint16_t> {1, 2, 3, 4});
         }
-        for (size_t i = 0; i < 10; ++i) ASSERT_TRUE(buffer.fetch());
+        for (size_t i = 0; i < 10; ++i) ASSERT_TRUE(buffer.fetch(-1));
     }
     {
         ImageBuffer<uint16_t> buffer(1);
         buffer.emplace(std::array<size_t, 2>{2, 2}, std::vector<uint16_t> {1, 2, 3, 4});
         buffer.emplace(std::array<size_t, 2>{2, 2}, std::vector<uint16_t> {4, 3, 2, 1});
-        ASSERT_TRUE(buffer.fetch());
+        ASSERT_TRUE(buffer.fetch(-1));
         ASSERT_THAT(buffer.front(), ElementsAre(4, 3, 2, 1));
         ASSERT_FALSE(buffer.fetch(0));
     }
@@ -185,7 +185,7 @@ TEST_F(MemoryBufferTest, TestGeneral) {
                                                3, 1, 2, 1, 1, 1, 1,
                                                3, 1, 2, 1, 1, 1, 1,
                                                1, 1, 1, 1, 1, 1, 1}).data(), {5, 7});
-    ASSERT_TRUE(buffer_.fetch());
+    ASSERT_TRUE(buffer_.fetch(-1));
     EXPECT_THAT(buffer_.front(), 
                 Pointwise(FloatNear(1e-6), {1., 2., 3., 4., 5., 6., 
                                             6., 5., 4., 3., 2., 1.,
@@ -224,7 +224,7 @@ TEST_F(MemoryBufferTest, TestBufferFull) {
 
     buffer_.fill<RawDtype>(4 * (capacity_ + 2) + shape_[0] - 1, _produceRawData({9, 8, 7, 6, 5, 4}).data()); 
     ASSERT_EQ(buffer_.occupied(), 1); // group 3 was dropped
-    buffer_.fetch();
+    buffer_.fetch(-1);
     EXPECT_THAT(buffer_.front(), 
                 Pointwise(FloatNear(1e-6), {4., 5., 6., 7., 8., 9., 
                                             4., 5., 6., 7., 8., 9.,
@@ -238,14 +238,14 @@ TEST_F(MemoryBufferTest, TestSameDataReceivedRepeatedly) {
         for (size_t j = 0; j < shape_[0]; ++j) {
             buffer_.fill<RawDtype>(j, _produceRawData({1, 2, 3}).data()); 
         }
-        if (i % 2 == 0) buffer_.fetch();
+        if (i % 2 == 0) buffer_.fetch(-1);
 
         // Attempt to fill half of the second group.
         for (size_t j = 0; j < shape_[0] / 2; ++j) {
             buffer_.fill<RawDtype>(4 + j, _produceRawData({1, 2, 3}).data()); 
         }
         if (i % 2 == 1) {
-            buffer_.fetch();
+            buffer_.fetch(-1);
             ASSERT_EQ(buffer_.occupied(), 0);
         } else {
             ASSERT_EQ(buffer_.occupied(), 1);

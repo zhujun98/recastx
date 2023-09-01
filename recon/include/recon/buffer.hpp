@@ -49,7 +49,7 @@ class BufferInterface {
     T& front() { return front_; }
     const T& front() const { return front_; }
 
-    virtual bool fetch(int timeout = -1) = 0;
+    virtual bool fetch(int timeout) = 0;
 };
 
 template<typename T>
@@ -73,7 +73,7 @@ public:
     TripleBufferInterface(TripleBufferInterface&&) = delete;
     TripleBufferInterface& operator=(TripleBufferInterface&&) = delete;
     
-    bool fetch(int timeout = -1) override;
+    bool fetch(int timeout) override;
 
     virtual void prepare();
 
@@ -127,7 +127,7 @@ public:
 
     const ShapeType& shape() const { return this->front_.shape(); }
 
-    size_t size() const { return this->front_.size(); }
+    [[nodiscard]] size_t size() const { return this->front_.size(); }
 };
 
 template<typename T, size_t N>
@@ -165,7 +165,7 @@ protected:
 
 public:
 
-    SliceBuffer(bool on_demand = false) : on_demand_(on_demand), shape_{0, 0} {}
+    explicit SliceBuffer(bool on_demand = false) : on_demand_(on_demand), shape_{0, 0} {}
     
     ~SliceBuffer() override = default;
 
@@ -175,9 +175,9 @@ public:
 
     const ShapeType& shape() const { return shape_; }
 
-    size_t size() const { return this->back_.size(); }
+    [[nodiscard]] size_t size() const { return this->back_.size(); }
 
-    bool onDemand() const { return on_demand_; }
+    [[nodiscard]] bool onDemand() const { return on_demand_; }
 };
 
 template<typename T>
@@ -256,7 +256,7 @@ class ImageBuffer : public BufferInterface<Tensor<T, 2>> {
 
   public:
 
-    ImageBuffer(int capacity = 0)
+    explicit ImageBuffer(int capacity = 0)
          : capacity_(capacity < 0 ? 0 : static_cast<size_t>(capacity)) {
     }
 
@@ -272,7 +272,7 @@ class ImageBuffer : public BufferInterface<Tensor<T, 2>> {
         this->cv_.notify_one();
     };
 
-    bool fetch(int timeout = -1) override;
+    bool fetch(int timeout) override;
 
     void reset() {
         std::lock_guard lk(this->mtx_);
@@ -351,24 +351,24 @@ class MemoryBuffer : public BufferInterface<Tensor<T, N>> {
     template<typename D>
     void fill(size_t index, const char* src, const std::array<size_t, N-1>& shape);
 
-    bool fetch(int timeout = -1) override;
+    bool fetch(int timeout) override;
 
     BufferType& ready() { return buffer_[map_.at(chunk_indices_.front())]; }
     const BufferType& ready() const { return buffer_[map_.at(chunk_indices_.front())]; }
 
-    size_t capacity() const { 
+    [[nodiscard]] size_t capacity() const {
         assert(this->capacity_ == buffer_.size());
         return this->capacity_;
     }
 
-    size_t occupied() const { 
+    [[nodiscard]] size_t occupied() const {
         assert(this->capacity_ >= unoccupied_.size());
         return this->capacity_ - unoccupied_.size();
     }
 
     const ShapeType& shape() const { return this->front_.shape(); }
 
-    size_t size() const { return this->front_.size(); }
+    [[nodiscard]] size_t size() const { return this->front_.size(); }
 };
 
 template<typename T, size_t N>

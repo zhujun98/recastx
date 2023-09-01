@@ -125,8 +125,8 @@ void DaqClient::stopAcquiring() {
 }
 
 zmq::socket_type DaqClient::parseSocketType(const std::string& socket_type) const {
-    if (socket_type.compare("pull") == 0) return zmq::socket_type::pull;
-    if (socket_type.compare("sub") == 0) return zmq::socket_type::sub;
+    if (socket_type == "pull") return zmq::socket_type::pull;
+    if (socket_type == "sub") return zmq::socket_type::sub;
     throw std::invalid_argument("Unsupported socket type: "s + socket_type); 
 }
 

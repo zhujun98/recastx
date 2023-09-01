@@ -24,9 +24,9 @@ TEST(ProjectionMediatorTest, TestDefault) {
     m.emplace(Projection(ProjectionType::PROJECTION, 1, 2, 2, std::vector<RawDtype>{1, 2, 3, 4}));
     m.emplace(Projection(ProjectionType::PROJECTION, 2, 2, 2, std::vector<RawDtype>{4, 3, 2, 1}));
     m.emplace(Projection(ProjectionType::PROJECTION, 3, 2, 2, std::vector<RawDtype>{1, 2, 3, 4}));
-    ASSERT_TRUE(projections.fetch());
+    ASSERT_TRUE(projections.fetch(-1));
     ASSERT_THAT(projections.front(), ElementsAre(4, 3, 2, 1));
-    ASSERT_TRUE(projections.fetch());
+    ASSERT_TRUE(projections.fetch(-1));
     ASSERT_THAT(projections.front(), ElementsAre(1, 2, 3, 4));
     ASSERT_FALSE(projections.fetch(0));
     
@@ -45,7 +45,7 @@ TEST(ProjectionMediatorTest, TestSetFilter1) {
     ASSERT_FALSE(projections.fetch(0));
 
     m.emplace(Projection(ProjectionType::PROJECTION, 12, 2, 2, std::vector<RawDtype>{1, 2, 3, 4}));
-    ASSERT_TRUE(projections.fetch());
+    ASSERT_TRUE(projections.fetch(-1));
     ASSERT_THAT(projections.front(), ElementsAre(1, 2, 3, 4));
 }
 

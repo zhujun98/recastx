@@ -29,7 +29,7 @@ class DaqClient : public DaqClientInterface {
     zmq::context_t context_;
     zmq::socket_t socket_;
 
-    zmq::socket_type parseSocketType(const std::string& socket_type) const; 
+    [[nodiscard]] zmq::socket_type parseSocketType(const std::string& socket_type) const;
 
     bool running_ = false;
     bool acquiring_ = false;
@@ -44,12 +44,12 @@ class DaqClient : public DaqClientInterface {
 
     DaqClient(const std::string& endpoint, const std::string& socket_type);
 
-    ~DaqClient();
+    ~DaqClient() override;
 
-    void start();
+    void start() override;
 
-    void stopAcquiring();
-    void startAcquiring();
+    void stopAcquiring() override;
+    void startAcquiring() override;
 };
 
 
