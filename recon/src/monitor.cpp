@@ -6,6 +6,8 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
+#include <spdlog/spdlog.h>
+
 #include "recon/monitor.hpp"
 
 namespace recastx::recon {
@@ -32,6 +34,17 @@ void Monitor::resetTimer() {
     tomo_start_ = start_;
 }
 
+void Monitor::countDark() {
+    if (++num_darks_ % report_darks_every_ == 0) {
+        spdlog::info("# of darks received: {}", num_darks_); 
+    }
+}
+
+void Monitor::countFlat() {
+    if (++num_flats_ % report_flats_every_ == 0) {
+        spdlog::info("# of flats received: {}", num_flats_); 
+    }
+}
 
 void Monitor::countTomogram() {
     ++num_tomograms_;

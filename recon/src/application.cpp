@@ -73,22 +73,6 @@ void Application::setReconGeometry(std::optional<size_t> slice_size, std::option
     // initialization is delayed
 }
 
-void Application::pushDark(const Projection<>& proj) {
-    maybeResetDarkAndFlatAcquisition();
-    size_t n = darks_.push(reinterpret_cast<const char*>(proj.data.data()));
-    if (n % 10 == 0) {
-        spdlog::info("# of darks received: {}", n);
-    }
-}
-
-void Application::pushFlat(const Projection<>& proj) {
-    maybeResetDarkAndFlatAcquisition();
-    size_t n = flats_.push(reinterpret_cast<const char*>(proj.data.data()));
-    if (n % 10 == 0) {
-        spdlog::info("# of flats received: {}", n);
-    }
-}
-
 void Application::pushProjection(const Projection<>& proj) {
     if (!reciprocal_computed_) {
         if (darks_.empty() && flats_.empty()) {
@@ -96,14 +80,8 @@ void Application::pushProjection(const Projection<>& proj) {
             return;
         }
 
-        if (!darks_.full()) {
-            spdlog::warn("Computing reciprocal with less darks than expected.");
-        }
-        if (!flats_.full()) {
-            spdlog::warn("Computing reciprocal with less flats than expected.");
-        }
-
-        spdlog::info("Computing reciprocal for flat field correction ...");
+        spdlog::info("Computing reciprocal for flat field correction "
+                     "with {} darks and {} flats ...", darks_.size(), flats_.size());
         
         {    
 #if (VERBOSITY >= 2)
@@ -119,6 +97,8 @@ void Application::pushProjection(const Projection<>& proj) {
         }
     
         reciprocal_computed_ = true;
+        spdlog::info("Reciprocal computed!");
+
         monitor_->resetTimer();
     }
 
@@ -156,14 +136,22 @@ void Application::startAcquiring() {
                 }
                 case ProjectionType::DARK: {
                     if (server_state_ == rpc::ServerState_State_PROCESSING) {
-                        pushDark(proj);
+                        maybeResetDarkAndFlatAcquisition();
+                        darks_.emplace_back(std::move(proj.data));
+                        if (darks_.size() > k_MAX_NUM_DARKS) {
+                            spdlog::warn("Maximum number of dark images received. Data ignored!");
+                        }
                     }
                     monitor_->countDark();
                     break;
                 }
                 case ProjectionType::FLAT: {
                     if (server_state_ == rpc::ServerState_State_PROCESSING) {
-                        pushFlat(proj);
+                        maybeResetDarkAndFlatAcquisition();
+                        flats_.emplace_back(std::move(proj.data));
+                        if (flats_.size() > k_MAX_NUM_FLATS) {
+                            spdlog::warn("Maximum number of flat images received. Data ignored!");
+                        }
                     }
                     monitor_->countFlat();
                     break;
@@ -481,8 +469,6 @@ void Application::init() {
     initReconstructor(col_count, row_count);
 
     spdlog::info("Initial parameters for real-time 3D tomographic reconstruction:");
-    spdlog::info("- Number of required dark images: {}", flatfield_params_.num_darks);
-    spdlog::info("- Number of required flat images: {}", flatfield_params_.num_flats);
     spdlog::info("- Number of projection images per tomogram: {}", proj_geom_.angles.size());
     spdlog::info("- Projection image size: {} ({}) x {} ({})", 
                  col_count, downsampling_col, row_count, downsampling_row);
@@ -534,22 +520,23 @@ void Application::initReconstructor(size_t col_count, size_t row_count) {
 }
 
 void Application::maybeInitFlatFieldBuffer(size_t row_count, size_t col_count) {
-    // store original darks and flats
-    size_t num_darks = flatfield_params_.num_darks;
-    size_t num_flats = flatfield_params_.num_flats;
     size_t row_count_orig = proj_geom_.row_count;
     size_t col_count_orig = proj_geom_.col_count;
 
-    auto shape_d = darks_.shape();
-    if (shape_d[0] != num_darks || shape_d[1] != row_count_orig || shape_d[2] != col_count_orig) {
-        darks_.resize({num_darks, row_count_orig, col_count_orig});
-        spdlog::debug("Dark image buffer resized");
+    if (!darks_.empty()) {
+        auto& shape = darks_[0].shape();
+        if (shape[0] != row_count_orig || shape[1] != col_count_orig) {
+            darks_.clear();
+            spdlog::debug("Dark image buffer reset");
+        }
     }
 
-    auto shape_f = flats_.shape();
-    if (shape_f[0] != num_flats || shape_f[1] != row_count_orig || shape_f[2] != col_count_orig) {
-        flats_.resize({num_flats, row_count_orig, col_count_orig});
-        spdlog::debug("Flat image buffer resized");
+    if (!flats_.empty()) {
+        auto& shape = flats_[0].shape();
+        if (shape[0] != row_count_orig || shape[1] != col_count_orig) {
+            flats_.clear();
+            spdlog::debug("Flat image buffer reset");
+        }
     }
 
     auto shape = dark_avg_.shape();
@@ -575,8 +562,8 @@ void Application::maybeInitReconBuffer(size_t col_count, size_t row_count) {
 void Application::maybeResetDarkAndFlatAcquisition() {
     if (reciprocal_computed_) {
         raw_buffer_.reset();
-        darks_.reset();
-        flats_.reset();
+        darks_.clear();
+        flats_.clear();
         reciprocal_computed_ = false;
     }
 }

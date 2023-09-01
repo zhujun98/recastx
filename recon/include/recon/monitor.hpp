@@ -11,8 +11,6 @@
 
 #include <chrono>
 
-#include <spdlog/spdlog.h>
-
 #include "daq_client_interface.hpp"
 
 namespace recastx::recon {
@@ -29,6 +27,8 @@ class Monitor {
     std::chrono::time_point<std::chrono::steady_clock> start_;
     std::chrono::time_point<std::chrono::steady_clock> tomo_start_;
     size_t report_tomo_throughput_every_;
+    const size_t report_darks_every_ = 10;
+    const size_t report_flats_every_ = 10;
 
   public:
 
@@ -39,8 +39,10 @@ class Monitor {
 
     void resetTimer();
 
-    void countDark() { ++num_darks_; }
-    void countFlat() { ++num_flats_; }
+    void countDark();
+    
+    void countFlat();
+
     void countProjection() { ++num_projections_; }
 
     void countTomogram();

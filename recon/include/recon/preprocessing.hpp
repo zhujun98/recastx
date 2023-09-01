@@ -35,12 +35,12 @@ inline void downsample(const ProImageData& src, ProImageData& dst) {
 }
 
 inline std::pair<ProImageData, ProImageData> computeReciprocal(
-        const RawImageGroup& darks, const RawImageGroup& flats) {
+        const std::vector<RawImageData>& darks, const std::vector<RawImageData>& flats) {
 
-    auto dark_avg = darks.average<float>();
-    auto flat_avg = flats.average<float>();
+    auto dark_avg = math::average<ProDtype>(darks);
+    auto flat_avg = math::average<ProDtype>(flats);
 
-    auto& shape = dark_avg.shape();
+    const auto& shape = dark_avg.shape();
     ProImageData reciprocal {shape};
     for (size_t i = 0; i < shape[0] * shape[1]; ++i) {
         if (dark_avg[i] == flat_avg[i]) {

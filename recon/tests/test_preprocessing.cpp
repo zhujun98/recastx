@@ -56,16 +56,17 @@ TEST(TestPreprocessing, TestDownsample) {
 
 TEST(TestPreprocessing, TestComputeReciprocal) {
     std::array<size_t, 2> shape {4, 3};
-    RawImageGroup darks({3, shape[0], shape[1]}, {
-        4, 1, 1, 2, 0, 9, 7, 4, 3, 8, 6, 8, 
-        1, 7, 3, 0, 6, 6, 0, 8, 1, 8, 4, 2, 
-        2, 4, 6, 0, 9, 5, 8, 3, 4, 2, 2, 0
-    });
-    RawImageGroup flats({3, shape[0], shape[1]}, {
-        1, 9, 5, 1, 7, 9, 0, 6, 7, 1, 5, 6, 
-        2, 4, 8, 1, 3, 9, 5, 6, 1, 1, 1, 7, 
-        9, 9, 4, 1, 6, 8, 6, 9, 2, 4, 9, 4
-    });
+    std::vector<RawImageData> darks;
+    std::vector<RawImageData> flats;
+
+    using ValueType = RawImageData::ValueType;
+    darks.emplace_back(shape, std::vector<ValueType>{4, 1, 1, 2, 0, 9, 7, 4, 3, 8, 6, 8});
+    darks.emplace_back(shape, std::vector<ValueType>{1, 7, 3, 0, 6, 6, 0, 8, 1, 8, 4, 2});
+    darks.emplace_back(shape, std::vector<ValueType>{2, 4, 6, 0, 9, 5, 8, 3, 4, 2, 2, 0});
+    
+    flats.emplace_back(shape, std::vector<ValueType>{1, 9, 5, 1, 7, 9, 0, 6, 7, 1, 5, 6});
+    flats.emplace_back(shape, std::vector<ValueType>{2, 4, 8, 1, 3, 9, 5, 6, 1, 1, 1, 7});
+    flats.emplace_back(shape, std::vector<ValueType>{9, 9, 4, 1, 6, 8, 6, 9, 2, 4, 9, 4});
 
     auto [dark_avg, reciprocal] = computeReciprocal(darks, flats);
 

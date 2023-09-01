@@ -55,9 +55,9 @@ class DaqClientInterface {
     [[nodiscard]] std::optional<daq::Message> next() {
         if (queue_.empty()) return std::nullopt;
 
-        auto proj = std::move(queue_.front());
+        auto data = std::move(queue_.front());
         queue_.pop();
-        return proj;
+        return data;
     }
 };
 
