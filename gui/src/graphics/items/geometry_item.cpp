@@ -8,26 +8,28 @@
 */
 #include <imgui.h>
 
-#include "graphics/items/axes_item.hpp"
+#include "graphics/items/geometry_item.hpp"
 #include "graphics/axes.hpp"
 #include "graphics/scene.hpp"
 #include "graphics/shader_program.hpp"
 
 namespace recastx::gui {
 
-AxesItem::AxesItem(Scene &scene) : GraphicsItem(scene), axes_(new Axes) {
+GeometryItem::GeometryItem(Scene &scene) : GraphicsItem(scene), axes_(new Axes) {
     scene.addItem(this);
 }
 
-AxesItem::~AxesItem() = default;
+GeometryItem::~GeometryItem() = default;
 
-void AxesItem::renderIm() {
+void GeometryItem::renderIm() {
+    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "GEOMETRY");
+
     ImGui::Checkbox("Show axes", &visible_);
 }
 
-void AxesItem::onFramebufferSizeChanged(int /* width */, int /* height */) {}
+void GeometryItem::onFramebufferSizeChanged(int /* width */, int /* height */) {}
 
-void AxesItem::renderGl() {
+void GeometryItem::renderGl() {
     if (!visible_) return;
 
     axes_->render(scene_.viewMatrix(),
