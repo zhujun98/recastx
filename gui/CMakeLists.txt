@@ -72,7 +72,7 @@ set(GUI_SOURCES
         "src/graphics/viewport.cpp"
         "src/graphics/volume.cpp"
         "src/graphics/wireframe.cpp"
-        "src/graphics/items/axes_item.cpp"
+        "src/graphics/items/geometry_item.cpp"
         "src/graphics/items/axiscube_item.cpp"
         "src/graphics/items/graphics_item.cpp"
         "src/graphics/items/icon_item.cpp"

@@ -6,8 +6,8 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
-#ifndef GUI_AXESITEM_H
-#define GUI_AXESITEM_H
+#ifndef GUI_GEOMETRYITEM_H
+#define GUI_GEOMETRYITEM_H
 
 #include <memory>
 
@@ -18,7 +18,7 @@ namespace recastx::gui {
 class Scene;
 class Axes;
 
-class AxesItem : public GraphicsItem, public GraphicsGLItem {
+class GeometryItem : public GraphicsItem, public GraphicsGLItem {
 
     bool visible_ = true;
 
@@ -26,9 +26,9 @@ class AxesItem : public GraphicsItem, public GraphicsGLItem {
 
 public:
 
-    explicit AxesItem(Scene& scene);
+    explicit GeometryItem(Scene& scene);
 
-    ~AxesItem() override;
+    ~GeometryItem() override;
 
     void renderIm() override;
 
@@ -39,4 +39,4 @@ public:
 
 }  // namespace recastx::gui
 
-#endif // GUI_AXESITEM_H
+#endif // GUI_GEOMETRYITEM_H

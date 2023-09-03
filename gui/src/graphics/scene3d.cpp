@@ -13,8 +13,8 @@
 #include "graphics/scene3d.hpp"
 #include "graphics/camera3d.hpp"
 #include "graphics/items/axiscube_item.hpp"
-#include "graphics/items/axes_item.hpp"
 #include "graphics/items/icon_item.hpp"
+#include "graphics/items/geometry_item.hpp"
 #include "graphics/items/preproc_item.hpp"
 #include "graphics/items/projection_item.hpp"
 #include "graphics/items/statusbar_item.hpp"
@@ -26,8 +26,8 @@ namespace recastx::gui {
 
 Scene3d::Scene3d(RpcClient* client)
         : Scene(client),
-          axes_item_(new AxesItem(*this)),
           icon_item_(new IconItem(*this)),
+          geometry_item_(new GeometryItem(*this)),
           preproc_item_(new PreprocItem(*this)),
           projection_item_(new ProjectionItem(*this)),
           recon_item_(new ReconItem(*this)),
@@ -173,14 +173,19 @@ void Scene3d::render() {
     if (ImGui::Button("Perspective##CAMERA")) {
         camera_->setPerspectiveView();
     }
-    axes_item_->renderIm();
+
+    ImGui::Separator();
+    geometry_item_->renderIm();
 
     ImGui::Separator();
     preproc_item_->renderIm();
+
     ImGui::Separator();
     recon_item_->renderIm();
+
     ImGui::Separator();
     statusbar_item_->renderIm();
+
     ImGui::Separator();
     logging_item_->renderIm();
 
