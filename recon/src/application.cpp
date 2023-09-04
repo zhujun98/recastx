@@ -509,7 +509,7 @@ void Application::initReconstructor(size_t col_count, size_t row_count) {
     float z0 = 0.5f * (max_z + min_z);
 
     slice_geom_ = {s_size, s_size, 1, min_x, max_x, min_y, max_y, z0 - half_slice_height, z0 + half_slice_height};
-    preview_geom_ = {p_size, p_size, p_size, min_x, max_x, min_y, max_y, min_z, max_z};
+    preview_geom_ = {p_size, p_size, p_size, min_x, max_x, min_y, max_y, min_y, max_y};
 
     preview_buffer_.resize({preview_geom_.col_count, preview_geom_.row_count, preview_geom_.slice_count});
     slice_mediator_->resize({slice_geom_.col_count, slice_geom_.row_count});
