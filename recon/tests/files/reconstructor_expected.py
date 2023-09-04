@@ -24,6 +24,7 @@ def test_reconstructor_push_data():
     filtered = corrected + 1.  # mocked filter
     print("\nFiltered values: \n", filtered)
     sino = np.moveaxis(filtered, 0, 1)
+    sino = sino[::-1, ...]
     print("\nSino values: \n", sino)
 
 if __name__ == "__main__":

@@ -228,11 +228,11 @@ TEST_F(ApplicationTest, TestPushProjection) {
                 Pointwise(FloatNear(1e-6), { 0.30685282f, -0.38629436f, -1.0794415f, -0.7917595f, -1.1972246f,
                                             -0.9459102f,  -1.1972246f,  -1.1972246f, -1.0794415f, -0.38629436f}));
     EXPECT_THAT(std::vector<float>(sino.begin(), sino.begin() + 10), 
-                Pointwise(FloatNear(1e-6), { 0.30685282f, -0.60943794f, -0.09861231f, -0.9459102f, 1.f,
-                                            -0.09861231f, -0.7917595f,  -0.38629436f, -1.0794415f, 0.30685282f}));
-    EXPECT_THAT(std::vector<float>(sino.end() - 10, sino.end()), 
                 Pointwise(FloatNear(1e-6), {-0.7917595f, -1.0794415f, -1.0794415f, -0.9459102f, -0.09861231f,
                                             -0.9459102f, -1.1972246f, -1.1972246f, -1.0794415f, -0.38629436f}));
+    EXPECT_THAT(std::vector<float>(sino.end() - 10, sino.end()), 
+                Pointwise(FloatNear(1e-6), { 0.30685282f, -0.60943794f, -0.09861231f, -0.9459102f, 1.f,
+                                            -0.09861231f, -0.7917595f,  -0.38629436f, -1.0794415f, 0.30685282f}));
 }
 
 TEST_F(ApplicationTest, TestMemoryBufferReset) {
@@ -285,11 +285,11 @@ TEST_F(ApplicationTest, TestPushProjectionUnordered) {
 
     auto& sino = app_.sinoBuffer().ready();
     EXPECT_THAT(std::vector<float>(sino.begin(), sino.begin() + 10), 
-                Pointwise(FloatNear(1e-6), { 0.30685282f, -0.60943794f, -0.09861231f, -0.9459102f, 1.f,
-                                            -0.09861231f, -0.7917595f,  -0.38629436f, -1.0794415f, 0.30685282f}));
-    EXPECT_THAT(std::vector<float>(sino.end() - 10, sino.end()), 
                 Pointwise(FloatNear(1e-6), {-0.7917595f, -1.0794415f, -1.0794415f, -0.9459102f, -0.09861231f,
                                             -0.9459102f, -1.1972246f, -1.1972246f, -1.0794415f, -0.38629436f}));
+    EXPECT_THAT(std::vector<float>(sino.end() - 10, sino.end()), 
+                Pointwise(FloatNear(1e-6), { 0.30685282f, -0.60943794f, -0.09861231f, -0.9459102f, 1.f,
+                                            -0.09861231f, -0.7917595f,  -0.38629436f, -1.0794415f, 0.30685282f}));
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     pushProjection(num_angles_ + overflow, 2 * num_angles_ - 1);
