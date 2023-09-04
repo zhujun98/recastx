@@ -13,6 +13,8 @@
 #include <Eigen/Eigen>
 #include <spdlog/spdlog.h>
 
+#include "common/scoped_timer.hpp"
+#include "common/utils.hpp"
 #include "recon/application.hpp"
 #include "recon/encoder.hpp"
 #include "recon/monitor.hpp"
@@ -21,7 +23,6 @@
 #include "recon/projection_mediator.hpp"
 #include "recon/rpc_server.hpp"
 #include "recon/slice_mediator.hpp"
-#include "common/scoped_timer.hpp"
 
 namespace recastx::recon {
 
@@ -503,7 +504,7 @@ void Application::initReconstructor(size_t col_count, size_t row_count) {
     auto [min_y, max_y] = details::parseReconstructedVolumeBoundary(min_y_, max_y_, col_count);
     auto [min_z, max_z] = details::parseReconstructedVolumeBoundary(min_z_, max_z_, row_count);
     
-    size_t s_size = slice_size_.value_or(col_count);
+    size_t s_size = slice_size_.value_or(expandDataSizeForGpu(col_count, 64));
     size_t p_size = preview_size_.value_or(128);
     float half_slice_height = 0.5f * (max_z - min_z) / p_size;
     float z0 = 0.5f * (max_z + min_z);
