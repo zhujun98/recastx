@@ -69,6 +69,8 @@ if (BUILD_TEST)
 
     enable_testing()
     include(GoogleTest)
+
+    add_subdirectory(tests)
 endif()
 
 if (BUILD_GUI)
