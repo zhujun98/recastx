@@ -6,6 +6,9 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
+#include <chrono>
+#include <thread>
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
@@ -25,6 +28,9 @@ TEST(MonitorTest, TestGeneral) {
     for (size_t i = 0; i < 5; ++i) mon.countProjection();
     ASSERT_EQ(mon.numProjections(), 5);
     
+    // avoid NUMERICAL error
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
     mon.countTomogram();
 
     mon.summarize();

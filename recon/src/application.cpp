@@ -401,7 +401,7 @@ void Application::preprocessProjections(oneapi::tbb::task_arena& arena) {
             for (auto i = block.begin(); i != block.end(); ++i) {
                 for (size_t j = 0; j < chunk_size; ++j) {
                     for (size_t k = 0; k < col_count; ++k) {
-                        sinos[i * chunk_size * col_count + j * col_count + k] = 
+                        sinos[(row_count - 1 - i) * chunk_size * col_count + j * col_count + k] = 
                             projs[j * col_count * row_count + i * col_count + k];
                     }
                 }
