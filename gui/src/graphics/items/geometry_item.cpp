@@ -25,6 +25,9 @@ void GeometryItem::renderIm() {
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "GEOMETRY");
 
     ImGui::Checkbox("Show axes", &visible_);
+
+    ImGui::Separator();
+
 }
 
 void GeometryItem::onFramebufferSizeChanged(int /* width */, int /* height */) {}

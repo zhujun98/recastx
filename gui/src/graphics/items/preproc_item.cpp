@@ -86,6 +86,8 @@ void PreprocItem::renderIm() {
     }
 
     ImGui::EndDisabled();
+
+    ImGui::Separator();
 }
 
 bool PreprocItem::updateServerParams() {

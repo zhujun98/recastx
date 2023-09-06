@@ -35,6 +35,8 @@ class Camera : public InputHandler {
     glm::mat4 rotation_;
     std::optional<glm::mat4> view_ { std::nullopt };
 
+    bool fixed_ = false;
+
     float mouse_scroll_sensitivity_ = 0.05f;
     float mouse_move_sensitivity_ = 5.f;
     float key_sensitivity_ = 0.2f;
@@ -54,9 +56,13 @@ class Camera : public InputHandler {
 
     virtual ~Camera();
 
+    void render();
+
     [[nodiscard]] const glm::mat4& matrix();
 
     [[nodiscard]] float distance();
+
+    [[nodiscard]] bool isFixed() const { return fixed_; }
 
     bool handleMouseButton(int button, int action) override;
     bool handleScroll(float offset) override;

@@ -74,6 +74,8 @@ void LoggingItem::renderIm() {
         ImGui::EndChild();
         ImGui::End();
     }
+
+    ImGui::Separator();
 }
 
 void LoggingItem::onWindowSizeChanged(int width, int height) {

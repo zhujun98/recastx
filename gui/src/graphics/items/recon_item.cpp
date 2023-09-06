@@ -133,6 +133,8 @@ void ReconItem::renderIm() {
         ImGui::End();
     }
 
+    ImGui::Separator();
+
     scene_.setStatus("tomoUpdateFrameRate", fps_counter_.frameRate());
 }
 

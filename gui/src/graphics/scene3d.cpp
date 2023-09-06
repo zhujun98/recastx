@@ -151,42 +151,14 @@ void Scene3d::render() {
     ImGui::EndDisabled();
 
     ImGui::Separator();
+
     projection_item_->renderGl();
     projection_item_->renderIm();
-
-    ImGui::Separator();
-
-    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "CAMERA");
-    ImGui::Checkbox("Fix camera", &fixed_camera_);
-    if (ImGui::Button("Y-Z##CAMERA")) {
-        camera_->setFrontView();
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("X-Z##CAMERA")) {
-        camera_->setSideView();
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("X-Y##CAMERA")) {
-        camera_->setTopView();
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("Perspective##CAMERA")) {
-        camera_->setPerspectiveView();
-    }
-
-    ImGui::Separator();
+    camera_->render();
     geometry_item_->renderIm();
-
-    ImGui::Separator();
     preproc_item_->renderIm();
-
-    ImGui::Separator();
     recon_item_->renderIm();
-
-    ImGui::Separator();
     statusbar_item_->renderIm();
-
-    ImGui::Separator();
     logging_item_->renderIm();
 
     ImGui::End();
