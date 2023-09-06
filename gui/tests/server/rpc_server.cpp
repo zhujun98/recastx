@@ -22,11 +22,11 @@ grpc::Status ControlService::SetServerState(grpc::ServerContext* context,
                                             const rpc::ServerState* state,
                                             google::protobuf::Empty* ack) {
     state_ = state->state();
-    if (state_ == rpc::ServerState_State::ServerState_State_PROCESSING) {
+    if (state_ == rpc::ServerState_State_PROCESSING) {
         spdlog::info("Start acquiring & processing data");
-    } else if (state_ == rpc::ServerState_State::ServerState_State_ACQUIRING) {
+    } else if (state_ == rpc::ServerState_State_ACQUIRING) {
         spdlog::info("Start acquiring data");
-    } else if (state_ == rpc::ServerState_State::ServerState_State_READY) {
+    } else if (state_ == rpc::ServerState_State_READY) {
         spdlog::info("Stop acquiring & processing data");
     }
     server_->updateState(state_);
@@ -64,8 +64,7 @@ grpc::Status ImageprocService::SetRampFilter(grpc::ServerContext* contest,
 grpc::Status ProjectionService::GetProjectionData(grpc::ServerContext* context,
                                                   const google::protobuf::Empty*,
                                                   grpc::ServerWriter<rpc::ProjectionData>* writer) {
-    if (state_ == rpc::ServerState_State::ServerState_State_PROCESSING
-            || state_ == rpc::ServerState_State::ServerState_State_ACQUIRING) {
+    if (state_ == rpc::ServerState_State_PROCESSING || state_ == rpc::ServerState_State_ACQUIRING) {
         std::this_thread::sleep_for(std::chrono::milliseconds(K_RECON_INTERVAL));
 
         rpc::ProjectionData data;
@@ -99,7 +98,7 @@ grpc::Status ReconstructionService::SetSlice(grpc::ServerContext* context,
 grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
                                                  const google::protobuf::Empty*,
                                                  grpc::ServerWriter<rpc::ReconData>* writer) {
-    if (state_ == rpc::ServerState_State::ServerState_State_PROCESSING) {
+    if (state_ == rpc::ServerState_State_PROCESSING) {
         std::this_thread::sleep_for(std::chrono::milliseconds(K_RECON_INTERVAL));
 
         std::random_device rd;
