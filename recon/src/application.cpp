@@ -472,6 +472,7 @@ void Application::init() {
     spdlog::info("- Projection image size: {} ({}) x {} ({})", 
                  col_count, downsampling_col, row_count, downsampling_row);
     spdlog::info("- Ramp filter: {}", imgproc_params_.ramp_filter.name);
+    spdlog::info("- Number of image-processing threads: {}", imgproc_params_.num_threads);
 }
 
 void Application::initParams() {
