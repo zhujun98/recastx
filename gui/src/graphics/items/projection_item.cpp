@@ -75,7 +75,6 @@ void ProjectionItem::onWindowSizeChanged(int width, int height) {
 
 void ProjectionItem::renderIm() {
     ImGui::Checkbox("Show projection", &visible_);
-
     if (visible_) {
         ImGui::SetNextWindowPos(pos_);
         ImGui::SetNextWindowSize(size_);
@@ -87,6 +86,8 @@ void ProjectionItem::renderIm() {
         ImGui::End();
         ImGui::PopStyleVar();
     }
+
+    ImGui::Separator();
 }
 
 void ProjectionItem::onFramebufferSizeChanged(int width, int height) {

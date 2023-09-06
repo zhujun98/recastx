@@ -10,6 +10,7 @@
 
 #include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
+#include "imgui.h"
 
 #include "graphics/camera3d.hpp"
 
@@ -20,6 +21,28 @@ Camera::Camera(const glm::vec3& target) : target_(target) {
 }
 
 Camera::~Camera() = default;
+
+void Camera::render() {
+    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "CAMERA");
+    ImGui::Checkbox("Fix camera", &fixed_);
+    if (ImGui::Button("Y-Z##CAMERA")) {
+        setFrontView();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("X-Z##CAMERA")) {
+        setSideView();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("X-Y##CAMERA")) {
+        setTopView();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Perspective##CAMERA")) {
+        setPerspectiveView();
+    }
+
+    ImGui::Separator();
+}
 
 const glm::mat4& Camera::matrix() {
     if (!view_) {

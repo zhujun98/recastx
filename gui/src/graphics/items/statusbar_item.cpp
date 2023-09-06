@@ -48,6 +48,8 @@ void StatusbarItem::renderIm() {
 
         ImGui::End();
     }
+
+    ImGui::Separator();
 }
 
 } // namespace recastx::gui

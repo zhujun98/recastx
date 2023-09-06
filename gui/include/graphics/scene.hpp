@@ -48,8 +48,6 @@ protected:
     ImVec2 pos_;
     ImVec2 size_;
 
-    bool fixed_camera_ = false;
-
     SceneStatus scene_status_;
 
   public:
