@@ -209,7 +209,7 @@ class Application {
 
     void startReconstructing();
 
-    void spin(bool auto_processing=false);
+    void spin(rpc::ServerState_State state);
 
     void setDownsampling(uint32_t col, uint32_t row);
 

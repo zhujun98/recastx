@@ -22,6 +22,11 @@
 
 namespace po = boost::program_options;
 
+recastx::rpc::ServerState_State parseServerState(bool auto_acquiring, bool auto_processing) {
+    if (auto_processing) return recastx::rpc::ServerState_State_PROCESSING;
+    if (auto_acquiring) return recastx::rpc::ServerState_State_ACQUIRING;
+    return recastx::rpc::ServerState_State_READY;
+}
 
 std::pair<uint32_t, uint32_t> parseDownsampleFactor(
         const po::variable_value& downsample_row, 
@@ -39,10 +44,13 @@ int main(int argc, char** argv) {
     spdlog::set_level(spdlog::level::debug);
 #endif
 
+    bool auto_acquiring = false;
     bool auto_processing = false;
     po::options_description general_desc("General options");
     general_desc.add_options()
         ("help,h", "print help message")
+        ("auto-acquiring", po::bool_switch(&auto_acquiring),
+         "start data acquisition automatically (without waiting for a trigger from the GUI client)")
         ("auto-processing", po::bool_switch(&auto_processing), 
          "start data processing automatically (without waiting for a trigger from the GUI client)")
     ;
@@ -206,7 +214,7 @@ int main(int argc, char** argv) {
                               num_cols, num_rows, 1.0f, 1.0f, 0.0f, 0.0f, num_angles);
     app.setReconGeometry(slice_size, preview_size, minx, maxx, miny, maxy, minz, maxz);
 
-    app.spin(auto_processing);
+    app.spin(parseServerState(auto_acquiring, auto_processing));
 
     return 0;
 }
