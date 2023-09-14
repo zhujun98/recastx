@@ -1,0 +1,13 @@
+site_name: RECASTX
+nav:
+  - Introduction: index.md
+  - Installation: installation.md
+  - User Guide:
+      - Getting started: user_guide/usage.md
+      - GUI: user_guide/gui.md
+  - FAQ: faq.md
+theme:
+  name: material
+markdown_extensions:
+  - mdx_include
+
