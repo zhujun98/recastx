@@ -8,6 +8,3 @@ nav:
   - FAQ: faq.md
 theme:
   name: material
-markdown_extensions:
-  - mdx_include
-
