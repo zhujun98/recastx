@@ -64,7 +64,7 @@ void IconItem::renderGl() {
     glyph_shader_->setMat4("view", view_);
     glyph_shader_->setMat4("projection", translate_ * vp_->projection());
     glyph_shader_->setVec3("glyphColor", color1_);
-    glyph_renderer_->render("RECAST-X", 0.f, 0.55f, 0.005f * asp, 0.02f);
+    glyph_renderer_->render("RECASTX", 0.f, 0.55f, 0.005f * asp, 0.02f);
     glyph_shader_->setVec3("glyphColor", color2_);
     glyph_renderer_->render("@TOMCAT", 0.f, -0.15f, 0.0025f * asp, 0.01f);
 

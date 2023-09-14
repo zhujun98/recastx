@@ -1,12 +1,10 @@
-# RECAST-X
+# RECASTX
 
-[![Documentation](https://github.com/zhujun98/recastx/actions/workflows/docs.yml/badge.svg)](https://github.com/zhujun98/recastx/actions/workflows/docs.yml)
-
-**REC**onstruction of **A**rbitrary **S**labs in **T**omography - **X**
-
-**Authors**: Jun Zhu <zhujun981661@gmail.com>
+[![docs](https://github.com/zhujun98/recastx/actions/workflows/docs.yml/badge.svg)](https://github.com/zhujun98/recastx/actions/workflows/docs.yml)
 
 ---
+
+[comment]: # (Any modification to the following content should also be implemented in 'docs/docs/index.md')
 
 This project has been developed based on a successful proof-of-principle test [1] 
 using [RECAST3D](https://github.com/cicwi/RECAST3D.git) in 2019 at the 
@@ -23,10 +21,8 @@ been heavily optimized and it currently reaches more than 2 GB/s on a ordinary G
 node. In addition, a modern GUI has been developed to offer better visualization 
 of the data and more flexible control of the reconstruction pipeline.
 
-Currently, the software is dedicated for the DAQ interface at the TOMCAT beamline. 
-However, there is a plan to make it more flexible in order to work with other DAQ 
-interfaces.
-
 **References**
 
 [1] Buurlage, JW., Marone, F., Pelt, D.M. et al. Real-time reconstruction and visualisation towards dynamic feedback control during time-resolved tomography experiments at TOMCAT. [Sci Rep 9, 18379 (2019)](https://doi.org/10.1038/s41598-019-54647-4)
+
+Learn more about RECASTX, please check the [documentation](https://zhujun98.github.io/recastx/).
