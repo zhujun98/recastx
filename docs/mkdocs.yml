@@ -5,6 +5,7 @@ nav:
   - User Guide:
       - Getting started: user_guide/usage.md
       - GUI: user_guide/gui.md
+      - Data protocol: user_guide/data_protocol.md
   - FAQ: faq.md
 theme:
   name: material

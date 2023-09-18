@@ -1,37 +1,19 @@
 ![architecture](../media/recastx-architecture.png)
 
-### At TOMCAT
-
-#### Step 1: Start the GUI
-
-Log in (no ssh) onto the graphics workstation `x02da-gws-3` and open a terminal
-```sh
-conda activate recastx-gui
-recastx-gui --recon-host x02da-gpu-1
-```
-
-Or on the Ra cluster, you can only run the OpenGL GUI inside a [NoMachine](https://www.psi.ch/en/photon-science-data-services/remote-interactive-access
-) client by
-```sh
-vglrun recastx-gui --recon-host x02da-gpu-1
-```
-**Note**: there is still a problem of linking the OpenGL GUI on Ra.
-
-Or on a local PC
-```sh
-ssh -L 9971:localhost:9971 x02da-gpu-1
-```
-
-#### Step 2: Start the reconstruction server
+## Step 1: Starting the reconstruction server
 
 ```sh
 conda activate recastx-recon
+```
 
-# Receiving the data stream and running the GUI both locally
+For a local data source:
+```sh
 recastx-recon  --rows 800 --cols 384 --angles 400
+```
 
-# Receiving the data stream from a DAQ node
-recastx-recon --daq-host xbl-daq-36 --rows 800 --cols 384 --angles 400
+For a remote data source (e.g. DAQ node):
+```sh
+recastx-recon --rows 800 --cols 384 --angles 400 --daq-host <hostname> 
 ```
 
 For more information, type
@@ -39,28 +21,42 @@ For more information, type
 recastx-recon -h
 ```
 
-#### Step 3: Stream the data
+## Step 2: Starting the GUI
 
-**Option1**: Streaming data from files on the GPU node
-
-Install [foamstream](https://github.com/zhujun98/foamstream.git), and stream real
-experimental data, for example, by
 ```sh
-foamstream-tomcat --datafile pet1 --ordered
-
-# pet1: recastx-recon --rows 800 --cols 384 --angles 400 --threads 32
-# h1: recastx-recon --rows 2016 --cols 288 --angles 500 --threads 32
-
-```
-or stream fake data, for example, by
-```sh
-foamstream-tomcat --rows 800 --cols 384 --projections 10000
+conda activate recastx-gui
 ```
 
-**Option2**: On the DAQ node
+You can specify the reconstruction server
+```sh
+recastx-gui --recon-host <hostname>
+```
 
-Start data acquisition with GigaFRoST camera.
+or make use of local port forwarding
+```sh
+ssh -L 9971:localhost:9971 <hostname>
+recastx-gui
+```
 
-### At other facilities
+You can also start the GUI on a node with [NoMachine](https://www.psi.ch/en/photon-science-data-services/remote-interactive-access
+) installed
+```sh
+vglrun recastx-gui --recon-host <hostname>
+```
 
-TBD: a data adaptor should be needed
+## Step 3: Streaming the data
+
+### Option 1: streaming data from an area detector
+
+Contact the corresponding specialists at the facility.
+
+### Option 2: streaming data from files
+
+We recommend using [foamstream](https://github.com/zhujun98/foamstream.git).
+```sh
+pip install foamstream
+
+foamstream-tomcat --datafile pet1
+```
+
+Please feel free to use your own file streamer as long as the [data protocol](./data_protocol.md) is compatible.
