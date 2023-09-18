@@ -126,13 +126,9 @@ void Application::startAcquiring() {
                         pushProjection(proj);
                     }
 
-                    monitor_->countProjection();
-                    // TODO: could be removed
-                    if (monitor_->numProjections() % 10 == 0) {
-                        std::this_thread::sleep_for(std::chrono::microseconds(1));
-                    }
-
                     proj_mediator_->emplace(std::move(proj));
+                    monitor_->countProjection();
+
                     break;
                 }
                 case ProjectionType::DARK: {
