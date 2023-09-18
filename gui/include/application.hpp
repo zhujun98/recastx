@@ -31,7 +31,7 @@ class Application {
 
     int width_ = 1440;
     int height_ = 1080;
-    const std::string title_ = "RECASTX - Quasi-3D Real-time Tomographic Reconstruction";
+    const std::string title_ = "RECASTX - REConstruction of Arbitrary Slabs in Tomography X";
 
     ImVec4 bg_color_ = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
 
