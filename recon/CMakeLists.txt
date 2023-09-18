@@ -47,10 +47,11 @@ set(RECON_SOURCES
         "src/reconstructor.cpp"
         "src/projection_mediator.cpp"
         "src/slice_mediator.cpp"
-        "src/daq_client.cpp"
         "src/rpc_server.cpp"
         "src/monitor.cpp"
         "src/application.cpp"
+        "src/daq/std_daq_client.cpp"
+        "src/daq/zmq_daq_client.cpp"
 )
 
 set(RECON_LIB _recastx-recon)
@@ -73,7 +74,6 @@ target_link_libraries(${RECON_LIB}
         PUBLIC 
                 cppzmq
                 spdlog::spdlog
-                fmt::fmt
                 Eigen3::Eigen
                 astra-toolbox
                 recastx_grpc_proto

@@ -34,10 +34,10 @@ extern "C" {
 #include "projection.pb.h"
 #include "reconstruction.pb.h"
 
-#include "daq_client_interface.hpp"
 #include "filter_interface.hpp"
 #include "reconstructor_interface.hpp"
 #include "projection.hpp"
+#include "daq/daq_client_interface.hpp"
 
 namespace recastx::recon {
 
@@ -67,6 +67,13 @@ class Application {
     static uint32_t defaultImageprocConcurrency() {
         uint32_t n = std::thread::hardware_concurrency();
         return n > 2 ? n / 2 : 1;
+    }
+
+    static uint32_t defaultDaqConcurrency() {
+        uint32_t n = std::thread::hardware_concurrency();
+        if (n >= 64) return 4;
+        if (n >= 32) return 2;
+        return 1;
     }
 
   private:

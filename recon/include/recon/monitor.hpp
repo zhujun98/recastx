@@ -11,8 +11,6 @@
 
 #include <chrono>
 
-#include "daq_client_interface.hpp"
-
 namespace recastx::recon {
 
 class Monitor {

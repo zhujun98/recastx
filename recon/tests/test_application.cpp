@@ -24,12 +24,22 @@ using ::testing::FloatNear;
 
 class MockDaqClient : public DaqClientInterface {
 
+    std::queue<Projection<>> queue_;
+
   public:
 
-    void start() {}
+    void start() override {}
 
-    void startAcquiring() {}
-    void stopAcquiring() {}
+    void startAcquiring() override {}
+    void stopAcquiring() override {}
+
+    [[nodiscard]] virtual std::optional<Projection<>> next() override {
+        if (queue_.empty()) return std::nullopt;
+
+        auto data = std::move(queue_.front());
+        queue_.pop();
+        return data;
+    }
 
     template<typename... Args>
     void push(Args&&... args) {

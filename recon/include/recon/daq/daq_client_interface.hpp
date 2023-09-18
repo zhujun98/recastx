@@ -12,21 +12,22 @@
 #include <optional>
 #include <queue>
 
-#include <zmq.hpp>
-
-#include "projection.hpp"
+#include "recon/projection.hpp"
 
 namespace recastx::recon {
 
 class DaqClientInterface {
 
-  public:
-
-    using BufferType = std::queue<Projection<>>;
-
   protected:
 
-    BufferType queue_;
+    static ProjectionType parseProjectionType(int v) {
+        if (v != static_cast<int>(ProjectionType::DARK) &&
+            v != static_cast<int>(ProjectionType::FLAT) && 
+            v != static_cast<int>(ProjectionType::PROJECTION)) {
+                return ProjectionType::UNKNOWN;
+            }
+        return static_cast<ProjectionType>(v);
+  }
 
   public:
 
@@ -37,14 +38,9 @@ class DaqClientInterface {
     virtual void startAcquiring() = 0;
     virtual void stopAcquiring() = 0;
 
-    [[nodiscard]] std::optional<Projection<>> next() {
-        if (queue_.empty()) return std::nullopt;
-
-        auto data = std::move(queue_.front());
-        queue_.pop();
-        return data;
-    }
+    [[nodiscard]] virtual std::optional<Projection<>> next() = 0;
 };
+
 
 } // namespace recastx::recon
 

@@ -19,7 +19,6 @@
 #include <type_traits>
 
 #include <spdlog/spdlog.h>
-#include <fmt/core.h>
 
 #include "common/config.hpp"
 #include "tensor.hpp"

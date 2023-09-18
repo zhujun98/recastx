@@ -10,7 +10,6 @@
 #include <gmock/gmock.h>
 
 #include "recon/projection_mediator.hpp"
-#include "recon/projection.hpp"
 
 namespace recastx::recon::test {
 
