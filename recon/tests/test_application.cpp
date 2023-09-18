@@ -168,7 +168,7 @@ class ApplicationTest : public testing::Test {
         for (int i = 0; i < n; ++i) {
             dynamic_cast<MockDaqClient*>(daq_client_.get())->push(
                 ProjectionType::DARK, i, num_cols_, num_rows_, 
-                zmq::message_t(reinterpret_cast<void*>(img.data()), img.size() * sizeof(RawDtype)));
+                reinterpret_cast<void*>(img.data()), img.size() * sizeof(RawDtype));
         }
     } 
 
@@ -177,7 +177,7 @@ class ApplicationTest : public testing::Test {
         for (int i = 0; i < n; ++i) {
             dynamic_cast<MockDaqClient*>(daq_client_.get())->push(
                 ProjectionType::FLAT, i, num_cols_, num_rows_, 
-                zmq::message_t(reinterpret_cast<void*>(img.data()), img.size() * sizeof(RawDtype)));
+                reinterpret_cast<void*>(img.data()), img.size() * sizeof(RawDtype));
         }
     } 
 
@@ -195,7 +195,7 @@ class ApplicationTest : public testing::Test {
             }
             dynamic_cast<MockDaqClient*>(daq_client_.get())->push(
                 ProjectionType::PROJECTION, i, num_cols_, num_rows_,
-                zmq::message_t(reinterpret_cast<void*>(img.data()), img.size() * sizeof(RawDtype)));
+                reinterpret_cast<void*>(img.data()), img.size() * sizeof(RawDtype));
        }
     }
 };

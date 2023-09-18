@@ -70,7 +70,6 @@ add_executable(${RECASTX_RECON_APP_TEST} main.cpp test_application.cpp
 target_include_directories(${RECASTX_RECON_APP_TEST} PRIVATE ${RECASTX_RECON_TEST_INCLUDE_DIRS})
 target_link_libraries(${RECASTX_RECON_APP_TEST} 
     PRIVATE
-        cppzmq
         TBB::tbb
         Eigen3::Eigen
         ${FFTW_FLOAT_LIB}

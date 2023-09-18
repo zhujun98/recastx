@@ -96,7 +96,7 @@ void DaqClient::start() {
 
             socket_.recv(update, zmq::recv_flags::none);
             assert(update.size() == sizeof(RawDtype) * n_rows * n_cols);
-            queue_.emplace(proj_type, frame, n_cols, n_rows, std::move(update));
+            queue_.emplace(proj_type, frame, n_cols, n_rows, update.data(), update.size());
 
 #if (VERBOSITY >= 1)
             if (proj_type == ProjectionType::PROJECTION) {
