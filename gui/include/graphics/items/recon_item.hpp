@@ -99,11 +99,12 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
 
     Colormap cm_;
     bool auto_levels_ = true;
+    bool clamp_negatives_ = true;
     float min_val_;
     float max_val_;
 
     bool show_volume_ = false;
-    float volume_alpha_ = 0.2f;
+    float volume_alpha_ = 1.f;
 
     glm::mat4 matrix_;
 

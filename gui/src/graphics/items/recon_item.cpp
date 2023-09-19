@@ -80,6 +80,9 @@ void ReconItem::renderIm() {
     }
 
     ImGui::Checkbox("Auto Levels", &auto_levels_);
+    ImGui::SameLine();
+    ImGui::Checkbox("Clamp Negatives", &clamp_negatives_);
+
     float step_size = (max_val_ - min_val_) / 100.f;
     if (step_size < 0.01f) step_size = 0.01f; // avoid a tiny step size
     ImGui::DragFloatRange2("Min / Max", &min_val_, &max_val_, step_size,
@@ -152,14 +155,17 @@ void ReconItem::renderGl() {
 
     matrix_ = projection * view;
 
+    float min_val = min_val_;
+    if (clamp_negatives_) min_val = min_val_ > 0 ? min_val_ : 0;
+
     volume_->bind();
     for (auto slice : sortedSlices()) {
-        slice->render(view, projection, min_val_, max_val_);
+        slice->render(view, projection, min_val, max_val_);
     }
     volume_->unbind();
 
     if (show_volume_) {
-        volume_->render(view, projection, min_val_, max_val_, volume_alpha_);
+        volume_->render(view, projection, min_val, max_val_, volume_alpha_);
     }
 
     cm_.unbind();
