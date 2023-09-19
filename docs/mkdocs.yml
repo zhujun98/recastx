@@ -1,11 +1,17 @@
 site_name: RECASTX
 nav:
-  - Introduction: index.md
+  - Introduction: introduction.md
   - Installation: installation.md
   - User Guide:
       - Getting started: user_guide/usage.md
       - GUI: user_guide/gui.md
       - Data protocol: user_guide/data_protocol.md
+  - Tutorial:
+      - Plastic beads (3D): tutorial/plastic_beads.md
+      - Dynamic tomography (4D): tutorial/dynamic_tomography.md
   - FAQ: faq.md
 theme:
   name: material
+markdown_extensions:
+  - attr_list
+  - md_in_html
