@@ -1,6 +1,6 @@
 site_name: RECASTX
 nav:
-  - Introduction: introduction.md
+  - Introduction: index.md
   - Installation: installation.md
   - User Guide:
       - Getting started: user_guide/usage.md
