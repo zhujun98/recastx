@@ -56,7 +56,7 @@ We recommend using [foamstream](https://github.com/zhujun98/foamstream.git).
 ```sh
 pip install foamstream
 
-foamstream-tomcat --datafile pet1
+foamstream-tomo --datafile <Your/HDF5 file/path>
 ```
 
 Please feel free to use your own file streamer as long as the [data protocol](./data_protocol.md) is compatible.
