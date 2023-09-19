@@ -21,7 +21,7 @@ cmake .. -DCMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"}
 make -j12 && make install
 ```
 
-### Installing the GUI
+### Installing the GUI client
 
 On a graphics node or a laptop (Linux / MacOS),
 
