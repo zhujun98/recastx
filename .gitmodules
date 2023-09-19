@@ -14,3 +14,6 @@
 [submodule "ext/implot"]
 	path = ext/implot
 	url = https://github.com/epezent/implot.git
+[submodule "docs/docs/recastx-docs-supplement"]
+	path = docs/docs/recastx-docs-supplement
+	url = https://github.com/zhujun98/recastx-docs-supplement.git
