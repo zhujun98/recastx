@@ -16,6 +16,8 @@ uniform float minValue;
 uniform float maxValue;
 
 float remapMinMax(float x, float x0, float x1) {
+    if (x > x1) return 1.f;
+    if (x < x0) return 0.f;
     return (x - x0) / (x1 - x0);
 }
 
