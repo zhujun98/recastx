@@ -15,9 +15,9 @@
 #include <boost/program_options.hpp>
 
 #include "recon/application.hpp"
-#include "recon/daq_client.hpp"
 #include "recon/ramp_filter.hpp"
 #include "recon/reconstructor.hpp"
+#include "recon/daq/daq_factory.hpp"
 #include "common/config.hpp"
 
 namespace po = boost::program_options;
@@ -63,6 +63,8 @@ int main(int argc, char** argv) {
          "ZMQ socket port of the DAQ server")
         ("daq-socket", po::value<std::string>()->default_value("pull"),
          "ZMQ socket type of the DAQ server. Options: sub/pull")
+        ("daq-data-protocol", po::value<std::string>()->default_value("default"),
+         "DAQ data protocol")
         ("rpc-port", po::value<int>()->default_value(9971),
          "port of the gRPC server."
          "At TOMCAT, the valid port range is [9970, 9979]")
@@ -139,6 +141,8 @@ int main(int argc, char** argv) {
     pipeline_desc.add_options()
         ("imageproc-threads", po::value<uint32_t>(),
          "number of threads used for image processing")
+        ("daq-threads", po::value<uint32_t>(),
+         "number of threads used for data acquisition")
     ;
 
     po::options_description all_desc(
@@ -164,6 +168,7 @@ int main(int argc, char** argv) {
     auto daq_hostname = opts["daq-host"].as<std::string>();
     auto daq_port = opts["daq-port"].as<int>();
     auto daq_socket_type = opts["daq-socket"].as<std::string>();
+    auto daq_data_protocol = opts["daq-data-protocol"].as<std::string>();
     auto rpc_port = opts["rpc-port"].as<int>();
 
     auto [downsampling_row, downsampling_col] = parseDownsampleFactor(
@@ -195,11 +200,17 @@ int main(int argc, char** argv) {
     auto imageproc_threads = opts["imageproc-threads"].empty()
          ? recastx::recon::Application::defaultImageprocConcurrency() 
          : opts["imageproc-threads"].as<uint32_t>();
+    auto daq_threads = opts["daq-threads"].empty()
+         ? recastx::recon::Application::defaultDaqConcurrency()
+         : opts["daq-threads"].as<uint32_t>();
 
     using namespace std::string_literals;
 
-    recastx::recon::DaqClient daq_client(
-        "tcp://"s + daq_hostname + ":"s + std::to_string(daq_port), daq_socket_type);
+    auto daq_client = recastx::recon::createDaqClient(
+        daq_data_protocol, 
+        "tcp://"s + daq_hostname + ":"s + std::to_string(daq_port), 
+        daq_socket_type,
+        daq_threads);
     recastx::recon::RampFilterFactory ramp_filter_factory;
     recastx::recon::AstraReconstructorFactory recon_factory;
     recastx::RpcServerConfig rpc_server_cfg {rpc_port};
@@ -207,7 +218,7 @@ int main(int argc, char** argv) {
         imageproc_threads, downsampling_col, downsampling_row, { ramp_filter }
     };
     recastx::recon::Application app(raw_buffer_size, imageproc_params, 
-                                    &daq_client, &ramp_filter_factory, &recon_factory, rpc_server_cfg);
+                                    daq_client.get(), &ramp_filter_factory, &recon_factory, rpc_server_cfg);
 
     if (retrieve_phase) app.setPaganinParams(pixel_size, lambda, delta, beta, distance);
     app.setProjectionGeometry(cone_beam ? recastx::BeamShape::CONE : recastx::BeamShape::PARALELL, 

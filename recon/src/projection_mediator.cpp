@@ -7,7 +7,6 @@
  * The full license is in the file LICENSE, distributed with this software.
 */
 #include "recon/projection_mediator.hpp"
-#include "recon/projection.hpp"
 
 namespace recastx::recon {
 

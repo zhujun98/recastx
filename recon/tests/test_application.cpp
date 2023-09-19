@@ -24,12 +24,22 @@ using ::testing::FloatNear;
 
 class MockDaqClient : public DaqClientInterface {
 
+    std::queue<Projection<>> queue_;
+
   public:
 
-    void start() {}
+    void start() override {}
 
-    void startAcquiring() {}
-    void stopAcquiring() {}
+    void startAcquiring() override {}
+    void stopAcquiring() override {}
+
+    [[nodiscard]] virtual std::optional<Projection<>> next() override {
+        if (queue_.empty()) return std::nullopt;
+
+        auto data = std::move(queue_.front());
+        queue_.pop();
+        return data;
+    }
 
     template<typename... Args>
     void push(Args&&... args) {
@@ -168,7 +178,7 @@ class ApplicationTest : public testing::Test {
         for (int i = 0; i < n; ++i) {
             dynamic_cast<MockDaqClient*>(daq_client_.get())->push(
                 ProjectionType::DARK, i, num_cols_, num_rows_, 
-                zmq::message_t(reinterpret_cast<void*>(img.data()), img.size() * sizeof(RawDtype)));
+                reinterpret_cast<void*>(img.data()), img.size() * sizeof(RawDtype));
         }
     } 
 
@@ -177,7 +187,7 @@ class ApplicationTest : public testing::Test {
         for (int i = 0; i < n; ++i) {
             dynamic_cast<MockDaqClient*>(daq_client_.get())->push(
                 ProjectionType::FLAT, i, num_cols_, num_rows_, 
-                zmq::message_t(reinterpret_cast<void*>(img.data()), img.size() * sizeof(RawDtype)));
+                reinterpret_cast<void*>(img.data()), img.size() * sizeof(RawDtype));
         }
     } 
 
@@ -195,7 +205,7 @@ class ApplicationTest : public testing::Test {
             }
             dynamic_cast<MockDaqClient*>(daq_client_.get())->push(
                 ProjectionType::PROJECTION, i, num_cols_, num_rows_,
-                zmq::message_t(reinterpret_cast<void*>(img.data()), img.size() * sizeof(RawDtype)));
+                reinterpret_cast<void*>(img.data()), img.size() * sizeof(RawDtype));
        }
     }
 };

@@ -17,7 +17,7 @@
 #include <stdexcept>
 #include <unordered_set>
 
-#include <fmt/core.h>
+#include <spdlog/spdlog.h>
 
 #include "common/config.hpp"
 

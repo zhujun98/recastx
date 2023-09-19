@@ -45,8 +45,6 @@ find_package(Boost 1.82 COMPONENTS program_options REQUIRED)
 
 find_package(spdlog 1.10.0 REQUIRED)
 
-find_package(fmt 9.1.0 REQUIRED)
-
 find_package(Threads REQUIRED)
 find_package(Protobuf REQUIRED)
 

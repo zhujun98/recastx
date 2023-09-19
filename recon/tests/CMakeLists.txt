@@ -11,7 +11,7 @@ set(RECASTX_RECON_TEST_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/../../common/inclu
 )
 set(RECASTX_RECON_TEST_SRC_FILE_DIR ${CMAKE_CURRENT_LIST_DIR}/../src/)
 
-set(RECONX_RECON_TEST_COMMON_LIBRARIES spdlog::spdlog fmt::fmt gmock gtest)
+set(RECONX_RECON_TEST_COMMON_LIBRARIES spdlog::spdlog gmock gtest)
 
 set(RECASTX_RECON_TEST_FILES test_tensor.cpp 
                              test_buffer.cpp
@@ -57,6 +57,21 @@ foreach(test_file IN LISTS RECASTX_RECON_TEST_FILES)
     gtest_discover_tests(${targetname})
 endforeach()
 
+# daq client test
+set(RECASTX_RECON_DAQ_TEST test_daq_client)
+add_executable(${RECASTX_RECON_DAQ_TEST} main.cpp test_daq_client.cpp 
+        ${RECASTX_RECON_TEST_SRC_FILE_DIR}/daq/zmq_daq_client.cpp
+        ${RECASTX_RECON_TEST_SRC_FILE_DIR}/daq/std_daq_client.cpp
+)
+target_include_directories(${RECASTX_RECON_DAQ_TEST} PRIVATE ${RECASTX_RECON_TEST_INCLUDE_DIRS})
+target_link_libraries(${RECASTX_RECON_DAQ_TEST} 
+    PRIVATE
+        cppzmq
+        nlohmann_json::nlohmann_json
+        ${RECONX_RECON_TEST_COMMON_LIBRARIES}
+)
+gtest_discover_tests(${RECASTX_RECON_DAQ_TEST})
+
 # app test
 set(RECASTX_RECON_APP_TEST test_application)
 add_executable(${RECASTX_RECON_APP_TEST} main.cpp test_application.cpp 
@@ -70,7 +85,6 @@ add_executable(${RECASTX_RECON_APP_TEST} main.cpp test_application.cpp
 target_include_directories(${RECASTX_RECON_APP_TEST} PRIVATE ${RECASTX_RECON_TEST_INCLUDE_DIRS})
 target_link_libraries(${RECASTX_RECON_APP_TEST} 
     PRIVATE
-        cppzmq
         TBB::tbb
         Eigen3::Eigen
         ${FFTW_FLOAT_LIB}
