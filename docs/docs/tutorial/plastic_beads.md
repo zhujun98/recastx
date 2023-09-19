@@ -42,11 +42,11 @@ recastx-gui
 ```
 
 <figure markdown>
-  ![Image title](../recastx-docs-supplement/beads_volume.gif){ width="480" }
+  ![Beads volume](../recastx-docs-supplement/beads_volume.gif){ width="480" }
   <figcaption>Low-resolution volume</figcaption>
 </figure>
 
 <figure markdown>
-  ![Image title](../recastx-docs-supplement/beads_slices.jpg){ width="480" }
+  ![Beads slices](../recastx-docs-supplement/beads_slices.jpg){ width="480" }
   <figcaption>Three orthogonal high-resolution slices</figcaption>
 </figure>
