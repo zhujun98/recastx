@@ -13,7 +13,7 @@ machine, respectively. You will also need to install
 to stream the data from files.
 
 We are going to use the *plastic beeds* dataset offered by 
-[TomoBank](https://tomobank.readthedocs.io/en/latest/#). Open its homepage and Navigate 
+[TomoBank](https://tomobank.readthedocs.io/en/latest/#). Go to the homepage, and then navigate 
 to `Datasets/KBLT` and download the file `2_plastic_beeds_RGB.h5`.
 
 ## Running
@@ -22,7 +22,7 @@ to `Datasets/KBLT` and download the file `2_plastic_beeds_RGB.h5`.
 
 Open a terminal and run:
 ```sh
-foamstream-tomcat --datafile <path>/2_plastic_beeds_RGB.h5 --pdata tomo -pflat flat
+foamstream-tomo --datafile <Your/folder/2_plastic_beeds_RGB.h5> --pdata tomo -pflat flat
 ```
 
 ### Starting the reconstruction server
