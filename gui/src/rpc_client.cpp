@@ -21,7 +21,7 @@ std::queue<RpcClient::DataType>& RpcClient::packets() { return packets_; }
 RpcClient::RpcClient(const std::string& hostname, int port) {
 
     grpc::ChannelArguments ch_args;
-    ch_args.SetMaxReceiveMessageSize(K_MAX_RPC_RECV_MESSAGE_SIZE);
+    ch_args.SetMaxReceiveMessageSize(K_MAX_RPC_CLIENT_RECV_MESSAGE_SIZE);
     channel_ = grpc::CreateCustomChannel(hostname + ":"s + std::to_string(port),
                                          grpc::InsecureChannelCredentials(),
                                          ch_args);
