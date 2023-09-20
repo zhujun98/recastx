@@ -9,8 +9,6 @@
 namespace recastx {
 
     inline constexpr size_t MAX_NUM_SLICES = 3;
-    inline constexpr int K_MAX_RPC_CLIENT_RECV_MESSAGE_SIZE = 512 * 512 * 512 * 4 + 1024;
-    inline constexpr int K_MAX_RPC_SERVER_SEND_MESSAGE_SIZE = 512 * 512 * 512 * 4 + 1024;
 
     inline constexpr uint32_t K_SCAN_UPDATE_INTERVAL_STEP_SIZE = 16;
     inline constexpr uint32_t K_MIN_SCAN_UPDATE_INTERVAL = 16;
@@ -26,6 +24,9 @@ namespace recastx {
 
     using RawDtype = uint16_t;
     using ProDtype = float;
+
+    inline constexpr int K_MAX_RPC_CLIENT_RECV_MESSAGE_SIZE = 512 * 512 * 512 * 4 + 1024;
+    inline constexpr int K_MAX_RPC_SERVER_SEND_MESSAGE_SIZE = 512 * 512 * 512 * 4 + 1024;
 
     struct RpcServerConfig {
         int port;
