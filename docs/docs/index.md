@@ -3,7 +3,9 @@
 
 [comment]: # (Any modification to the following content should also be implemented in '../../README.md')
 
-RECASTX (**REC**onstruction of **A**rbitrary **S**labs in **T**omography **X**) has been developed based on a successful proof-of-principle test [1]
+RECASTX (**REC**onstruction of **A**rbitrary **S**labs in **T**omography **X**) 
+is a GPU-accelerated software written in modern C++(17).
+This project has been developed based on a successful proof-of-principle test [1]
 using [RECAST3D](https://github.com/cicwi/RECAST3D.git) in 2019 at the
 [TOMCAT](https://www.psi.ch/en/sls/tomcat), [Swiss Light Source](https://www.psi.ch/en/sls).
 It aims at providing a near real-time streaming data analysis and visualization
