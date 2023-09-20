@@ -11,6 +11,7 @@
 #include "recon/rpc_server.hpp"
 #include "recon/application.hpp"
 
+#include "common/config.hpp"
 #include "common/utils.hpp"
 
 namespace recastx::recon {
@@ -131,6 +132,8 @@ void RpcServer::start() {
         builder.RegisterService(&imageproc_service_);
         builder.RegisterService(&projection_service_);
         builder.RegisterService(&reconstruction_service_);
+ 
+        builder.SetMaxSendMessageSize(K_MAX_RPC_SERVER_SEND_MESSAGE_SIZE);
 
         server_ = builder.BuildAndStart();
         server_->Wait();

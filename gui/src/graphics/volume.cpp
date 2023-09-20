@@ -118,7 +118,7 @@ std::tuple<float, float, int> VolumeSlicer::sortVertices(const glm::vec3& view_d
 }
 
 
-Volume::Volume() : size_({128, 128, 128}) {
+Volume::Volume() : size_({8, 8, 8}) {
     DataType data(size_[0] * size_[1] * size_[2], 0);
     setData(std::move(data), size_);
 
