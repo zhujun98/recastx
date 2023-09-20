@@ -22,7 +22,7 @@ to `Datasets/KBLT` and download the file `2_plastic_beeds_RGB.h5`.
 
 Open a terminal and run:
 ```sh
-foamstream-tomo --datafile <Your/folder/2_plastic_beeds_RGB.h5> --pdata tomo -pflat flat
+foamstream-tomo --datafile <Your/folder/2_plastic_beeds_RGB.h5> --pdata tomo --pflat flat
 ```
 
 ### Starting the reconstruction server
