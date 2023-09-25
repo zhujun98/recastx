@@ -22,11 +22,13 @@ struct Projection {
     size_t index;
     Tensor<T, 2> data;
 
+    Projection() = default;
+
     Projection(ProjectionType type, size_t index, size_t col_count, size_t row_count, std::vector<T> data_)
         : type(type), index(index), data(std::array<size_t, 2> {row_count, col_count}, std::move(data_)) {
     }
 
-    Projection(ProjectionType type, size_t index, size_t col_count, size_t row_count, void* data_, size_t size)
+    Projection(ProjectionType type, size_t index, size_t col_count, size_t row_count, const void* data_, size_t size)
             : type(type), index(index), data(std::array<size_t, 2> {row_count, col_count}) {
         std::memcpy(data.data(), data_, size);   
     }

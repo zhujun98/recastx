@@ -113,13 +113,9 @@ void Application::startAcquiring() {
         while (running_) {
             if (waitForAcquiring()) continue;
 
-            auto item = daq_client_->next();
-            if (!item.has_value()) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                continue;
-            }
+            Projection<> proj;
+            if (!daq_client_->next(proj)) continue;
 
-            Projection proj(item.value());
             switch(proj.type) {
                 case ProjectionType::PROJECTION: {
                     if (server_state_ == rpc::ServerState_State_PROCESSING) {

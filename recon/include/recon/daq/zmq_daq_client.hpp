@@ -15,8 +15,10 @@
 
 #include <zmq.hpp>
 #include <spdlog/spdlog.h>
+#include <nlohmann/json.hpp>
 
 #include "daq_client_interface.hpp"
+#include "daq_buffer.hpp"
 #include "recon/projection.hpp"
 
 namespace recastx::recon {
@@ -35,28 +37,31 @@ class ZmqDaqClient : public DaqClientInterface {
 
   public:
 
-    static constexpr size_t K_MAX_QUEUE_SIZE = 100;
-    static constexpr size_t K_MONITOR_EVERY = 1000;
-
-    using BufferType = std::queue<Projection<>>;
+    static constexpr size_t K_BUFFER_SIZE = 1000;
+    static constexpr size_t K_MONITOR_EVERY = 100;
 
   protected:
 
-    BufferType queue_;
+    DaqBuffer<Projection<>> buffer_;
 
     zmq::context_t context_;
     zmq::socket_t socket_;
 
-    size_t max_concurrency_;
+    std::mutex mtx_;
+    size_t concurrency_;
 
     bool running_ = false;
     bool acquiring_ = false;
+
+    virtual std::optional<nlohmann::json> parseMeta(const zmq::message_t& msg);
+
+    virtual std::optional<Projection<>> parseData(const nlohmann::json& meta, const zmq::message_t& msg) = 0;
 
     bool isDataShapeValid(size_t num_rows, size_t num_cols);
   
   public:
 
-    ZmqDaqClient(const std::string& endpoint, const std::string& socket_type, size_t max_concurrency);
+    ZmqDaqClient(const std::string& endpoint, const std::string& socket_type, size_t concurrency);
 
     ~ZmqDaqClient() override;
 
@@ -65,9 +70,7 @@ class ZmqDaqClient : public DaqClientInterface {
 
     void start() override;
 
-    [[nodiscard]] std::optional<Projection<>> next() override;
-
-    virtual std::optional<Projection<>> recv() = 0;
+    [[nodiscard]] bool next(Projection<>& proj) override;
 };
 
 } // namespace recastx::recon

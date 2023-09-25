@@ -15,6 +15,7 @@
 
 #include "recon/application.hpp"
 #include "recon/preprocessing.hpp"
+#include "recon/daq/daq_buffer.hpp"
 
 
 namespace recastx::recon::test {
@@ -24,7 +25,7 @@ using ::testing::FloatNear;
 
 class MockDaqClient : public DaqClientInterface {
 
-    std::queue<Projection<>> queue_;
+    DaqBuffer<Projection<>> buffer_;
 
   public:
 
@@ -33,17 +34,13 @@ class MockDaqClient : public DaqClientInterface {
     void startAcquiring() override {}
     void stopAcquiring() override {}
 
-    [[nodiscard]] virtual std::optional<Projection<>> next() override {
-        if (queue_.empty()) return std::nullopt;
-
-        auto data = std::move(queue_.front());
-        queue_.pop();
-        return data;
+    [[nodiscard]] virtual bool next(Projection<>& proj) override {
+        return buffer_.waitAndPop(proj);
     }
 
     template<typename... Args>
     void push(Args&&... args) {
-        queue_.emplace(std::forward<Args>(args)...);
+        buffer_.tryPush(Projection<>(std::forward<Args>(args)...));
     }
 };
 

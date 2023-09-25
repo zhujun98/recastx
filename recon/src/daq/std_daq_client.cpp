@@ -17,21 +17,13 @@
 
 namespace recastx::recon {
 
-StdDaqClient::StdDaqClient(const std::string& endpoint, const std::string& socket_type, size_t max_concurrency)
-        : ZmqDaqClient(endpoint, socket_type, max_concurrency) {}
+StdDaqClient::StdDaqClient(const std::string& endpoint, const std::string& socket_type, size_t concurrency)
+        : ZmqDaqClient(endpoint, socket_type, concurrency) {}
 
 StdDaqClient::~StdDaqClient() = default; 
 
-std::optional<Projection<>> StdDaqClient::recv() {
-    zmq::message_t update;
-
-    // metadata
-    auto result = socket_.recv(update, zmq::recv_flags::dontwait);
-    if (!result.has_value()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        return std::nullopt;
-    }
-    auto meta = nlohmann::json::parse(update.to_string());
+std::optional<Projection<>>
+StdDaqClient::parseData(const nlohmann::json& meta, const zmq::message_t& data) {
     size_t frame = meta["frame"];
     int scan_index = meta["image_attributes"]["scan_index"]; 
     ProjectionType proj_type = parseProjectionType(scan_index);
@@ -43,11 +35,8 @@ std::optional<Projection<>> StdDaqClient::recv() {
     size_t num_cols = meta["shape"][1];
     if (!isDataShapeValid(num_rows, num_cols)) return std::nullopt;
 
-    // data
-    socket_.recv(update, zmq::recv_flags::none);
     assert(update.size() == sizeof(RawDtype) * n_rows * n_cols);
-    
-    return Projection<>{proj_type, frame, num_cols, num_rows, update.data(), update.size()};
+    return Projection<>{proj_type, frame, num_cols, num_rows, data.data(), data.size()};
 }
 
 } // namespace recastx::recon

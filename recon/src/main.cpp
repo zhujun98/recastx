@@ -141,8 +141,8 @@ int main(int argc, char** argv) {
     pipeline_desc.add_options()
         ("imageproc-threads", po::value<uint32_t>(),
          "number of threads used for image processing")
-        ("daq-threads", po::value<uint32_t>(),
-         "number of threads used for data acquisition")
+        ("daq-concurrency", po::value<uint32_t>(),
+         "Concurrency for data acquisition")
     ;
 
     po::options_description all_desc(
@@ -200,15 +200,15 @@ int main(int argc, char** argv) {
     auto imageproc_threads = opts["imageproc-threads"].empty()
          ? recastx::recon::Application::defaultImageprocConcurrency() 
          : opts["imageproc-threads"].as<uint32_t>();
-    auto daq_threads = opts["daq-threads"].empty()
+    auto daq_concurrency = opts["daq-concurrency"].empty()
          ? recastx::recon::Application::defaultDaqConcurrency()
-         : opts["daq-threads"].as<uint32_t>();
+         : opts["daq-concurrency"].as<uint32_t>();
 
     auto daq_client = recastx::recon::createDaqClient(
         daq_data_protocol,
         fmt::format("{}://{}", daq_protocol, daq_address),
         daq_socket_type,
-        daq_threads);
+        daq_concurrency);
     recastx::recon::RampFilterFactory ramp_filter_factory;
     recastx::recon::AstraReconstructorFactory recon_factory;
     recastx::RpcServerConfig rpc_server_cfg {rpc_port};
