@@ -18,13 +18,12 @@ using namespace std::string_literals;
 
 std::queue<RpcClient::DataType>& RpcClient::packets() { return packets_; }
 
-RpcClient::RpcClient(const std::string& hostname, int port) {
+RpcClient::RpcClient(const std::string& address) {
 
     grpc::ChannelArguments ch_args;
     ch_args.SetMaxReceiveMessageSize(K_MAX_RPC_CLIENT_RECV_MESSAGE_SIZE);
-    channel_ = grpc::CreateCustomChannel(hostname + ":"s + std::to_string(port),
-                                         grpc::InsecureChannelCredentials(),
-                                         ch_args);
+    channel_ = grpc::CreateCustomChannel(
+            address, grpc::InsecureChannelCredentials(), ch_args);
 
     control_stub_ = rpc::Control::NewStub(channel_);
     imageproc_stub_ = rpc::Imageproc::NewStub(channel_);

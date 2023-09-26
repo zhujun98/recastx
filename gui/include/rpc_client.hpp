@@ -76,7 +76,7 @@ class RpcClient {
 
     static std::queue<DataType>& packets();
 
-    RpcClient(const std::string& hostname, int port);
+    explicit RpcClient(const std::string& address);
 
     ~RpcClient();
 

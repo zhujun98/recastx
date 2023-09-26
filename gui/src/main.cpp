@@ -31,10 +31,8 @@ int main(int argc, char** argv) {
     po::options_description desc("Options");
     desc.add_options()
         ("help,h", "print help message")
-        ("recon-host", po::value<std::string>()->default_value("localhost"),
-         "hostname of the reconstruction server")
-        ("rpc-port", po::value<int>()->default_value(9971),
-         "port of the RPC server. ")
+        ("server", po::value<std::string>()->default_value("localhost:9971"),
+         "address (<hostname>:<port>) of the reconstruction server")
     ;
 
     po::variables_map opts;
@@ -48,7 +46,7 @@ int main(int argc, char** argv) {
 
     auto& app = Application::instance();
 
-    RpcClient rpc_client(opts["recon-host"].as<std::string>(), opts["rpc-port"].as<int>());
+    RpcClient rpc_client(opts["server"].as<std::string>());
 
     Scene3d scene(&rpc_client);
 
