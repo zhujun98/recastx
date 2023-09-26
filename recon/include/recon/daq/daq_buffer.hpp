@@ -105,6 +105,10 @@ class DaqBuffer {
         std::lock_guard lk(head_mtx_);
         return head_.get() == tail();
     }
+
+    size_t size() const {
+        return len_;
+    }
 };
 
 } // namespace recastx::recon
