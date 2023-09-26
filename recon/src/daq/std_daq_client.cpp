@@ -35,7 +35,7 @@ StdDaqClient::parseData(const nlohmann::json& meta, const zmq::message_t& data) 
     size_t num_cols = meta["shape"][1];
     if (!isDataShapeValid(num_rows, num_cols)) return std::nullopt;
 
-    assert(update.size() == sizeof(RawDtype) * n_rows * n_cols);
+    assert(data.size() == sizeof(RawDtype) * num_rows * num_cols);
     return Projection<>{proj_type, frame, num_cols, num_rows, data.data(), data.size()};
 }
 
