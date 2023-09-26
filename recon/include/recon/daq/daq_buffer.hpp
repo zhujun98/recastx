@@ -9,6 +9,7 @@
 #ifndef RECON_DAQBUFFER_H
 #define RECON_DAQBUFFER_H
 
+#include <atomic>
 #include <chrono>
 #include <limits>
 #include <memory>
@@ -31,7 +32,7 @@ class DaqBuffer {
     };
 
     size_t max_len_;
-    size_t len_ {0};
+    std::atomic<size_t> len_ {0};
 
     mutable std::mutex head_mtx_;
     std::unique_ptr<Item> head_;
@@ -49,7 +50,7 @@ class DaqBuffer {
     std::unique_ptr<Item> popHead() {
         std::unique_ptr<Item> old_head = std::move(head_);
         head_ = std::move(old_head->next);
-        --len_;
+        len_--;
         return old_head;
     }
 
@@ -80,7 +81,7 @@ class DaqBuffer {
             Item* const new_tail = new_item.get();
             tail_->next = std::move(new_item);
             tail_ = new_tail;
-            ++len_;
+            len_++;
         }
         cv_.notify_one();
         return true;
@@ -93,7 +94,8 @@ class DaqBuffer {
 
     bool waitAndPop(T& value) {
         std::unique_lock<std::mutex> lk(head_mtx_);
-        if (cv_.wait_for(lk, std::chrono::milliseconds(100), [&] { return head_.get() != tail(); })) {
+        if (cv_.wait_for(lk, std::chrono::milliseconds(100), 
+                         [&] { return head_.get() != tail(); })) {
             value = std::move(head_->data);
             popHead();
             return true;
