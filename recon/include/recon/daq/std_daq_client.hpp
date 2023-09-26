@@ -19,11 +19,11 @@ class StdDaqClient : public ZmqDaqClient {
 
   public:
 
-    StdDaqClient(const std::string& endpoint, const std::string& socket_type, size_t max_concurrency = 1);
+    StdDaqClient(const std::string& endpoint, const std::string& socket_type, size_t concurrency = 1);
 
     ~StdDaqClient() override;
 
-    std::optional<Projection<>> recv() override;
+    std::optional<Projection<>> parseData(const nlohmann::json& meta, const zmq::message_t& msg) override;
 };
 
 } // namespace recastx::recon

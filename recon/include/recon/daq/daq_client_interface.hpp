@@ -9,7 +9,6 @@
 #ifndef RECON_DAQCLIENTINTERFACE_H
 #define RECON_DAQCLIENTINTERFACE_H
 
-#include <optional>
 #include <queue>
 
 #include "recon/projection.hpp"
@@ -38,7 +37,7 @@ class DaqClientInterface {
     virtual void startAcquiring() = 0;
     virtual void stopAcquiring() = 0;
 
-    [[nodiscard]] virtual std::optional<Projection<>> next() = 0;
+    [[nodiscard]] virtual bool next(Projection<>& proj) = 0;
 };
 
 

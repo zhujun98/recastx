@@ -70,10 +70,7 @@ class Application {
     }
 
     static uint32_t defaultDaqConcurrency() {
-        uint32_t n = std::thread::hardware_concurrency();
-        if (n >= 64) return 4;
-        if (n >= 32) return 2;
-        return 1;
+        return 2;
     }
 
   private:

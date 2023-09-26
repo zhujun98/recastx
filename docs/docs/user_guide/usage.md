@@ -13,7 +13,7 @@ recastx-recon  --rows 800 --cols 384 --angles 400
 
 For a remote data source (e.g. DAQ node):
 ```sh
-recastx-recon --rows 800 --cols 384 --angles 400 --daq-host <hostname> 
+recastx-recon --rows 800 --cols 384 --angles 400 --daq-address <hostname:port> 
 ```
 
 For more information, type

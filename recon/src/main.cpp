@@ -57,10 +57,10 @@ int main(int argc, char** argv) {
 
     po::options_description communication_desc("Communication options");
     communication_desc.add_options()
-        ("daq-host", po::value<std::string>()->default_value("localhost"), 
-         "hostname of the DAQ server")
-        ("daq-port", po::value<int>()->default_value(9667),
-         "ZMQ socket port of the DAQ server")
+        ("daq-protocol", po::value<std::string>()->default_value("tcp"), 
+         "ZMQ transport protocol of the DAQ server. Options: tcp/ipc")
+        ("daq-address", po::value<std::string>()->default_value("localhost:9667"), 
+         "address (e.g. 127.0.0.1:5555) of the DAQ server")
         ("daq-socket", po::value<std::string>()->default_value("pull"),
          "ZMQ socket type of the DAQ server. Options: sub/pull")
         ("daq-data-protocol", po::value<std::string>()->default_value("default"),
@@ -141,8 +141,8 @@ int main(int argc, char** argv) {
     pipeline_desc.add_options()
         ("imageproc-threads", po::value<uint32_t>(),
          "number of threads used for image processing")
-        ("daq-threads", po::value<uint32_t>(),
-         "number of threads used for data acquisition")
+        ("daq-concurrency", po::value<uint32_t>(),
+         "Concurrency for data acquisition")
     ;
 
     po::options_description all_desc(
@@ -165,8 +165,8 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    auto daq_hostname = opts["daq-host"].as<std::string>();
-    auto daq_port = opts["daq-port"].as<int>();
+    auto daq_protocol = opts["daq-protocol"].as<std::string>();
+    auto daq_address = opts["daq-address"].as<std::string>();
     auto daq_socket_type = opts["daq-socket"].as<std::string>();
     auto daq_data_protocol = opts["daq-data-protocol"].as<std::string>();
     auto rpc_port = opts["rpc-port"].as<int>();
@@ -200,17 +200,15 @@ int main(int argc, char** argv) {
     auto imageproc_threads = opts["imageproc-threads"].empty()
          ? recastx::recon::Application::defaultImageprocConcurrency() 
          : opts["imageproc-threads"].as<uint32_t>();
-    auto daq_threads = opts["daq-threads"].empty()
+    auto daq_concurrency = opts["daq-concurrency"].empty()
          ? recastx::recon::Application::defaultDaqConcurrency()
-         : opts["daq-threads"].as<uint32_t>();
-
-    using namespace std::string_literals;
+         : opts["daq-concurrency"].as<uint32_t>();
 
     auto daq_client = recastx::recon::createDaqClient(
-        daq_data_protocol, 
-        "tcp://"s + daq_hostname + ":"s + std::to_string(daq_port), 
+        daq_data_protocol,
+        fmt::format("{}://{}", daq_protocol, daq_address),
         daq_socket_type,
-        daq_threads);
+        daq_concurrency);
     recastx::recon::RampFilterFactory ramp_filter_factory;
     recastx::recon::AstraReconstructorFactory recon_factory;
     recastx::RpcServerConfig rpc_server_cfg {rpc_port};

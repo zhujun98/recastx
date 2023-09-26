@@ -113,13 +113,9 @@ void Application::startAcquiring() {
         while (running_) {
             if (waitForAcquiring()) continue;
 
-            auto item = daq_client_->next();
-            if (!item.has_value()) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                continue;
-            }
+            Projection<> proj;
+            if (!daq_client_->next(proj)) continue;
 
-            Projection proj(item.value());
             switch(proj.type) {
                 case ProjectionType::PROJECTION: {
                     if (server_state_ == rpc::ServerState_State_PROCESSING) {
@@ -419,7 +415,7 @@ void Application::onStartProcessing() {
         spdlog::info("- Scan mode: discrete");
     }
 
-    size_t s = proj_geom_.row_count * proj_geom_.col_count * proj_geom_.angles.size() * sizeof(RawDtype);
+    size_t s = proj_geom_.row_count * proj_geom_.col_count * group_size_ * sizeof(RawDtype);
     monitor_.reset(new Monitor(s));
 }
 
