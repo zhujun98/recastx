@@ -29,19 +29,19 @@ conda activate recastx-gui
 
 You can specify the reconstruction server
 ```sh
-recastx-gui --recon-host <hostname>
+recastx-gui --server <hostname:port>
 ```
 
 or make use of local port forwarding
 ```sh
-ssh -L 9971:localhost:9971 <hostname>
+ssh -L <port>:localhost:<port> <hostname>
 recastx-gui
 ```
 
 You can also start the GUI on a node with [NoMachine](https://www.psi.ch/en/photon-science-data-services/remote-interactive-access
 ) installed
 ```sh
-vglrun recastx-gui --recon-host <hostname>
+vglrun recastx-gui --server <hostname:port>
 ```
 
 ## Step 3: Streaming the data
