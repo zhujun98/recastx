@@ -49,6 +49,11 @@ void Monitor::countFlat() {
 void Monitor::countTomogram() {
     ++num_tomograms_;
 
+#if (VERBOSITY >= 1)
+    spdlog::info("{} tomograms reconstructed", num_tomograms_);
+#endif
+
+#if (VERBOSITY >= 2)
     if (num_tomograms_ % report_tomo_throughput_every_ == 0) {
         // The number for the first <report_tomo_throughput_every_> tomograms 
         // underestimates the throughput! 
@@ -57,11 +62,11 @@ void Monitor::countTomogram() {
             end -  tomo_start_).count();
         double throughput = scan_byte_size_ * report_tomo_throughput_every_ / dt;
         double throughput_per_tomo = 1000000. * report_tomo_throughput_every_ / dt;
-        spdlog::info("{} tomograms reconstructed", num_tomograms_);
-        spdlog::info("[Bench] Throughput (averaged over the last {} tomograms): {:.1f} (MB/s) / {:.1f} (tomo/s)", 
+        spdlog::info("Throughput (averaged over the last {} tomograms): {:.1f} (MB/s) / {:.1f} (tomo/s)", 
                      report_tomo_throughput_every_, throughput, throughput_per_tomo);
         tomo_start_ = end;
     }
+#endif    
 }
 
 void Monitor::summarize() const {

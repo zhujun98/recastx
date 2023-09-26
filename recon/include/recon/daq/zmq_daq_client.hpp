@@ -38,7 +38,7 @@ class ZmqDaqClient : public DaqClientInterface {
   public:
 
     static constexpr size_t K_BUFFER_SIZE = 1000;
-    static constexpr size_t K_MONITOR_EVERY = 100;
+    static constexpr size_t K_MONITOR_EVERY = 1000;
 
   protected:
 
