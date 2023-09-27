@@ -23,7 +23,7 @@ better visualization of the data and more flexible control of the reconstruction
 pipeline.
 
 <figure markdown>
-  ![Architecture](../recastx-docs-supplement/recastx_architecture.jpg)
+  ![Architecture](recastx-docs-supplement/recastx_architecture.jpg)
 </figure>
 
 **References**
