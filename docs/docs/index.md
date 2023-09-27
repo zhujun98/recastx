@@ -22,6 +22,10 @@ in near real time. In addition, a modern GUI has been developed to offer
 better visualization of the data and more flexible control of the reconstruction 
 pipeline.
 
+<figure markdown>
+  ![Architecture](../recastx-docs-supplement/recastx_architecture.jpg)
+</figure>
+
 **References**
 
 [1] Buurlage, JW., Marone, F., Pelt, D.M. et al. Real-time reconstruction and visualisation towards dynamic feedback control during time-resolved tomography experiments at TOMCAT. [Sci Rep 9, 18379 (2019)](https://doi.org/10.1038/s41598-019-54647-4)
