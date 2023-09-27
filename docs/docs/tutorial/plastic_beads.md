@@ -14,7 +14,8 @@ to stream the data from files.
 
 We are going to use the *plastic beeds* dataset offered by 
 [TomoBank](https://tomobank.readthedocs.io/en/latest/#). Go to the homepage, and then navigate 
-to `Datasets/KBLT` and download the file `2_plastic_beeds_RGB.h5`.
+to `Datasets/KBLT` and download the file `2_plastic_beeds_RGB.h5`. 
+You can also find the description of the dataset there.
 
 ## Running
 
@@ -40,7 +41,7 @@ You can find the shapes of the DARK, FLAT and PROJECTION data from the output of
     reconstructed volume is indeed high. It should be noted that it thus takes
     longer time to perform the reconstruction and send the reconstructed volume
     from the server to the client. Therefore, the default value of `volume-size`
-    is set to 128 and is recommended to use in [dynamic tomography](./dynamic_tomography.md).
+    is set to 128 and is recommended to use in [dynamic tomography](./fuel_cell.md).
 
 ### Starting the GUI client
 
@@ -49,12 +50,14 @@ Open a terminal and run:
 recastx-gui
 ```
 
-<figure markdown>
-  ![Beads volume](../recastx-docs-supplement/beads_volume.gif){ width="480" }
-  <figcaption>"Low-resolution" volume</figcaption>
-</figure>
+Make sure the `SCAN MODE` is set to `Discrete` and click the `Process` button.
 
 <figure markdown>
   ![Beads slices](../recastx-docs-supplement/beads_slices.jpg){ width="480" }
   <figcaption>Three orthogonal high-resolution slices</figcaption>
+</figure>
+
+<figure markdown>
+  ![Beads volume](../recastx-docs-supplement/beads_volume.gif){ width="480" }
+  <figcaption>"Low-resolution" volume</figcaption>
 </figure>

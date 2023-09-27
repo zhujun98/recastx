@@ -23,6 +23,15 @@ better visualization of the data and more flexible control of the reconstruction
 pipeline.
 
 <figure markdown>
+  <img src="recastx-docs-supplement/overview.jpg" width="98.5%"/>
+</figure>
+
+<p float="left">
+  <img src="recastx-docs-supplement/beads_volume.gif" width="49%" />
+  <img src="recastx-docs-supplement/fuelcell_slices.gif" width="49%" />
+</p>
+
+<figure markdown>
   ![Architecture](recastx-docs-supplement/recastx_architecture.jpg)
 </figure>
 
