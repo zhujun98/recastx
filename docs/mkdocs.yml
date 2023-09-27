@@ -6,6 +6,7 @@ nav:
       - Getting started: user_guide/usage.md
       - GUI: user_guide/gui.md
       - Data protocol: user_guide/data_protocol.md
+      - Performance consideration: user_guide/performance_consideration.md
   - Tutorial:
       - Plastic beads (3D): tutorial/plastic_beads.md
       - Dynamic tomography (4D): tutorial/dynamic_tomography.md
@@ -15,6 +16,7 @@ theme:
   name: material
   features:
     - content.code.copy
+    - navigation.expand
   icon:
     admonition:
       <type>: material/alert-circle

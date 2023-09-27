@@ -16,9 +16,11 @@ by removing trivial or repetitive data while preserving the important scientific
 information which could lead to scientific discoveries.
 
 Besides various new features, the performance of the reconstruction pipeline has
-been heavily optimized and it currently reaches more than 2 GB/s on an ordinary GPU
-node. In addition, a modern GUI has been developed to offer better visualization
-of the data and more flexible control of the reconstruction pipeline.
+been heavily optimized and it currently reaches **more than 2 GB/s (a few tomograms/s)** 
+on an ordinary GPU node, which makes it possible to monitor a fast dynamic process
+in near real time. In addition, a modern GUI has been developed to offer 
+better visualization of the data and more flexible control of the reconstruction 
+pipeline.
 
 **References**
 
