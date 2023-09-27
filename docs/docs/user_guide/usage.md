@@ -1,4 +1,3 @@
-![architecture](../media/recastx-architecture.png)
 
 ## Step 1: Starting the reconstruction server
 
