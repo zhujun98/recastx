@@ -111,6 +111,7 @@ class Application {
     ProjectionGeometry proj_geom_;
     VolumeGeometry slice_geom_;
     VolumeGeometry preview_geom_;
+    bool volume_required_ = true;
     ReconstructorFactory* recon_factory_;
     std::unique_ptr<Reconstructor> recon_;
 
@@ -213,13 +214,17 @@ class Application {
 
     void setSlice(size_t timestamp, const Orientation& orientation);
 
+    void setVolume(bool required);
+
     void setScanMode(rpc::ScanMode_Mode mode, uint32_t update_inverval);
 
     void onStateChanged(rpc::ServerState_State state);
 
     std::optional<rpc::ProjectionData> getProjectionData(int timeout);
 
-    std::optional<rpc::ReconData> getPreviewData(int timeout);
+    bool hasVolume() const { return volume_required_; }
+
+    std::optional<rpc::ReconData> getVolumeData(int timeout);
 
     std::vector<rpc::ReconData> getSliceData(int timeout);
 

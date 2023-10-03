@@ -80,18 +80,28 @@ grpc::Status ReconstructionService::SetSlice(grpc::ServerContext* context,
     return grpc::Status::OK;
 }
 
+grpc::Status ReconstructionService::SetVolume(grpc::ServerContext* context,
+                                              const rpc::Volume* volume,
+                                              google::protobuf::Empty* ack) {
+
+    app_->setVolume(volume->required());
+    return grpc::Status::OK;
+}
+
 grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
                                                  const google::protobuf::Empty*,
                                                  grpc::ServerWriter<rpc::ReconData>* writer) {
     // - Do not block because slice request needs to be responsive
     // - If the number of the logical threads are more than the number of the physical threads, 
     //   the preview_data could always have value.
-    auto preview_data = app_->getPreviewData(0);
+    auto preview_data = app_->getVolumeData(0);
     if (preview_data) {
         auto slice_data = app_->getSliceData(-1);
 
-        writer->Write(preview_data.value());
-        spdlog::debug("Preview data sent");
+        if (app_->hasVolume()) {
+            writer->Write(preview_data.value());
+            spdlog::debug("Preview data sent");
+        }
         
         for (const auto& item : slice_data) {
             writer->Write(item);

@@ -26,11 +26,11 @@ class Slice {
 
   public:
 
+//    enum class Orientation: int { YZ, XZ, XY};
+
     using DataType = std::vector<float>;
     using SizeType = std::array<size_t, 2>;
     using Orient4Type = glm::mat4;
-
-    friend class ReconItem;
 
   private:
 
@@ -73,7 +73,7 @@ class Slice {
 
     [[nodiscard]] bool visible() const { return visible_; }
 
-    void show(bool visible) { visible_ = visible; }
+    void setVisible(bool visible) { visible_ = visible; }
 
     [[nodiscard]] bool transparent() const;
 

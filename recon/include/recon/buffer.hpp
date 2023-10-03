@@ -352,6 +352,8 @@ class MemoryBuffer : public BufferInterface<Tensor<T, N>> {
 
     bool fetch(int timeout) override;
 
+    bool isReady() const { return is_ready_; }
+
     BufferType& ready() { return buffer_[map_.at(chunk_indices_.front())]; }
     const BufferType& ready() const { return buffer_[map_.at(chunk_indices_.front())]; }
 

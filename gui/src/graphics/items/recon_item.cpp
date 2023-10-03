@@ -69,7 +69,7 @@ void ReconItem::renderIm() {
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "RECONSTRUCTION");
 
     auto& cmd = Colormap::data();
-    if (ImGui::BeginCombo("Colormap##Widget", cmd.GetName(cm_.get()))) {
+    if (ImGui::BeginCombo("Colormap##RECON", cmd.GetName(cm_.get()))) {
         for (auto idx : Colormap::options()) {
             const char* name = cmd.GetName(idx);
             if (ImGui::Selectable(name, cm_.get() == idx)) {
@@ -88,32 +88,16 @@ void ReconItem::renderIm() {
     ImGui::DragFloatRange2("Min / Max", &min_val_, &max_val_, step_size,
                            std::numeric_limits<float>::lowest(), // min() does not work
                            std::numeric_limits<float>::max());
-    ImGui::AlignTextToFramePadding();
-    ImGui::Checkbox("Slice 1##RECON", &slices_[0].second->visible_);
-    ImGui::SameLine();
-    ImGui::Text("Y-Z");
 
-    ImGui::Checkbox("Slice 2##RECON", &slices_[1].second->visible_);
-    ImGui::SameLine();
-    ImGui::Text("X-Z");
-
-    ImGui::Checkbox("Slice 3##RECON", &slices_[2].second->visible_);
-    ImGui::SameLine();
-    ImGui::Text("X-Y");
+    renderImSliceControl<0>("Slice 1##RECON");
+    renderImSliceControl<1>("Slice 2##RECON");
+    renderImSliceControl<2>("Slice 3##RECON");
 
     if (ImGui::Button("Reset all slices")) {
         initSlices();
         updateServerSliceParams();
     }
-
-    ImGui::Checkbox("Volume", &show_volume_);
     ImGui::SameLine();
-    ImGui::BeginDisabled(!show_volume_);
-    ImGui::PushItemWidth(-40);
-    ImGui::SliderFloat("Alpha", &volume_alpha_, 0.0f, 1.0f);
-    ImGui::PopItemWidth();
-    ImGui::EndDisabled();
-
     ImGui::Checkbox("Show slice histograms", &show_statistics_);
     if (show_statistics_) {
         ImGui::SetNextWindowPos(st_win_pos_);
@@ -139,6 +123,8 @@ void ReconItem::renderIm() {
 
         ImGui::End();
     }
+
+    renderImVolumeControl();
 
     ImGui::Separator();
 
@@ -168,7 +154,7 @@ void ReconItem::renderGl() {
     }
     volume_->unbind();
 
-    if (show_volume_) {
+    if (volume_policy_ == SHOW_VOL) {
         volume_->render(view, projection, min_val, max_val_, volume_alpha_);
     }
 
@@ -193,7 +179,7 @@ void ReconItem::renderGl() {
 }
 
 bool ReconItem::updateServerParams() {
-    return updateServerSliceParams();
+    return updateServerSliceParams() || updateServerVolumeParams();
 }
 
 void ReconItem::setSliceData(const std::string& data,
@@ -334,6 +320,50 @@ void ReconItem::initSlices() {
                                       glm::vec3( 0.0f,  2.0f,  0.0f));
 }
 
+template<size_t index>
+void ReconItem::renderImSliceControl(const char* header) {
+
+    static const char* BTN_2D[] = {"2D##RECON_SLI_0", "2D##RECON_SLI_1", "2D##RECON_SLI_2"};
+    static const char* BTN_3D[] = {"3D##RECON_SLI_0", "3D##RECON_SLI_1", "3D##RECON_SLI_2"};
+    static const char* BTN_DISABLE[] = {"Disable##RECON_SLI_0", "Disable##RECON_SLI_1", "Disable##RECON_SLI_2"};
+
+    static const ImVec4 K_HEADER_COLOR = (ImVec4)ImColor(65, 145, 151);
+    ImGui::PushStyleColor(ImGuiCol_Header, K_HEADER_COLOR);
+    bool expand = ImGui::CollapsingHeader(header, ImGuiTreeNodeFlags_DefaultOpen);
+    ImGui::PopStyleColor();
+    if (expand) {
+        bool cd = false;
+
+        cd |= ImGui::RadioButton(BTN_2D[index], &slice_policies_[index], SHOW2D_SLI);
+        ImGui::SameLine();
+        cd |= ImGui::RadioButton(BTN_3D[index], &slice_policies_[index], SHOW3D_SLI);
+        ImGui::SameLine();
+        cd |= ImGui::RadioButton(BTN_DISABLE[index], &slice_policies_[index], DISABLE_SLI);
+
+        if (cd) slices_[index].second->setVisible(slice_policies_[index] != DISABLE_SLI);
+    }
+}
+
+void ReconItem::renderImVolumeControl() {
+    static const ImVec4 K_HEADER_COLOR = (ImVec4)ImColor(65, 145, 151);
+    ImGui::PushStyleColor(ImGuiCol_Header, K_HEADER_COLOR);
+    bool expand = ImGui::CollapsingHeader("Volume##RECON", ImGuiTreeNodeFlags_DefaultOpen);
+    ImGui::PopStyleColor();
+
+    if (expand) {
+        bool cd = false;
+        cd |= ImGui::RadioButton("Preview##RECON_VOL", &volume_policy_, PREVIEW_VOL);
+        ImGui::SameLine();
+        cd |= ImGui::RadioButton("Show##RECON_VOL", &volume_policy_, SHOW_VOL);
+        ImGui::SameLine();
+        cd |= ImGui::RadioButton("Disable##RECON_VOL", &volume_policy_, DISABLE_VOL);
+
+        if (cd) updateServerVolumeParams();
+
+        ImGui::SliderFloat("Alpha##RECON_VOL", &volume_alpha_, 0.0f, 1.0f);
+    }
+}
+
 bool ReconItem::updateServerSliceParams() {
     for (auto& slice : slices_) {
         if (scene_.client()->setSlice(slice.first, slice.second->orientation3())) {
@@ -341,6 +371,10 @@ bool ReconItem::updateServerSliceParams() {
         }
     }
     return false;
+}
+
+bool ReconItem::updateServerVolumeParams() {
+    return scene_.client()->setVolume(volume_policy_ != DISABLE_VOL);
 }
 
 void ReconItem::updateHoveringSlice(float x, float y) {

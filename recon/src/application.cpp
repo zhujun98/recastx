@@ -156,8 +156,13 @@ void Application::startReconstructing() {
             {
                 std::unique_lock<std::mutex> lck(gpu_mtx_);
                 if (gpu_cv_.wait_for(lck, 10ms, [&] { return sino_uploaded_; })) {
-                    spdlog::info("Reconstructing preview and slices ...");
-                    recon_->reconstructPreview(gpu_buffer_index_, preview_buffer_.back());
+                    if (volume_required_) {
+                        spdlog::info("Reconstructing preview and slices ...");
+                        recon_->reconstructPreview(gpu_buffer_index_, preview_buffer_.back());
+                    } else {
+                        spdlog::info("Reconstructing slices ...");
+                    }
+
                 } else {
                     if (waitForSinoInitialization()) continue;
                     slice_mediator_->reconOnDemand(recon_.get(), gpu_buffer_index_);
@@ -271,6 +276,10 @@ void Application::setSlice(size_t timestamp, const Orientation& orientation) {
     slice_mediator_->update(timestamp, orientation);
 }
 
+void Application::setVolume(bool required) {
+    volume_required_ = required;
+}
+
 void Application::setScanMode(rpc::ScanMode_Mode mode, uint32_t update_interval) {
     scan_mode_ = mode;
     scan_update_interval_ = update_interval;
@@ -314,7 +323,7 @@ std::optional<rpc::ProjectionData> Application::getProjectionData(int timeout) {
     return std::nullopt;
 }
 
-std::optional<rpc::ReconData> Application::getPreviewData(int timeout) { 
+std::optional<rpc::ReconData> Application::getVolumeData(int timeout) { 
     if (preview_buffer_.fetch(timeout)) {
         auto& data = preview_buffer_.front();
         auto [x, y, z] = data.shape();
