@@ -177,6 +177,7 @@ class ApplicationTest : public testing::Test {
                 ProjectionType::DARK, i, num_cols_, num_rows_, 
                 reinterpret_cast<void*>(img.data()), img.size() * sizeof(RawDtype));
         }
+        while(app_.consume());
     } 
 
     void pushFlats(int n) {
@@ -186,6 +187,7 @@ class ApplicationTest : public testing::Test {
                 ProjectionType::FLAT, i, num_cols_, num_rows_, 
                 reinterpret_cast<void*>(img.data()), img.size() * sizeof(RawDtype));
         }
+        while(app_.consume());
     } 
 
     void pushProjection(int start, int end) {
@@ -203,12 +205,12 @@ class ApplicationTest : public testing::Test {
             dynamic_cast<MockDaqClient*>(daq_client_.get())->push(
                 ProjectionType::PROJECTION, i, num_cols_, num_rows_,
                 reinterpret_cast<void*>(img.data()), img.size() * sizeof(RawDtype));
-       }
+        }
+        while(app_.consume());
     }
 };
 
 TEST_F(ApplicationTest, TestPushProjection) {
-    app_.startAcquiring();
     app_.startPreprocessing();
     app_.onStateChanged(rpc::ServerState_State_PROCESSING);
 
@@ -216,6 +218,7 @@ TEST_F(ApplicationTest, TestPushProjection) {
     pushFlats(num_flats_);
     // push projections (don't completely fill the buffer)
     pushProjection(0, num_angles_ - 1);
+
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     auto& sino = app_.sinoBuffer().ready();
@@ -243,7 +246,6 @@ TEST_F(ApplicationTest, TestPushProjection) {
 }
 
 TEST_F(ApplicationTest, TestMemoryBufferReset) {
-    app_.startAcquiring();
     app_.startPreprocessing();
     app_.onStateChanged(rpc::ServerState_State_PROCESSING);
 
@@ -263,7 +265,6 @@ TEST_F(ApplicationTest, TestMemoryBufferReset) {
 }
 
 TEST_F(ApplicationTest, TestPushProjectionUnordered) {
-    app_.startAcquiring();
     app_.startPreprocessing();
     app_.onStateChanged(rpc::ServerState_State_PROCESSING);
     
@@ -305,7 +306,6 @@ TEST_F(ApplicationTest, TestPushProjectionUnordered) {
 }
 
 TEST_F(ApplicationTest, TestReconstructing) {
-    app_.startAcquiring();
     app_.startPreprocessing();
     app_.startUploading();
     app_.startReconstructing();
@@ -331,7 +331,6 @@ TEST_F(ApplicationTest, TestWithPagagin) {
     // float distance = 40.f;
     // app_.setPaganinParams(pixel_size, lambda, delta, beta, distance);
 
-    app_.startAcquiring();
     app_.startPreprocessing();
     app_.onStateChanged(rpc::ServerState_State_PROCESSING);
     
@@ -341,7 +340,6 @@ TEST_F(ApplicationTest, TestWithPagagin) {
 }
 
 TEST_F(ApplicationTest, TestDownsampling) {
-    app_.startAcquiring();
     app_.startPreprocessing();
     app_.onStateChanged(rpc::ServerState_State_PROCESSING);
 

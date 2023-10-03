@@ -74,88 +74,30 @@ void Application::setReconGeometry(std::optional<size_t> slice_size, std::option
     // initialization is delayed
 }
 
-void Application::pushProjection(const Projection<>& proj) {
-    if (!reciprocal_computed_) {
-        if (darks_.empty() && flats_.empty()) {
-            spdlog::warn("Send dark and flat images first! Projection ignored.");
-            return;
-        }
-
-        spdlog::info("Computing reciprocal for flat field correction "
-                     "with {} darks and {} flats ...", darks_.size(), flats_.size());
-        
-        {    
-#if (VERBOSITY >= 2)
-            ScopedTimer timer("Bench", "Computing reciprocal");
-#endif
-        
-            auto [dark_avg, reciprocal] = computeReciprocal(darks_, flats_);
-
-            spdlog::debug("Downsampling dark ... ");
-            downsample(dark_avg, dark_avg_);
-            spdlog::debug("Downsampling reciprocal ... ");
-            downsample(reciprocal, reciprocal_);
-        }
-    
-        reciprocal_computed_ = true;
-        spdlog::info("Reciprocal computed!");
-
-        monitor_->resetTimer();
+void Application::computeReciprocal() {
+    if (darks_.empty() && flats_.empty()) {
+        spdlog::warn("Send dark and flat images first! Projection ignored.");
+        return;
     }
 
-    // TODO: compute the average on the fly instead of storing the data in the buffer
-    raw_buffer_.fill<RawDtype>(
-        proj.index, reinterpret_cast<const char*>(proj.data.data()), proj.data.shape());
-}
+    spdlog::info("Computing reciprocal for flat field correction "
+                 "with {} darks and {} flats ...", darks_.size(), flats_.size());
+    
+    {    
+#if (VERBOSITY >= 2)
+        ScopedTimer timer("Bench", "Computing reciprocal");
+#endif
+    
+        auto [dark_avg, reciprocal] = recastx::recon::computeReciprocal(darks_, flats_);
 
-void Application::startAcquiring() {
-    auto t = std::thread([&] {
-        while (running_) {
-            if (waitForAcquiring()) continue;
+        spdlog::debug("Downsampling dark ... ");
+        downsample(dark_avg, dark_avg_);
+        spdlog::debug("Downsampling reciprocal ... ");
+        downsample(reciprocal, reciprocal_);
+    }
 
-            Projection<> proj;
-            if (!daq_client_->next(proj)) continue;
-
-            switch(proj.type) {
-                case ProjectionType::PROJECTION: {
-                    if (server_state_ == rpc::ServerState_State_PROCESSING) {
-                        pushProjection(proj);
-                    }
-
-                    proj_mediator_->emplace(std::move(proj));
-                    monitor_->countProjection();
-
-                    break;
-                }
-                case ProjectionType::DARK: {
-                    if (server_state_ == rpc::ServerState_State_PROCESSING) {
-                        maybeResetDarkAndFlatAcquisition();
-                        darks_.emplace_back(std::move(proj.data));
-                        if (darks_.size() > k_MAX_NUM_DARKS) {
-                            spdlog::warn("Maximum number of dark images received. Data ignored!");
-                        }
-                    }
-                    monitor_->countDark();
-                    break;
-                }
-                case ProjectionType::FLAT: {
-                    if (server_state_ == rpc::ServerState_State_PROCESSING) {
-                        maybeResetDarkAndFlatAcquisition();
-                        flats_.emplace_back(std::move(proj.data));
-                        if (flats_.size() > k_MAX_NUM_FLATS) {
-                            spdlog::warn("Maximum number of flat images received. Data ignored!");
-                        }
-                    }
-                    monitor_->countFlat();
-                    break;
-                }
-                default:
-                    break;
-            }
-        }
-    });
-
-    t.detach();
+    reciprocal_computed_ = true;
+    spdlog::info("Reciprocal computed!");
 }
 
 void Application::startPreprocessing() {
@@ -238,8 +180,61 @@ void Application::startReconstructing() {
     t.detach();
 }
 
+void Application::pushProjection(const Projection<>& proj) {
+    // TODO: compute the average on the fly instead of storing the data in the buffer
+    raw_buffer_.fill<RawDtype>(
+        proj.index, reinterpret_cast<const char*>(proj.data.data()), proj.data.shape());
+}
+
+bool Application::consume() {
+    Projection<> proj;
+    if (!daq_client_->next(proj)) return false;
+
+    switch(proj.type) {
+        case ProjectionType::PROJECTION: {
+            if (server_state_ == rpc::ServerState_State_PROCESSING) {
+                if (!reciprocal_computed_) {
+                    computeReciprocal();
+                    monitor_->resetTimer();
+                }
+
+                pushProjection(proj);
+            }
+
+            proj_mediator_->emplace(std::move(proj));
+            monitor_->countProjection();
+            break;
+        }
+        case ProjectionType::DARK: {
+            if (server_state_ == rpc::ServerState_State_PROCESSING) {
+                maybeResetDarkAndFlatAcquisition();
+                darks_.emplace_back(std::move(proj.data));
+                if (darks_.size() > k_MAX_NUM_DARKS) {
+                    spdlog::warn("Maximum number of dark images received. Data ignored!");
+                }
+            }
+            monitor_->countDark();
+            break;
+        }
+        case ProjectionType::FLAT: {
+            if (server_state_ == rpc::ServerState_State_PROCESSING) {
+                maybeResetDarkAndFlatAcquisition();
+                flats_.emplace_back(std::move(proj.data));
+                if (flats_.size() > k_MAX_NUM_FLATS) {
+                    spdlog::warn("Maximum number of flat images received. Data ignored!");
+                }
+            }
+            monitor_->countFlat();
+            break;
+        }
+        default:
+            throw std::runtime_error("Unexpected projection type");
+    }
+
+    return true;
+}
+
 void Application::spin(rpc::ServerState_State state) {
-    startAcquiring();    
     startPreprocessing();
     startUploading();
     startReconstructing();
@@ -249,9 +244,14 @@ void Application::spin(rpc::ServerState_State state) {
 
     onStateChanged(state);
 
-    // TODO: start the event loop in the main thread
     while (running_) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        if (raw_buffer_.isReady()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+
+        if (!consume()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
     }
 }
 
