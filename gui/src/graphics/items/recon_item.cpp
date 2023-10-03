@@ -89,20 +89,24 @@ void ReconItem::renderIm() {
                            std::numeric_limits<float>::lowest(), // min() does not work
                            std::numeric_limits<float>::max());
     ImGui::AlignTextToFramePadding();
-    ImGui::Text("Slices: ");
+    ImGui::Checkbox("Slice 1##RECON", &slices_[0].second->visible_);
     ImGui::SameLine();
-    ImGui::Checkbox("Y-Z##RECON", &slices_[Slice_YZ].second->visible_);
+    ImGui::Text("Y-Z");
+
+    ImGui::Checkbox("Slice 2##RECON", &slices_[1].second->visible_);
     ImGui::SameLine();
-    ImGui::Checkbox("X-Z##RECON", &slices_[Slice_XZ].second->visible_);
+    ImGui::Text("X-Z");
+
+    ImGui::Checkbox("Slice 3##RECON", &slices_[2].second->visible_);
     ImGui::SameLine();
-    ImGui::Checkbox("X-Y##RECON", &slices_[Slice_XY].second->visible_);
-    ImGui::SameLine();
-    if(ImGui::Button("Reset")) {
+    ImGui::Text("X-Y");
+
+    if (ImGui::Button("Reset all slices")) {
         initSlices();
         updateServerSliceParams();
     }
 
-    ImGui::Checkbox("Show volume", &show_volume_);
+    ImGui::Checkbox("Volume", &show_volume_);
     ImGui::SameLine();
     ImGui::BeginDisabled(!show_volume_);
     ImGui::PushItemWidth(-40);
@@ -315,19 +319,19 @@ void ReconItem::initSlices() {
     assert(slices_.size() == MAX_NUM_SLICES);
 
     // slice along axis 0 = x
-    slices_[Slice_YZ].second->setOrientation(glm::vec3(0.0f, -1.0f, -1.0f),
-                                      glm::vec3(0.0f, 2.0f, 0.0f),
-                                      glm::vec3(0.0f, 0.0f, 2.0f));
+    slices_[0].second->setOrientation(glm::vec3( 0.0f, -1.0f, -1.0f),
+                                      glm::vec3( 0.0f,  2.0f,  0.0f),
+                                      glm::vec3( 0.0f,  0.0f,  2.0f));
 
     // slice along axis 1 = y
-    slices_[Slice_XZ].second->setOrientation(glm::vec3(-1.0f, 0.0f, -1.0f),
-                                      glm::vec3(2.0f, 0.0f, 0.0f),
-                                      glm::vec3(0.0f, 0.0f, 2.0f));
+    slices_[1].second->setOrientation(glm::vec3(-1.0f,  0.0f, -1.0f),
+                                      glm::vec3( 2.0f,  0.0f,  0.0f),
+                                      glm::vec3( 0.0f,  0.0f,  2.0f));
 
     // slice along axis 2 = z
-    slices_[Slice_XY].second->setOrientation(glm::vec3(-1.0f, -1.0f, 0.0f),
-                                      glm::vec3(2.0f, 0.0f, 0.0f),
-                                      glm::vec3(0.0f, 2.0f, 0.0f));
+    slices_[2].second->setOrientation(glm::vec3(-1.0f, -1.0f,  0.0f),
+                                      glm::vec3( 2.0f,  0.0f,  0.0f),
+                                      glm::vec3( 0.0f,  2.0f,  0.0f));
 }
 
 bool ReconItem::updateServerSliceParams() {
