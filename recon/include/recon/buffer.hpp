@@ -52,7 +52,7 @@ class BufferInterface {
 };
 
 template<typename T>
-class TripleBufferInterface : public BufferInterface<T> {
+class TripleBuffer : public BufferInterface<T> {
 
     bool is_ready_ = false;
 
@@ -63,14 +63,14 @@ protected:
 
 public:
 
-    TripleBufferInterface() = default;
-    virtual ~TripleBufferInterface() = default;
+    TripleBuffer() = default;
+    virtual ~TripleBuffer() = default;
 
-    TripleBufferInterface(const TripleBufferInterface&) = delete;
-    TripleBufferInterface& operator=(const TripleBufferInterface&) = delete;
+    TripleBuffer(const TripleBuffer&) = delete;
+    TripleBuffer& operator=(const TripleBuffer&) = delete;
 
-    TripleBufferInterface(TripleBufferInterface&&) = delete;
-    TripleBufferInterface& operator=(TripleBufferInterface&&) = delete;
+    TripleBuffer(TripleBuffer&&) = delete;
+    TripleBuffer& operator=(TripleBuffer&&) = delete;
     
     bool fetch(int timeout) override;
 
@@ -83,7 +83,7 @@ public:
 };
 
 template<typename T>
-bool TripleBufferInterface<T>::fetch(int timeout) {
+bool TripleBuffer<T>::fetch(int timeout) {
     std::unique_lock lk(this->mtx_);
     if (timeout < 0) {
         this->cv_.wait(lk, [this] { return is_ready_; });
@@ -98,7 +98,7 @@ bool TripleBufferInterface<T>::fetch(int timeout) {
 }
 
 template<typename T>
-void TripleBufferInterface<T>::prepare() {
+void TripleBuffer<T>::prepare() {
     {
         std::lock_guard lk(this->mtx_);
         this->swap(ready_, back_);
@@ -109,7 +109,7 @@ void TripleBufferInterface<T>::prepare() {
 
 
 template<typename T, size_t N>
-class TripleTensorBuffer : public TripleBufferInterface<Tensor<T, N>> {
+class TripleTensorBuffer : public TripleBuffer<Tensor<T, N>> {
 
 public:
 
@@ -138,7 +138,7 @@ void TripleTensorBuffer<T, N>::resize(const ShapeType& shape) {
 }
 
 template<typename T>
-class SliceBuffer : public TripleBufferInterface<std::map<size_t, std::tuple<bool, size_t, Tensor<T, 2>>>> {
+class SliceBuffer : public TripleBuffer<std::map<size_t, std::tuple<bool, size_t, Tensor<T, 2>>>> {
 
 public:
 

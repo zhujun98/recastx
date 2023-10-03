@@ -149,21 +149,14 @@ class Application {
 
     void pushProjection(const Projection<>& proj);
 
+    void computeReciprocal();
+
     void preprocessProjections(oneapi::tbb::task_arena& arena);
 
     void onStartProcessing();
     void onStopProcessing();
     void onStartAcquiring();
     void onStopAcquiring();
-
-    bool waitForAcquiring() const {
-        if (server_state_ != rpc::ServerState_State_ACQUIRING 
-                && server_state_ != rpc::ServerState_State_PROCESSING) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            return true;
-        }
-        return false;
-    }
 
     bool waitForProcessing() const {
         if (server_state_ != rpc::ServerState_State_PROCESSING) {
@@ -204,8 +197,7 @@ class Application {
                           std::optional<float> min_y, std::optional<float> max_y, 
                           std::optional<float> min_z, std::optional<float> max_z);
 
-    void startAcquiring();
-    void stopAcquiring();
+    bool consume();
 
     void startPreprocessing();
 
