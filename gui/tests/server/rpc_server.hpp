@@ -125,6 +125,10 @@ class ProjectionService final : public rpc::Projection::Service {
                           const rpc::Slice* slice,
                           google::protobuf::Empty* ack) override;
 
+    grpc::Status SetVolume(grpc::ServerContext* context,
+                           const rpc::Volume* volume,
+                           google::protobuf::Empty* ack) override;
+
     grpc::Status GetReconData(grpc::ServerContext* context,
                               const google::protobuf::Empty*,
                               grpc::ServerWriter<rpc::ReconData>* writer) override;

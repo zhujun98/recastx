@@ -30,8 +30,6 @@ class Slice {
     using SizeType = std::array<size_t, 2>;
     using Orient4Type = glm::mat4;
 
-    friend class ReconItem;
-
   private:
 
     int id_ = -1;
@@ -73,7 +71,7 @@ class Slice {
 
     [[nodiscard]] bool visible() const { return visible_; }
 
-    void show(bool visible) { visible_ = visible; }
+    void setVisible(bool visible) { visible_ = visible; }
 
     [[nodiscard]] bool transparent() const;
 

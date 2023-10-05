@@ -24,7 +24,7 @@ public:
 
     virtual void reconstructSlice(Orientation x, int buffer_idx, Tensor<float, 2>& buffer) = 0;
 
-    virtual void reconstructPreview(int buffer_idx, Tensor<float, 3>& buffer) = 0;
+    virtual void reconstructVolume(int buffer_idx, Tensor<float, 3>& buffer) = 0;
 
     virtual void uploadSinograms(int buffer_idx, const float* data, size_t n) = 0;
 };
@@ -39,7 +39,7 @@ class ReconstructorFactory {
                                                   size_t row_count, 
                                                   ProjectionGeometry proj_geom, 
                                                   VolumeGeometry slice_geom, 
-                                                  VolumeGeometry preview_geom,
+                                                  VolumeGeometry volume_geom,
                                                   bool double_buffering) = 0;
 
 };

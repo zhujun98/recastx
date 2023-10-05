@@ -88,12 +88,12 @@ AstraReconstructor::AstraReconstructor(const ProjectionGeometry& p_geom,
     s_geom_ = makeVolumeGeometry(s_geom);
     s_mem_ = makeVolumeGeometryMemHandle(s_geom);
     s_data_ = std::make_unique<astra::CFloat32VolumeData3DGPU>(s_geom_.get(), s_mem_);
-    spdlog::info("- Slice volume geometry: {}", details::astraInfo(*s_geom_));
+    spdlog::info("- Slice geometry: {}", details::astraInfo(*s_geom_));
     
     v_geom_ = makeVolumeGeometry(v_geom);
     v_mem_ = makeVolumeGeometryMemHandle(v_geom);
     v_data_ = std::make_unique<astra::CFloat32VolumeData3DGPU>(v_geom_.get(), v_mem_);
-    spdlog::info("- Preview volume geometry: {}", details::astraInfo(*v_geom_));
+    spdlog::info("- Volume geometry: {}", details::astraInfo(*v_geom_));
 
     for (int i = 0; i < (double_buffering ? 2 : 1); ++i) {
         uploader_.emplace_back(p_geom.angles.size());
@@ -156,7 +156,7 @@ ParallelBeamReconstructor::ParallelBeamReconstructor(size_t col_count,
     }
 
     spdlog::info("- Slice projection geometry: {}", details::astraInfo(*s_p_geom_));
-    spdlog::info("- Preview projection geometry: {}", details::astraInfo(*v_p_geom_));
+    spdlog::info("- Volume projection geometry: {}", details::astraInfo(*v_p_geom_));
 
     vectors_ = std::vector<astra::SPar3DProjection>(
         s_p_geom_->getProjectionVectors(), s_p_geom_->getProjectionVectors() + angle_count);
@@ -225,13 +225,13 @@ void ParallelBeamReconstructor::reconstructSlice(Orientation x, int buffer_idx, 
     astraCUDA3d::copyFromGPUMemory(buffer.data(), s_mem_, pos);
 }
 
-void ParallelBeamReconstructor::reconstructPreview(int buffer_idx, Tensor<float, 3>& buffer) {
+void ParallelBeamReconstructor::reconstructVolume(int buffer_idx, Tensor<float, 3>& buffer) {
 
 #if (VERBOSITY >= 2)
-    ScopedTimer timer("Bench", "Reconstructing preview");
+    ScopedTimer timer("Bench", "Reconstructing volume");
 #endif
 
-    spdlog::debug("Reconstructing preview with buffer index: {}", buffer_idx);
+    spdlog::debug("Reconstructing volume with buffer index: {}", buffer_idx);
     p_data_[buffer_idx]->changeGeometry(v_p_geom_.get());
     v_algo_[buffer_idx]->run();
 
@@ -278,7 +278,7 @@ ConeBeamReconstructor::ConeBeamReconstructor(size_t col_count,
     }
     
     spdlog::info("- Slice projection geometry: {}", details::astraInfo(*s_p_geom_));
-    spdlog::info("- Preview projection geometry: {}", details::astraInfo(*v_p_geom_));
+    spdlog::info("- Volume projection geometry: {}", details::astraInfo(*v_p_geom_));
 
     vectors_ = std::vector<astra::SConeProjection>(
         s_p_geom_->getProjectionVectors(), s_p_geom_->getProjectionVectors() + angle_count);
@@ -343,7 +343,7 @@ void ConeBeamReconstructor::reconstructSlice(Orientation x, int buffer_idx, Tens
     astraCUDA3d::copyFromGPUMemory(buffer.data(), s_mem_, pos);
 }
 
-void ConeBeamReconstructor::reconstructPreview(int buffer_idx, Tensor<float, 3>& buffer) {
+void ConeBeamReconstructor::reconstructVolume(int buffer_idx, Tensor<float, 3>& buffer) {
     p_data_[buffer_idx]->changeGeometry(v_p_geom_.get());
     v_algo_[buffer_idx]->run();
 
@@ -389,14 +389,14 @@ AstraReconstructorFactory::create(size_t col_count,
                                   size_t row_count, 
                                   ProjectionGeometry proj_geom, 
                                   VolumeGeometry slice_geom, 
-                                  VolumeGeometry preview_geom,
+                                  VolumeGeometry volume_geom,
                                   bool double_buffering) {
     if (proj_geom.beam_shape == BeamShape::CONE) {
         return std::make_unique<ConeBeamReconstructor>(
-            col_count, row_count, proj_geom, slice_geom, preview_geom, double_buffering);
+            col_count, row_count, proj_geom, slice_geom, volume_geom, double_buffering);
     }
     return std::make_unique<ParallelBeamReconstructor>(
-        col_count, row_count, proj_geom, slice_geom, preview_geom, double_buffering);
+        col_count, row_count, proj_geom, slice_geom, volume_geom, double_buffering);
 }
 
 } // namespace recastx::recon

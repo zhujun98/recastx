@@ -25,12 +25,17 @@
 - *Auto Levels*: Check to enable automatically setting color levels of the displayed objects.
     - *Min*: Minimum colormap value.
     - *Max*: Maximum colormap value.
-- *Slices*
-    - *Y-Z*: Toggle the visibility of the slice in the y-z plane.
-    - *X-Z*: Toggle the visibility of the slice in the x-z plane.
-    - *X-Y*: Toggle the visibility of the slice in the x-y plane.
-    - *Reset*: Click to reset the positions and orientations of all the slices.
-- *Show volume*: Check to display the low-resolution 3D volume.
+- *Slice 1/2/3*
+    - *2D*: Check to display the 2D high-resolution slice.
+    - *3D*: Check to display the 3D high-resolution slab (TBD).
+    - *Disable*: Check to hide the slice.
+- *Reset all slices*: Click to reset the positions and orientations of all the slices.
+- *Show slice histograms*: Check to display the pixel value histogram for each slice.
+- *Volume*
+    - *Preview*: Check to use the 3D reconstructed volume as preview.
+    - *Show*: Check to display the 3D reconstructed volume.
+    - *Disable*: Check to disable the reconstruction of the 3D volume. As a result, 
+                 there will be no preview when moving a slice.
     - *Alpha*: Opacity of the low-resolution 3D volume.
 
 ## Manipulating 3D model with mouse and keyboard

@@ -72,7 +72,7 @@ class MockReconstructor: public Reconstructor {
 
     size_t upload_counter_;
     size_t slice_counter_;
-    size_t preview_counter_;
+    size_t volume_counter_;
 
   public:
 
@@ -80,20 +80,20 @@ class MockReconstructor: public Reconstructor {
                       size_t row_count, 
                       ProjectionGeometry proj_geom, 
                       VolumeGeometry slice_geom, 
-                      VolumeGeometry preview_geom,
+                      VolumeGeometry volume_geom,
                       bool double_buffering)
-         : upload_counter_(0), slice_counter_(0), preview_counter_(0) {
+         : upload_counter_(0), slice_counter_(0), volume_counter_(0) {
     }
 
     void reconstructSlice(Orientation x, int buffer_idx, Tensor<float, 2>& buffer) override { ++slice_counter_; };
 
-    void reconstructPreview(int buffer_idx, Tensor<float, 3>& buffer) override { ++preview_counter_; };
+    void reconstructVolume(int buffer_idx, Tensor<float, 3>& buffer) override { ++volume_counter_; };
 
     void uploadSinograms(int buffer_idx, const float* data, size_t n) override { ++upload_counter_; };
 
-    size_t num_uploads() const { return upload_counter_; }
-    size_t num_slices() const { return slice_counter_; }
-    size_t num_previews() const { return preview_counter_; }
+    size_t numUploads() const { return upload_counter_; }
+    size_t numSlices() const { return slice_counter_; }
+    size_t numVolumes() const { return volume_counter_; }
 };
 
 class MockReconFactory: public ReconstructorFactory {
@@ -104,10 +104,10 @@ class MockReconFactory: public ReconstructorFactory {
                                           size_t row_count, 
                                           ProjectionGeometry proj_geom, 
                                           VolumeGeometry slice_geom, 
-                                          VolumeGeometry preview_geom,
+                                          VolumeGeometry volume_geom,
                                           bool double_buffering) {
     return std::make_unique<MockReconstructor>(
-        col_count, row_count, proj_geom, slice_geom, preview_geom, double_buffering);
+        col_count, row_count, proj_geom, slice_geom, volume_geom, double_buffering);
     }
 };
 
@@ -129,7 +129,7 @@ class ApplicationTest : public testing::Test {
     size_t buffer_size_ = 100;
     size_t num_angles_ = 16;
     size_t slice_size_ = num_cols_;
-    size_t preview_size_ = slice_size_ / 2;
+    size_t volume_size_ = slice_size_ / 2;
 
     std::string filter_name_ = "shepp";
     uint32_t threads_ = 2;
@@ -317,9 +317,9 @@ TEST_F(ApplicationTest, TestReconstructing) {
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    EXPECT_EQ(dynamic_cast<const MockReconstructor*>(app_.reconstructor())->num_uploads(), 1);
-    EXPECT_EQ(dynamic_cast<const MockReconstructor*>(app_.reconstructor())->num_previews(), 1);
-    EXPECT_EQ(dynamic_cast<const MockReconstructor*>(app_.reconstructor())->num_slices(), 0);
+    EXPECT_EQ(dynamic_cast<const MockReconstructor*>(app_.reconstructor())->numUploads(), 1);
+    EXPECT_EQ(dynamic_cast<const MockReconstructor*>(app_.reconstructor())->numVolumes(), 1);
+    EXPECT_EQ(dynamic_cast<const MockReconstructor*>(app_.reconstructor())->numSlices(), 0);
 }
 
 // FIXME: fix Paganin

@@ -33,12 +33,10 @@ class Wireframe;
 class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDataItem {
 
     enum class DragType : int { none, rotator, translator};
+    
+    enum SlicePolicy { SHOW2D_SLI = 0, SHOW3D_SLI = 1, DISABLE_SLI = 2};
 
-    enum {
-        Slice_YZ = 0,
-        Slice_XZ = 1,
-        Slice_XY = 2
-    };
+    enum VolumePolicy { PREVIEW_VOL = 0, SHOW_VOL = 1, DISABLE_VOL = 2};
 
     class DragMachine {
 
@@ -86,9 +84,7 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
     friend class SliceRotator;
 
     std::vector<std::pair<uint64_t, std::unique_ptr<Slice>>> slices_;
-    std::unique_ptr<Volume> volume_;
-
-    std::unique_ptr<Wireframe> wireframe_;
+    std::array<int, MAX_NUM_SLICES> slice_policies_ { SHOW2D_SLI, SHOW2D_SLI, SHOW2D_SLI };
 
     GLuint rotation_axis_vao_;
     GLuint rotation_axis_vbo_;
@@ -103,8 +99,11 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
     float min_val_;
     float max_val_;
 
-    bool show_volume_ = false;
+    std::unique_ptr<Volume> volume_;
+    int volume_policy_ = PREVIEW_VOL;
     float volume_alpha_ = 1.f;
+
+    std::unique_ptr<Wireframe> wireframe_;
 
     glm::mat4 matrix_;
 
@@ -119,7 +118,14 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
 
     void initSlices();
 
+    template<size_t index>
+    void renderImSliceControl(const char* header);
+
+    void renderImVolumeControl();
+
     bool updateServerSliceParams();
+
+    bool updateServerVolumeParams();
 
     void updateHoveringSlice(float x, float y);
 

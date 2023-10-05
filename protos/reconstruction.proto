@@ -6,6 +6,8 @@ import "google/protobuf/empty.proto";
 service Reconstruction {
   rpc SetSlice (Slice) returns (google.protobuf.Empty) {}
 
+  rpc SetVolume (Volume) returns (google.protobuf.Empty) {}
+
   rpc GetReconData (google.protobuf.Empty) returns (stream ReconData) {}
 }
 
@@ -33,4 +35,8 @@ message ReconData {
 message Slice {
   uint64 timestamp = 1;
   repeated float orientation = 2;
+}
+
+message Volume {
+  bool required = 1;
 }

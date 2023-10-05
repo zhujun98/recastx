@@ -99,6 +99,18 @@ bool RpcClient::setSlice(uint64_t timestamp, const Orientation& orientation) {
     return checkStatus(status);
 }
 
+bool RpcClient::setVolume(bool required) {
+    rpc::Volume request;
+    request.set_required(required);
+
+    google::protobuf::Empty reply;
+
+    grpc::ClientContext context;
+
+    grpc::Status status = reconstruction_stub_->SetVolume(&context, request, &reply);
+    return checkStatus(status);
+}
+
 void RpcClient::start() {
     if (streaming_) return;
     streaming_ = true;

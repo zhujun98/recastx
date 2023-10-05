@@ -67,23 +67,38 @@ std::tuple<bool, float, glm::vec3> intersectionPoint(const glm::mat4& inv_matrix
 
 // class FpsCounter
 
-FpsCounter::FpsCounter() : prev_(glfwGetTime()), threshold_(1.) {}
+FpsCounter::FpsCounter() : v_prev_(glfwGetTime()), s_prev_(v_prev_), threshold_(1.) {}
 
 FpsCounter::~FpsCounter() = default;
 
-void FpsCounter::update() {
-    ++frames_;
+void FpsCounter::countVolume() {
+    ++v_frames_;
     double curr = glfwGetTime();
-    if (curr - prev_ > threshold_) {
-        fps_ = frames_ / (curr - prev_);
-        prev_ = curr;
-        frames_ = 0;
+    if (curr - v_prev_ > threshold_) {
+        v_fps_ = v_frames_ / (curr - v_prev_);
+        v_prev_ = curr;
+        v_frames_ = 0;
     }
 }
 
-[[nodiscard]] double FpsCounter::frameRate() {
-    if (glfwGetTime() - prev_ > FpsCounter::reset_interval_) fps_ = 0.;
-    return fps_;
+void FpsCounter::countSlice() {
+    ++s_frames_;
+    double curr = glfwGetTime();
+    if (curr - s_prev_ > threshold_) {
+        s_fps_ = s_frames_ / (curr - s_prev_);
+        s_prev_ = curr;
+        s_frames_ = 0;
+    }
+}
+
+[[nodiscard]] double FpsCounter::volumeFrameRate() {
+    if (glfwGetTime() - v_prev_ > FpsCounter::reset_interval_) v_fps_ = 0.;
+    return v_fps_;
+}
+
+[[nodiscard]] double FpsCounter::sliceFrameRate() {
+    if (glfwGetTime() - s_prev_ > FpsCounter::reset_interval_) s_fps_ = 0.;
+    return s_fps_;
 }
 
 } // namespace recastx::gui

@@ -103,7 +103,7 @@ public:
 
     void reconstructSlice(Orientation x, int buffer_idx, Tensor<float, 2>& buffer) override;
 
-    void reconstructPreview(int buffer_idx, Tensor<float, 3>& buffer) override;
+    void reconstructVolume(int buffer_idx, Tensor<float, 3>& buffer) override;
 
 };
 
@@ -126,7 +126,7 @@ public:
 
     void reconstructSlice(Orientation x, int buffer_idx, Tensor<float, 2>& buffer) override;
 
-    void reconstructPreview(int buffer_idx, Tensor<float, 3>& buffer) override;
+    void reconstructVolume(int buffer_idx, Tensor<float, 3>& buffer) override;
 
     std::vector<float> fdk_weights();
 };
@@ -139,7 +139,7 @@ public:
                                           size_t row_count, 
                                           ProjectionGeometry proj_geom, 
                                           VolumeGeometry slice_geom, 
-                                          VolumeGeometry preview_geom,
+                                          VolumeGeometry volume_geom,
                                           bool double_buffering) override;
 
 };

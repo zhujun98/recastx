@@ -29,17 +29,17 @@ foamstream-tomo --datafile <Your/folder/2_plastic_beeds_RGB.h5> --pdata tomo --p
 
 Open another terminal and run:
 ```sh
-recastx-recon --rows 400 --cols 130 --angles 200 --minx -256 --maxx 256 --miny -256 --maxy 256 --preview-size 512
+recastx-recon --rows 400 --cols 130 --angles 200 --minx -256 --maxx 256 --miny -256 --maxy 256 --volume-size 512
 ```
 
 You can find the shapes of the DARK, FLAT and PROJECTION data from the output of foamstream.
 
 !!! note
-    The `preview-size`, which defines the resolution of the "low-resolution" 
+    The `volume-size`, which defines the resolution of the "low-resolution" 
     volume, is set to 512 in this case. As a result, the resolution of the 
     reconstructed volume is indeed high. It should be noted that it thus takes
     longer time to perform the reconstruction and send the reconstructed volume
-    from the server to the client. Therefore, the default value of `preview-size`
+    from the server to the client. Therefore, the default value of `volume-size`
     is set to 128 and is recommended to use in [dynamic tomography](./dynamic_tomography.md).
 
 ### Starting the GUI client

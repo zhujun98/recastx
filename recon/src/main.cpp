@@ -113,8 +113,8 @@ int main(int argc, char** argv) {
     reconstruction_desc.add_options()
         ("slice-size", po::value<size_t>(),
          "size of the square reconstructed slice in pixels. Default to detector columns.")
-        ("preview-size", po::value<size_t>(),
-         "size of the cubic reconstructed volume for preview.")
+        ("volume-size", po::value<size_t>(),
+         "size of the cubic reconstructed volume. Default to 128.")
         ("raw-buffer-size", po::value<size_t>()->default_value(10),
          "maximum number of projection groups to be cached in the memory buffer")
         ("retrieve-phase", po::bool_switch(&retrieve_phase),
@@ -185,8 +185,8 @@ int main(int argc, char** argv) {
 
     auto slice_size = opts["slice-size"].empty()
         ? std::nullopt : std::optional<size_t>(opts["slice-size"].as<size_t>());
-    auto preview_size = opts["preview-size"].empty()
-        ? std::nullopt : std::optional<size_t>(opts["preview-size"].as<size_t>());
+    auto volume_size = opts["volume-size"].empty()
+        ? std::nullopt : std::optional<size_t>(opts["volume-size"].as<size_t>());
     auto raw_buffer_size = opts["raw-buffer-size"].as<size_t>();
 
     auto ramp_filter = opts["ramp-filter"].as<std::string>();
@@ -221,7 +221,7 @@ int main(int argc, char** argv) {
     if (retrieve_phase) app.setPaganinParams(pixel_size, lambda, delta, beta, distance);
     app.setProjectionGeometry(cone_beam ? recastx::BeamShape::CONE : recastx::BeamShape::PARALELL, 
                               num_cols, num_rows, 1.0f, 1.0f, 0.0f, 0.0f, num_angles);
-    app.setReconGeometry(slice_size, preview_size, minx, maxx, miny, maxy, minz, maxz);
+    app.setReconGeometry(slice_size, volume_size, minx, maxx, miny, maxy, minz, maxz);
 
     app.spin(parseServerState(auto_acquiring, auto_processing));
 

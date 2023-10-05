@@ -90,6 +90,8 @@ class RpcClient {
 
     bool setSlice(uint64_t timestamp, const Orientation& orientation);
 
+    bool setVolume(bool required);
+
     void start();
 };
 

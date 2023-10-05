@@ -93,6 +93,8 @@ public:
 
     void setData(DataType&& data, const SizeType& size);
 
+    void clearData();
+
     void render(const glm::mat4& view,
                 const glm::mat4& projection,
                 float min_v,

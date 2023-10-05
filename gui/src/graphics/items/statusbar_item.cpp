@@ -43,9 +43,10 @@ void StatusbarItem::renderIm() {
 
         auto& io = ImGui::GetIO();
         ImGui::Text("GUI FPS: %.1f", io.Framerate);
-        ImGui::Text("Tomogram (update) FPS: %.1f",
-                    std::any_cast<double>(scene_.getStatus("tomoUpdateFrameRate")));
-
+        ImGui::Text("Volume (update) FPS: %.1f",
+                    std::any_cast<double>(scene_.getStatus("volumeUpdateFrameRate")));
+        ImGui::Text("Slice (update) FPS: %.1f",
+                    std::any_cast<double>(scene_.getStatus("sliceUpdateFrameRate")));
         ImGui::End();
     }
 
