@@ -128,7 +128,8 @@ void ReconItem::renderIm() {
 
     ImGui::Separator();
 
-    scene_.setStatus("tomoUpdateFrameRate", fps_counter_.frameRate());
+    scene_.setStatus("volumeUpdateFrameRate", fps_counter_.volumeFrameRate());
+    scene_.setStatus("sliceUpdateFrameRate", fps_counter_.sliceFrameRate());
 }
 
 void ReconItem::onFramebufferSizeChanged(int /* width */, int /* height */) {}
@@ -218,13 +219,14 @@ bool ReconItem::consume(const DataType& packet) {
         if (data.has_slice()) {
             auto& slice = data.slice();
             setSliceData(slice.data(), {slice.row_count(), slice.col_count()}, slice.timestamp());
+            fps_counter_.countSlice();
             return true;
         }
 
         if (volume_policy_ != DISABLE_VOL && data.has_volume()) {
             auto& volume = data.volume();
             setVolumeData(volume.data(), {volume.row_count(), volume.col_count(), volume.slice_count()});
-            fps_counter_.update();
+            fps_counter_.countVolume();
             return true;
         }
     }

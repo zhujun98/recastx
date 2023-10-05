@@ -40,11 +40,15 @@ std::tuple<bool, float, glm::vec3> intersectionPoint(const glm::mat4& inv_matrix
 
 class FpsCounter {
 
-    int frames_ = 0;
-    double prev_;
-    double threshold_;
-    double fps_ = 0.;
+    int v_frames_ = 0;
+    double v_prev_;
+    double v_fps_ = 0.;
 
+    int s_frames_ = 0;
+    double s_prev_;
+    double s_fps_ = 0.;
+
+    double threshold_;
     static constexpr double reset_interval_ = 5.;
 
 public:
@@ -52,9 +56,11 @@ public:
     FpsCounter();
     ~FpsCounter();
 
-    void update();
+    void countVolume();
+    void countSlice();
 
-    [[nodiscard]] double frameRate();
+    [[nodiscard]] double volumeFrameRate();
+    [[nodiscard]] double sliceFrameRate();
 };
 
 inline std::ostream& operator<<(std::ostream& stream, const glm::vec3& v) {
