@@ -18,6 +18,12 @@
 #include <thread>
 #include <variant>
 
+<<<<<<< HEAD
+=======
+#include "logger.hpp"
+#include "common/config.hpp"
+
+>>>>>>> f474bee (Remove header and undefine Windows.h macros)
 #include <grpcpp/channel.h>
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
@@ -26,9 +32,16 @@
 #include "projection.grpc.pb.h"
 #include "reconstruction.grpc.pb.h"
 
+<<<<<<< HEAD
 #include "logger.hpp"
 #include "common/config.hpp"
 #include "common/queue.hpp"
+=======
+#ifdef _WIN32
+#undef min
+#undef max
+#endif
+>>>>>>> f474bee (Remove header and undefine Windows.h macros)
 
 namespace recastx::gui {
 
