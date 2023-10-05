@@ -98,7 +98,6 @@ grpc::Status ReconstructionService::SetSlice(grpc::ServerContext* context,
 grpc::Status ReconstructionService::SetVolume(grpc::ServerContext* context,
                                               const rpc::Volume* volume,
                                               google::protobuf::Empty* ack) {
-
     spdlog::info("Set volume required: {}", volume->required());
     return grpc::Status::OK;
 }

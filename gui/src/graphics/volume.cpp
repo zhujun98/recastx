@@ -159,6 +159,16 @@ void Volume::setData(DataType&& data, const SizeType& size) {
                      static_cast<int>(size_[2]));
 }
 
+void Volume::clearData() {
+    std::fill(data_.begin(), data_.end(), 0.f);
+    min_max_vals_ = {0.f, 0.f};
+
+    texture_.setData(data_,
+                     static_cast<int>(size_[0]),
+                     static_cast<int>(size_[1]),
+                     static_cast<int>(size_[2]));
+}
+
 void Volume::render(const glm::mat4& view,
                     const glm::mat4& projection,
                     float min_v,

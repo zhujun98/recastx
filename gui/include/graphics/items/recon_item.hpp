@@ -33,9 +33,7 @@ class Wireframe;
 class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDataItem {
 
     enum class DragType : int { none, rotator, translator};
-
-    enum class Orientation: int { YZ, XZ, XY};
-
+    
     enum SlicePolicy { SHOW2D_SLI = 0, SHOW3D_SLI = 1, DISABLE_SLI = 2};
 
     enum VolumePolicy { PREVIEW_VOL = 0, SHOW_VOL = 1, DISABLE_VOL = 2};

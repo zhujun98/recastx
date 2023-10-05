@@ -221,7 +221,7 @@ bool ReconItem::consume(const DataType& packet) {
             return true;
         }
 
-        if (data.has_volume()) {
+        if (volume_policy_ != DISABLE_VOL && data.has_volume()) {
             auto& volume = data.volume();
             setVolumeData(volume.data(), {volume.row_count(), volume.col_count(), volume.slice_count()});
             fps_counter_.update();
@@ -356,9 +356,14 @@ void ReconItem::renderImVolumeControl() {
         ImGui::SameLine();
         cd |= ImGui::RadioButton("Show##RECON_VOL", &volume_policy_, SHOW_VOL);
         ImGui::SameLine();
-        cd |= ImGui::RadioButton("Disable##RECON_VOL", &volume_policy_, DISABLE_VOL);
+        bool disabled = ImGui::RadioButton("Disable##RECON_VOL", &volume_policy_, DISABLE_VOL);
+        cd |= disabled;
 
         if (cd) updateServerVolumeParams();
+        if (disabled) {
+            volume_->clearData();
+            maybeUpdateMinMaxValues();
+        }
 
         ImGui::SliderFloat("Alpha##RECON_VOL", &volume_alpha_, 0.0f, 1.0f);
     }
