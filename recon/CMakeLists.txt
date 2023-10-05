@@ -80,8 +80,11 @@ target_link_libraries(${RECON_LIB}
                 recastx_grpc_proto
         )
 
-target_compile_options(${RECON_LIB}
-        PUBLIC -Wall -Wextra -Wfatal-errors -fPIC -static)
+if (WIN32)
+        target_compile_options(${RECON_LIB} PUBLIC -fPIC -static)
+else()
+        target_compile_options(${RECON_LIB} PUBLIC -Wall -Wextra -Wfatal-errors -fPIC -static)
+endif()
 
 target_compile_definitions(${RECON_LIB} PUBLIC VERBOSITY=${VERBOSITY})
 

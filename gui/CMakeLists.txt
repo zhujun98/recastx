@@ -122,7 +122,16 @@ if (UNIX AND NOT APPLE)
     target_link_libraries(${TARGET_NAME} PRIVATE X11)
 endif()
 
+<<<<<<< HEAD
 target_compile_options(${TARGET_NAME} PRIVATE -Wall -Wextra -Wfatal-errors)
+=======
+if (WIN32)
+        target_compile_options(${TARGET_NAME} PRIVATE)
+else()
+        target_compile_options(${TARGET_NAME} PRIVATE -Wall -Wextra -Wfatal-errors)
+endif()
+
+>>>>>>> 0d6a20b (Update CMakeLists.txt to not use gcc flags)
 # This is to work around GLM issue#754 <https://github.com/g-truc/glm/issues/754>
 target_compile_definitions(${TARGET_NAME}
         PUBLIC -DVERBOSITY=${VERBOSITY}
