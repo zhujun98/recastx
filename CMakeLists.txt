@@ -33,7 +33,7 @@ option(BENCHMARK "Build with benchmarking configurations" OFF)
 # VERBOSITY values:
 # - 0: no verbosity
 # - 1: general performance benchmarks
-# - 2: performance benchmark of critical functions, 
+# - 2: performance benchmark of critical functions,
 #      monitoring occupation of the memory buffer
 # - 3: communications between the GUI and the reconstruction server
 # - 4: received image data information (type, frame id, etc.),
@@ -46,9 +46,11 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
 
-set(CMAKE_CXX_FLAGS "-Wno-unused-result")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
-set(CMAKE_CXX_FLAGS_DEBUG "-g")
+if(NOT WIN32)
+    set(CMAKE_CXX_FLAGS "-Wno-unused-result")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g")
+endif()
 
 set(CMAKE_INSTALL_PREFIX ${CMAKE_PREFIX_PATH})
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
@@ -80,7 +82,7 @@ if (BUILD_TEST)
         GIT_REPOSITORY https://github.com/google/googletest.git
         GIT_TAG v1.13.0
     )
-    
+
     # For Windows: Prevent overriding the parent project's compiler/linker settings
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(googletest)

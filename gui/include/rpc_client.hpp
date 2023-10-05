@@ -9,6 +9,7 @@
 #ifndef GUI_RPCCLIENT_H
 #define GUI_RPCCLIENT_H
 
+#include <algorithm>
 #include <atomic>
 #include <cstring>
 #include <map>
@@ -39,8 +40,8 @@ class RpcClient {
   public:
 
     enum class State {
-        OK = 0,
-        ERROR = 1
+        SUCCESS = 0,
+        FAILURE = 1
     };
 
     using DataType = std::variant<rpc::ReconData, rpc::ProjectionData>;
@@ -77,9 +78,9 @@ class RpcClient {
     ThreadSafeQueue<DataType> packets_;
 
     void updateTimeout(int& timeout, const grpc::Status& status) {
-        if (checkStatus(status, false) != State::OK) {
+        if (checkStatus(status, false) != State::SUCCESS) {
             std::this_thread::sleep_for(std::chrono::milliseconds(timeout));
-            timeout = std::min(2 * timeout, max_timeout);
+            timeout = (std::min)(2 * timeout, max_timeout);
         } else {
             timeout = min_timeout;
         }
@@ -139,7 +140,7 @@ class RpcClient {
 };
 
 #define CHECK_CLIENT_STATE(x) { RpcClient::State ret = x;\
-    if (ret != RpcClient::State::OK) return ret; }
+    if (ret != RpcClient::State::SUCCESS) return ret; }
 
 }  // namespace recastx::gui
 

@@ -118,8 +118,8 @@ bool VolumeComponent::drawStatistics(rpc::ServerState_State) {
                 float bin_width = 1.f;
                 if (bin_centers.size() > 1) bin_width = bin_centers[1] - bin_centers[0];
 
-                ImPlot::PlotBars("##Histogram_Volume",
-                                 bin_centers.data(), bin_counts.data(), bin_centers.size(), 0.5f * bin_width);
+                ImPlot::PlotBars("##Histogram_Volume", bin_centers.data(), bin_counts.data(),
+                                 static_cast<int>(bin_centers.size()), 0.5f * bin_width);
             }
             ImPlot::EndPlot();
         }
@@ -135,7 +135,7 @@ void VolumeComponent::preRender() {
         auto mat = MaterialManager::instance().getMaterial<TransferFunc>(voxel_object_->materialID());
         const auto& v = data_.minMaxVals();
         if (v) mat->registerMinMaxVals(v.value());
-        
+
         if (update_texture_) {
             if (data_.empty()) {
                 voxel_object_->resetIntensity();
@@ -159,7 +159,7 @@ void VolumeComponent::preRender() {
 
 RpcClient::State VolumeComponent::updateServerParams() const {
     CHECK_CLIENT_STATE(client_->setVolume(display_policy_ != DISABLE))
-    return RpcClient::State::OK;
+    return RpcClient::State::SUCCESS;
 }
 
 bool VolumeComponent::setShard(uint32_t pos, const std::string& data, uint32_t x, uint32_t y, uint32_t z) {

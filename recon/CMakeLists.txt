@@ -107,9 +107,7 @@ if (BENCHMARK)
     target_compile_definitions(${RECON_LIB} PRIVATE BENCHMARK)
 endif()
 
-target_compile_options(${RECON_LIB}
-        PUBLIC -Wall -Wextra -Wfatal-errors -fPIC -static)
-
+target_compile_options(${RECON_LIB} PUBLIC -Wall -Wextra -Wfatal-errors -fPIC -static)
 target_compile_definitions(${RECON_LIB} PUBLIC VERBOSITY=${VERBOSITY})
 
 if (BUILD_TEST)

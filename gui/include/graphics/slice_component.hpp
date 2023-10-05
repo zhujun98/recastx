@@ -6,8 +6,8 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
-#ifndef GUI_SLICE_H
-#define GUI_SLICE_H
+#ifndef GUI_SLICE_COMPONENT_H
+#define GUI_SLICE_COMPONENT_H
 
 #include <array>
 #include <cstddef>
@@ -86,4 +86,4 @@ public:
 
 } // namespace recastx::gui
 
-#endif // GUI_SLICE_H
+#endif // GUI_SLICE_COMPONENT_H

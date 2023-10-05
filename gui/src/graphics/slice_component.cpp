@@ -29,7 +29,7 @@ void SliceComponent::addSliceObject(SliceObject* obj) {
     static std::array<Plane, MAX_NUM_SLICES> planes { Plane::YZ, Plane::XZ, Plane::XY };
 
     Slice slice;
-    slice.id = slices_.size();
+    slice.id = static_cast<uint32_t>(slices_.size());
     slice.timestamp = slice.id;
     slice.object = obj;
     slice.plane = planes[slices_.size()];
@@ -90,8 +90,8 @@ void SliceComponent::drawStatistics(rpc::ServerState_State) {
                 float bin_width = 1.f;
                 if (bin_centers.size() > 1) bin_width = bin_centers[1] - bin_centers[0];
 
-                ImPlot::PlotBars(("##Histogram_" + name).c_str(),
-                                 bin_centers.data(), bin_counts.data(), bin_centers.size(), 0.5f * bin_width);
+                ImPlot::PlotBars(("##Histogram_" + name).c_str(), bin_centers.data(), bin_counts.data(),
+                                 static_cast<int>(bin_centers.size()), 0.5f * bin_width);
             }
             ImPlot::EndPlot();
         }
@@ -103,7 +103,7 @@ RpcClient::State SliceComponent::updateServerParams() const {
     for (auto& slice : slices_) {
         CHECK_CLIENT_STATE(client_->setSlice(slice.timestamp, slice.object->orientation()))
     }
-    return RpcClient::State::OK;
+    return RpcClient::State::SUCCESS;
 }
 
 bool SliceComponent::setData(size_t timestamp, const std::string& data, uint32_t x, uint32_t y) {

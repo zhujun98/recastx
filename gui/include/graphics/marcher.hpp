@@ -355,7 +355,8 @@ class Marcher {
         if (z >= data.z()) z = data.z() - 1;
         int index = (z * data.y() + y) * data.x() + x;
 
-        return data.data()[index];
+        // TODO: check
+        return static_cast<uint8_t>(data.data()[index]);
     }
 
     glm::vec3 normalAt(const DataType& data, int x, int y, int z) {

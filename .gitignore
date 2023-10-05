@@ -1,7 +1,9 @@
 .DS_Store
+CMakePresets.json
 
 .idea
 .vscode
+.vs
 
 version.hpp
 

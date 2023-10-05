@@ -92,7 +92,7 @@ void Alphamap::set(const std::map<float, float>& alphamap) {
     }
     while (j < n) data_[j++] = alpha.back();
 
-    setData(data_.data(), data_.size(), 1);
+    setData(data_.data(), static_cast<int>(data_.size()), 1);
 }
 
 } // namespace recastx::gui

@@ -56,9 +56,9 @@ Mesh::Mesh(Mesh &&other) noexcept
 void Mesh::render() const {
     glBindVertexArray(VAO_);
     if (!indices_.empty()) {
-        glDrawElements(GL_TRIANGLES, indices_.size(), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices_.size()), GL_UNSIGNED_INT, 0);
     } else {
-        glDrawArrays(GL_TRIANGLES, 0, vertices_.size());
+        glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(vertices_.size()));
     }
     glBindVertexArray(0);
 }

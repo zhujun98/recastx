@@ -161,7 +161,7 @@ void SimpleObject::init() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
 
-    int vertex_size = vertices.size() / num_indices;
+    int vertex_size = static_cast<int>(vertices.size() / num_indices);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, vertex_size * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
     if (vertex_size == 6) {
@@ -178,12 +178,12 @@ void SimpleObject::render(Renderer* renderer) {
 
     glBindVertexArray(VAO_);
     if (model_.mode == Mode::SURFACE) {
-        glDrawElements(GL_TRIANGLES, model_.indices.size(), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(model_.indices.size()), GL_UNSIGNED_INT, 0);
     } else {
 #ifndef __APPLE__
         glLineWidth(0.5f);
 #endif
-        glDrawElements(GL_LINES, model_.indices.size(), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_LINES, static_cast<GLsizei>(model_.indices.size()), GL_UNSIGNED_INT, 0);
     }
 }
 

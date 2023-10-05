@@ -45,7 +45,6 @@ class MaterialManager {
     T* getMaterial(MaterialID id) {
         if constexpr (std::is_base_of_v<T, MeshMaterial>) return mesh_materials_.at(id).get();
         if constexpr (std::is_base_of_v<T, TransferFunc>) return transfer_funcs_.at(id).get();
-        return nullptr;
     }
 
     Widget* getWidget(MaterialID id) {  return widgets_.at(id).get(); }

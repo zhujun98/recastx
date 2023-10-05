@@ -114,7 +114,7 @@ void VoxelObject::Model::renderOnFramebuffer(Framebuffer *fb,
     glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, fb->light_texture_);
 
-    for (int i = num_slices_; i >= 0; --i) {
+    for (int i = static_cast<int>(num_slices_); i >= 0; --i) {
         glDrawBuffer(GL_COLOR_ATTACHMENT1);
 
         vslice_shader->use();

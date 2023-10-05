@@ -6,8 +6,8 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
-#ifndef RECASTX_PREPROC_COMPONENT_HPP
-#define RECASTX_PREPROC_COMPONENT_HPP
+#ifndef RECASTX_PREPROC_COMPONENT_H
+#define RECASTX_PREPROC_COMPONENT_H
 
 #include <map>
 #include <string>
@@ -44,4 +44,4 @@ class PreprocComponent : public Component {
 
 } // namespace recastx::gui
 
-#endif //RECASTX_PREPROC_COMPONENT_HPP
+#endif //RECASTX_PREPROC_COMPONENT_H

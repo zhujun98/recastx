@@ -55,7 +55,7 @@ void ProjectionComponent::draw(rpc::ServerState_State) {
 
 RpcClient::State ProjectionComponent::updateServerParams() const {
     CHECK_CLIENT_STATE(client_->setProjection(id_))
-    return RpcClient::State::OK;
+    return RpcClient::State::SUCCESS;
 }
 
 void ProjectionComponent::setData(uint32_t id, const std::string& data, uint32_t x, uint32_t y) {
