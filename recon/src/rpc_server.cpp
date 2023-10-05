@@ -93,14 +93,14 @@ grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
                                                  grpc::ServerWriter<rpc::ReconData>* writer) {
     // - Do not block because slice request needs to be responsive
     // - If the number of the logical threads are more than the number of the physical threads, 
-    //   the preview_data could always have value.
-    auto preview_data = app_->getVolumeData(0);
-    if (preview_data) {
+    //   the volume_data could always have value.
+    auto volume_data = app_->getVolumeData(0);
+    if (volume_data) {
         auto slice_data = app_->getSliceData(-1);
 
         if (app_->hasVolume()) {
-            writer->Write(preview_data.value());
-            spdlog::debug("Preview data sent");
+            writer->Write(volume_data.value());
+            spdlog::debug("Volume data sent");
         }
         
         for (const auto& item : slice_data) {

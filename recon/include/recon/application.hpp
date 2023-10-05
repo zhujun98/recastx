@@ -90,7 +90,7 @@ class Application {
     std::unique_ptr<ProjectionMediator> proj_mediator_;
     std::unique_ptr<SliceMediator> slice_mediator_;
 
-    TripleTensorBuffer<ProDtype, 3> preview_buffer_;
+    TripleTensorBuffer<ProDtype, 3> volume_buffer_;
 
     std::optional<PaganinConfig> paganin_cfg_;
     std::unique_ptr<Paganin> paganin_;
@@ -101,7 +101,7 @@ class Application {
     ImageprocParams imgproc_params_;
 
     std::optional<size_t> slice_size_;
-    std::optional<size_t> preview_size_;
+    std::optional<size_t> volume_size_;
     std::optional<float> min_x_;
     std::optional<float> max_x_;
     std::optional<float> min_y_;
@@ -110,7 +110,7 @@ class Application {
     std::optional<float> max_z_;
     ProjectionGeometry proj_geom_;
     VolumeGeometry slice_geom_;
-    VolumeGeometry preview_geom_;
+    VolumeGeometry volume_geom_;
     bool volume_required_ = true;
     ReconstructorFactory* recon_factory_;
     std::unique_ptr<Reconstructor> recon_;
@@ -193,7 +193,7 @@ class Application {
                                float pixel_width, float pixel_height, 
                                float src2origin, float origin2det, size_t num_angles);
 
-    void setReconGeometry(std::optional<size_t> slice_size, std::optional<size_t> preview_size, 
+    void setReconGeometry(std::optional<size_t> slice_size, std::optional<size_t> volume_size,
                           std::optional<float> min_x, std::optional<float> max_x, 
                           std::optional<float> min_y, std::optional<float> max_y, 
                           std::optional<float> min_z, std::optional<float> max_z);

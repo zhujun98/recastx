@@ -26,8 +26,6 @@ class Slice {
 
   public:
 
-//    enum class Orientation: int { YZ, XZ, XY};
-
     using DataType = std::vector<float>;
     using SizeType = std::array<size_t, 2>;
     using Orient4Type = glm::mat4;

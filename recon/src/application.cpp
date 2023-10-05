@@ -59,12 +59,12 @@ void Application::setProjectionGeometry(BeamShape beam_shape, size_t col_count, 
                   src2origin, origin2det, defaultAngles(num_angles)};
 }
 
-void Application::setReconGeometry(std::optional<size_t> slice_size, std::optional<size_t> preview_size,
+void Application::setReconGeometry(std::optional<size_t> slice_size, std::optional<size_t> volume_size,
                                    std::optional<float> minx, std::optional<float> maxx, 
                                    std::optional<float> miny, std::optional<float> maxy, 
                                    std::optional<float> minz, std::optional<float> maxz) {
     slice_size_ = slice_size;
-    preview_size_ = preview_size;
+    volume_size_ = volume_size;
     min_x_ = minx;
     max_x_ = maxx;
     min_y_ = miny;
@@ -157,8 +157,8 @@ void Application::startReconstructing() {
                 std::unique_lock<std::mutex> lck(gpu_mtx_);
                 if (gpu_cv_.wait_for(lck, 10ms, [&] { return sino_uploaded_; })) {
                     if (volume_required_) {
-                        spdlog::info("Reconstructing preview and slices ...");
-                        recon_->reconstructPreview(gpu_buffer_index_, preview_buffer_.back());
+                        spdlog::info("Reconstructing volume and slices ...");
+                        recon_->reconstructVolume(gpu_buffer_index_, volume_buffer_.back());
                     } else {
                         spdlog::info("Reconstructing slices ...");
                     }
@@ -174,10 +174,10 @@ void Application::startReconstructing() {
                 sino_uploaded_ = false;
             }
             
-            spdlog::debug("Preview and slices reconstructed!");
+            spdlog::debug("Volume and slices reconstructed!");
             monitor_->countTomogram();
 
-            preview_buffer_.prepare();
+            volume_buffer_.prepare();
         }
 
     });
@@ -324,8 +324,8 @@ std::optional<rpc::ProjectionData> Application::getProjectionData(int timeout) {
 }
 
 std::optional<rpc::ReconData> Application::getVolumeData(int timeout) { 
-    if (preview_buffer_.fetch(timeout)) {
-        auto& data = preview_buffer_.front();
+    if (volume_buffer_.fetch(timeout)) {
+        auto& data = volume_buffer_.front();
         auto [x, y, z] = data.shape();
         return createVolumeDataPacket(data, x, y, z);
     }
@@ -505,19 +505,19 @@ void Application::initReconstructor(size_t col_count, size_t row_count) {
     auto [min_z, max_z] = details::parseReconstructedVolumeBoundary(min_z_, max_z_, row_count);
     
     size_t s_size = slice_size_.value_or(expandDataSizeForGpu(col_count, 64));
-    size_t p_size = preview_size_.value_or(128);
+    size_t p_size = volume_size_.value_or(128);
     float half_slice_height = 0.5f * (max_z - min_z) / p_size;
     float z0 = 0.5f * (max_z + min_z);
 
     slice_geom_ = {s_size, s_size, 1, min_x, max_x, min_y, max_y, z0 - half_slice_height, z0 + half_slice_height};
-    preview_geom_ = {p_size, p_size, p_size, min_x, max_x, min_y, max_y, min_y, max_y};
+    volume_geom_ = {p_size, p_size, p_size, min_x, max_x, min_y, max_y, min_y, max_y};
 
-    preview_buffer_.resize({preview_geom_.col_count, preview_geom_.row_count, preview_geom_.slice_count});
+    volume_buffer_.resize({volume_geom_.col_count, volume_geom_.row_count, volume_geom_.slice_count});
     slice_mediator_->resize({slice_geom_.col_count, slice_geom_.row_count});
 
     bool double_buffering = scan_mode_ == rpc::ScanMode_Mode_DISCRETE;
     recon_ = recon_factory_->create(
-        col_count, row_count, proj_geom_, slice_geom_, preview_geom_, double_buffering);
+        col_count, row_count, proj_geom_, slice_geom_, volume_geom_, double_buffering);
 }
 
 void Application::maybeInitFlatFieldBuffer(size_t row_count, size_t col_count) {
