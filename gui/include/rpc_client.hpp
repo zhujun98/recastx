@@ -9,6 +9,7 @@
 #ifndef GUI_ZMQCLIENT_H
 #define GUI_ZMQCLIENT_H
 
+#include <atomic>
 #include <cstring>
 #include <map>
 #include <memory>
@@ -46,12 +47,15 @@ class RpcClient {
 
     std::unique_ptr<rpc::Control::Stub> control_stub_;
     std::unique_ptr<rpc::Imageproc::Stub> imageproc_stub_;
-    std::unique_ptr<rpc::Projection::Stub> projection_stub_;
-    std::unique_ptr<rpc::Reconstruction::Stub> reconstruction_stub_;
+    std::unique_ptr<rpc::ProjectionTransfer::Stub> proj_trans_stub_;
+    std::unique_ptr<rpc::Reconstruction::Stub> recon_stub_;
 
-    std::thread thread_projection_;
+    bool running_ = false;
+
     std::thread thread_recon_;
-    bool streaming_ = false;
+
+    std::atomic<bool> streaming_proj_ = false;
+    std::thread thread_proj_;
 
     inline static std::queue<DataType> packets_;
 
@@ -86,11 +90,15 @@ class RpcClient {
 
     bool setRampFilter(const std::string& filter_name);
 
+    bool setProjection(uint32_t id);
+
     bool setSlice(uint64_t timestamp, const Orientation& orientation);
 
     bool setVolume(bool required);
 
     void start();
+
+    void toggleProjectionStream(bool state);
 };
 
 }  // namespace recastx::gui

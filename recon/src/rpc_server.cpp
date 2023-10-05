@@ -54,11 +54,19 @@ grpc::Status ImageprocService::SetRampFilter(grpc::ServerContext* contest,
 }
 
 
-ProjectionService::ProjectionService(Application* app) : app_(app) {}
+ProjectionTransferService::ProjectionTransferService(Application* app) : app_(app) {}
 
-grpc::Status ProjectionService::GetProjectionData(grpc::ServerContext* context,
-                                                  const google::protobuf::Empty*,
-                                                  grpc::ServerWriter<rpc::ProjectionData>* writer) {
+grpc::Status ProjectionTransferService::SetProjection(grpc::ServerContext* context,
+                                                      const rpc::Projection* request,
+                                                      google::protobuf::Empty* ack) {
+    app_->setProjectionReq(request->id());
+    return grpc::Status::OK;
+}
+
+grpc::Status ProjectionTransferService::GetProjectionData(
+        grpc::ServerContext* context,
+        const google::protobuf::Empty*,
+        grpc::ServerWriter<rpc::ProjectionData>* writer) {
     auto proj = app_->getProjectionData(100);
     if (proj) {
         writer->Write(proj.value());
@@ -76,7 +84,7 @@ grpc::Status ReconstructionService::SetSlice(grpc::ServerContext* context,
                                              google::protobuf::Empty* ack) {
     Orientation orient;
     std::copy(slice->orientation().begin(), slice->orientation().end(), orient.begin());
-    app_->setSlice(slice->timestamp(), orient);
+    app_->setSliceReq(slice->timestamp(), orient);
     return grpc::Status::OK;
 }
 
@@ -84,7 +92,7 @@ grpc::Status ReconstructionService::SetVolume(grpc::ServerContext* context,
                                               const rpc::Volume* volume,
                                               google::protobuf::Empty* ack) {
 
-    app_->setVolume(volume->required());
+    app_->setVolumeReq(volume->required());
     return grpc::Status::OK;
 }
 
@@ -128,8 +136,8 @@ RpcServer::RpcServer(int port, Application* app)
         : address_("0.0.0.0:" + std::to_string(port)), 
     control_service_(app),
     imageproc_service_(app),
-    projection_service_(app),
-    reconstruction_service_(app)  {
+    proj_trans_service_(app),
+    recon_service_(app)  {
 }
 
 void RpcServer::start() {
@@ -140,8 +148,8 @@ void RpcServer::start() {
         builder.AddListeningPort(address_, grpc::InsecureServerCredentials());
         builder.RegisterService(&control_service_);
         builder.RegisterService(&imageproc_service_);
-        builder.RegisterService(&projection_service_);
-        builder.RegisterService(&reconstruction_service_);
+        builder.RegisterService(&proj_trans_service_);
+        builder.RegisterService(&recon_service_);
  
         builder.SetMaxSendMessageSize(K_MAX_RPC_SERVER_SEND_MESSAGE_SIZE);
 

@@ -39,11 +39,12 @@ inline rpc::ReconData createVolumeDataPacket(const Container& data, uint32_t x, 
 }
 
 template<typename Container>
-inline rpc::ProjectionData createProjectionDataPacket(const Container& data, uint32_t x, uint32_t y) {
+inline rpc::ProjectionData createProjectionDataPacket(uint32_t id, uint32_t x, uint32_t y, const Container& data) {
     rpc::ProjectionData packet;
-    packet.set_data(data.data(), data.size() * sizeof(typename Container::value_type));
+    packet.set_id(id);
     packet.set_col_count(x);
     packet.set_row_count(y);
+    packet.set_data(data.data(), data.size() * sizeof(typename Container::value_type));
     return packet;
 }
 

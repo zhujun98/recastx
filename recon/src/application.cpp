@@ -272,11 +272,15 @@ void Application::setRampFilter(std::string filter_name) {
     spdlog::debug("Set ramp filter: {}", filter_name);
 }
 
-void Application::setSlice(size_t timestamp, const Orientation& orientation) {
+void Application::setProjectionReq(size_t id) {
+    proj_mediator_->setId(id); 
+}
+
+void Application::setSliceReq(size_t timestamp, const Orientation& orientation) {
     slice_mediator_->update(timestamp, orientation);
 }
 
-void Application::setVolume(bool required) {
+void Application::setVolumeReq(bool required) {
     volume_required_ = required;
 }
 
@@ -318,7 +322,8 @@ std::optional<rpc::ProjectionData> Application::getProjectionData(int timeout) {
     if (buffer.fetch(timeout)) {
         auto& data = buffer.front();
         auto [y, x] = data.shape();
-        return createProjectionDataPacket(data, x, y);
+        // FIXME: how to get the id?
+        return createProjectionDataPacket(0, x, y, data);
     }
     return std::nullopt;
 }

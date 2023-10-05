@@ -212,9 +212,11 @@ class Application {
 
     void setRampFilter(std::string filter_name);
 
-    void setSlice(size_t timestamp, const Orientation& orientation);
+    void setProjectionReq(size_t id);
 
-    void setVolume(bool required);
+    void setSliceReq(size_t timestamp, const Orientation& orientation);
+
+    void setVolumeReq(bool required);
 
     void setScanMode(rpc::ScanMode_Mode mode, uint32_t update_inverval);
 

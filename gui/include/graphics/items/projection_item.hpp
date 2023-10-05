@@ -24,7 +24,9 @@ class ProjectionItem : public GraphicsItem, public GraphicsGLItem, public Graphi
     ImVec2 size_;
 
     Projection img_;
-    static constexpr int padding_ = 5;
+    int id_;
+    static constexpr int K_MAX_ID_ = 10000;
+    static constexpr int K_PADDING_ = 5;
     ImVec2 img_display_size_;
 
     GLuint vao_;
@@ -35,6 +37,10 @@ class ProjectionItem : public GraphicsItem, public GraphicsGLItem, public Graphi
     std::unique_ptr<Colormap> cm_;
 
     bool visible_ = true;
+
+    void toggleProjectionStream();
+
+    bool setProjectionId();
 
     void setProjectionData(const std::string& data, const std::array<uint32_t, 2>& size);
 

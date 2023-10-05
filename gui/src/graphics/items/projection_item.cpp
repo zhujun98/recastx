@@ -68,17 +68,17 @@ void ProjectionItem::onWindowSizeChanged(int width, int height) {
     };
 
     img_display_size_ = {
-            size_.x - 2 * padding_,
-            size_.y - 2 * padding_,
+            size_.x - 2 * K_PADDING_,
+            size_.y - 2 * K_PADDING_,
     };
 }
 
 void ProjectionItem::renderIm() {
-    ImGui::Checkbox("Show projection", &visible_);
+    bool cd = ImGui::Checkbox("Show projection: ", &visible_);
     if (visible_) {
         ImGui::SetNextWindowPos(pos_);
         ImGui::SetNextWindowSize(size_);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(padding_, padding_));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(K_PADDING_, K_PADDING_));
         ImGui::Begin("Raw projection", NULL, ImGuiWindowFlags_NoDecoration);
 
         ImGui::Image((void*)(intptr_t)fb_->texture(), img_display_size_);
@@ -87,12 +87,22 @@ void ProjectionItem::renderIm() {
         ImGui::PopStyleVar();
     }
 
+    if (cd) toggleProjectionStream();
+
+    ImGui::SameLine();
+    ImGui::PushItemWidth(100);
+    int prev_id = id_;
+    ImGui::InputInt("##PROJECTION_ID", &id_);
+    id_ = std::clamp(id_, 0, K_MAX_ID_);
+    if (prev_id != id_) setProjectionId();
+    ImGui::PopItemWidth();
+
     ImGui::Separator();
 }
 
 void ProjectionItem::onFramebufferSizeChanged(int width, int height) {
-    int w = static_cast<int>(Style::PROJECTION_WIDTH * width) - 2 * padding_;
-    int h = static_cast<int>(Style::PROJECTION_HEIGHT * height) - 2 * padding_;
+    int w = static_cast<int>(Style::PROJECTION_WIDTH * width) - 2 * K_PADDING_;
+    int h = static_cast<int>(Style::PROJECTION_HEIGHT * height) - 2 * K_PADDING_;
 
     fb_->prepareForRescale(w, h);
 }
@@ -117,7 +127,8 @@ void ProjectionItem::renderGl() {
 }
 
 bool ProjectionItem::updateServerParams() {
-    return false;
+    toggleProjectionStream();
+    return setProjectionId();
 }
 
 bool ProjectionItem::consume(const DataType& packet) {
@@ -125,11 +136,19 @@ bool ProjectionItem::consume(const DataType& packet) {
         const auto& data = std::get<rpc::ProjectionData>(packet);
 
         setProjectionData(data.data(), {data.col_count(), data.row_count()});
-        log::info("Set projection data");
+        log::info("Set projection data: {}", data.id());
         return true;
     }
 
     return false;
+}
+
+void ProjectionItem::toggleProjectionStream() {
+    scene_.client()->toggleProjectionStream(visible_);
+}
+
+bool ProjectionItem::setProjectionId() {
+    return scene_.client()->setProjection(id_);
 }
 
 void ProjectionItem::setProjectionData(const std::string &data, const std::array<uint32_t, 2> &size) {

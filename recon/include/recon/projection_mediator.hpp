@@ -19,7 +19,7 @@ namespace recastx::recon {
 class ProjectionMediator {
 
     size_t monitor_every_;
-    size_t monitor_index_;
+    size_t proj_id_;
 
     ImageBuffer<RawDtype> projections_;
 
@@ -33,11 +33,11 @@ class ProjectionMediator {
 
     void emplace(Projection<>&& proj);
 
-    void setFilter(int monitor_every, int monitor_index = 0);
+    void setFilter(size_t monitor_every);
+    
+    size_t setId(size_t id);
 
-    void reset() { 
-        projections_.reset(); 
-    }
+    void reset() { projections_.reset(); }
 
     ImageBuffer<RawDtype>& projections() { return projections_; }
 };
