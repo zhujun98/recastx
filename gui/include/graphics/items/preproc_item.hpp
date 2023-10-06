@@ -15,14 +15,6 @@ namespace recastx::gui {
 
 class PreprocItem : public GraphicsItem {
 
-  public:
-
-    inline static const std::map<std::string, std::string> filter_options {
-            {"shepp", "Shepp-Logan"},
-            {"ramlak", "Ram-Lak"}};
-
-  private:
-
     int downsampling_col_ = 1;
     int downsampling_row_ = 1;
 

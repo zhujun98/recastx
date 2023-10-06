@@ -30,6 +30,8 @@ class Slice {
     using SizeType = std::array<size_t, 2>;
     using Orient4Type = glm::mat4;
 
+    enum class Plane { XY, YZ, XZ };
+
   private:
 
     int id_ = -1;
@@ -47,13 +49,14 @@ class Slice {
 
     std::array<float, 2> min_max_vals_ {0.f, 0.f};
 
+    Plane plane_;
     Orient4Type orient_;
 
     void updateMinMaxVal();
 
   public:
 
-    explicit Slice(int slice_id);
+    Slice(int slice_id, Plane plane);
     ~Slice();
 
     [[nodiscard]] int id() const;
@@ -81,6 +84,12 @@ class Slice {
 
     void setOrientation(const glm::vec3& base, const glm::vec3& x, const glm::vec3& y);
     void setOrientation(const Slice::Orient4Type& orient);
+
+    void reset();
+
+    void setPlane(Plane plane) { plane_ = plane; reset(); }
+
+    Plane plane() const { return plane_; }
 
     [[nodiscard]] Orientation orientation3() const;
     Orient4Type& orientation4();

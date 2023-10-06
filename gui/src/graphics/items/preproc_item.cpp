@@ -72,10 +72,12 @@ void PreprocItem::renderIm() {
 //    ImGui::DragFloat("X offset", &x_offset_, 1, -50, 50, "%.1f");
 //    ImGui::DragFloat("Y offset", &y_offset_, 1, -50, 50, "%.1f");
 
+    static const std::map<std::string, std::string> filter_options {
+            {"shepp", "Shepp-Logan"},
+            {"ramlak", "Ram-Lak"}};
+
     ImGui::AlignTextToFramePadding();
-    ImGui::Text("Ramp filter: ");
-    ImGui::SameLine();
-    if (ImGui::BeginCombo("##RampFilter", filter_options.at(ramp_filter_name_).c_str())) {
+    if (ImGui::BeginCombo("Ramp filter##RampFilter", filter_options.at(ramp_filter_name_).c_str())) {
         for (const auto& [k, v] : filter_options) {
             const bool is_selected = (ramp_filter_name_ == k);
             if (ImGui::Selectable(v.c_str(), is_selected)) {
