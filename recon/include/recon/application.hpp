@@ -150,7 +150,7 @@ class Application {
 
     void pushProjection(const Projection<>& proj);
 
-    void computeReciprocal();
+    void tryComputeReciprocal();
 
     void preprocessProjections(oneapi::tbb::task_arena& arena);
 
