@@ -45,6 +45,7 @@ class Slice {
     std::unique_ptr<ShaderProgram> shader_;
 
     bool hovered_ = false;
+    bool highlighted_ = false;
     bool visible_ = true;
 
     std::array<float, 2> min_max_vals_ {0.f, 0.f};
@@ -68,17 +69,19 @@ class Slice {
                 float min_v,
                 float max_v);
 
-    [[nodiscard]] bool empty() const;
+    [[nodiscard]] bool empty() const { return data_.empty(); }
 
-    [[nodiscard]] bool hovered() const;
+    [[nodiscard]] bool hovered() const { return hovered_; }
 
     [[nodiscard]] bool visible() const { return visible_; }
 
     void setVisible(bool visible) { visible_ = visible; }
 
-    [[nodiscard]] bool transparent() const;
+    [[nodiscard]] bool transparent() const  { return hovered_ || highlighted_ || data_.empty(); }
 
-    void setHovered(bool state);
+    void setHovered(bool state) { hovered_ = state; }
+
+    void setHighlighted(bool state) { highlighted_ = state; }
 
     void setEmpty();
 
@@ -92,11 +95,12 @@ class Slice {
     Plane plane() const { return plane_; }
 
     [[nodiscard]] Orientation orientation3() const;
-    Orient4Type& orientation4();
 
-    [[nodiscard]] const DataType& data() const;
+    Orient4Type& orientation4() { return orient_; }
 
-    [[nodiscard]] const std::array<float, 2>& minMaxVals() const;
+    [[nodiscard]] const DataType& data() const { return data_; }
+
+    [[nodiscard]] const std::array<float, 2>& minMaxVals() const { return min_max_vals_; }
 };
 
 } // namespace recastx::gui
