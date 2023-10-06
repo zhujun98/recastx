@@ -74,7 +74,7 @@ void Application::setReconGeometry(std::optional<size_t> slice_size, std::option
     // initialization is delayed
 }
 
-void Application::computeReciprocal() {
+void Application::tryComputeReciprocal() {
     if (darks_.empty() && flats_.empty()) {
         spdlog::warn("Send dark and flat images first! Projection ignored.");
         return;
@@ -199,7 +199,8 @@ bool Application::consume() {
         case ProjectionType::PROJECTION: {
             if (server_state_ == rpc::ServerState_State_PROCESSING) {
                 if (!reciprocal_computed_) {
-                    computeReciprocal();
+                    tryComputeReciprocal();
+                    if (!reciprocal_computed_) break; 
                     monitor_->resetTimer();
                 }
 
@@ -439,6 +440,7 @@ void Application::onStopProcessing() {
 
     proj_mediator_->reset();
     monitor_->summarize();
+    monitor_->reset();
 }
 
 void Application::onStartAcquiring() {
