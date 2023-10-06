@@ -50,7 +50,7 @@ void GlyphRenderer::init(unsigned int pixel_width, unsigned int pixel_height) {
 
 =======
 #ifdef _WIN32
-    std::string font_name = std::filesystem::path("/Library/Fonts/Arial Unicode.ttf").string();
+    std::string font_name = std::filesystem::path("C:\\Windows/Fonts/arial.ttf").string();
 #else
     std::string font_name = std::filesystem::path("/Library/Fonts/Arial Unicode.ttf");
 #endif
