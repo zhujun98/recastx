@@ -44,7 +44,11 @@ ReconItem::ReconItem(Scene& scene)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
     glEnableVertexAttribArray(0);
 
-    initSlices();
+    slices_.emplace_back(0, SHOW2D_SLI, std::make_unique<Slice>(0, Slice::Plane::YZ));
+    slices_.emplace_back(1, SHOW2D_SLI, std::make_unique<Slice>(1, Slice::Plane::XZ));
+    slices_.emplace_back(2, SHOW2D_SLI, std::make_unique<Slice>(2, Slice::Plane::XY));
+    assert(slices_.size() == MAX_NUM_SLICES);
+
     maybeUpdateMinMaxValues();
 }
 
@@ -94,7 +98,9 @@ void ReconItem::renderIm() {
     renderImSliceControl<2>("Slice 3##RECON");
 
     if (ImGui::Button("Reset all slices")) {
-        initSlices();
+        for (auto& slice : slices_) {
+            std::get<2>(slice)->reset();
+        }
         updateServerSliceParams();
     }
     ImGui::SameLine();
@@ -299,35 +305,13 @@ bool ReconItem::handleMouseMoved(float x, float y) {
     return false;
 }
 
-void ReconItem::initSlices() {
-    slices_.clear();
-    for (size_t i = 0; i < MAX_NUM_SLICES; ++i)
-        slices_.emplace_back(i, SHOW2D_SLI, std::make_unique<Slice>(i));
-
-    assert(slices_.size() == MAX_NUM_SLICES);
-
-    // slice along axis 0 = x
-    std::get<2>(slices_[0])->setOrientation(glm::vec3( 0.0f, -1.0f, -1.0f),
-                                            glm::vec3( 0.0f,  2.0f,  0.0f),
-                                            glm::vec3( 0.0f,  0.0f,  2.0f));
-
-    // slice along axis 1 = y
-    std::get<2>(slices_[1])->setOrientation(glm::vec3(-1.0f,  0.0f, -1.0f),
-                                            glm::vec3( 2.0f,  0.0f,  0.0f),
-                                            glm::vec3( 0.0f,  0.0f,  2.0f));
-
-    // slice along axis 2 = z
-    std::get<2>(slices_[2])->setOrientation(glm::vec3(-1.0f, -1.0f,  0.0f),
-                                            glm::vec3( 2.0f,  0.0f,  0.0f),
-                                            glm::vec3( 0.0f,  2.0f,  0.0f));
-}
-
 template<size_t index>
 void ReconItem::renderImSliceControl(const char* header) {
 
     static const char* BTN_2D[] = {"2D##RECON_SLI_0", "2D##RECON_SLI_1", "2D##RECON_SLI_2"};
     static const char* BTN_3D[] = {"3D##RECON_SLI_0", "3D##RECON_SLI_1", "3D##RECON_SLI_2"};
     static const char* BTN_DISABLE[] = {"Disable##RECON_SLI_0", "Disable##RECON_SLI_1", "Disable##RECON_SLI_2"};
+    static const char* COMBO[] = {"Orientation##RECON_PLANE_0", "Orientation##RECON_PLANE_1", "Orientation##RECON_PLANE_2"};
 
     static const ImVec4 K_HEADER_COLOR = (ImVec4)ImColor(65, 145, 151);
     ImGui::PushStyleColor(ImGuiCol_Header, K_HEADER_COLOR);
@@ -343,6 +327,25 @@ void ReconItem::renderImSliceControl(const char* header) {
         cd |= ImGui::RadioButton(BTN_DISABLE[index], &std::get<1>(slices_[index]), DISABLE_SLI);
 
         if (cd) std::get<2>(slices_[index])->setVisible(std::get<1>(slices_[index]) != DISABLE_SLI);
+
+        static const std::map<Slice::Plane, std::string> plane_options {
+                {Slice::Plane::XY, "X-Y"},
+                {Slice::Plane::YZ, "Y-Z"},
+                {Slice::Plane::XZ, "X-Z"},
+        };
+
+        ImGui::AlignTextToFramePadding();
+        ImGui::PushItemWidth(60);
+        auto& slice = std::get<2>(slices_[index]);
+        Slice::Plane curr_plane = slice->plane();
+        if (ImGui::BeginCombo(COMBO[index], plane_options.at(curr_plane).c_str())) {
+            for (auto& [k, v] : plane_options) {
+                if (ImGui::Selectable(v.c_str(), curr_plane == k))
+                    slice->setPlane(k);
+            }
+            ImGui::EndCombo();
+        }
+        ImGui::PopItemWidth();
     }
 }
 

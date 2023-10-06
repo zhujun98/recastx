@@ -17,7 +17,7 @@
 
 namespace recastx::gui {
 
-Slice::Slice(int slice_id) : id_(slice_id) {
+Slice::Slice(int slice_id, Plane plane) : id_(slice_id), plane_(plane) {
     glGenVertexArrays(1, &vao_);
     glBindVertexArray(vao_);
     glGenBuffers(1, &vbo_);
@@ -33,6 +33,8 @@ Slice::Slice(int slice_id) : id_(slice_id) {
 #include "shaders/recon_slice.frag"
     ;
     shader_ = std::make_unique<ShaderProgram>(vert, frag);
+
+    reset();
 }
 
 Slice::~Slice() {
@@ -101,6 +103,22 @@ void Slice::setOrientation(const glm::vec3& base, const glm::vec3& x, const glm:
 
 void Slice::setOrientation(const Slice::Orient4Type& orient) {
     orient_ = orient;
+}
+
+void Slice::reset() {
+    if (plane_ == Plane::YZ) {
+        setOrientation(glm::vec3( 0.0f, -1.0f, -1.0f),
+                       glm::vec3( 0.0f,  2.0f,  0.0f),
+                       glm::vec3( 0.0f,  0.0f,  2.0f));
+    } else if (plane_ == Plane::XZ) {
+        setOrientation(glm::vec3(-1.0f,  0.0f, -1.0f),
+                       glm::vec3( 2.0f,  0.0f,  0.0f),
+                       glm::vec3( 0.0f,  0.0f,  2.0f));
+    } else if (plane_ == Plane::XY) {
+        setOrientation(glm::vec3(-1.0f, -1.0f,  0.0f),
+                       glm::vec3( 2.0f,  0.0f,  0.0f),
+                       glm::vec3( 0.0f,  2.0f,  0.0f));
+    }
 }
 
 Orientation Slice::orientation3() const {
