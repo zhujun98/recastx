@@ -27,13 +27,13 @@ RpcClient::RpcClient(const std::string& address) {
 
     control_stub_ = rpc::Control::NewStub(channel_);
     imageproc_stub_ = rpc::Imageproc::NewStub(channel_);
-    projection_stub_ = rpc::Projection::NewStub(channel_);
-    reconstruction_stub_ = rpc::Reconstruction::NewStub(channel_);
+    proj_trans_stub_ = rpc::ProjectionTransfer::NewStub(channel_);
+    recon_stub_ = rpc::Reconstruction::NewStub(channel_);
 }
 
 RpcClient::~RpcClient() {
-    streaming_ = false;
-    if (thread_projection_.joinable()) thread_projection_.join();
+    running_ = false;
+    if (thread_proj_.joinable()) thread_proj_.join();
     if (thread_recon_.joinable()) thread_recon_.join();
 }
 
@@ -86,6 +86,18 @@ bool RpcClient::setRampFilter(const std::string& filter_name) {
     return checkStatus(status);
 }
 
+bool RpcClient::setProjection(uint32_t id) {
+    rpc::Projection request;
+    request.set_id(id);
+
+    google::protobuf::Empty reply;
+
+    grpc::ClientContext context;
+
+    grpc::Status status = proj_trans_stub_->SetProjection(&context, request, &reply);
+    return checkStatus(status);
+}
+
 bool RpcClient::setSlice(uint64_t timestamp, const Orientation& orientation) {
     rpc::Slice request;
     request.set_timestamp(timestamp);
@@ -95,7 +107,7 @@ bool RpcClient::setSlice(uint64_t timestamp, const Orientation& orientation) {
 
     grpc::ClientContext context;
 
-    grpc::Status status = reconstruction_stub_->SetSlice(&context, request, &reply);
+    grpc::Status status = recon_stub_->SetSlice(&context, request, &reply);
     return checkStatus(status);
 }
 
@@ -107,30 +119,32 @@ bool RpcClient::setVolume(bool required) {
 
     grpc::ClientContext context;
 
-    grpc::Status status = reconstruction_stub_->SetVolume(&context, request, &reply);
+    grpc::Status status = recon_stub_->SetVolume(&context, request, &reply);
     return checkStatus(status);
 }
 
 void RpcClient::start() {
-    if (streaming_) return;
-    streaming_ = true;
+    if (running_) return;
 
-    startReadingProjectionStream();
+    running_ = true;
     startReadingReconStream();
+    startReadingProjectionStream();
+}
+
+void RpcClient::toggleProjectionStream(bool state) {
+    streaming_proj_.store(state, std::memory_order_release);
 }
 
 void RpcClient::startReadingReconStream() {
     thread_recon_ = std::thread([&]() {
         int timeout = min_timeout;
 
-        while (streaming_) {
+        google::protobuf::Empty request;
+        rpc::ReconData reply;
+        while (running_) {
             grpc::ClientContext context;
-
-            google::protobuf::Empty request;
-            rpc::ReconData reply;
-
             std::unique_ptr<grpc::ClientReader<rpc::ReconData> > reader(
-                    reconstruction_stub_->GetReconData(&context, request));
+                    recon_stub_->GetReconData(&context, request));
             while(reader->Read(&reply)) {
                 log::debug("Received ReconData");
                 packets_.emplace(std::move(reply));
@@ -144,17 +158,20 @@ void RpcClient::startReadingReconStream() {
 }
 
 void RpcClient::startReadingProjectionStream() {
-    thread_projection_ = std::thread([&]() {
+    thread_proj_ = std::thread([&]() {
         int timeout = min_timeout;
 
-        while (streaming_) {
+        google::protobuf::Empty request;
+        rpc::ProjectionData reply;
+        while (running_) {
+            if (!streaming_proj_.load(std::memory_order_acquire)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                continue;
+            }
+
             grpc::ClientContext context;
-
-            google::protobuf::Empty request;
-            rpc::ProjectionData reply;
-
             std::unique_ptr<grpc::ClientReader<rpc::ProjectionData> > reader(
-                    projection_stub_->GetProjectionData(&context, request));
+                    proj_trans_stub_->GetProjectionData(&context, request));
             while(reader->Read(&reply)) {
                 log::debug("Received ProjectionData");
                 packets_.emplace(std::move(reply));

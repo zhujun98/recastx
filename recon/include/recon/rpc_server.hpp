@@ -63,13 +63,17 @@ class ImageprocService final : public rpc::Imageproc::Service {
                                google::protobuf::Empty* ack) override;
 };
 
-class ProjectionService final : public rpc::Projection::Service {
+class ProjectionTransferService final : public rpc::ProjectionTransfer::Service {
 
     Application* app_;
 
   public:
 
-    explicit ProjectionService(Application* app);
+    explicit ProjectionTransferService(Application* app);
+
+    grpc::Status SetProjection(grpc::ServerContext* context,
+                               const rpc::Projection* request,
+                               google::protobuf::Empty* ack) override;
 
     grpc::Status GetProjectionData(grpc::ServerContext* context,
                                    const google::protobuf::Empty*,
@@ -107,8 +111,8 @@ class RpcServer {
 
     ControlService control_service_;
     ImageprocService imageproc_service_;
-    ProjectionService projection_service_;
-    ReconstructionService reconstruction_service_;
+    ProjectionTransferService proj_trans_service_;
+    ReconstructionService recon_service_;
 
     std::thread thread_;
 

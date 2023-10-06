@@ -3,13 +3,19 @@ package recastx.rpc;
 
 import "google/protobuf/empty.proto";
 
-service Projection {
+service ProjectionTransfer {
+  rpc SetProjection (Projection) returns (google.protobuf.Empty) {}
+
   rpc GetProjectionData (google.protobuf.Empty) returns (stream ProjectionData) {}
 }
 
 message ProjectionData {
-  bytes data = 1;
+  uint32 id = 1;
   uint32 col_count = 2;
   uint32 row_count = 3;
-  uint64 index = 4;
+  bytes data = 4;
+}
+
+message Projection {
+  uint32 id = 1;
 }

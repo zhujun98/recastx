@@ -12,26 +12,25 @@ namespace recastx::recon {
 
 ProjectionMediator::ProjectionMediator(int capacity)
      : monitor_every_{1}, 
-       monitor_index_{0},
+       proj_id_{0},
        projections_(capacity) {
 }
 
 ProjectionMediator::~ProjectionMediator() = default;
 
 void ProjectionMediator::emplace(Projection<>&& proj) {
-    if (proj.index % monitor_every_ == monitor_index_) {
+    if (proj.index % monitor_every_ == proj_id_) {
         projections_.emplace(std::move(proj.data));
     }
 }
 
-void ProjectionMediator::setFilter(int monitor_every, int monitor_index) {
-    monitor_every_ = monitor_every > 0 ? static_cast<size_t>(monitor_every) : 1;
-    if (monitor_index < 0) {
-        monitor_index_ = 0;
-    } else {
-        auto index = static_cast<size_t>(monitor_index);
-        monitor_index_ = index < monitor_every_ ? index : monitor_every_ - 1;
-    }
+void ProjectionMediator::setFilter(size_t monitor_every) {
+    monitor_every_ = monitor_every;
+}
+
+size_t ProjectionMediator::setId(size_t id) {
+    proj_id_ = id < monitor_every_ ? id : monitor_every_ - 1;
+    return proj_id_;
 }
 
 } // namespace recastx::recon

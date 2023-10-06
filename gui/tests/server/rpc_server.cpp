@@ -61,9 +61,17 @@ grpc::Status ImageprocService::SetRampFilter(grpc::ServerContext* contest,
     return grpc::Status::OK;
 }
 
-grpc::Status ProjectionService::GetProjectionData(grpc::ServerContext* context,
-                                                  const google::protobuf::Empty*,
-                                                  grpc::ServerWriter<rpc::ProjectionData>* writer) {
+grpc::Status ProjectionTransferService::SetProjection(grpc::ServerContext* context,
+                                                      const rpc::Projection* request,
+                                                      google::protobuf::Empty* ack) {
+    proj_id_ = request->id();
+    spdlog::info("Set projection id: {}", proj_id_);
+    return grpc::Status::OK;
+}
+
+grpc::Status ProjectionTransferService::GetProjectionData(grpc::ServerContext* context,
+                                                          const google::protobuf::Empty*,
+                                                          grpc::ServerWriter<rpc::ProjectionData>* writer) {
     if (state_ == rpc::ServerState_State_PROCESSING || state_ == rpc::ServerState_State_ACQUIRING) {
         std::this_thread::sleep_for(std::chrono::milliseconds(K_RECON_INTERVAL));
 
@@ -76,11 +84,12 @@ grpc::Status ProjectionService::GetProjectionData(grpc::ServerContext* context,
     return grpc::Status::OK;
 }
 
-void ProjectionService::setProjectionData(rpc::ProjectionData *data) {
+void ProjectionTransferService::setProjectionData(rpc::ProjectionData *data) {
     auto vec = generateRandomRawData(1024 * 512, 0, 1000);
-    data->set_data(vec.data(), vec.size() * sizeof(decltype(vec)::value_type));
+    data->set_id(proj_id_);
     data->set_col_count(1024);
     data->set_row_count(512);
+    data->set_data(vec.data(), vec.size() * sizeof(decltype(vec)::value_type));
 }
 
 ReconstructionService::ReconstructionService() : timestamps_ {0, 1, 2} {}
@@ -165,7 +174,7 @@ void RpcServer::start() {
     builder.AddListeningPort(address_, grpc::InsecureServerCredentials());
     builder.RegisterService(&control_service_);
     builder.RegisterService(&imageproc_service_);
-    builder.RegisterService(&projection_service_);
+    builder.RegisterService(&proj_trans_service_);
     builder.RegisterService(&reconstruction_service_);
 
     server_ = builder.BuildAndStart();
@@ -174,7 +183,7 @@ void RpcServer::start() {
 
 void RpcServer::updateState(rpc::ServerState_State state) {
     imageproc_service_.updateState(state);
-    projection_service_.updateState(state);
+    proj_trans_service_.updateState(state);
     reconstruction_service_.updateState(state);
 }
 
