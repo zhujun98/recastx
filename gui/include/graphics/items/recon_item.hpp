@@ -15,6 +15,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <tuple>
 
 #include "graphics/items/graphics_item.hpp"
 #include "graphics/aesthetics.hpp"
@@ -83,8 +84,7 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
 
     friend class SliceRotator;
 
-    std::vector<std::pair<uint64_t, std::unique_ptr<Slice>>> slices_;
-    std::array<int, MAX_NUM_SLICES> slice_policies_ { SHOW2D_SLI, SHOW2D_SLI, SHOW2D_SLI };
+    std::vector<std::tuple<uint64_t, int, std::unique_ptr<Slice>>> slices_;
 
     GLuint rotation_axis_vao_;
     GLuint rotation_axis_vbo_;

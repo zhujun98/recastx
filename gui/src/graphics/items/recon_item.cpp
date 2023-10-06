@@ -107,7 +107,7 @@ void ReconItem::renderIm() {
 
         ImPlot::BeginSubplots("##Histograms", 1, MAX_NUM_SLICES, ImVec2(-1.f, -1.f));
         for (auto& slice: slices_) {
-            Slice* ptr = slice.second.get();
+            Slice* ptr = std::get<2>(slice).get();
             const auto &data = ptr->data();
             // FIXME: faster way to build the title?
             if (ImPlot::BeginPlot(("Slice " + std::to_string(ptr->id())).c_str(),
@@ -188,8 +188,8 @@ void ReconItem::setSliceData(const std::string& data,
                              uint64_t timestamp) {
     size_t sid = sliceIdFromTimestamp(timestamp);
     auto& slice = slices_[sid];
-    if (slice.first == timestamp) {
-        Slice* ptr = slice.second.get();
+    if (std::get<0>(slice) == timestamp) {
+        Slice* ptr = std::get<2>(slice).get();
         if (ptr == dragged_slice_) return;
 
         Slice::DataType slice_data(size[0] * size[1]);
@@ -257,12 +257,12 @@ bool ReconItem::handleMouseButton(int button, int action) {
         }
     } else if (action == GLFW_RELEASE) {
         if (dragged_slice_ != nullptr) {
-            slices_[dragged_slice_->id()].first += MAX_NUM_SLICES;
-            scene_.client()->setSlice(slices_[dragged_slice_->id()].first,
+            std::get<0>(slices_[dragged_slice_->id()]) += MAX_NUM_SLICES;
+            scene_.client()->setSlice(std::get<0>(slices_[dragged_slice_->id()]),
                                       dragged_slice_->orientation3());
 
             log::debug("Sent slice {} ({}) orientation update request",
-                       dragged_slice_->id(), slices_[dragged_slice_->id()].first);
+                       dragged_slice_->id(), std::get<0>(slices_[dragged_slice_->id()]));
 
             dragged_slice_ = nullptr;
             drag_machine_ = nullptr;
@@ -302,24 +302,24 @@ bool ReconItem::handleMouseMoved(float x, float y) {
 void ReconItem::initSlices() {
     slices_.clear();
     for (size_t i = 0; i < MAX_NUM_SLICES; ++i)
-        slices_.emplace_back(i, std::make_unique<Slice>(i));
+        slices_.emplace_back(i, SHOW2D_SLI, std::make_unique<Slice>(i));
 
     assert(slices_.size() == MAX_NUM_SLICES);
 
     // slice along axis 0 = x
-    slices_[0].second->setOrientation(glm::vec3( 0.0f, -1.0f, -1.0f),
-                                      glm::vec3( 0.0f,  2.0f,  0.0f),
-                                      glm::vec3( 0.0f,  0.0f,  2.0f));
+    std::get<2>(slices_[0])->setOrientation(glm::vec3( 0.0f, -1.0f, -1.0f),
+                                            glm::vec3( 0.0f,  2.0f,  0.0f),
+                                            glm::vec3( 0.0f,  0.0f,  2.0f));
 
     // slice along axis 1 = y
-    slices_[1].second->setOrientation(glm::vec3(-1.0f,  0.0f, -1.0f),
-                                      glm::vec3( 2.0f,  0.0f,  0.0f),
-                                      glm::vec3( 0.0f,  0.0f,  2.0f));
+    std::get<2>(slices_[1])->setOrientation(glm::vec3(-1.0f,  0.0f, -1.0f),
+                                            glm::vec3( 2.0f,  0.0f,  0.0f),
+                                            glm::vec3( 0.0f,  0.0f,  2.0f));
 
     // slice along axis 2 = z
-    slices_[2].second->setOrientation(glm::vec3(-1.0f, -1.0f,  0.0f),
-                                      glm::vec3( 2.0f,  0.0f,  0.0f),
-                                      glm::vec3( 0.0f,  2.0f,  0.0f));
+    std::get<2>(slices_[2])->setOrientation(glm::vec3(-1.0f, -1.0f,  0.0f),
+                                            glm::vec3( 2.0f,  0.0f,  0.0f),
+                                            glm::vec3( 0.0f,  2.0f,  0.0f));
 }
 
 template<size_t index>
@@ -336,13 +336,13 @@ void ReconItem::renderImSliceControl(const char* header) {
     if (expand) {
         bool cd = false;
 
-        cd |= ImGui::RadioButton(BTN_2D[index], &slice_policies_[index], SHOW2D_SLI);
+        cd |= ImGui::RadioButton(BTN_2D[index], &std::get<1>(slices_[index]), SHOW2D_SLI);
         ImGui::SameLine();
-        cd |= ImGui::RadioButton(BTN_3D[index], &slice_policies_[index], SHOW3D_SLI);
+        cd |= ImGui::RadioButton(BTN_3D[index], &std::get<1>(slices_[index]), SHOW3D_SLI);
         ImGui::SameLine();
-        cd |= ImGui::RadioButton(BTN_DISABLE[index], &slice_policies_[index], DISABLE_SLI);
+        cd |= ImGui::RadioButton(BTN_DISABLE[index], &std::get<1>(slices_[index]), DISABLE_SLI);
 
-        if (cd) slices_[index].second->setVisible(slice_policies_[index] != DISABLE_SLI);
+        if (cd) std::get<2>(slices_[index])->setVisible(std::get<1>(slices_[index]) != DISABLE_SLI);
     }
 }
 
@@ -373,7 +373,7 @@ void ReconItem::renderImVolumeControl() {
 
 bool ReconItem::updateServerSliceParams() {
     for (auto& slice : slices_) {
-        if (scene_.client()->setSlice(slice.first, slice.second->orientation3())) {
+        if (scene_.client()->setSlice(std::get<0>(slice), std::get<2>(slice)->orientation3())) {
             return true;
         }
     }
@@ -389,7 +389,7 @@ void ReconItem::updateHoveringSlice(float x, float y) {
     int slice_id = -1;
     float best_z = std::numeric_limits<float>::max();
     for (auto& slice : slices_) {
-        Slice* ptr = slice.second.get();
+        Slice* ptr = std::get<2>(slice).get();
         if (!ptr->visible()) continue;
         ptr->setHovered(false);
         auto maybe_point = intersectionPoint(inv_matrix, ptr->orientation4(), glm::vec2(x, y));
@@ -403,7 +403,7 @@ void ReconItem::updateHoveringSlice(float x, float y) {
     }
 
     if (slice_id >= 0) {
-        Slice* slice = slices_[slice_id].second.get();
+        Slice* slice = std::get<2>(slices_[slice_id]).get();
         slice->setHovered(true);
         hovered_slice_ = slice;
     } else {
@@ -413,7 +413,7 @@ void ReconItem::updateHoveringSlice(float x, float y) {
 
 std::vector<Slice*> ReconItem::sortedSlices() const {
     std::vector<Slice*> sorted;
-    for (auto& [slice_id, slice] : slices_) {
+    for (auto& [slice_id, _, slice] : slices_) {
         if (!slice->visible()) continue;
         sorted.push_back(slice.get());
     }
@@ -450,7 +450,7 @@ void ReconItem::maybeUpdateMinMaxValues() {
     auto overall_max = std::numeric_limits<float>::min();
 
     for (auto& slice : slices_) {
-        Slice* ptr = slice.second.get();
+        Slice* ptr = std::get<2>(slice).get();
         if (ptr->empty()) continue;
 
         auto [min_v, max_v] = ptr->minMaxVals();
