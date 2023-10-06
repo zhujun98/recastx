@@ -16,8 +16,6 @@
 #include <thread>
 #include <variant>
 
-#include <zmq.hpp>
-
 #include "logger.hpp"
 #include "common/config.hpp"
 
