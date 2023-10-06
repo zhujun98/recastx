@@ -66,23 +66,13 @@ void Slice::render(const glm::mat4& view,
     shader_->setMat4("view", view);
     shader_->setMat4("projection", projection);
     shader_->setMat4("orientationMatrix", orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0)));
-    shader_->setBool("hovered", hovered());
+    shader_->setBool("highlighted", hovered_ || highlighted_);
     shader_->setBool("empty", data_.empty());
 
     texture_.bind();
     glBindVertexArray(vao_);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     texture_.unbind();
-}
-
-bool Slice::empty() const { return data_.empty(); }
-
-bool Slice::hovered() const { return hovered_; }
-
-bool Slice::transparent() const { return hovered_ || data_.empty(); }
-
-void Slice::setHovered(bool state) {
-    hovered_ = state;
 }
 
 void Slice::setEmpty() {
@@ -128,14 +118,6 @@ Orientation Slice::orientation3() const {
         orient_[2][0], orient_[2][1], orient_[2][2]
     };
 }
-
-Slice::Orient4Type& Slice::orientation4() {
-    return orient_;
-}
-
-const std::array<float, 2>& Slice::minMaxVals() const { return min_max_vals_; }
-
-const Slice::DataType& Slice::data() const { return data_; }
 
 void Slice::updateMinMaxVal() {
     auto [vmin, vmax] = std::minmax_element(data_.begin(), data_.end());

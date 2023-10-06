@@ -312,10 +312,18 @@ void ReconItem::renderImSliceControl(const char* header) {
     static const char* BTN_3D[] = {"3D##RECON_SLI_0", "3D##RECON_SLI_1", "3D##RECON_SLI_2"};
     static const char* BTN_DISABLE[] = {"Disable##RECON_SLI_0", "Disable##RECON_SLI_1", "Disable##RECON_SLI_2"};
     static const char* COMBO[] = {"Orientation##RECON_PLANE_0", "Orientation##RECON_PLANE_1", "Orientation##RECON_PLANE_2"};
-
     static const ImVec4 K_HEADER_COLOR = (ImVec4)ImColor(65, 145, 151);
+
+    auto& slice = std::get<2>(slices_[index]);
+
     ImGui::PushStyleColor(ImGuiCol_Header, K_HEADER_COLOR);
     bool expand = ImGui::CollapsingHeader(header, ImGuiTreeNodeFlags_DefaultOpen);
+    if (ImGui::IsItemHovered()) {
+        slice->setHighlighted(true);
+    } else {
+        slice->setHighlighted(false);
+    }
+
     ImGui::PopStyleColor();
     if (expand) {
         bool cd = false;
@@ -336,7 +344,6 @@ void ReconItem::renderImSliceControl(const char* header) {
 
         ImGui::AlignTextToFramePadding();
         ImGui::PushItemWidth(60);
-        auto& slice = std::get<2>(slices_[index]);
         Slice::Plane curr_plane = slice->plane();
         if (ImGui::BeginCombo(COMBO[index], plane_options.at(curr_plane).c_str())) {
             for (auto& [k, v] : plane_options) {

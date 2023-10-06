@@ -10,7 +10,7 @@ uniform sampler2D sliceData;
 uniform sampler1D colormap;
 uniform sampler3D volumeData;
 
-uniform int hovered;
+uniform int highlighted;
 uniform int empty;
 uniform float minValue;
 uniform float maxValue;
@@ -39,7 +39,7 @@ void main() {
         fColor.a = 0.75f;
     }
 
-    if (hovered == 1) {
+    if (highlighted == 1) {
         fColor += vec4(0.3f);
     }
 }
