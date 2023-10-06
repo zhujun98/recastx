@@ -38,7 +38,6 @@ void GlyphRenderer::init(unsigned int pixel_width, unsigned int pixel_height) {
         throw std::runtime_error("FREETYPE: Could not init FreeType Library");
     }
 
-<<<<<<< HEAD
 // TODO: add an own font and the system font should only be a fallback solution
 #if defined(__APPLE__)
     std::string font_name = std::filesystem::path("/Library/Fonts/Arial Unicode.ttf");
@@ -48,13 +47,6 @@ void GlyphRenderer::init(unsigned int pixel_width, unsigned int pixel_height) {
     std::string font_name = std::filesystem::path("/usr/share/fonts/truetype/freefont/FreeMono.ttf");
 #endif
 
-=======
-#ifdef _WIN32
-    std::string font_name = std::filesystem::path("C:\\Windows/Fonts/arial.ttf").string();
-#else
-    std::string font_name = std::filesystem::path("/Library/Fonts/Arial Unicode.ttf");
-#endif
->>>>>>> 9cd409b (Windows filesystem format problems)
     if (font_name.empty()) {
         throw std::runtime_error("FREETYPE: Failed to load font_name");
     }

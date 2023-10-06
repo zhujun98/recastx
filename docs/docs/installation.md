@@ -51,6 +51,22 @@ make -j12 && make install
 
 - Windows
 
+```sh
+git clone --recursive https://github.com/<repo>/recastx.git
+cd recastx
+
+conda env create -f environment-gui.yml
+conda activate recastx-gui
+
+mkdir build-gui
+cd build-gui
+cmake .. -DCMAKE_PREFIX_PATH=<YOUR_CONDA_INSTALL_PATH>/envs/recastx-gui/ -DBUILD_GUI=ON
+msbuild recastx.sln /property:Configuration=Release
+```
+
+Note that you also have to copy the libraries manually from your Conda environment (Usually located in <YOUR_CONDA_INSTALL_PATH>/envs/recastx-gui/Library/Bin)
+
+
 ## Package managers
 
 TBD
