@@ -132,6 +132,8 @@ void ReconItem::renderIm() {
 
     renderImVolumeControl();
 
+    ImGui::Checkbox("Show wireframe##RECON", &show_wireframe_);
+
     ImGui::Separator();
 
     scene_.setStatus("volumeUpdateFrameRate", fps_counter_.volumeFrameRate());
@@ -167,7 +169,9 @@ void ReconItem::renderGl() {
 
     cm_.unbind();
 
-    wireframe_->render(view, projection);
+    if (show_wireframe_) {
+        wireframe_->render(view, projection);
+    }
 
     glDisable(GL_DEPTH_TEST);
 

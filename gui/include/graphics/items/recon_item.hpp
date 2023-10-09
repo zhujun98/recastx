@@ -104,6 +104,7 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
     float volume_alpha_ = 1.f;
 
     std::unique_ptr<Wireframe> wireframe_;
+    bool show_wireframe_ = true;
 
     glm::mat4 matrix_;
 
@@ -115,8 +116,6 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
     double prev_y_ = -1.1;
 
     FpsCounter fps_counter_;
-
-    void initSlices();
 
     template<size_t index>
     void renderImSliceControl(const char* header);
