@@ -30,16 +30,21 @@ struct Style {
         ImGui::StyleColorsDark();
 
         auto& colors = ImGui::GetStyle().Colors;
-        colors[ImGuiCol_WindowBg]         = ImVec4(0.06f, 0.06f, 0.06f, 0.05f);
-        colors[ImGuiCol_Border]           = ImVec4(0.43f, 0.43f, 0.50f, 0.00f);
-        colors[ImGuiCol_FrameBg]          = ImVec4(0.00f, 0.00f, 0.00f, 0.60f);
-        colors[ImGuiCol_Header]           = ImVec4(0.00f, 0.00f, 0.00f, 0.20f);
-        colors[ImGuiCol_TitleBg]          = ImVec4(0.00f, 0.00f, 0.00f, 0.40f);
-        colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.00f, 0.00f, 0.00f, 0.30f);
-        colors[ImGuiCol_CheckMark]        = ImVec4(0.90f, 0.90f, 0.90f, 1.00f);
-        colors[ImGuiCol_Button]           = ImVec4(0.00f, 0.00f, 0.00f, 0.30f);
-        colors[ImGuiCol_Separator]        = ImVec4(0.90f, 0.90f, 0.90f, 0.60f);
-        colors[ImGuiCol_SliderGrab]       = ImVec4(0.40f, 0.40f, 0.40f, 0.80f);
+        colors[ImGuiCol_WindowBg]               = ImVec4(0.06f, 0.06f, 0.06f, 0.05f);
+        colors[ImGuiCol_Border]                 = ImVec4(0.43f, 0.43f, 0.50f, 0.00f);
+        colors[ImGuiCol_FrameBg]                = ImVec4(0.00f, 0.00f, 0.00f, 0.60f);
+        colors[ImGuiCol_Header]                 = ImVec4(0.00f, 0.00f, 0.00f, 0.20f);
+        colors[ImGuiCol_TitleBg]                = ImVec4(0.00f, 0.00f, 0.00f, 0.40f);
+        colors[ImGuiCol_TitleBgActive]          = ImVec4(0.20f, 0.20f, 0.20f, 0.40f);
+        colors[ImGuiCol_TitleBgCollapsed]       = ImVec4(0.00f, 0.00f, 0.00f, 0.30f);
+        colors[ImGuiCol_CheckMark]              = ImVec4(0.90f, 0.90f, 0.90f, 1.00f);
+        colors[ImGuiCol_Button]                 = ImVec4(0.00f, 0.00f, 0.00f, 0.30f);
+        colors[ImGuiCol_Separator]              = ImVec4(0.90f, 0.90f, 0.90f, 0.60f);
+        colors[ImGuiCol_SliderGrab]             = ImVec4(0.40f, 0.40f, 0.40f, 0.80f);
+        colors[ImGuiCol_ScrollbarBg]            = ImVec4(0.40f, 0.40f, 0.40f, 0.40f);
+        colors[ImGuiCol_ScrollbarGrab]          = ImVec4(0.50f, 0.50f, 0.50f, 0.60f);
+        colors[ImGuiCol_ScrollbarGrabHovered]   = ImVec4(0.55f, 0.55f, 0.55f, 0.60f);
+        colors[ImGuiCol_ScrollbarGrabActive]    = ImVec4(0.60f, 0.60f, 0.60f, 0.60f);
     }
 
 };
