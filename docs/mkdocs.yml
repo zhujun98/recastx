@@ -9,7 +9,7 @@ nav:
       - Performance consideration: user_guide/performance_consideration.md
   - Tutorial:
       - Plastic beads (3D): tutorial/plastic_beads.md
-      - Dynamic tomography (4D): tutorial/dynamic_tomography.md
+      - Fuel cell (4D): tutorial/fuel_cell.md
   - FAQ: faq.md
 
 theme:
