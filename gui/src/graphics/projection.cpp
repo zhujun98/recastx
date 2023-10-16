@@ -12,11 +12,9 @@
 
 namespace recastx::gui {
 
-Projection::Projection(int proj_id) : id_(proj_id) {}
+Projection::Projection(uint32_t proj_id) : id_(proj_id) {}
 
 Projection::~Projection() = default;
-
-int Projection::id() const { return id_; }
 
 void Projection::setData(DataType&& data, const SizeType& size) {
     data_ = std::move(data);

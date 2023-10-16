@@ -26,7 +26,7 @@ class Projection {
 
   private:
 
-    int id_ = -1;
+    uint32_t id_;
     SizeType size_;
     DataType data_;
 
@@ -34,10 +34,10 @@ class Projection {
 
   public:
 
-    explicit Projection(int proj_id);
+    explicit Projection(uint32_t id);
     ~Projection();
 
-    [[nodiscard]] int id() const;
+    [[nodiscard]] uint32_t id() const { return id_; }
 
     void setData(DataType&& data, const SizeType& size);
 

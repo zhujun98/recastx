@@ -23,7 +23,7 @@ class ProjectionItem : public GraphicsItem, public GraphicsGLItem, public Graphi
     ImVec2 pos_;
     ImVec2 size_;
 
-    Projection img_;
+    std::unique_ptr<Projection> img_;
     int id_;
     static constexpr int K_MAX_ID_ = 10000;
     static constexpr int K_PADDING_ = 5;
@@ -42,7 +42,7 @@ class ProjectionItem : public GraphicsItem, public GraphicsGLItem, public Graphi
 
     bool setProjectionId();
 
-    void setProjectionData(const std::string& data, const std::array<uint32_t, 2>& size);
+    void updateProjection(uint32_t id, const std::string& data, const std::array<uint32_t, 2>& size);
 
   public:
 

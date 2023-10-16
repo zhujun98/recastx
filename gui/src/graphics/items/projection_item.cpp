@@ -20,7 +20,6 @@ namespace recastx::gui {
 
 ProjectionItem::ProjectionItem(Scene& scene)
         : GraphicsItem(scene),
-          img_(0),
           fb_(new Framebuffer),
           cm_(new Colormap) {
     scene.addItem(this);
@@ -94,7 +93,10 @@ void ProjectionItem::renderIm() {
     int prev_id = id_;
     ImGui::InputInt("##PROJECTION_ID", &id_);
     id_ = std::clamp(id_, 0, K_MAX_ID_);
-    if (prev_id != id_) setProjectionId();
+    if (prev_id != id_) {
+        img_.reset();
+        setProjectionId();
+    }
     ImGui::PopItemWidth();
 
     ImGui::Separator();
@@ -108,18 +110,21 @@ void ProjectionItem::onFramebufferSizeChanged(int width, int height) {
 }
 
 void ProjectionItem::renderGl() {
+    if (img_ == nullptr) return;
+
+    spdlog::info("render GL called");
     shader_->use();
     shader_->setInt("colormap", 0);
     shader_->setInt("projectionTexture", 1);
 
     fb_->bind();
     cm_->bind();
-    img_.bind();
+    img_->bind();
     glBindVertexArray(vao_);
     glViewport(0, 0, fb_->width(), fb_->height());
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     glBindVertexArray(0);
-    img_.unbind();
+    img_->unbind();
     cm_->unbind();
     fb_->unbind();
 
@@ -135,7 +140,7 @@ bool ProjectionItem::consume(const DataType& packet) {
     if (std::holds_alternative<rpc::ProjectionData>(packet)) {
         const auto& data = std::get<rpc::ProjectionData>(packet);
 
-        setProjectionData(data.data(), {data.col_count(), data.row_count()});
+        updateProjection(data.id(), data.data(), {data.col_count(), data.row_count()});
         log::info("Set projection data: {}", data.id());
         return true;
     }
@@ -151,11 +156,16 @@ bool ProjectionItem::setProjectionId() {
     return scene_.client()->setProjection(id_);
 }
 
-void ProjectionItem::setProjectionData(const std::string &data, const std::array<uint32_t, 2> &size) {
+void ProjectionItem::updateProjection(uint32_t id, const std::string &data, const std::array<uint32_t, 2> &size) {
     Projection::DataType proj(size[0] * size[1]);
     std::memcpy(proj.data(), data.data(), data.size());
     assert(data.size() == proj.size() * sizeof(Projection::DataType::value_type));
-    img_.setData(std::move(proj), {size[0], size[1]});
+
+    if (img_ == nullptr) {
+        img_ = std::make_unique<Projection>(id);
+    }
+    assert(img_->id() == id);
+    img_->setData(std::move(proj), {size[0], size[1]});
 }
 
 } // namespace recastx::gui
