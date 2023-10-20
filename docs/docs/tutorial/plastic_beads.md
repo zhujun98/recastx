@@ -1,4 +1,3 @@
-
 ## Introduction
 
 In this hands-on tutorial, we will take a look at how we can use RECASTX to explore

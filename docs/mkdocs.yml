@@ -1,25 +1,38 @@
 site_name: RECASTX
+
 nav:
-  - Introduction: index.md
-  - Installation: installation.md
-  - User Guide:
-      - Getting started: user_guide/usage.md
-      - GUI: user_guide/gui.md
-      - Data protocol: user_guide/data_protocol.md
-      - Performance consideration: user_guide/performance_consideration.md
+  - Home: index.md
+  - Getting started:
+      - Installation: installation.md
+      - Starting pipeline: run.md
   - Tutorial:
       - Plastic beads (3D): tutorial/plastic_beads.md
       - Fuel cell (4D): tutorial/fuel_cell.md
+  - User guide:
+      - GUI: gui.md
+      - Data protocol: data_protocol.md
+      - Performance consideration: performance_consideration.md
   - FAQ: faq.md
 
 theme:
   name: material
   features:
     - content.code.copy
-    - navigation.expand
+    - content.action.view
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.footer
+    - toc.follow
+    - toc.integrate
   icon:
     admonition:
       <type>: material/alert-circle
+
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/extra.js
 
 markdown_extensions:
   - admonition
@@ -33,3 +46,12 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/zhujun98
+    - icon: fontawesome/solid/paper-plane
+      link: mailto:<zhujun981661@gmail.com>
+
+copyright: Copyright (c) 2022 - 2023 Paul Scherrer Institut PSI
