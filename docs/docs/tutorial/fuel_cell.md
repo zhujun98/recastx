@@ -1,4 +1,3 @@
-
 ## Introduction
 
 In this hands-on tutorial, we will take a look at how we can use RECASTX to explore
@@ -46,7 +45,7 @@ Make sure the `SCAN MODE` is set to `Discrete` and click the `Process` button.
 
 <figure markdown>
   ![Fuelcell slices](../recastx-docs-supplement/fuelcell_slices.gif){ width="480" }
-  <figcaption>Three orthogonal high-resolution slices</figcaption>
+  <figcaption>Three high-resolution slices</figcaption>
 </figure>
 
 !!! note
@@ -54,7 +53,7 @@ Make sure the `SCAN MODE` is set to `Discrete` and click the `Process` button.
     the raw data were downsampled by a factor of 2 (one can configure it in the GUI)
     and thus the quality of the reconstructed slice degrades slightly. We also turned off
     the volume reconstruction in order to save the network bandwidth for visualization.
-    See [Performance consideration](../user_guide/performance_consideration.md)
+    See [Performance consideration](../performance_consideration.md)
     for more details. Therefore, there is no preview when moving the slice.
 
 <figure markdown>

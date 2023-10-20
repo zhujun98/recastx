@@ -1,4 +1,3 @@
-
 ## Step 1: Starting the reconstruction server
 
 ```sh
@@ -58,4 +57,4 @@ pip install foamstream
 foamstream-tomo --datafile <Your/HDF5 file/path>
 ```
 
-Please feel free to use your own file streamer as long as the [data protocol](./data_protocol.md) is compatible.
+Please feel free to use your own file streamer as long as the [data protocol](data_protocol.md) is compatible.

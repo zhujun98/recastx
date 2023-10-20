@@ -1,4 +1,3 @@
-
 ## Control panel
 
 - *Acquire*: Click to only start acquiring the raw projection images and meta data.
