@@ -47,7 +47,7 @@ void Camera::render() {
 const glm::mat4& Camera::matrix() {
     if (!view_) {
         view_ = glm::lookAt(pos0_, target_, up0_) * rotation_;
-        assert(glm::normalize(target_ - pos0_) == front0_);
+        assert(glm::length(glm::normalize(target_ - pos0_) - front0_) < 1.e-6);
     }
 
     return view_.value();
