@@ -3,23 +3,53 @@
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    /*max-width: 1560px;*/
-    /*margin-left: auto;*/
-    /*margin-right: auto;*/
 }
 
-.button {
+#button-container > .button {
     font-weight: 500;
-    color: #E1AA74;
+    color: #3876BF;
     border: 2px solid #E1AA74;
-    border-radius: 5px;
     margin: 15px;
     padding: 6px 30px;
+    position: relative;
+
+    &::before, &::after {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        display: block;
+        background: #E1AA74;
+        top: 0;
+        left: 0;
+        z-index: -1;
+        transform: scaleX(0);
+        transition: background 0.5s, transform 0.5s;
+    }
+
+    &:hover {
+        color: white;
+        transition: color 0.2s;
+    }
+
+    &:hover::after {
+        transform: scaleX(1);
+    }
+
+    &:active {
+        transform: translateY(2px);
+    }
 }
 
-.button#get-started {
+
+#button-container #get-started {
     background: #3876BF;
     color: white;
+
+    &:hover {
+        background: none;
+        transition: background 0.5s;
+    }
 }
 
 #button-container {
