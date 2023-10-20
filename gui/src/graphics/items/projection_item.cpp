@@ -112,7 +112,6 @@ void ProjectionItem::onFramebufferSizeChanged(int width, int height) {
 void ProjectionItem::renderGl() {
     if (img_ == nullptr) return;
 
-    spdlog::info("render GL called");
     shader_->use();
     shader_->setInt("colormap", 0);
     shader_->setInt("projectionTexture", 1);

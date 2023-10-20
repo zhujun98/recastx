@@ -76,6 +76,8 @@ bool Scene3d::setScanMode() {
 }
 
 void Scene3d::render() {
+    for (auto& item: gl_items_) item->renderGl();
+
     ImGui::SetNextWindowPos(pos_);
     ImGui::SetNextWindowSize(size_);
 
@@ -162,10 +164,6 @@ void Scene3d::render() {
     logging_item_->renderIm();
 
     ImGui::End();
-
-    for (auto& item: gl_items_) {
-        item->renderGl();
-    }
 }
 
 } // namespace recastx::gui
