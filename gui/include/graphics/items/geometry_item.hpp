@@ -30,6 +30,8 @@ public:
 
     ~GeometryItem() override;
 
+    void onWindowSizeChanged(int width, int height) override;
+
     void renderIm() override;
 
     void onFramebufferSizeChanged(int width, int height) override;

@@ -10,31 +10,21 @@
 #define GUI_PROJECTIONITEM_HPP
 
 #include "graphics/items/graphics_item.hpp"
-#include "graphics/projection.hpp"
 
 namespace recastx::gui {
 
-class Colormap;
-class Framebuffer;
-class ShaderProgram;
+class Projection;
 
 class ProjectionItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDataItem {
 
     ImVec2 pos_;
     ImVec2 size_;
 
-    std::unique_ptr<Projection> img_;
+    std::unique_ptr<Projection> proj_;
     int id_;
     static constexpr int K_MAX_ID_ = 10000;
     static constexpr int K_PADDING_ = 5;
-    ImVec2 img_display_size_;
-
-    GLuint vao_;
-    GLuint vbo_;
-    std::unique_ptr<ShaderProgram> shader_;
-    std::unique_ptr<Framebuffer> fb_;
-
-    std::unique_ptr<Colormap> cm_;
+    ImVec2 img_size_;
 
     bool visible_ = true;
 

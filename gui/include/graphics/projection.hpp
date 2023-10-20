@@ -12,23 +12,29 @@
 #include <array>
 #include <vector>
 
+#include "GL/gl3w.h"
+
 #include "common/config.hpp"
-#include "textures.hpp"
+#include "graphics/textures.hpp"
 
 namespace recastx::gui {
+
+class Colormap;
+class ImageBuffer;
 
 class Projection {
 
   public:
 
     using DataType = std::vector<RawDtype>;
-    using SizeType = std::array<size_t, 2>;
 
   private:
 
     uint32_t id_;
-    SizeType size_;
-    DataType data_;
+
+    std::unique_ptr<ImageBuffer> buffer_;
+
+    std::unique_ptr<Colormap> cm_;
 
     ImageTexture<RawDtype> texture_;
 
@@ -37,14 +43,13 @@ class Projection {
     explicit Projection(uint32_t id);
     ~Projection();
 
+    void setData(const DataType& data, const std::array<size_t, 2>& size);
+
+    void resize(int width, int height);
+
     [[nodiscard]] uint32_t id() const { return id_; }
 
-    void setData(DataType&& data, const SizeType& size);
-
-    void bind() const;
-    void unbind() const;
-
-    [[nodiscard]] GLuint texture() const { return texture_.texture(); }
+    [[nodiscard]] GLuint texture() const;
 };
 
 } // namespace recastx::gui

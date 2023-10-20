@@ -287,7 +287,7 @@ public:
 };
 
 template <typename T = unsigned char>
-class ImageTexture : public Texture {
+class  ImageTexture : public Texture {
 
     int x_;
     int y_;

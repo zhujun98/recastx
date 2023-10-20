@@ -63,6 +63,8 @@ AxiscubeItem::AxiscubeItem(Scene &scene)
 
 AxiscubeItem::~AxiscubeItem() = default;
 
+void AxiscubeItem::onWindowSizeChanged(int /*width*/, int /*height*/) {}
+
 void AxiscubeItem::renderIm() {}
 
 void AxiscubeItem::onFramebufferSizeChanged(int width, int height) {
