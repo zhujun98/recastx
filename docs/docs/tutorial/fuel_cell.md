@@ -21,14 +21,14 @@ You can also find the description of the dataset there.
 ### Streaming the data
 
 Open a terminal and run:
-```sh
+```bash
 foamstream-tomo --datafile <Your/folder/fuelcell_i3.h5>
 ```
 
 ### Starting the reconstruction server
 
 Open another terminal and run:
-```sh
+```bash
 recastx-recon --rows 1100 --cols 1400 --angles 301
 ```
 
@@ -37,7 +37,7 @@ You can find the shapes of the DARK, FLAT and PROJECTION data from the output of
 ### Starting the GUI client
 
 Open a terminal and run:
-```sh
+```bash
 recastx-gui
 ```
 

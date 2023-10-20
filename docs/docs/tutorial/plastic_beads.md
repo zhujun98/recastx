@@ -21,14 +21,14 @@ You can also find the description of the dataset there.
 ### Streaming the data
 
 Open a terminal and run:
-```sh
+```bash
 foamstream-tomo --datafile <Your/folder/2_plastic_beeds_RGB.h5> --pdata tomo --pflat flat
 ```
 
 ### Starting the reconstruction server
 
 Open another terminal and run:
-```sh
+```bash
 recastx-recon --rows 400 --cols 130 --angles 200 --minx -256 --maxx 256 --miny -256 --maxy 256 --volume-size 512
 ```
 
@@ -45,7 +45,7 @@ You can find the shapes of the DARK, FLAT and PROJECTION data from the output of
 ### Starting the GUI client
 
 Open a terminal and run:
-```sh
+```bash
 recastx-gui
 ```
 

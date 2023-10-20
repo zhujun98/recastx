@@ -8,7 +8,7 @@ We recommend using the [Anaconda](https://www.anaconda.com/download) environment
 
 On a GPU node (Linux only),
 
-```sh
+```bash
 git clone --recursive https://github.com/<repo>/recastx.git
 cd recastx
 
@@ -25,7 +25,7 @@ make -j12 && make install
 
 On a graphics node or a laptop (Linux / MacOS),
 
-```sh
+```bash
 git clone --recursive https://github.com/<repo>/recastx.git
 cd recastx
 
