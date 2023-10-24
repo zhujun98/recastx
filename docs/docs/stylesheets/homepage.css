@@ -72,15 +72,24 @@
 .card {
     max-width: 30%;
     min-width: 30%;
-    margin: 1.5%;
+    margin: 20px;
     background: #F3F0CA;
     box-shadow: 10px 10px 5px #E1AA74;
 }
 
 .card > .content {
-    margin: 10px 30px;
+    margin: 0 20px;
 }
 
+.card h3 {
+    margin-top: 20px;
+    margin-bottom: 0;
+}
+
+.card p {
+    margin-top: 0.5em;
+    margin-bottom: 20px;
+}
 
 @media (max-width: 768px) {
     #highlight-container {
@@ -129,9 +138,8 @@
 }
 
 .feature > p {
-    font-family: Tahoma, Verdana, sans-serif;
-    font-size: 30px;
-    font-weight: 400;
+    font-family: Impact, Gill Sans, sans-serif;
+    font-size: 36px;
     color: #192655;
 }
 
@@ -183,7 +191,7 @@
     }
 
     .feature > p {
-        font-size: 24px;
+        font-size: 28px;
         text-align: center;
     }
 }
