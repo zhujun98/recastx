@@ -9,15 +9,24 @@
 #include <imgui.h>
 
 #include "graphics/items/projection_item.hpp"
-#include "graphics/projection.hpp"
 #include "graphics/scene.hpp"
 #include "graphics/style.hpp"
+#include "graphics/aesthetics.hpp"
+#include "graphics/image_buffer.hpp"
 #include "logger.hpp"
 
 namespace recastx::gui {
 
-ProjectionItem::ProjectionItem(Scene& scene) : GraphicsItem(scene){
+ProjectionItem::ProjectionItem(Scene& scene)
+        : GraphicsItem(scene),
+          buffer_(new ImageBuffer),
+          cm_(new Colormap) {
     scene.addItem(this);
+
+    buffer_->keepAspectRatio(true);
+    buffer_->clear();
+
+    cm_->set(ImPlotColormap_Greys);
 }
 
 ProjectionItem::~ProjectionItem() = default;
@@ -32,6 +41,12 @@ void ProjectionItem::onWindowSizeChanged(int width, int height) {
             (1.0f - Style::MARGIN - Style::PROJECTION_WIDTH) * (float)width,
             (1.0f - Style::PROJECTION_HEIGHT - Style::STATUS_BAR_HEIGHT - 2.f * Style::MARGIN) * (float)(height)
     };
+
+    // Caveat: don't use framebuffer size because of high-resolution display like Retinal
+    img_size_ = { Style::PROJECTION_WIDTH * (float)width - 2 * K_PADDING_,
+                  Style::PROJECTION_HEIGHT * (float)height - 2 * K_PADDING_ - 2 * Style::LINE_HEIGHT };
+
+    buffer_->resize(static_cast<int>(img_size_.x), static_cast<int>(img_size_.y));
 }
 
 void ProjectionItem::renderIm() {
@@ -41,9 +56,17 @@ void ProjectionItem::renderIm() {
         ImGui::SetNextWindowSize(size_);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(K_PADDING_, K_PADDING_));
         ImGui::Begin("Raw projection", NULL, ImGuiWindowFlags_NoDecoration);
-        if (proj_ != nullptr) {
-            ImGui::Image((void*)(intptr_t)proj_->texture(), img_size_);
-        }
+
+        ImGui::Image((void*)(intptr_t)buffer_->texture(), img_size_);
+
+        ImGui::Checkbox("Auto Levels", &auto_levels_);
+
+        float step_size = (max_val_ - min_val_) / 100.f;
+        if (step_size < 0.01f) step_size = 0.01f; // avoid a tiny step size
+        ImGui::DragFloatRange2("Min / Max", &min_val_, &max_val_, step_size,
+                               std::numeric_limits<float>::lowest(), // min() does not work
+                               std::numeric_limits<float>::max());
+
         ImGui::End();
         ImGui::PopStyleVar();
     }
@@ -56,7 +79,7 @@ void ProjectionItem::renderIm() {
     ImGui::InputInt("##PROJECTION_ID", &id_);
     id_ = std::clamp(id_, 0, K_MAX_ID_);
     if (prev_id != id_) {
-        proj_.reset();
+        buffer_->clear();
         setProjectionId();
     }
     ImGui::PopItemWidth();
@@ -64,14 +87,7 @@ void ProjectionItem::renderIm() {
     ImGui::Separator();
 }
 
-void ProjectionItem::onFramebufferSizeChanged(int width, int height) {
-    img_size_ = { Style::PROJECTION_WIDTH * (float)width - 2 * K_PADDING_,
-                  Style::PROJECTION_HEIGHT * (float)height - 2 * K_PADDING_ };
-
-    if (proj_ != nullptr) {
-        proj_->resize(static_cast<int>(img_size_.x), static_cast<int>(img_size_.y));
-    }
-}
+void ProjectionItem::onFramebufferSizeChanged(int /*width*/, int /*height*/) {}
 
 void ProjectionItem::renderGl() {}
 
@@ -101,17 +117,27 @@ bool ProjectionItem::setProjectionId() {
 }
 
 void ProjectionItem::updateProjection(uint32_t id, const std::string &data, const std::array<uint32_t, 2> &size) {
-    Projection::DataType proj(size[0] * size[1]);
+    id_ = static_cast<int>(id);
+
+    std::vector<RawDtype> proj(size[0] * size[1]);
     std::memcpy(proj.data(), data.data(), data.size());
-    assert(data.size() == proj.size() * sizeof(Projection::DataType::value_type));
+    assert(data.size() == proj.size() * sizeof(RawDtype));
 
-    if (proj_ == nullptr) {
-        proj_ = std::make_unique<Projection>(id);
-        proj_->resize(static_cast<int>(img_size_.x), static_cast<int>(img_size_.y));
+    auto w = static_cast<int>(size[0]);
+    auto h = static_cast<int>(size[1]);
+    texture_.setData(proj, w, h);
+
+    cm_->bind();
+    texture_.bind();
+    if (auto_levels_) {
+        auto [min_p, max_p] = std::minmax_element(proj.begin(), proj.end());
+        min_val_ = *min_p;
+        max_val_ = *max_p;
     }
-    assert(proj_->id() == id);
+    buffer_->render(w, h, min_val_, max_val_);
+    texture_.unbind();
+    cm_->unbind();
 
-    proj_->setData(proj, {size[0], size[1]});
     scene_.useViewport();
 }
 

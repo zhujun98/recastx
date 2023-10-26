@@ -48,7 +48,7 @@ class Slice {
     bool highlighted_ = false;
     bool visible_ = true;
 
-    std::array<float, 2> min_max_vals_ {0.f, 0.f};
+    std::array<float, 2> min_max_vals_ { 0.f, 0.f };
 
     Plane plane_;
     Orient4Type orient_;

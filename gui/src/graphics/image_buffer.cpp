@@ -51,8 +51,40 @@ ImageBuffer::ImageBuffer() {
 }
 
 ImageBuffer::~ImageBuffer() {
+    glDeleteBuffers(1, &rbo_);
+    glDeleteBuffers(1, &fbo_);
+
     glDeleteBuffers(1, &vbo_);
     glDeleteVertexArrays(1, &vao_);
+}
+
+void ImageBuffer::render(int width, int height, float min_v, float max_v) {
+    shader_->use();
+    shader_->setInt("colormap", 0);
+    shader_->setInt("imageTexture", 1);
+    shader_->setFloat("minValue", min_v / 65535.f);
+    shader_->setFloat("maxValue", max_v / 65535.f);
+
+    auto [w, h] = computeImageSize(width, height);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
+
+    clearImp();
+
+    glViewport((width_ - w) / 2, (height_ - h) / 2, w, h);
+    glBindVertexArray(vao_);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    glBindVertexArray(0);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    shader_->unuse();
+}
+
+void ImageBuffer::clear() {
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
+    clearImp();
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void ImageBuffer::resize(int width, int height) {
@@ -63,32 +95,17 @@ void ImageBuffer::resize(int width, int height) {
     }
 }
 
-void ImageBuffer::render(int width, int height) {
-    shader_->use();
-    shader_->setInt("colormap", 0);
-    shader_->setInt("imageTexture", 1);
-
-    auto [w, h] = computeImageSize(width, height);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
-
+void ImageBuffer::clearImp() {
     glViewport(0, 0, width_, height_);
     glClearColor(background_.x, background_.y, background_.z, background_.w);
     glClear(GL_COLOR_BUFFER_BIT);
-
-    glViewport((width_ - w) / 2, (height_ - h) / 2, w, h);
-    glBindVertexArray(vao_);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    glBindVertexArray(0);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void ImageBuffer::updateBuffer() const {
     glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
 
     glBindTexture(GL_TEXTURE_2D, texture_);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, width_, height_, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width_, height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture_, 0);

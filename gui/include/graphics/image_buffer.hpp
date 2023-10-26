@@ -37,6 +37,8 @@ class ImageBuffer {
 
     std::unique_ptr<ShaderProgram> shader_;
 
+    void clearImp();
+
     void updateBuffer() const;
 
     std::array<int, 2> computeImageSize(int width, int height);
@@ -46,7 +48,9 @@ class ImageBuffer {
     ImageBuffer();
     ~ImageBuffer();
 
-    void render(int width, int height);
+    void render(int width, int height, float min_v, float max_v);
+
+    void clear();
 
     void keepAspectRatio(bool keep) { keep_aspect_ratio_ = keep; }
 

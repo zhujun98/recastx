@@ -66,7 +66,6 @@ set(GUI_SOURCES
         "src/graphics/glyph_renderer.cpp"
         "src/graphics/graph_node.cpp"
         "src/graphics/image_buffer.cpp"
-        "src/graphics/projection.cpp"
         "src/graphics/shader_program.cpp"
         "src/graphics/slice.cpp"
         "src/graphics/viewport.cpp"
