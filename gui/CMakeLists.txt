@@ -68,6 +68,7 @@ set(GUI_SOURCES
         "src/graphics/image_buffer.cpp"
         "src/graphics/shader_program.cpp"
         "src/graphics/slice.cpp"
+        "src/graphics/texture.cpp"
         "src/graphics/viewport.cpp"
         "src/graphics/volume.cpp"
         "src/graphics/wireframe.cpp"
