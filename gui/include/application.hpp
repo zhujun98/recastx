@@ -28,8 +28,8 @@ class Scene3d;
 
 class Application {
 
-    static constexpr int min_width_ = 640;
-    static constexpr int min_height_ = 480;
+    static constexpr int min_width_ = 800;
+    static constexpr int min_height_ = 600;
 
     int width_ = 1440;
     int height_ = 1080;
