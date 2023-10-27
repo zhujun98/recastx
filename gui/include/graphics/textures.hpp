@@ -29,7 +29,7 @@ template <>
 inline GLint InternalFormat<float>() { return GL_R32F; }
 
 template <>
-inline GLint InternalFormat<unsigned short>() { return GL_R32F; }
+inline GLint InternalFormat<unsigned short>() { return GL_R16UI; }
 
 template <>
 inline GLint InternalFormat<unsigned char>() { return GL_RGB32F; }
@@ -41,7 +41,7 @@ template <>
 inline GLenum DataFormat<float>() { return GL_RED; }
 
 template <>
-inline GLenum DataFormat<unsigned short>() { return GL_RED; }
+inline GLenum DataFormat<unsigned short>() { return GL_RED_INTEGER; }
 
 template <>
 inline GLenum DataFormat<unsigned char>() { return GL_RGB; }
@@ -287,7 +287,7 @@ public:
 };
 
 template <typename T = unsigned char>
-class ImageTexture : public Texture {
+class  ImageTexture : public Texture {
 
     int x_;
     int y_;

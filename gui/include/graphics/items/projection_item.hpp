@@ -9,40 +9,44 @@
 #ifndef GUI_PROJECTIONITEM_HPP
 #define GUI_PROJECTIONITEM_HPP
 
+#include "common/config.hpp"
+#include "graphics/textures.hpp"
 #include "graphics/items/graphics_item.hpp"
-#include "graphics/projection.hpp"
 
 namespace recastx::gui {
 
+class ImageBuffer;
 class Colormap;
-class Framebuffer;
-class ShaderProgram;
 
 class ProjectionItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDataItem {
+
+  public:
+
+    using ImageDataType = std::vector<RawDtype>;
+
+  private:
 
     ImVec2 pos_;
     ImVec2 size_;
 
-    Projection img_;
-    int id_;
+    int id_ {0};
     static constexpr int K_MAX_ID_ = 10000;
-    static constexpr int K_PADDING_ = 5;
-    ImVec2 img_display_size_;
 
-    GLuint vao_;
-    GLuint vbo_;
-    std::unique_ptr<ShaderProgram> shader_;
-    std::unique_ptr<Framebuffer> fb_;
-
+    ImVec2 img_size_;
+    ImageTexture<typename ImageDataType::value_type> texture_;
+    std::unique_ptr<ImageBuffer> buffer_;
     std::unique_ptr<Colormap> cm_;
 
-    bool visible_ = true;
+    bool visible_ { true };
+    bool auto_levels_ { true };
+    float min_val_ { 0.f };
+    float max_val_ { 0.f };
 
     void toggleProjectionStream();
 
     bool setProjectionId();
 
-    void setProjectionData(const std::string& data, const std::array<uint32_t, 2>& size);
+    void updateProjection(uint32_t id, const std::string& data, const std::array<uint32_t, 2>& size);
 
   public:
 

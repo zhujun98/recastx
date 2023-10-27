@@ -33,6 +33,8 @@ class PreprocItem : public GraphicsItem {
 
     ~PreprocItem() override;
 
+    void onWindowSizeChanged(int width, int height) override;
+
     void renderIm() override;
 
     bool updateServerParams() override;

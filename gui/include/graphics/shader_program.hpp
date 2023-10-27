@@ -33,6 +33,7 @@ class ShaderProgram {
     ~ShaderProgram();
 
     void use() const;
+    void unuse() const;
 
     void setMat4(const std::string& name, glm::mat4 value);
     void setVec3(const std::string& name, glm::vec3 value);

@@ -43,6 +43,8 @@ IconItem::IconItem(Scene &scene)
 
 IconItem::~IconItem() = default;
 
+void IconItem::onWindowSizeChanged(int /*width*/, int /*height*/) {}
+
 void IconItem::renderIm() {}
 
 void IconItem::onFramebufferSizeChanged(int width, int height) {

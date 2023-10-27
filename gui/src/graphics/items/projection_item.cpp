@@ -9,47 +9,22 @@
 #include <imgui.h>
 
 #include "graphics/items/projection_item.hpp"
-#include "graphics/aesthetics.hpp"
-#include "graphics/framebuffer.hpp"
 #include "graphics/scene.hpp"
-#include "graphics/shader_program.hpp"
 #include "graphics/style.hpp"
+#include "graphics/aesthetics.hpp"
+#include "graphics/image_buffer.hpp"
 #include "logger.hpp"
 
 namespace recastx::gui {
 
 ProjectionItem::ProjectionItem(Scene& scene)
         : GraphicsItem(scene),
-          img_(0),
-          fb_(new Framebuffer),
+          buffer_(new ImageBuffer),
           cm_(new Colormap) {
     scene.addItem(this);
 
-    static constexpr float s = 1.0f;
-    static constexpr GLfloat square[] = {
-        -s, -s, 0.0f, 0.0f, 0.0f,
-        -s,  s, 0.0f, 0.0f, 1.0f,
-         s,  s, 0.0f, 1.0f, 1.0f,
-         s, -s, 0.0f, 1.0f, 0.0f};
-
-    glGenVertexArrays(1, &vao_);
-    glBindVertexArray(vao_);
-    glGenBuffers(1, &vbo_);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(square), square, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    auto vert =
-#include "../shaders/projection.vert"
-    ;
-    auto frag =
-#include "../shaders/projection.frag"
-    ;
-
-    shader_ = std::make_unique<ShaderProgram>(vert, frag);
+    buffer_->keepAspectRatio(true);
+    buffer_->clear();
 
     cm_->set(ImPlotColormap_Greys);
 }
@@ -67,10 +42,12 @@ void ProjectionItem::onWindowSizeChanged(int width, int height) {
             (1.0f - Style::PROJECTION_HEIGHT - Style::STATUS_BAR_HEIGHT - 2.f * Style::MARGIN) * (float)(height)
     };
 
-    img_display_size_ = {
-            size_.x - 2 * K_PADDING_,
-            size_.y - 2 * K_PADDING_,
-    };
+    // Caveat: don't use framebuffer size because of high-resolution display like Retinal
+    static constexpr int K_PADDING = 5;
+    img_size_ = { Style::PROJECTION_WIDTH * (float)width - 2 * K_PADDING,
+                  Style::PROJECTION_HEIGHT * (float)height - 2 * K_PADDING - 2 * Style::LINE_HEIGHT };
+
+    buffer_->resize(static_cast<int>(img_size_.x), static_cast<int>(img_size_.y));
 }
 
 void ProjectionItem::renderIm() {
@@ -78,10 +55,19 @@ void ProjectionItem::renderIm() {
     if (visible_) {
         ImGui::SetNextWindowPos(pos_);
         ImGui::SetNextWindowSize(size_);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(K_PADDING_, K_PADDING_));
+        static constexpr int K_PADDING = 5;
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(K_PADDING, K_PADDING));
         ImGui::Begin("Raw projection", NULL, ImGuiWindowFlags_NoDecoration);
 
-        ImGui::Image((void*)(intptr_t)fb_->texture(), img_display_size_);
+        ImGui::Image((void*)(intptr_t)buffer_->texture(), img_size_);
+
+        ImGui::Checkbox("Auto Levels", &auto_levels_);
+
+        float step_size = (max_val_ - min_val_) / 100.f;
+        if (step_size < 0.01f) step_size = 0.01f; // avoid a tiny step size
+        ImGui::DragFloatRange2("Min / Max", &min_val_, &max_val_, step_size,
+                               std::numeric_limits<float>::lowest(), // min() does not work
+                               std::numeric_limits<float>::max());
 
         ImGui::End();
         ImGui::PopStyleVar();
@@ -94,37 +80,18 @@ void ProjectionItem::renderIm() {
     int prev_id = id_;
     ImGui::InputInt("##PROJECTION_ID", &id_);
     id_ = std::clamp(id_, 0, K_MAX_ID_);
-    if (prev_id != id_) setProjectionId();
+    if (prev_id != id_) {
+        buffer_->clear();
+        setProjectionId();
+    }
     ImGui::PopItemWidth();
 
     ImGui::Separator();
 }
 
-void ProjectionItem::onFramebufferSizeChanged(int width, int height) {
-    int w = static_cast<int>(Style::PROJECTION_WIDTH * width) - 2 * K_PADDING_;
-    int h = static_cast<int>(Style::PROJECTION_HEIGHT * height) - 2 * K_PADDING_;
+void ProjectionItem::onFramebufferSizeChanged(int /*width*/, int /*height*/) {}
 
-    fb_->prepareForRescale(w, h);
-}
-
-void ProjectionItem::renderGl() {
-    shader_->use();
-    shader_->setInt("colormap", 0);
-    shader_->setInt("projectionTexture", 1);
-
-    fb_->bind();
-    cm_->bind();
-    img_.bind();
-    glBindVertexArray(vao_);
-    glViewport(0, 0, fb_->width(), fb_->height());
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    glBindVertexArray(0);
-    img_.unbind();
-    cm_->unbind();
-    fb_->unbind();
-
-    scene_.useViewport();
-}
+void ProjectionItem::renderGl() {}
 
 bool ProjectionItem::updateServerParams() {
     toggleProjectionStream();
@@ -135,7 +102,7 @@ bool ProjectionItem::consume(const DataType& packet) {
     if (std::holds_alternative<rpc::ProjectionData>(packet)) {
         const auto& data = std::get<rpc::ProjectionData>(packet);
 
-        setProjectionData(data.data(), {data.col_count(), data.row_count()});
+        updateProjection(data.id(), data.data(), {data.col_count(), data.row_count()});
         log::info("Set projection data: {}", data.id());
         return true;
     }
@@ -151,11 +118,31 @@ bool ProjectionItem::setProjectionId() {
     return scene_.client()->setProjection(id_);
 }
 
-void ProjectionItem::setProjectionData(const std::string &data, const std::array<uint32_t, 2> &size) {
-    Projection::DataType proj(size[0] * size[1]);
-    std::memcpy(proj.data(), data.data(), data.size());
-    assert(data.size() == proj.size() * sizeof(Projection::DataType::value_type));
-    img_.setData(std::move(proj), {size[0], size[1]});
+void ProjectionItem::updateProjection(uint32_t id, const std::string& data, const std::array<uint32_t, 2>& size) {
+    id_ = static_cast<int>(id);
+
+    // TODO: check whether id == id_. This can only be implemented when the GUI client knows the maximum id
+
+    ImageDataType img(size[0] * size[1]);
+    std::memcpy(img.data(), data.data(), data.size());
+    assert(data.size() == img.size() * sizeof(ImageDataType::value_type));
+
+    auto w = static_cast<int>(size[0]);
+    auto h = static_cast<int>(size[1]);
+    texture_.setData(img, w, h);
+
+    cm_->bind();
+    texture_.bind();
+    if (auto_levels_) {
+        auto [min_p, max_p] = std::minmax_element(img.begin(), img.end());
+        min_val_ = static_cast<float>(*min_p);
+        max_val_ = static_cast<float>(*max_p);
+    }
+    buffer_->render(w, h, min_val_, max_val_);
+    texture_.unbind();
+    cm_->unbind();
+
+    scene_.useViewport();
 }
 
 } // namespace recastx::gui

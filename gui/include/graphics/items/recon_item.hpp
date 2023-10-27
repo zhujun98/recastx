@@ -140,13 +140,13 @@ public:
 
     ~ReconItem() override;
 
-    void onWindowSizeChanged(int width, int height) override;
-
     void renderIm() override;
 
-    void onFramebufferSizeChanged(int width, int height) override;
+    void onWindowSizeChanged(int width, int height) override;
 
     void renderGl() override;
+
+    void onFramebufferSizeChanged(int width, int height) override;
 
     bool updateServerParams() override;
 

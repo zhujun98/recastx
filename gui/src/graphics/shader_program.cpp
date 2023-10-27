@@ -55,6 +55,8 @@ ShaderProgram::~ShaderProgram() {
 
 void ShaderProgram::use() const { glUseProgram(program_); }
 
+void ShaderProgram::unuse() const { glUseProgram(0); }
+
 void ShaderProgram::setMat4(const std::string& name, glm::mat4 value){
     glUniformMatrix4fv(glGetUniformLocation(program_, name.c_str()), 1, GL_FALSE, &value[0][0]);
 }

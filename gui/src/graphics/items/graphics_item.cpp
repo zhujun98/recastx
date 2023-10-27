@@ -17,6 +17,4 @@ GraphicsItem::GraphicsItem(Scene& scene) : scene_(scene) {}
 
 GraphicsItem::~GraphicsItem() = default;
 
-void GraphicsItem::onWindowSizeChanged(int /*width*/, int /*height*/) {}
-
 } // namespace recastx::gui

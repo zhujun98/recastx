@@ -43,9 +43,9 @@ public:
 
     ~GraphicsItem() override;
 
-    virtual void renderIm() {};
+    virtual void onWindowSizeChanged(int width, int height) = 0;
 
-    virtual void onWindowSizeChanged(int width, int height);
+    virtual void renderIm() = 0;
 
     virtual void setState(rpc::ServerState_State state) { state_ = state; }
 

@@ -20,6 +20,8 @@ PreprocItem::PreprocItem(Scene& scene)
 
 PreprocItem::~PreprocItem() = default;
 
+void PreprocItem::onWindowSizeChanged(int /*width*/, int /*height*/) {}
+
 void PreprocItem::renderIm() {
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "PREPROCESSING");
 

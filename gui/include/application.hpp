@@ -18,6 +18,8 @@
 
 #include "imgui.h"
 
+#include "graphics/style.hpp"
+
 struct GLFWwindow;
 
 namespace recastx::gui {
@@ -33,7 +35,7 @@ class Application {
     int height_ = 1080;
     const std::string title_ = "RECASTX - REConstruction of Arbitrary Slabs in Tomography X";
 
-    ImVec4 bg_color_ = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
+    ImVec4 bg_color_ { Style::BG_COLOR };
 
     GLFWwindow* glfw_window_ = nullptr;
 
