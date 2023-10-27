@@ -20,25 +20,27 @@ class Colormap;
 
 class ProjectionItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDataItem {
 
+  public:
+
+    using ImageDataType = std::vector<RawDtype>;
+
+  private:
+
     ImVec2 pos_;
     ImVec2 size_;
 
     int id_ {0};
     static constexpr int K_MAX_ID_ = 10000;
-    static constexpr int K_PADDING_ = 5;
+
     ImVec2 img_size_;
-
-    ImageTexture<RawDtype> texture_;
-
+    ImageTexture<typename ImageDataType::value_type> texture_;
     std::unique_ptr<ImageBuffer> buffer_;
-
     std::unique_ptr<Colormap> cm_;
 
+    bool visible_ { true };
     bool auto_levels_ { true };
-    float min_val_ {0.f};
-    float max_val_ {0.f};
-
-    bool visible_ = true;
+    float min_val_ { 0.f };
+    float max_val_ { 0.f };
 
     void toggleProjectionStream();
 

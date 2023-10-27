@@ -14,7 +14,7 @@
 namespace recastx::gui {
 
 ImageBuffer::ImageBuffer() {
-    const GLfloat square[] = {
+    static const GLfloat square[] = {
             -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
             -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
              1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
@@ -62,8 +62,8 @@ void ImageBuffer::render(int width, int height, float min_v, float max_v) {
     shader_->use();
     shader_->setInt("colormap", 0);
     shader_->setInt("imageTexture", 1);
-    shader_->setFloat("minValue", min_v / 65535.f);
-    shader_->setFloat("maxValue", max_v / 65535.f);
+    shader_->setFloat("minValue", min_v);
+    shader_->setFloat("maxValue", max_v);
 
     auto [w, h] = computeImageSize(width, height);
 
@@ -95,9 +95,9 @@ void ImageBuffer::resize(int width, int height) {
     }
 }
 
-void ImageBuffer::clearImp() {
+void ImageBuffer::clearImp() const {
     glViewport(0, 0, width_, height_);
-    glClearColor(background_.x, background_.y, background_.z, background_.w);
+    glClearColor(bg_.x, bg_.y, bg_.z, bg_.w);
     glClear(GL_COLOR_BUFFER_BIT);
 }
 
@@ -123,7 +123,7 @@ void ImageBuffer::updateBuffer() const {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-std::array<int, 2> ImageBuffer::computeImageSize(int width, int height) {
+std::array<int, 2> ImageBuffer::computeImageSize(int width, int height) const {
     if (keep_aspect_ratio_) {
         double ratio = static_cast<double>(height) / width;
         if (width_ * ratio > height_) {

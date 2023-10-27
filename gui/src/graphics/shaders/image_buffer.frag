@@ -6,7 +6,7 @@ in vec2 texCoord;
 out vec4 fColor;
 
 uniform sampler1D colormap;
-uniform sampler2D imageTexture;
+uniform usampler2D imageTexture;
 uniform float minValue;
 uniform float maxValue;
 
@@ -21,9 +21,8 @@ void main() {
     if (minValue == maxValue) {
         value = 1.f;
     } else {
-        value = remapMinMax(texture(imageTexture, texCoord).x, minValue, maxValue);
+        value = remapMinMax(float(texture(imageTexture, texCoord).x), minValue, maxValue);
     }
-
     fColor = vec4(texture(colormap, value).xyz, 1.0f);
 }
 )glsl"

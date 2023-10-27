@@ -43,8 +43,9 @@ void ProjectionItem::onWindowSizeChanged(int width, int height) {
     };
 
     // Caveat: don't use framebuffer size because of high-resolution display like Retinal
-    img_size_ = { Style::PROJECTION_WIDTH * (float)width - 2 * K_PADDING_,
-                  Style::PROJECTION_HEIGHT * (float)height - 2 * K_PADDING_ - 2 * Style::LINE_HEIGHT };
+    static constexpr int K_PADDING = 5;
+    img_size_ = { Style::PROJECTION_WIDTH * (float)width - 2 * K_PADDING,
+                  Style::PROJECTION_HEIGHT * (float)height - 2 * K_PADDING - 2 * Style::LINE_HEIGHT };
 
     buffer_->resize(static_cast<int>(img_size_.x), static_cast<int>(img_size_.y));
 }
@@ -54,7 +55,8 @@ void ProjectionItem::renderIm() {
     if (visible_) {
         ImGui::SetNextWindowPos(pos_);
         ImGui::SetNextWindowSize(size_);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(K_PADDING_, K_PADDING_));
+        static constexpr int K_PADDING = 5;
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(K_PADDING, K_PADDING));
         ImGui::Begin("Raw projection", NULL, ImGuiWindowFlags_NoDecoration);
 
         ImGui::Image((void*)(intptr_t)buffer_->texture(), img_size_);
@@ -116,23 +118,25 @@ bool ProjectionItem::setProjectionId() {
     return scene_.client()->setProjection(id_);
 }
 
-void ProjectionItem::updateProjection(uint32_t id, const std::string &data, const std::array<uint32_t, 2> &size) {
+void ProjectionItem::updateProjection(uint32_t id, const std::string& data, const std::array<uint32_t, 2>& size) {
     id_ = static_cast<int>(id);
 
-    std::vector<RawDtype> proj(size[0] * size[1]);
-    std::memcpy(proj.data(), data.data(), data.size());
-    assert(data.size() == proj.size() * sizeof(RawDtype));
+    // TODO: check whether id == id_. This can only be implemented when the GUI client knows the maximum id
+
+    ImageDataType img(size[0] * size[1]);
+    std::memcpy(img.data(), data.data(), data.size());
+    assert(data.size() == img.size() * sizeof(ImageDataType::value_type));
 
     auto w = static_cast<int>(size[0]);
     auto h = static_cast<int>(size[1]);
-    texture_.setData(proj, w, h);
+    texture_.setData(img, w, h);
 
     cm_->bind();
     texture_.bind();
     if (auto_levels_) {
-        auto [min_p, max_p] = std::minmax_element(proj.begin(), proj.end());
-        min_val_ = *min_p;
-        max_val_ = *max_p;
+        auto [min_p, max_p] = std::minmax_element(img.begin(), img.end());
+        min_val_ = static_cast<float>(*min_p);
+        max_val_ = static_cast<float>(*max_p);
     }
     buffer_->render(w, h, min_val_, max_val_);
     texture_.unbind();

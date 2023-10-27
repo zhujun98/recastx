@@ -25,9 +25,9 @@ class ImageBuffer {
     GLuint vao_;
     GLuint vbo_;
 
-    int width_ {8};
-    int height_ {8};
-    ImVec4 background_ { Style::IMAGE_BUFFER_BG_COLOR };
+    int width_ { 8 };
+    int height_ { 8 };
+    ImVec4 bg_ { Style::IMAGE_BUFFER_BG_COLOR };
 
     GLuint fbo_;
     GLuint texture_;
@@ -37,11 +37,11 @@ class ImageBuffer {
 
     std::unique_ptr<ShaderProgram> shader_;
 
-    void clearImp();
+    void clearImp() const;
 
     void updateBuffer() const;
 
-    std::array<int, 2> computeImageSize(int width, int height);
+    std::array<int, 2> computeImageSize(int width, int height) const;
 
   public:
 
@@ -50,11 +50,11 @@ class ImageBuffer {
 
     void render(int width, int height, float min_v, float max_v);
 
+    void resize(int width, int height);
+
     void clear();
 
     void keepAspectRatio(bool keep) { keep_aspect_ratio_ = keep; }
-
-    void resize(int width, int height);
 
     GLuint texture() const { return texture_; }
 };
