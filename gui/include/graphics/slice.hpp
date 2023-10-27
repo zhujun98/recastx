@@ -38,7 +38,7 @@ class Slice {
     SizeType size_;
     DataType data_;
 
-    SliceTexture<float> texture_;
+    SliceTexture texture_;
 
     GLuint vao_;
     GLuint vbo_;

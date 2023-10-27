@@ -109,6 +109,9 @@ public:
         glDeleteTextures(1, &texture_id_);
     }
 
+    ColormapTexture(const ColormapTexture&) = delete;
+    ColormapTexture& operator=(const ColormapTexture&) = delete;
+
     ColormapTexture(ColormapTexture&& other) noexcept {
         x_ = other.x_;
         texture_id_ = other.texture_id_;
@@ -119,6 +122,7 @@ public:
         x_ = other.x_;
         texture_id_ = other.texture_id_;
         other.texture_id_ = -1;
+        return *this;
     }
 
     void setData(const std::vector<T>& data, int x) {
@@ -138,13 +142,18 @@ public:
     }
 };
 
-template <typename T = unsigned char>
 class SliceTexture : public Texture {
+
+  public:
+
+    using DType = float;
+
+  private:
 
     int x_;
     int y_;
 
-    void genTexture(const std::vector<T>& data) {
+    void genTexture(const std::vector<DType>& data) {
         // In reference to the hack in the 3D fill_texture below, we
         // have found that 1x1 textures are supported in intel
         // integrated graphics.
@@ -153,8 +162,8 @@ class SliceTexture : public Texture {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, detail::InternalFormat<T>(), x_, y_, 0,
-                     detail::DataFormat<T>(), detail::DataType<T>(), data.data());
+        glTexImage2D(GL_TEXTURE_2D, 0, detail::InternalFormat<DType>(), x_, y_, 0,
+                     detail::DataFormat<DType>(), detail::DataType<DType>(), data.data());
         glGenerateMipmap(GL_TEXTURE_2D);
 
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -165,13 +174,16 @@ public:
     SliceTexture() : Texture(), x_(1), y_(1) {
         glGenTextures(1, &texture_id_);
 
-        std::vector<T> data(x_ * y_, 0);
+        std::vector<DType> data(x_ * y_, 0);
         genTexture(data);
     };
 
     ~SliceTexture() override {
         glDeleteTextures(1, &texture_id_);
     }
+
+    SliceTexture(const SliceTexture&) = delete;
+    SliceTexture& operator=(const SliceTexture&) = delete;
 
     SliceTexture(SliceTexture&& other) noexcept {
         x_ = other.x_;
@@ -185,9 +197,10 @@ public:
         y_ = other.y_;
         texture_id_ = other.texture_id_;
         other.texture_id_ = -1;
+        return *this;
     }
 
-    void setData(const std::vector<T>& data, int x, int y) {
+    void setData(const std::vector<DType>& data, int x, int y) {
         x_ = x;
         y_ = y;
         assert((int)data.size() == x * y);
@@ -205,14 +218,19 @@ public:
     }
 };
 
-template <typename T = unsigned char>
 class VolumeTexture  : public Texture {
+
+  public:
+
+    using DType = float;
+
+  private:
 
     int x_;
     int y_;
     int z_;
 
-    void genTexture(const std::vector<T>& data) {
+    void genTexture(const std::vector<DType>& data) {
         // This is a hack to prevent segfaults on laptops with integrated intel graphics.
         // For some reason, the i965_dri.so module crashes on textures smaller than 8x8x8 pixels.
         if (x_ < 8 || y_ < 8 || z_ < 8) {
@@ -228,8 +246,8 @@ class VolumeTexture  : public Texture {
         glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-        glTexImage3D(GL_TEXTURE_3D, 0, detail::InternalFormat<T>(), x_, y_, z_, 0,
-                     detail::DataFormat<T>(), detail::DataType<T>(), data.data());
+        glTexImage3D(GL_TEXTURE_3D, 0, detail::InternalFormat<DType>(), x_, y_, z_, 0,
+                     detail::DataFormat<DType>(), detail::DataType<DType>(), data.data());
         glGenerateMipmap(GL_TEXTURE_3D);
 
         glBindTexture(GL_TEXTURE_3D, 0);
@@ -240,7 +258,7 @@ public:
     VolumeTexture() : Texture(), x_(8), y_(8), z_(8) {
         glGenTextures(1, &texture_id_);
 
-        std::vector<T> data(x_ * y_ * z_, 0);
+        std::vector<DType> data(x_ * y_ * z_, 0);
         genTexture(data);
     };
 
@@ -265,9 +283,10 @@ public:
         z_ = other.z_;
         texture_id_ = other.texture_id_;
         other.texture_id_ = -1;
+        return *this;
     }
 
-    void setData(const std::vector<T>& data, int x, int y, int z) {
+    void setData(const std::vector<DType>& data, int x, int y, int z) {
         x_ = x;
         y_ = y;
         z_ = z;
@@ -317,6 +336,9 @@ class  ImageTexture : public Texture {
         glDeleteTextures(1, &texture_id_);
     }
 
+    ImageTexture(const ImageTexture&) = delete;
+    ImageTexture& operator=(const ImageTexture&) = delete;
+
     ImageTexture(ImageTexture&& other) noexcept {
         x_ = other.x_;
         y_ = other.y_;
@@ -329,6 +351,7 @@ class  ImageTexture : public Texture {
         y_ = other.y_;
         texture_id_ = other.texture_id_;
         other.texture_id_ = -1;
+        return *this;
     }
 
     void setData(const std::vector<T>& data, int x, int y) {

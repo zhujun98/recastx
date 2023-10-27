@@ -74,7 +74,7 @@ class Volume {
     SizeType size_;
     DataType data_;
 
-    VolumeTexture<float> texture_;
+    VolumeTexture texture_;
 
     VolumeSlicer slicer_;
 
