@@ -10,6 +10,7 @@
 #define GUI_VOLUME_H
 
 #include <array>
+#include <memory>
 
 #include "textures.hpp"
 #include "utils.hpp"

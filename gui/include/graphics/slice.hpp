@@ -11,6 +11,7 @@
 
 #include <array>
 #include <cstddef>
+#include <memory>
 
 #include <GL/gl3w.h>
 #include <glm/glm.hpp>
