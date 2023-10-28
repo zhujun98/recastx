@@ -13,6 +13,8 @@
 #include <backends/imgui_impl_glfw.h>
 #include <implot.h>
 
+#include <spdlog/spdlog.h>
+
 #include "application.hpp"
 #include "graphics/scene3d.hpp"
 #include "graphics/style.hpp"
@@ -49,6 +51,8 @@ Application::Application() {
     if (gl3wInit()) {
         throw std::runtime_error("Failed to initialize OpenGL!");
     }
+
+    spdlog::info("OpenGL version: {}", reinterpret_cast<const char*>(glGetString(GL_VERSION)));
 
     initImgui();
     registerCallbacks();
