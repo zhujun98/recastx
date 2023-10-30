@@ -263,6 +263,9 @@ class  ImageTexture : public Texture {
         genTexture(data);
     }
 
+    [[nodiscard]] int x() const { return x_; }
+    [[nodiscard]] int y() const { return y_; }
+
     void bind() const override {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture_id_);

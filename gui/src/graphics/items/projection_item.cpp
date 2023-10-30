@@ -23,7 +23,7 @@ ProjectionItem::ProjectionItem(Scene& scene)
           cm_(new Colormap) {
     scene.addItem(this);
 
-    buffer_->keepAspectRatio(true);
+    buffer_->keepAspectRatio(false);
     buffer_->clear();
 
     cm_->set(ImPlotColormap_Greys);
@@ -46,11 +46,11 @@ void ProjectionItem::onWindowSizeChanged(int width, int height) {
     static constexpr int K_PADDING = 5;
     img_size_ = { Style::PROJECTION_WIDTH * (float)width - 2 * K_PADDING,
                   Style::PROJECTION_HEIGHT * (float)height - 2 * K_PADDING - 2 * Style::LINE_HEIGHT };
-
-    buffer_->resize(static_cast<int>(img_size_.x), static_cast<int>(img_size_.y));
 }
 
 void ProjectionItem::renderIm() {
+    bool render = false;
+
     bool cd = ImGui::Checkbox("Show projection: ", &visible_);
     if (visible_) {
         ImGui::SetNextWindowPos(pos_);
@@ -59,15 +59,19 @@ void ProjectionItem::renderIm() {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(K_PADDING, K_PADDING));
         ImGui::Begin("Raw projection", NULL, ImGuiWindowFlags_NoDecoration);
 
+        render |= buffer_->resize(static_cast<int>(img_size_.x), static_cast<int>(img_size_.y));
+
         ImGui::Image((void*)(intptr_t)buffer_->texture(), img_size_);
 
         ImGui::Checkbox("Auto Levels", &auto_levels_);
 
         float step_size = (max_val_ - min_val_) / 100.f;
         if (step_size < 0.01f) step_size = 0.01f; // avoid a tiny step size
-        ImGui::DragFloatRange2("Min / Max", &min_val_, &max_val_, step_size,
-                               std::numeric_limits<float>::lowest(), // min() does not work
-                               std::numeric_limits<float>::max());
+        render |= ImGui::DragFloatRange2("Min / Max", &min_val_, &max_val_, step_size,
+                                         std::numeric_limits<float>::lowest(), // min() does not work
+                                         std::numeric_limits<float>::max());
+
+        if (render) renderBuffer(texture_.x(), texture_.y());
 
         ImGui::End();
         ImGui::PopStyleVar();
@@ -130,15 +134,23 @@ void ProjectionItem::updateProjection(uint32_t id, const std::string& data, cons
     auto w = static_cast<int>(size[0]);
     auto h = static_cast<int>(size[1]);
     texture_.setData(img, w, h);
+    initialized_ = true;
 
-    cm_->bind();
-    texture_.bind();
     if (auto_levels_) {
         auto [min_p, max_p] = std::minmax_element(img.begin(), img.end());
         min_val_ = static_cast<float>(*min_p);
         max_val_ = static_cast<float>(*max_p);
     }
-    buffer_->render(w, h, min_val_, max_val_);
+
+    renderBuffer(w, h);
+}
+
+void ProjectionItem::renderBuffer(int width, int height) {
+    if (!initialized_) return;
+
+    cm_->bind();
+    texture_.bind();
+    buffer_->render(width, height, min_val_, max_val_);
     texture_.unbind();
     cm_->unbind();
 
