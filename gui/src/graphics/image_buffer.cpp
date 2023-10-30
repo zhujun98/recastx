@@ -40,6 +40,8 @@ ImageBuffer::ImageBuffer() {
     glGenTextures(1, &texture_);
     glGenRenderbuffers(1, &rbo_);
 
+    init();
+
     auto vert =
 #include "shaders/image_buffer.vert"
     ;
@@ -87,12 +89,14 @@ void ImageBuffer::clear() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void ImageBuffer::resize(int width, int height) {
+bool ImageBuffer::resize(int width, int height) {
     if (width_ != width || height_ != height) {
         width_ = width;
         height_ = height;
-        updateBuffer();
+        init();
+        return true;
     }
+    return false;
 }
 
 void ImageBuffer::clearImp() const {
@@ -101,7 +105,7 @@ void ImageBuffer::clearImp() const {
     glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void ImageBuffer::updateBuffer() const {
+void ImageBuffer::init() const {
     glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
 
     glBindTexture(GL_TEXTURE_2D, texture_);

@@ -40,7 +40,7 @@ class ImageBuffer {
 
     void clearImp() const;
 
-    void updateBuffer() const;
+    void init() const;
 
     std::array<int, 2> computeImageSize(int width, int height) const;
 
@@ -51,7 +51,7 @@ class ImageBuffer {
 
     void render(int width, int height, float min_v, float max_v);
 
-    void resize(int width, int height);
+    bool resize(int width, int height);
 
     void clear();
 

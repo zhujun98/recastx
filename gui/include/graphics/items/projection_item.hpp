@@ -32,6 +32,7 @@ class ProjectionItem : public GraphicsItem, public GraphicsGLItem, public Graphi
     int id_ {0};
     static constexpr int K_MAX_ID_ = 10000;
 
+    bool initialized_ = false;
     ImVec2 img_size_;
     ImageTexture<typename ImageDataType::value_type> texture_;
     std::unique_ptr<ImageBuffer> buffer_;
@@ -47,6 +48,8 @@ class ProjectionItem : public GraphicsItem, public GraphicsGLItem, public Graphi
     bool setProjectionId();
 
     void updateProjection(uint32_t id, const std::string& data, const std::array<uint32_t, 2>& size);
+
+    void renderBuffer(int width, int height);
 
   public:
 
