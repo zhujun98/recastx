@@ -233,66 +233,6 @@ inline void copyBuffer(T* dst,
 
 } // details
 
-template<typename T>
-class ImageBuffer : public BufferInterface<Tensor<T, 2>> {
-
-    size_t capacity_;
-
-  public:
-
-    using BufferType = Tensor<T, 2>;
-    using ValueType = typename BufferType::ValueType;
-    using ShapeType = typename BufferType::ShapeType;
-
-  private:
-
-    // Caveat: images can have different shapes
-    std::queue<BufferType> buffer_;
-
-    void pop() { buffer_.pop(); }
-
-  public:
-
-    explicit ImageBuffer(int capacity = 0)
-         : capacity_(capacity < 0 ? 0 : static_cast<size_t>(capacity)) {
-    }
-
-    ~ImageBuffer() override = default;
-
-    template<typename... Args>
-    void emplace(Args&&... args) {
-        if (capacity_ > 0 && buffer_.size() == capacity_) {
-            std::lock_guard lk(this->mtx_);
-            pop();
-        }
-        buffer_.emplace(std::forward<Args>(args)...);
-        this->cv_.notify_one();
-    };
-
-    bool fetch(int timeout) override;
-
-    void reset() {
-        std::lock_guard lk(this->mtx_);
-        std::queue<BufferType>().swap(buffer_);
-    }
-};
-
-template<typename T>
-bool ImageBuffer<T>::fetch(int timeout) {
-    std::unique_lock lk(this->mtx_);
-    if (timeout < 0) {
-        this->cv_.wait(lk, [this] { return !buffer_.empty(); });
-    } else {
-        if (!(this->cv_.wait_for(lk, timeout * 1ms, [this] { return !buffer_.empty(); }))) {
-            return false;
-        }
-    }
-
-    this->swap(this->front_, buffer_.front());
-    pop();
-    return true;
-}
-
 
 template<typename T, size_t N>
 class MemoryBuffer : public BufferInterface<Tensor<T, N>> {

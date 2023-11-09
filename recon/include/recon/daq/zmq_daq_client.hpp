@@ -18,7 +18,7 @@
 #include <nlohmann/json.hpp>
 
 #include "daq_client_interface.hpp"
-#include "daq_buffer.hpp"
+#include "recon/queue.hpp"
 #include "recon/projection.hpp"
 
 namespace recastx::recon {
@@ -42,7 +42,7 @@ class ZmqDaqClient : public DaqClientInterface {
 
   protected:
 
-    DaqBuffer<Projection<>> buffer_;
+    ThreadSafeQueue<Projection<>> buffer_;
 
     zmq::context_t context_;
     zmq::socket_t socket_;

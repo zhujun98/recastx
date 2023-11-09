@@ -11,35 +11,39 @@
 
 #include <queue>
 
-#include "buffer.hpp"
+#include "queue.hpp"
 #include "projection.hpp"
 
 namespace recastx::recon {
 
 class ProjectionMediator {
 
+  public:
+
+    using DataType = Projection<>;
+
+  private:
+
     size_t monitor_every_;
     size_t proj_id_;
 
-    ImageBuffer<RawDtype> projections_;
+    ThreadSafeQueue<DataType> queue_;
 
   public:
     
-    using ImageType = typename ImageBuffer<RawDtype>::BufferType;
-
     ProjectionMediator(int capacity = 0);
 
     ~ProjectionMediator();
 
-    void emplace(Projection<>&& proj);
+    void push(DataType proj);
+
+    bool waitAndPop(DataType& proj, int timeout = -1);
 
     void setFilter(size_t monitor_every);
     
     size_t setId(size_t id);
 
-    void reset() { projections_.reset(); }
-
-    ImageBuffer<RawDtype>& projections() { return projections_; }
+    void reset() { queue_.reset(); }
 };
 
 } // namespace recastx::recon

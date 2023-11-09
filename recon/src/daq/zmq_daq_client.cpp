@@ -101,7 +101,7 @@ void ZmqDaqClient::start() {
 }
 
 bool ZmqDaqClient::next(Projection<>& proj) {
-    return buffer_.waitAndPop(proj);
+    return buffer_.waitAndPop(proj, 100);
 }
 
 std::optional<nlohmann::json> ZmqDaqClient::parseMeta(const zmq::message_t& msg) {

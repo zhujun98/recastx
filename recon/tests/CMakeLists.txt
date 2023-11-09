@@ -15,6 +15,7 @@ set(RECONX_RECON_TEST_COMMON_LIBRARIES spdlog::spdlog gmock gtest)
 
 set(RECASTX_RECON_TEST_FILES test_tensor.cpp 
                              test_buffer.cpp
+                             test_queue.cpp
                              test_preprocessing.cpp
                              test_projection_mediator.cpp
                              test_slice_mediator.cpp
