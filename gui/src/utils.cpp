@@ -1,8 +1,5 @@
 #include <algorithm>
-#include <cstdint>
 #include <limits>
-#include <vector>
-#include <iostream>
 #include "utils.hpp"
 
 namespace recastx::gui {

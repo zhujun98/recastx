@@ -9,6 +9,7 @@
 #ifndef GUI_IMAGEBUFFER_HPP
 #define GUI_IMAGEBUFFER_HPP
 
+#include <array>
 #include <memory>
 #include <vector>
 
