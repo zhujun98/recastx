@@ -14,11 +14,11 @@
 
 namespace recastx::recon {
 
-SliceMediator::SliceMediator() : ondemand_slices_(true) {}
+SliceMediator::SliceMediator() = default;
 
 SliceMediator::~SliceMediator() = default;
 
-void SliceMediator::resize(const SliceBufferType::ShapeType& shape) {
+void SliceMediator::resize(const SliceBuffer<float>::ShapeType& shape) {
     all_slices_.resize(shape);
     ondemand_slices_.resize(shape);
 }
