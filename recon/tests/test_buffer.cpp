@@ -81,7 +81,7 @@ TEST(SliceBufferTest, TestNonOnDemand) {
 }
 
 TEST(SliceBufferTest, TestOnDemand) {
-    SliceBuffer<float> sbf(true);
+    SliceBuffer<float, true> sbf;
     ASSERT_TRUE(sbf.onDemand());
 
     std::array<size_t, 2> shape {5, 6};
@@ -105,43 +105,6 @@ TEST(SliceBufferTest, TestOnDemand) {
     // "ready" status reset
     for (auto& [k, slice] : sbf.ready()) ASSERT_FALSE(std::get<0>(slice));
     for (auto& [k, slice] : sbf.front()) ASSERT_FALSE(std::get<0>(slice));
-}
-
-
-TEST(ImageBufferTest, TestGeneral) {
-    {
-        ImageBuffer<uint16_t> buffer;
-        ASSERT_FALSE(buffer.fetch(0));
-
-        buffer.emplace(std::array<size_t, 2>{2, 3}, std::vector<uint16_t> {1, 2, 3, 4, 5, 6});
-        ASSERT_TRUE(buffer.fetch(-1));
-        ASSERT_THAT(buffer.front(), ElementsAre(1, 2, 3, 4, 5, 6));
-        ASSERT_FALSE(buffer.fetch(0));
-    }
-    {
-        ImageBuffer<uint16_t> buffer;
-        buffer.emplace(std::array<size_t, 2>{2, 3}, std::vector<uint16_t> {1, 2, 3, 4, 5, 6});
-        buffer.reset();
-        ASSERT_FALSE(buffer.fetch(0));
-    }
-}
-
-TEST(ImageBufferTest, TestCapacity) {
-    {
-        ImageBuffer<uint16_t> buffer(-1);
-        for (size_t i = 0; i < 10; ++i) {
-            buffer.emplace(std::array<size_t, 2>{2, 2}, std::vector<uint16_t> {1, 2, 3, 4});
-        }
-        for (size_t i = 0; i < 10; ++i) ASSERT_TRUE(buffer.fetch(-1));
-    }
-    {
-        ImageBuffer<uint16_t> buffer(1);
-        buffer.emplace(std::array<size_t, 2>{2, 2}, std::vector<uint16_t> {1, 2, 3, 4});
-        buffer.emplace(std::array<size_t, 2>{2, 2}, std::vector<uint16_t> {4, 3, 2, 1});
-        ASSERT_TRUE(buffer.fetch(-1));
-        ASSERT_THAT(buffer.front(), ElementsAre(4, 3, 2, 1));
-        ASSERT_FALSE(buffer.fetch(0));
-    }
 }
 
 

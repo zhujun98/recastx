@@ -13,15 +13,19 @@ namespace recastx::recon {
 ProjectionMediator::ProjectionMediator(int capacity)
      : monitor_every_{1}, 
        proj_id_{0},
-       projections_(capacity) {
+       queue_(capacity) {
 }
 
 ProjectionMediator::~ProjectionMediator() = default;
 
-void ProjectionMediator::emplace(Projection<>&& proj) {
+void ProjectionMediator::push(DataType proj) {
     if (proj.index % monitor_every_ == proj_id_) {
-        projections_.emplace(std::move(proj.data));
+        queue_.push(std::move(proj));
     }
+}
+
+bool ProjectionMediator::waitAndPop(DataType& proj, int timeout) {
+    return queue_.waitAndPop(proj, timeout);
 }
 
 void ProjectionMediator::setFilter(size_t monitor_every) {

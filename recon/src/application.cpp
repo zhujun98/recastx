@@ -36,7 +36,7 @@ Application::Application(size_t raw_buffer_size,
                          ReconstructorFactory* recon_factory,
                          const RpcServerConfig& rpc_config)
      : raw_buffer_(raw_buffer_size),
-       proj_mediator_(new ProjectionMediator(10)),
+       proj_mediator_(new ProjectionMediator(k_PROJECTION_MEDIATOR_BUFFER_SIZE)),
        slice_mediator_(new SliceMediator()),
        ramp_filter_factory_(ramp_filter_factory),
        imgproc_params_(imageproc_params),
@@ -207,7 +207,7 @@ bool Application::consume() {
                 pushProjection(proj);
             }
 
-            proj_mediator_->emplace(std::move(proj));
+            proj_mediator_->push(std::move(proj));
             monitor_->countProjection();
             break;
         }
@@ -319,12 +319,10 @@ void Application::onStateChanged(rpc::ServerState_State state) {
 }
 
 std::optional<rpc::ProjectionData> Application::getProjectionData(int timeout) {
-    auto& buffer = proj_mediator_->projections();
-    if (buffer.fetch(timeout)) {
-        auto& data = buffer.front();
-        auto [y, x] = data.shape();
-        // FIXME: how to get the id?
-        return createProjectionDataPacket(0, x, y, data);
+    ProjectionMediator::DataType proj;
+    if (proj_mediator_->waitAndPop(proj, timeout)) {
+        auto [y, x] = proj.data.shape();
+        return createProjectionDataPacket(proj.index % proj_geom_.angles.size(), x, y, proj.data);
     }
     return std::nullopt;
 }

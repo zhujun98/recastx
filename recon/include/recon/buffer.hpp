@@ -137,7 +137,7 @@ void TripleTensorBuffer<T, N>::resize(const ShapeType& shape) {
     this->front_.resize(shape);
 }
 
-template<typename T>
+template<typename T, bool OD = false>
 class SliceBuffer : public TripleBuffer<std::map<size_t, std::tuple<bool, size_t, Tensor<T, 2>>>> {
 
 public:
@@ -149,22 +149,20 @@ public:
 
 private:
 
-    bool on_demand_;
-
     ShapeType shape_;
 
 protected:
 
     void swap(BufferType& v1, BufferType& v2) noexcept override {
         v1.swap(v2);
-        if (on_demand_) {
+        if constexpr (OD) {
             for ([[maybe_unused]] auto& [k, v] : v2) std::get<0>(v) = false;
         }
     }
 
 public:
 
-    explicit SliceBuffer(bool on_demand = false) : on_demand_(on_demand), shape_{0, 0} {}
+    SliceBuffer() : shape_{0, 0} {}
     
     ~SliceBuffer() override = default;
 
@@ -176,22 +174,22 @@ public:
 
     [[nodiscard]] size_t size() const { return this->back_.size(); }
 
-    [[nodiscard]] bool onDemand() const { return on_demand_; }
+    [[nodiscard]] bool onDemand() const { return OD; }
 };
 
-template<typename T>
-bool SliceBuffer<T>::insert(size_t index) {
+template<typename T, bool OD>
+bool SliceBuffer<T, OD>::insert(size_t index) {
     std::lock_guard lk(this->mtx_);
-    auto [it1, success1] = this->back_.insert({index, {!on_demand_, 0, SliceType(shape_)}});
-    [[maybe_unused]] auto [it2, success2] = this->ready_.insert({index, {!on_demand_, 0, SliceType(shape_)}});
-    [[maybe_unused]] auto [it3, success3] = this->front_.insert({index, {!on_demand_, 0, SliceType(shape_)}});
+    auto [it1, success1] = this->back_.insert({index, {!OD, 0, SliceType(shape_)}});
+    [[maybe_unused]] auto [it2, success2] = this->ready_.insert({index, {!OD, 0, SliceType(shape_)}});
+    [[maybe_unused]] auto [it3, success3] = this->front_.insert({index, {!OD, 0, SliceType(shape_)}});
     assert(success1 == success2);
     assert(success1 == success3);
     return success1;
 }
 
-template<typename T>
-void SliceBuffer<T>::resize(const ShapeType& shape) {
+template<typename T, bool OD>
+void SliceBuffer<T, OD>::resize(const ShapeType& shape) {
     std::lock_guard lk(this->mtx_);
     for (auto& [k, v] : this->back_) std::get<2>(v).resize(shape);
     for (auto& [k, v] : this->ready_) std::get<2>(v).resize(shape);
@@ -234,66 +232,6 @@ inline void copyBuffer(T* dst,
 }
 
 } // details
-
-template<typename T>
-class ImageBuffer : public BufferInterface<Tensor<T, 2>> {
-
-    size_t capacity_;
-
-  public:
-
-    using BufferType = Tensor<T, 2>;
-    using ValueType = typename BufferType::ValueType;
-    using ShapeType = typename BufferType::ShapeType;
-
-  private:
-
-    // Caveat: images can have different shapes
-    std::queue<BufferType> buffer_;
-
-    void pop() { buffer_.pop(); }
-
-  public:
-
-    explicit ImageBuffer(int capacity = 0)
-         : capacity_(capacity < 0 ? 0 : static_cast<size_t>(capacity)) {
-    }
-
-    ~ImageBuffer() override = default;
-
-    template<typename... Args>
-    void emplace(Args&&... args) {
-        if (capacity_ > 0 && buffer_.size() == capacity_) {
-            std::lock_guard lk(this->mtx_);
-            pop();
-        }
-        buffer_.emplace(std::forward<Args>(args)...);
-        this->cv_.notify_one();
-    };
-
-    bool fetch(int timeout) override;
-
-    void reset() {
-        std::lock_guard lk(this->mtx_);
-        std::queue<BufferType>().swap(buffer_);
-    }
-};
-
-template<typename T>
-bool ImageBuffer<T>::fetch(int timeout) {
-    std::unique_lock lk(this->mtx_);
-    if (timeout < 0) {
-        this->cv_.wait(lk, [this] { return !buffer_.empty(); });
-    } else {
-        if (!(this->cv_.wait_for(lk, timeout * 1ms, [this] { return !buffer_.empty(); }))) {
-            return false;
-        }
-    }
-
-    this->swap(this->front_, buffer_.front());
-    pop();
-    return true;
-}
 
 
 template<typename T, size_t N>

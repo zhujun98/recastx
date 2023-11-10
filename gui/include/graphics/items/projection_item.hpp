@@ -31,6 +31,7 @@ class ProjectionItem : public GraphicsItem, public GraphicsGLItem, public Graphi
 
     int id_ {0};
     static constexpr int K_MAX_ID_ = 10000;
+    int displayed_id_ {0};
 
     bool initialized_ = false;
     ImVec2 img_size_;

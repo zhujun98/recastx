@@ -17,6 +17,10 @@ namespace recastx {
     inline constexpr size_t k_MAX_NUM_DARKS = 1000;
     inline constexpr size_t k_MAX_NUM_FLATS = 1000;
 
+    inline constexpr size_t k_DAQ_BUFFER_SIZE = 1000;
+    inline constexpr size_t k_DAQ_MONITOR_EVERY = 1000;
+    inline constexpr size_t k_PROJECTION_MEDIATOR_BUFFER_SIZE = 10;
+
     using Orientation = std::array<float, 9>;
 
     enum class ProjectionType : int { DARK = 0, FLAT = 1, PROJECTION = 2, UNKNOWN = 99 };

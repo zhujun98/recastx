@@ -45,7 +45,7 @@ void ProjectionItem::onWindowSizeChanged(int width, int height) {
     // Caveat: don't use framebuffer size because of high-resolution display like Retinal
     static constexpr int K_PADDING = 5;
     img_size_ = { Style::PROJECTION_WIDTH * (float)width - 2 * K_PADDING,
-                  Style::PROJECTION_HEIGHT * (float)height - 2 * K_PADDING - 2 * Style::LINE_HEIGHT };
+                  Style::PROJECTION_HEIGHT * (float)height - 2 * K_PADDING - 3 * Style::LINE_HEIGHT };
 }
 
 void ProjectionItem::renderIm() {
@@ -61,6 +61,7 @@ void ProjectionItem::renderIm() {
 
         render |= buffer_->resize(static_cast<int>(img_size_.x), static_cast<int>(img_size_.y));
 
+        ImGui::Text("Projection ID: %i", displayed_id_);
         ImGui::Image((void*)(intptr_t)buffer_->texture(), img_size_);
 
         ImGui::Checkbox("Auto Levels", &auto_levels_);
@@ -85,7 +86,6 @@ void ProjectionItem::renderIm() {
     ImGui::InputInt("##PROJECTION_ID", &id_);
     id_ = std::clamp(id_, 0, K_MAX_ID_);
     if (prev_id != id_) {
-        buffer_->clear();
         setProjectionId();
     }
     ImGui::PopItemWidth();
@@ -123,9 +123,7 @@ bool ProjectionItem::setProjectionId() {
 }
 
 void ProjectionItem::updateProjection(uint32_t id, const std::string& data, const std::array<uint32_t, 2>& size) {
-    id_ = static_cast<int>(id);
-
-    // TODO: check whether id == id_. This can only be implemented when the GUI client knows the maximum id
+    displayed_id_ = static_cast<int>(id);
 
     ImageDataType img(size[0] * size[1]);
     std::memcpy(img.data(), data.data(), data.size());

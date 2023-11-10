@@ -83,9 +83,9 @@ void ReconItem::renderIm() {
         ImGui::EndCombo();
     }
 
-    ImGui::Checkbox("Auto Levels", &auto_levels_);
+    ImGui::Checkbox("Auto levels", &auto_levels_);
     ImGui::SameLine();
-    ImGui::Checkbox("Clamp Negatives", &clamp_negatives_);
+    ImGui::Checkbox("Clamp negatives", &clamp_negatives_);
 
     float step_size = (max_val_ - min_val_) / 100.f;
     if (step_size < 0.01f) step_size = 0.01f; // avoid a tiny step size
