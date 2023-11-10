@@ -36,7 +36,7 @@ Application::Application(size_t raw_buffer_size,
                          ReconstructorFactory* recon_factory,
                          const RpcServerConfig& rpc_config)
      : raw_buffer_(raw_buffer_size),
-       proj_mediator_(new ProjectionMediator(10)),
+       proj_mediator_(new ProjectionMediator(k_PROJECTION_MEDIATOR_BUFFER_SIZE)),
        slice_mediator_(new SliceMediator()),
        ramp_filter_factory_(ramp_filter_factory),
        imgproc_params_(imageproc_params),

@@ -12,13 +12,14 @@
 
 #include <spdlog/spdlog.h>
 
+#include "common/config.hpp"
 #include "recon/daq/zmq_daq_client.hpp"
 
 namespace recastx::recon {
 
 ZmqDaqClient::ZmqDaqClient(const std::string& endpoint, const std::string& socket_type, size_t concurrency)
         : DaqClientInterface(),
-          buffer_(K_BUFFER_SIZE),
+          buffer_(k_DAQ_BUFFER_SIZE),
           context_(1),
           socket_(context_, parseSocketType(socket_type)),
           concurrency_(concurrency) {
@@ -140,7 +141,7 @@ zmq::socket_type ZmqDaqClient::parseSocketType(const std::string& socket_type) c
 void ZmqDaqClient::monitor(const Projection<>& proj) {
     if (proj.type == ProjectionType::PROJECTION) {
         ++projection_received_;
-        if (projection_received_ % K_MONITOR_EVERY == 0) {
+        if (projection_received_ % k_DAQ_MONITOR_EVERY == 0) {
             spdlog::info("# of projections received: {}", projection_received_);
         }                
     } else {

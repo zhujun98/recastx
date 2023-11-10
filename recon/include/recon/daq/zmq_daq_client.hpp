@@ -35,11 +35,6 @@ class ZmqDaqClient : public DaqClientInterface {
 
     void monitor(const Projection<>& proj);
 
-  public:
-
-    static constexpr size_t K_BUFFER_SIZE = 1000;
-    static constexpr size_t K_MONITOR_EVERY = 1000;
-
   protected:
 
     ThreadSafeQueue<Projection<>> buffer_;
