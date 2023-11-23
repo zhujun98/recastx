@@ -23,7 +23,17 @@ make -j12 && make install
 
 ### Installing the GUI client
 
-On a graphics node or a laptop (Linux / MacOS),
+#### Installing prerequisites (optional)
+
+- Linux / MaxOS
+
+  *X11*
+
+- Windows
+
+#### Installing the GUI client
+
+- Linux / MacOS
 
 ```bash
 git clone --recursive https://github.com/<repo>/recastx.git
@@ -38,6 +48,8 @@ cmake .. -DCMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"} \
          -DBUILD_GUI=ON
 make -j12 && make install
 ```
+
+- Windows
 
 ## Package managers
 
