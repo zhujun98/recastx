@@ -16,7 +16,7 @@
 #include <spdlog/spdlog.h>
 
 #include "application.hpp"
-#include "graphics/scene3d.hpp"
+#include "graphics/scene.hpp"
 #include "graphics/style.hpp"
 
 namespace recastx::gui {
@@ -72,7 +72,7 @@ Application& Application::instance() {
     return *instance_;
 }
 
-void Application::setScene(Scene3d* scene){
+void Application::setScene(Scene* scene){
     scene_ = scene;
 
     glfwGetWindowSize(glfw_window_, &width_, &height_);

@@ -24,7 +24,7 @@ struct GLFWwindow;
 
 namespace recastx::gui {
 
-class Scene3d;
+class Scene;
 
 class Application {
 
@@ -41,7 +41,7 @@ class Application {
 
     inline static std::unique_ptr<Application> instance_;
 
-    Scene3d* scene_;
+    Scene* scene_;
 
     Application();
 
@@ -71,7 +71,7 @@ public:
 
     static Application& instance();
 
-    void setScene(Scene3d* scene);
+    void setScene(Scene* scene);
 
     void spin();
 };
