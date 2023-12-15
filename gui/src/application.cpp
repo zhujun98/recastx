@@ -72,16 +72,18 @@ Application& Application::instance() {
     return *instance_;
 }
 
-void Application::setScene(Scene3d* scene) { scene_ = scene; }
+void Application::setScene(Scene3d* scene){
+    scene_ = scene;
 
-void Application::spin() {
     glfwGetWindowSize(glfw_window_, &width_, &height_);
     scene_->onWindowSizeChanged(width_, height_);
 
     int display_w, display_h;
     glfwGetFramebufferSize(glfw_window_, &display_w, &display_h);
     scene_->onFramebufferSizeChanged(display_w, display_h);
+}
 
+void Application::spin() {
     while (!glfwWindowShouldClose(glfw_window_)) {
         glfwPollEvents();
         scene_->consumeData();
