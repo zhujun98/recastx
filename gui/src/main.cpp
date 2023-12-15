@@ -17,8 +17,6 @@
 #include <imgui.h>
 
 #include "application.hpp"
-#include "graphics/scene3d.hpp"
-#include "rpc_client.hpp"
 
 int main(int argc, char** argv) {
     spdlog::set_pattern("[%Y-%m-%d %T.%e] [%^%l%$] %v");
@@ -45,13 +43,7 @@ int main(int argc, char** argv) {
     }
 
     auto& app = Application::instance();
-
-    RpcClient rpc_client(opts["server"].as<std::string>());
-
-    Scene3d scene(&rpc_client);
-
-    app.setScene(&scene);
-    app.spin();
+    app.spin(opts["server"].as<std::string>());
 
     spdlog::info("GUI application closed!");
     return 0;

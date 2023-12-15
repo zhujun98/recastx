@@ -24,7 +24,8 @@ struct GLFWwindow;
 
 namespace recastx::gui {
 
-class Scene3d;
+class Scene;
+class RpcClient;
 
 class Application {
 
@@ -39,9 +40,10 @@ class Application {
 
     GLFWwindow* glfw_window_ = nullptr;
 
-    inline static std::unique_ptr<Application> instance_;
+    std::unique_ptr<RpcClient> rpc_client_;
+    std::unique_ptr<Scene> scene_;
 
-    Scene3d* scene_;
+    inline static std::unique_ptr<Application> instance_;
 
     Application();
 
@@ -71,9 +73,9 @@ public:
 
     static Application& instance();
 
-    void setScene(Scene3d* scene);
+    void makeScene();
 
-    void spin();
+    void spin(const std::string& endpoint);
 };
 
 }  // namespace recastx::gui
