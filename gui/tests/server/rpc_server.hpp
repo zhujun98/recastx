@@ -91,6 +91,9 @@ class ImageprocService final : public rpc::Imageproc::Service {
 
 class ProjectionTransferService final : public rpc::ProjectionTransfer::Service {
 
+    static constexpr uint32_t x_ = 1024;
+    static constexpr uint32_t y_ = 1024;
+
     uint32_t proj_id_;
 
     rpc::ServerState_State state_;
@@ -110,7 +113,14 @@ class ProjectionTransferService final : public rpc::ProjectionTransfer::Service 
     void updateState(rpc::ServerState_State state) { state_ = state; }
 };
 
-  class ReconstructionService final : public rpc::Reconstruction::Service {
+class ReconstructionService final : public rpc::Reconstruction::Service {
+
+    static constexpr uint32_t slice_x_ = 1024;
+    static constexpr uint32_t slice_y_ = 512;
+
+    static constexpr uint32_t volume_x_ = 128;
+    static constexpr uint32_t volume_y_ = 128;
+    static constexpr uint32_t volume_z_ = 128;
 
     rpc::ServerState_State state_;
     bool sino_uploaded_ = false;
@@ -124,7 +134,7 @@ class ProjectionTransferService final : public rpc::ProjectionTransfer::Service 
 
     void setSliceData(rpc::ReconData* data, int id);
 
-    void setVolumeData(rpc::ReconData* data);
+    void setVolumeShardData(rpc::ReconData* data, uint32_t shard_id);
 
   public:
 

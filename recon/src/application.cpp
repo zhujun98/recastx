@@ -327,13 +327,13 @@ std::optional<rpc::ProjectionData> Application::getProjectionData(int timeout) {
     return std::nullopt;
 }
 
-std::optional<rpc::ReconData> Application::getVolumeData(int timeout) { 
+std::vector<rpc::ReconData> Application::getVolumeData(int timeout) {
     if (volume_buffer_.fetch(timeout)) {
         auto& data = volume_buffer_.front();
         auto [x, y, z] = data.shape();
         return createVolumeDataPacket(data, x, y, z);
     }
-    return std::nullopt;
+    return {};
 }
 
 std::vector<rpc::ReconData> Application::getSliceData(int timeout) {

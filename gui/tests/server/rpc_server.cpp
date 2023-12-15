@@ -73,7 +73,9 @@ grpc::Status ProjectionTransferService::GetProjectionData(grpc::ServerContext* c
                                                           const google::protobuf::Empty*,
                                                           grpc::ServerWriter<rpc::ProjectionData>* writer) {
     if (state_ == rpc::ServerState_State_PROCESSING || state_ == rpc::ServerState_State_ACQUIRING) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(kReconInterval));
+        if (state_ == rpc::ServerState_State_PROCESSING) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(kReconInterval));
+        }
 
         rpc::ProjectionData data;
         spdlog::info("Set projection data");
@@ -85,10 +87,10 @@ grpc::Status ProjectionTransferService::GetProjectionData(grpc::ServerContext* c
 }
 
 void ProjectionTransferService::setProjectionData(rpc::ProjectionData *data) {
-    auto vec = generateRandomRawData(1024 * 512, 0, 1000 + 10 * proj_id_);
+    auto vec = generateRandomRawData(x_ * y_, 0, 1000 + 10 * proj_id_);
     data->set_id(proj_id_);
-    data->set_col_count(1024);
-    data->set_row_count(512);
+    data->set_col_count(x_);
+    data->set_row_count(y_);
     data->set_data(vec.data(), vec.size() * sizeof(decltype(vec)::value_type));
 }
 
@@ -124,21 +126,24 @@ grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
     if (state_ == rpc::ServerState_State_PROCESSING) {
         sino_uploaded_ = true;
 
-        spdlog::info("Set volume data");
-        setVolumeData(&data);
-        writer->Write(data);
+        for (auto i = 0; i < volume_z_; ++i) {
+            setVolumeShardData(&data, i);
+            writer->Write(data);
+        }
+        spdlog::info("Volume data sent");
 
         for (int i = 0; i < timestamps_.size(); ++i) {
             setSliceData(&data, i);
             writer->Write(data);
             if (timestamps_.at(i) == timestamp_) on_demand_ = false;
         }
+        spdlog::info("Slice data sent");
     }
 
     if (on_demand_ && sino_uploaded_) {
-        spdlog::info("Set on-demand slice data: {}", timestamp_);
         setSliceData(&data, -1);
         writer->Write(data);
+        spdlog::info("On-demand slice data: {} sent", timestamp_);
         on_demand_ = false;
     }
     return grpc::Status::OK;
@@ -148,10 +153,10 @@ void ReconstructionService::setSliceData(rpc::ReconData* data, int id) {
     auto slice = data->mutable_slice();
 
     auto vec = generateRandomProcData(
-            1024 * 512, 0.f, 1.f + (id >= 0 ? (float)id : (float)sliceIdFromTimestamp(timestamp_)));
+            slice_x_ * slice_y_, 0.f, 1.f + (id >= 0 ? (float)id : (float)sliceIdFromTimestamp(timestamp_)));
     slice->set_data(vec.data(), vec.size() * sizeof(decltype(vec)::value_type));
-    slice->set_col_count(1024);
-    slice->set_row_count(512);
+    slice->set_col_count(slice_x_);
+    slice->set_row_count(slice_y_);
     if (id >= 0) {
         slice->set_timestamp(timestamps_.at(id));
     } else {
@@ -159,14 +164,15 @@ void ReconstructionService::setSliceData(rpc::ReconData* data, int id) {
     }
 }
 
-void ReconstructionService::setVolumeData(rpc::ReconData* data) {
-    auto vol = data->mutable_volume();
+void ReconstructionService::setVolumeShardData(rpc::ReconData* data, uint32_t index) {
+    auto shard = data->mutable_volume_shard();
 
-    auto vec = generateRandomProcData(128 * 128 * 128, 0.f, 0.5f);
-    vol->set_data(vec.data(), vec.size() * sizeof(float));
-    vol->set_col_count(128);
-    vol->set_row_count(128);
-    vol->set_slice_count(128);
+    auto vec = generateRandomProcData(volume_x_ * volume_y_, 0.f, 0.5f);
+    shard->set_data(vec.data(), vec.size() * sizeof(float));
+    shard->set_col_count(volume_x_);
+    shard->set_row_count(volume_y_);
+    shard->set_slice_count(volume_z_);
+    shard->set_pos(index * volume_x_ * volume_y_);
 }
 
 RpcServer::RpcServer(int port)

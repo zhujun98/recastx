@@ -11,24 +11,25 @@ service Reconstruction {
   rpc GetReconData (google.protobuf.Empty) returns (stream ReconData) {}
 }
 
-message SliceData {
+message ReconSlice {
   bytes data = 1;
   uint32 col_count = 2;
   uint32 row_count = 3;
   uint64 timestamp = 4;
 }
 
-message VolumeData {
+message ReconVolumeShard {
   bytes data = 1;
   uint32 col_count = 2;
   uint32 row_count = 3;
   uint32 slice_count = 4;
+  uint32 pos = 5;
 }
 
 message ReconData {
   oneof data {
-    VolumeData volume = 1;
-    SliceData slice = 2;
+    ReconSlice slice = 1;
+    ReconVolumeShard volume_shard = 2;
   }
 }
 

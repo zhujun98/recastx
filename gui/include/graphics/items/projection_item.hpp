@@ -9,16 +9,19 @@
 #ifndef GUI_PROJECTIONITEM_HPP
 #define GUI_PROJECTIONITEM_HPP
 
+#include <mutex>
 #include <optional>
 
 #include "common/config.hpp"
 #include "graphics/textures.hpp"
 #include "graphics/items/graphics_item.hpp"
+#include "utils.hpp"
 
 namespace recastx::gui {
 
 class ImageBuffer;
 class Colormap;
+class FpsCounter;
 
 class ProjectionItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDataItem {
 
@@ -36,6 +39,7 @@ class ProjectionItem : public GraphicsItem, public GraphicsGLItem, public Graphi
     static constexpr int K_MAX_ID_ = 10000;
     int displayed_id_ {0};
 
+    std::mutex mtx_;
     ImageDataType data_;
     std::array<uint32_t, 2> shape_;
 
@@ -50,6 +54,8 @@ class ProjectionItem : public GraphicsItem, public GraphicsGLItem, public Graphi
     float min_val_ { 0.f };
     float max_val_ { 0.f };
     bool update_min_max_vals_ {false};
+
+    FpsCounter counter_;
 
     void toggleProjectionStream();
 

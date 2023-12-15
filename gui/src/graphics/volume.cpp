@@ -6,6 +6,8 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
+#include <cstring>
+
 #include "graphics/volume.hpp"
 #include "graphics/primitives.hpp"
 #include "graphics/shader_program.hpp"
@@ -144,19 +146,44 @@ Volume::~Volume() {
     glDeleteBuffers(1, &vbo_);
 }
 
-void Volume::setData(DataType&& data, const ShapeType& shape) {
-    data_ = std::move(data);
-    shape_ = shape;
-    update_texture_ = true;
+bool Volume::init(uint32_t x, uint32_t y, uint32_t z) {
+    if (x != b_x_ || y != b_y_ || z != b_z_) {
+        buffer_.resize(x * y * z, DataType::value_type(0));
+        b_x_ = x;
+        b_y_ = y;
+        b_z_ = z;
+        return true;
+    }
+    return false;
+}
+
+bool Volume::setShard(const std::string& shard, uint32_t pos) {
+    if (buffer_.empty()) return false;
+
+    using value_type = DataType::value_type;
+    assert(shard.size() == b_x_ * b_y_ * sizeof(value_type));
+    assert(pos * sizeof(value_type) + shard.size() <= buffer_.size() * sizeof(value_type));
+    std::memcpy(buffer_.data() + pos, shard.data(), shard.size());
+    bool ok =  pos * sizeof(value_type) + shard.size() == buffer_.size() * sizeof(value_type);
+    if (ok) {
+        buffer_.swap(data_);
+        if (x_ != b_x_ || y_ != b_y_ || z_ != b_z_) {
+            x_ = b_x_;
+            y_ = b_y_;
+            z_ = b_z_;
+            buffer_.resize(x_ * y_ * z_);
+        }
+        update_texture_ = true;
+    }
+    return ok;
 }
 
 void Volume::preRender() {
     if (update_texture_) {
-        if (!data_.empty()) {
-            texture_.setData(data_,
-                             static_cast<int>(shape_[0]),
-                             static_cast<int>(shape_[1]),
-                             static_cast<int>(shape_[2]));
+        if (data_.empty()) {
+            texture_.clear();
+        } else {
+            texture_.setData(data_, static_cast<int>(x_), static_cast<int>(y_), static_cast<int>(z_));
         }
         update_texture_ = false;
         updateMinMaxVal();
@@ -168,7 +195,7 @@ void Volume::render(const glm::mat4& view,
                     float min_v,
                     float max_v,
                     float alpha) {
-    if (data_.empty()) return;
+    if (!texture_.isReady()) return;
 
     shader_->use();
     shader_->setInt("colormap", 0);
@@ -195,6 +222,21 @@ void Volume::render(const glm::mat4& view,
     glDrawArrays(GL_TRIANGLES, 0, count);
 
     texture_.unbind();
+}
+
+void Volume::clear() {
+    data_.clear();
+    x_ = 0;
+    y_ = 0;
+    z_ = 0;
+    update_texture_ = true;
+}
+
+void Volume::clearBuffer() {
+    buffer_.clear();
+    b_x_ = 0;
+    b_y_ = 0;
+    b_z_ = 0;
 }
 
 void Volume::updateMinMaxVal() {

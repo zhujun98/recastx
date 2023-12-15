@@ -29,7 +29,6 @@ class Slice {
   public:
 
     using DataType = std::vector<float>;
-    using ShapeType = std::array<size_t, 2>;
     using Orient4Type = glm::mat4;
 
     enum class Plane { XY, YZ, XZ };
@@ -37,7 +36,8 @@ class Slice {
   private:
 
     int id_ = -1;
-    ShapeType shape_;
+    uint32_t x_;
+    uint32_t y_;
     DataType data_;
 
     std::optional<std::array<float, 2>> min_max_vals_;
@@ -65,7 +65,7 @@ class Slice {
 
     [[nodiscard]] int id() const;
 
-    void setData(DataType&& data, const ShapeType& size);
+    bool setData(const std::string& data, uint32_t x, uint32_t y);
 
     void preRender();
 
@@ -75,17 +75,13 @@ class Slice {
                 float max_v,
                 bool fallback_to_preview);
 
-    [[nodiscard]] bool empty() const { return data_.empty(); }
+    [[nodiscard]] bool hasTexture() const { return texture_.isReady(); }
+
+    void clear();
 
     [[nodiscard]] bool hovered() const { return hovered_; }
 
     [[nodiscard]] bool transparent() const  { return hovered_ || highlighted_ || data_.empty(); }
-
-    void setEmpty() {
-        data_.clear();
-        shape_.fill(0);
-        update_texture_ = true;
-    }
 
     void setHovered(bool state) { hovered_ = state; }
 

@@ -94,11 +94,15 @@ void ProjectionItem::renderIm() {
     ImGui::PopItemWidth();
 
     ImGui::Separator();
+
+    scene_.setStatus("projectionUpdateFrameRate", counter_.frameRate());
 }
 
 void ProjectionItem::onFramebufferSizeChanged(int /*width*/, int /*height*/) {}
 
 void ProjectionItem::preRenderGl() {
+    std::lock_guard lck(mtx_);
+
     if (update_texture_) {
         if (!data_.empty()) {
             texture_.setData(data_, static_cast<int>(shape_[0]), static_cast<int>(shape_[1]));
@@ -125,6 +129,7 @@ bool ProjectionItem::consume(const DataType& packet) {
         const auto& data = std::get<rpc::ProjectionData>(packet);
 
         updateProjection(data.id(), data.data(), {data.col_count(), data.row_count()});
+        counter_.count();
         log::info("Set projection data: {}", data.id());
         return true;
     }
@@ -147,9 +152,10 @@ void ProjectionItem::updateProjection(uint32_t id, const std::string& data, cons
     std::memcpy(img.data(), data.data(), data.size());
     assert(data.size() == img.size() * sizeof(ImageValueType));
 
+    std::lock_guard lck(mtx_);
+
     data_ = std::move(img);
     shape_ = size;
-
     update_texture_ = true;
     update_min_max_vals_ = true;
 }

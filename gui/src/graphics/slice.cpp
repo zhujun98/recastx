@@ -44,16 +44,26 @@ Slice::~Slice() {
 
 int Slice::id() const { return id_; }
 
-void Slice::setData(DataType&& data, const ShapeType& shape) {
-    data_ = std::move(data);
-    shape_ = shape;
+bool Slice::setData(const std::string& data, uint32_t x, uint32_t y) {
+    bool resized = false;
+    if (x != x_ || y != y_ ) {
+        x_ = x;
+        y_ = y;
+        data_.resize(x_ * y_);
+        resized = true;
+    }
+    assert(data.size() == x_ * y_ * sizeof(DataType::value_type));
+    std::memcpy(data_.data(), data.data(), data.size());
     update_texture_ = true;
+    return resized;
 }
 
 void Slice::preRender() {
     if (update_texture_) {
-        if (!data_.empty()) {
-            texture_.setData(data_, static_cast<int>(shape_[0]), static_cast<int>(shape_[1]));
+        if (data_.empty()) {
+            texture_.clear();
+        } else {
+            texture_.setData(data_, static_cast<int>(x_), static_cast<int>(y_));
         }
         update_texture_ = false;
         updateMinMaxVal();
@@ -71,10 +81,10 @@ void Slice::render(const glm::mat4& view,
     shader_->setMat4("projection", projection);
     shader_->setMat4("orientationMatrix", orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0)));
     shader_->setBool("highlighted", hovered_ || highlighted_);
-    shader_->setBool("empty", data_.empty());
+    shader_->setBool("empty", !texture_.isReady());
     shader_->setBool("fallback", fallback_to_preview);
 
-    if (data_.empty() && !fallback_to_preview) {
+    if (!texture_.isReady() && !fallback_to_preview) {
         shader_->setVec4("frameColor", frame_color_);
 
         glBindVertexArray(vao_);
@@ -93,8 +103,15 @@ void Slice::render(const glm::mat4& view,
     }
 }
 
+void Slice::clear() {
+    data_.clear();
+    x_ = 0;
+    y_ = 0;
+    update_texture_ = true;
+}
+
 void Slice::setOrientation(const glm::vec3& base, const glm::vec3& x, const glm::vec3& y) {
-    setEmpty();
+    clear();
 
     float orientation[16] = {x.x,  y.x,  base.x, 0.0f,  // 1
                              x.y,  y.y,  base.y, 0.0f,  // 2
@@ -104,7 +121,7 @@ void Slice::setOrientation(const glm::vec3& base, const glm::vec3& x, const glm:
 }
 
 void Slice::setOrientation(const Slice::Orient4Type& orient) {
-    setEmpty();
+    clear();
 
     orient_ = orient;
 }
