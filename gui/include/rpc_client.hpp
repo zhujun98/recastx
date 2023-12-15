@@ -72,7 +72,7 @@ class RpcClient {
 
     void startReadingReconStream();
 
-    [[nodiscard]] bool checkStatus(const grpc::Status& status, bool warn_on_fail = true) const;
+    [[nodiscard]] bool checkStatus(const grpc::Status& status, bool warn_on_unavailable_server = true) const;
 
   public:
 

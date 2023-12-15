@@ -82,7 +82,7 @@ protected:
 
     bool handleKey(int key, int action, int mods) override;
 
-    void consumeData();
+    bool consume(RpcClient::DataType&& data);
 
     void setStatus(const std::string& key, const std::any& value) {
         scene_status_[key] = value;

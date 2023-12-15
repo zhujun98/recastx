@@ -90,11 +90,29 @@ void Application::spin(const std::string& endpoint) {
 
     makeScene();
 
+    std::atomic<bool> running = true;
+    auto t = std::thread([&]() {
+        auto& packets = RpcClient::packets();
+        while (running) {
+            if (!packets.empty()) {
+                auto data = std::move(packets.front());
+                packets.pop();
+
+                if (!scene_->consume(std::move(data))) {
+                    spdlog::warn("Data ignored!");
+                }
+            } else {
+                std::this_thread::sleep_for(std::chrono::microseconds(1));
+            }
+        }
+    });
+
     while (!glfwWindowShouldClose(glfw_window_)) {
         glfwPollEvents();
-        scene_->consumeData();
         render();
     }
+
+    running = false;
 }
 
 void Application::initImgui() {

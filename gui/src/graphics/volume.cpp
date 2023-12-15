@@ -118,10 +118,7 @@ std::tuple<float, float, int> VolumeSlicer::sortVertices(const glm::vec3& view_d
 }
 
 
-Volume::Volume() : size_({8, 8, 8}) {
-    DataType data(size_[0] * size_[1] * size_[2], 0);
-    setData(std::move(data), size_);
-
+Volume::Volume() {
     glGenVertexArrays(1, &vao_);
     glBindVertexArray(vao_);
     glGenBuffers(1, &vbo_);
@@ -147,26 +144,23 @@ Volume::~Volume() {
     glDeleteBuffers(1, &vbo_);
 }
 
-void Volume::setData(DataType&& data, const SizeType& size) {
+void Volume::setData(DataType&& data, const ShapeType& shape) {
     data_ = std::move(data);
-    size_ = size;
-
-    updateMinMaxVal();
-
-    texture_.setData(data_,
-                     static_cast<int>(size_[0]),
-                     static_cast<int>(size_[1]),
-                     static_cast<int>(size_[2]));
+    shape_ = shape;
+    update_texture_ = true;
 }
 
-void Volume::clearData() {
-    std::fill(data_.begin(), data_.end(), 0.f);
-    min_max_vals_ = {0.f, 0.f};
-
-    texture_.setData(data_,
-                     static_cast<int>(size_[0]),
-                     static_cast<int>(size_[1]),
-                     static_cast<int>(size_[2]));
+void Volume::preRender() {
+    if (update_texture_) {
+        if (!data_.empty()) {
+            texture_.setData(data_,
+                             static_cast<int>(shape_[0]),
+                             static_cast<int>(shape_[1]),
+                             static_cast<int>(shape_[2]));
+        }
+        update_texture_ = false;
+        updateMinMaxVal();
+    }
 }
 
 void Volume::render(const glm::mat4& view,
@@ -201,14 +195,13 @@ void Volume::render(const glm::mat4& view,
     texture_.unbind();
 }
 
-void Volume::bind() const { texture_.bind(); }
-void Volume::unbind() const { texture_.unbind(); }
-
 void Volume::updateMinMaxVal() {
+    if (data_.empty()) {
+        min_max_vals_.reset();
+        return;
+    }
     auto [vmin, vmax] = std::minmax_element(data_.begin(), data_.end());
     min_max_vals_ = {*vmin, *vmax};
 }
-
-const std::array<float, 2>& Volume::minMaxVals() const { return min_max_vals_; }
 
 } // namespace recastx::gui

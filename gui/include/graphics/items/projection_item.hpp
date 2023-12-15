@@ -9,6 +9,8 @@
 #ifndef GUI_PROJECTIONITEM_HPP
 #define GUI_PROJECTIONITEM_HPP
 
+#include <optional>
+
 #include "common/config.hpp"
 #include "graphics/textures.hpp"
 #include "graphics/items/graphics_item.hpp"
@@ -23,6 +25,7 @@ class ProjectionItem : public GraphicsItem, public GraphicsGLItem, public Graphi
   public:
 
     using ImageDataType = std::vector<RawDtype>;
+    using ImageValueType = typename ImageDataType::value_type;
 
   private:
 
@@ -33,9 +36,12 @@ class ProjectionItem : public GraphicsItem, public GraphicsGLItem, public Graphi
     static constexpr int K_MAX_ID_ = 10000;
     int displayed_id_ {0};
 
-    bool initialized_ = false;
+    ImageDataType data_;
+    std::array<uint32_t, 2> shape_;
+
     ImVec2 img_size_;
-    ImageTexture<typename ImageDataType::value_type> texture_;
+    bool update_texture_ = false;
+    ImageTexture<ImageValueType> texture_;
     std::unique_ptr<ImageBuffer> buffer_;
     std::unique_ptr<Colormap> cm_;
 
@@ -43,12 +49,15 @@ class ProjectionItem : public GraphicsItem, public GraphicsGLItem, public Graphi
     bool auto_levels_ { true };
     float min_val_ { 0.f };
     float max_val_ { 0.f };
+    bool update_min_max_vals_ {false};
 
     void toggleProjectionStream();
 
     bool setProjectionId();
 
     void updateProjection(uint32_t id, const std::string& data, const std::array<uint32_t, 2>& size);
+
+    void updateMinMaxVals();
 
     void renderBuffer(int width, int height);
 
@@ -63,6 +72,8 @@ class ProjectionItem : public GraphicsItem, public GraphicsGLItem, public Graphi
     void renderIm() override;
 
     void onFramebufferSizeChanged(int width, int height) override;
+
+    void preRenderGl() override;
 
     void renderGl() override;
 

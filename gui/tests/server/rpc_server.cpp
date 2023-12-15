@@ -73,7 +73,7 @@ grpc::Status ProjectionTransferService::GetProjectionData(grpc::ServerContext* c
                                                           const google::protobuf::Empty*,
                                                           grpc::ServerWriter<rpc::ProjectionData>* writer) {
     if (state_ == rpc::ServerState_State_PROCESSING || state_ == rpc::ServerState_State_ACQUIRING) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(K_RECON_INTERVAL));
+        std::this_thread::sleep_for(std::chrono::milliseconds(kReconInterval));
 
         rpc::ProjectionData data;
         spdlog::info("Set projection data");
@@ -85,7 +85,7 @@ grpc::Status ProjectionTransferService::GetProjectionData(grpc::ServerContext* c
 }
 
 void ProjectionTransferService::setProjectionData(rpc::ProjectionData *data) {
-    auto vec = generateRandomRawData(1024 * 512, 0, 1000);
+    auto vec = generateRandomRawData(1024 * 512, 0, 1000 + 10 * proj_id_);
     data->set_id(proj_id_);
     data->set_col_count(1024);
     data->set_row_count(512);
@@ -100,6 +100,10 @@ grpc::Status ReconstructionService::SetSlice(grpc::ServerContext* context,
     uint64_t ts = slice->timestamp();
     size_t id = sliceIdFromTimestamp(ts);
     spdlog::info("Update slice parameters: {} ({})", id, ts);
+
+    timestamp_ = ts;
+    on_demand_ = true;
+
     timestamps_.at(id) = ts;
     return grpc::Status::OK;
 }
@@ -114,14 +118,12 @@ grpc::Status ReconstructionService::SetVolume(grpc::ServerContext* context,
 grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
                                                  const google::protobuf::Empty*,
                                                  grpc::ServerWriter<rpc::ReconData>* writer) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(kReconInterval));
+
+    rpc::ReconData data;
     if (state_ == rpc::ServerState_State_PROCESSING) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(K_RECON_INTERVAL));
+        sino_uploaded_ = true;
 
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_int_distribution<int> dist(0, 4);
-
-        rpc::ReconData data;
         spdlog::info("Set volume data");
         setVolumeData(&data);
         writer->Write(data);
@@ -129,33 +131,38 @@ grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
         for (int i = 0; i < timestamps_.size(); ++i) {
             setSliceData(&data, i);
             writer->Write(data);
-        }
-
-        if (dist(gen) == 4) {
-            // simulate on-demand slice requested sporadically
-            spdlog::info("Set on-demand slice data");
-            setSliceData(&data, 0);
-            writer->Write(data);
+            if (timestamps_.at(i) == timestamp_) on_demand_ = false;
         }
     }
 
+    if (on_demand_ && sino_uploaded_) {
+        spdlog::info("Set on-demand slice data: {}", timestamp_);
+        setSliceData(&data, -1);
+        writer->Write(data);
+        on_demand_ = false;
+    }
     return grpc::Status::OK;
 }
 
-void ReconstructionService::setSliceData(rpc::ReconData* data, size_t id) {
+void ReconstructionService::setSliceData(rpc::ReconData* data, int id) {
     auto slice = data->mutable_slice();
 
-    auto vec = generateRandomProcData(1024 * 512, 0.f, 1.f + id);
+    auto vec = generateRandomProcData(
+            1024 * 512, 0.f, 1.f + (id >= 0 ? (float)id : (float)sliceIdFromTimestamp(timestamp_)));
     slice->set_data(vec.data(), vec.size() * sizeof(decltype(vec)::value_type));
     slice->set_col_count(1024);
     slice->set_row_count(512);
-    slice->set_timestamp(timestamps_.at(id));
+    if (id >= 0) {
+        slice->set_timestamp(timestamps_.at(id));
+    } else {
+        slice->set_timestamp(timestamp_);
+    }
 }
 
 void ReconstructionService::setVolumeData(rpc::ReconData* data) {
     auto vol = data->mutable_volume();
 
-    auto vec = generateRandomProcData(128 * 128 * 128, 0.f, 1.f + MAX_NUM_SLICES - 1);
+    auto vec = generateRandomProcData(128 * 128 * 128, 0.f, 0.5f);
     vol->set_data(vec.data(), vec.size() * sizeof(float));
     vol->set_col_count(128);
     vol->set_row_count(128);

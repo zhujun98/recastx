@@ -12,6 +12,7 @@
 #include <array>
 #include <cstddef>
 #include <memory>
+#include <optional>
 
 #include <GL/gl3w.h>
 #include <glm/glm.hpp>
@@ -28,7 +29,7 @@ class Slice {
   public:
 
     using DataType = std::vector<float>;
-    using SizeType = std::array<size_t, 2>;
+    using ShapeType = std::array<size_t, 2>;
     using Orient4Type = glm::mat4;
 
     enum class Plane { XY, YZ, XZ };
@@ -36,9 +37,12 @@ class Slice {
   private:
 
     int id_ = -1;
-    SizeType size_;
+    ShapeType shape_;
     DataType data_;
 
+    std::optional<std::array<float, 2>> min_max_vals_;
+
+    bool update_texture_ = false;
     SliceTexture texture_;
 
     GLuint vao_;
@@ -47,9 +51,6 @@ class Slice {
 
     bool hovered_ = false;
     bool highlighted_ = false;
-    bool visible_ = true;
-
-    std::array<float, 2> min_max_vals_ { 0.f, 0.f };
 
     Plane plane_;
     Orient4Type orient_;
@@ -63,35 +64,41 @@ class Slice {
 
     [[nodiscard]] int id() const;
 
-    void setData(DataType&& data, const SizeType& size);
+    void setData(DataType&& data, const ShapeType& size);
+
+    void preRender();
 
     void render(const glm::mat4& view,
                 const glm::mat4& projection,
                 float min_v,
-                float max_v);
+                float max_v,
+                bool fallback_to_volume);
 
     [[nodiscard]] bool empty() const { return data_.empty(); }
 
     [[nodiscard]] bool hovered() const { return hovered_; }
 
-    [[nodiscard]] bool visible() const { return visible_; }
-
-    void setVisible(bool visible) { visible_ = visible; }
-
     [[nodiscard]] bool transparent() const  { return hovered_ || highlighted_ || data_.empty(); }
+
+    void setEmpty() {
+        data_.clear();
+        shape_.fill(0);
+        update_texture_ = true;
+    }
 
     void setHovered(bool state) { hovered_ = state; }
 
     void setHighlighted(bool state) { highlighted_ = state; }
-
-    void setEmpty();
 
     void setOrientation(const glm::vec3& base, const glm::vec3& x, const glm::vec3& y);
     void setOrientation(const Slice::Orient4Type& orient);
 
     void reset();
 
-    void setPlane(Plane plane) { plane_ = plane; reset(); }
+    void setPlane(Plane plane) {
+        plane_ = plane;
+        reset();
+    }
 
     Plane plane() const { return plane_; }
 
@@ -101,7 +108,7 @@ class Slice {
 
     [[nodiscard]] const DataType& data() const { return data_; }
 
-    [[nodiscard]] const std::array<float, 2>& minMaxVals() const { return min_max_vals_; }
+    [[nodiscard]] const std::optional<std::array<float, 2>>& minMaxVals() const { return min_max_vals_; }
 };
 
 } // namespace recastx::gui

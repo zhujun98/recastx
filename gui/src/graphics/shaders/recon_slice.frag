@@ -11,7 +11,7 @@ uniform sampler1D colormap;
 uniform sampler3D volumeData;
 
 uniform int highlighted;
-uniform int empty;
+uniform int useVolumeTexture;
 uniform float minValue;
 uniform float maxValue;
 
@@ -26,7 +26,7 @@ void main() {
     if (minValue == maxValue) {
         value = 1.f;
     } else {
-        if (empty == 1) {
+        if (useVolumeTexture == 1) {
             value = remapMinMax(texture(volumeData, volumeCoord).x, minValue, maxValue);
         } else {
             value = remapMinMax(texture(sliceData, sliceCoord).x, minValue, maxValue);
@@ -35,7 +35,7 @@ void main() {
 
     fColor = vec4(texture(colormap, value).xyz, 1.0f);
 
-    if (empty == 1) {
+    if (useVolumeTexture == 1) {
         fColor.a = 0.75f;
     }
 

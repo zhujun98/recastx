@@ -49,8 +49,7 @@ void ProjectionItem::onWindowSizeChanged(int width, int height) {
 }
 
 void ProjectionItem::renderIm() {
-    bool render = false;
-
+    bool rerender = false;
     bool cd = ImGui::Checkbox("Show projection: ", &visible_);
     if (visible_) {
         ImGui::SetNextWindowPos(pos_);
@@ -59,20 +58,24 @@ void ProjectionItem::renderIm() {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(K_PADDING, K_PADDING));
         ImGui::Begin("Raw projection", NULL, ImGuiWindowFlags_NoDecoration);
 
-        render |= buffer_->resize(static_cast<int>(img_size_.x), static_cast<int>(img_size_.y));
+        rerender |= buffer_->resize(static_cast<int>(img_size_.x), static_cast<int>(img_size_.y));
 
         ImGui::Text("Projection ID: %i", displayed_id_);
         ImGui::Image((void*)(intptr_t)buffer_->texture(), img_size_);
 
-        ImGui::Checkbox("Auto Levels", &auto_levels_);
+        if (ImGui::Checkbox("Auto Levels", &auto_levels_) && auto_levels_) {
+            update_min_max_vals_ = true;
+        }
 
+        ImGui::BeginDisabled(auto_levels_);
         float step_size = (max_val_ - min_val_) / 100.f;
         if (step_size < 0.01f) step_size = 0.01f; // avoid a tiny step size
-        render |= ImGui::DragFloatRange2("Min / Max", &min_val_, &max_val_, step_size,
-                                         std::numeric_limits<float>::lowest(), // min() does not work
-                                         std::numeric_limits<float>::max());
+        rerender |= ImGui::DragFloatRange2("Min / Max", &min_val_, &max_val_, step_size,
+                                           std::numeric_limits<float>::lowest(), // min() does not work
+                                           std::numeric_limits<float>::max());
+        ImGui::EndDisabled();
 
-        if (render) renderBuffer(texture_.x(), texture_.y());
+        if (rerender && !data_.empty()) renderBuffer(texture_.x(), texture_.y());
 
         ImGui::End();
         ImGui::PopStyleVar();
@@ -94,6 +97,21 @@ void ProjectionItem::renderIm() {
 }
 
 void ProjectionItem::onFramebufferSizeChanged(int /*width*/, int /*height*/) {}
+
+void ProjectionItem::preRenderGl() {
+    if (update_texture_) {
+        if (!data_.empty()) {
+            texture_.setData(data_, static_cast<int>(shape_[0]), static_cast<int>(shape_[1]));
+        }
+        renderBuffer(static_cast<int>(shape_[0]), static_cast<int>(shape_[1]));
+        update_texture_ = false;
+    }
+
+    if (update_min_max_vals_ && auto_levels_) {
+        updateMinMaxVals();
+        update_min_max_vals_ = false;
+    }
+}
 
 void ProjectionItem::renderGl() {}
 
@@ -127,25 +145,27 @@ void ProjectionItem::updateProjection(uint32_t id, const std::string& data, cons
 
     ImageDataType img(size[0] * size[1]);
     std::memcpy(img.data(), data.data(), data.size());
-    assert(data.size() == img.size() * sizeof(ImageDataType::value_type));
+    assert(data.size() == img.size() * sizeof(ImageValueType));
 
-    auto w = static_cast<int>(size[0]);
-    auto h = static_cast<int>(size[1]);
-    texture_.setData(img, w, h);
-    initialized_ = true;
+    data_ = std::move(img);
+    shape_ = size;
 
-    if (auto_levels_) {
-        auto [min_p, max_p] = std::minmax_element(img.begin(), img.end());
-        min_val_ = static_cast<float>(*min_p);
-        max_val_ = static_cast<float>(*max_p);
+    update_texture_ = true;
+    update_min_max_vals_ = true;
+}
+
+void ProjectionItem::updateMinMaxVals() {
+    if (data_.empty()) {
+        min_val_ = 0.f;
+        max_val_ = 0.f;
+        return;
     }
-
-    renderBuffer(w, h);
+    auto [vmin, vmax] = std::minmax_element(data_.begin(), data_.end());
+    min_val_ = static_cast<float>(*vmin);
+    max_val_ = static_cast<float>(*vmax);
 }
 
 void ProjectionItem::renderBuffer(int width, int height) {
-    if (!initialized_) return;
-
     cm_->bind();
     texture_.bind();
     buffer_->render(width, height, min_val_, max_val_);
@@ -153,6 +173,7 @@ void ProjectionItem::renderBuffer(int width, int height) {
     cm_->unbind();
 
     scene_.useViewport();
+    spdlog::info("Buffer rendered");
 }
 
 } // namespace recastx::gui

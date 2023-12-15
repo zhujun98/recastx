@@ -184,15 +184,21 @@ void RpcClient::startReadingProjectionStream() {
     });
 }
 
-bool RpcClient::checkStatus(const grpc::Status& status, bool warn_on_fail) const {
-    if (!status.ok()) {
-        log::debug("{}: {}", status.error_code(), status.error_message());
-        if (warn_on_fail) {
-            log::warn("Failed to connect to the reconstruction server!");
+bool RpcClient::checkStatus(const grpc::Status& status, bool warn_on_unavailable_server) const {
+    auto code = status.error_code();
+    if (!code) return false;
+
+    if (code == grpc::StatusCode::UNAVAILABLE) {
+        if (warn_on_unavailable_server) {
+            log::warn("Reconstruction server is not available!");
         }
-        return true;
+    } else if (code == grpc::StatusCode::UNKNOWN) {
+        log::error("Unknown RPC error {}: {}", code, status.error_message());
+        std::exit(EXIT_FAILURE);
+    } else {
+        log::warn("Unexpected RPC error {}: {}", status.error_code(), status.error_message());
     }
-    return false;
+    return true;
 }
 
 } // namespace recastx::gui

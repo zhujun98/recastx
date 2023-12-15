@@ -96,6 +96,7 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
     Colormap cm_;
     bool auto_levels_ = true;
     bool clamp_negatives_ = true;
+    bool update_min_max_val_ = false;
     float min_val_;
     float max_val_;
 
@@ -132,7 +133,7 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
 
     void maybeSwitchDragMachine(DragType type);
 
-    void maybeUpdateMinMaxValues();
+    void updateMinMaxValues();
 
 public:
 
@@ -143,6 +144,8 @@ public:
     void renderIm() override;
 
     void onWindowSizeChanged(int width, int height) override;
+
+    void preRenderGl() override;
 
     void renderGl() override;
 

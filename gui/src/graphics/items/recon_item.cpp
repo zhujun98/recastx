@@ -49,7 +49,7 @@ ReconItem::ReconItem(Scene& scene)
     slices_.emplace_back(2, SHOW2D_SLI, std::make_unique<Slice>(2, Slice::Plane::XY));
     assert(slices_.size() == MAX_NUM_SLICES);
 
-    maybeUpdateMinMaxValues();
+    update_min_max_val_ = true;
 }
 
 ReconItem::~ReconItem() {
@@ -83,15 +83,19 @@ void ReconItem::renderIm() {
         ImGui::EndCombo();
     }
 
-    ImGui::Checkbox("Auto levels", &auto_levels_);
+    if (ImGui::Checkbox("Auto levels", &auto_levels_) && auto_levels_) {
+        update_min_max_val_ = true;
+    }
     ImGui::SameLine();
     ImGui::Checkbox("Clamp negatives", &clamp_negatives_);
 
+    ImGui::BeginDisabled(auto_levels_);
     float step_size = (max_val_ - min_val_) / 100.f;
     if (step_size < 0.01f) step_size = 0.01f; // avoid a tiny step size
     ImGui::DragFloatRange2("Min / Max", &min_val_, &max_val_, step_size,
                            std::numeric_limits<float>::lowest(), // min() does not work
                            std::numeric_limits<float>::max());
+    ImGui::EndDisabled();
 
     renderImSliceControl<0>("Slice 1##RECON");
     renderImSliceControl<1>("Slice 2##RECON");
@@ -112,16 +116,17 @@ void ReconItem::renderIm() {
         ImGui::Begin("Statistics##ReconItem", NULL, ImGuiWindowFlags_NoDecoration);
 
         ImPlot::BeginSubplots("##Histograms", 1, MAX_NUM_SLICES, ImVec2(-1.f, -1.f));
-        for (auto& slice: slices_) {
-            Slice* ptr = std::get<2>(slice).get();
-            const auto &data = ptr->data();
+        for (auto& [_, policy, slice]: slices_) {
+            const auto &data = slice->data();
             // FIXME: faster way to build the title?
-            if (ImPlot::BeginPlot(("Slice " + std::to_string(ptr->id())).c_str(),
+            if (ImPlot::BeginPlot(("Slice " + std::to_string(slice->id())).c_str(),
                                   ImVec2(-1.f, -1.f))) {
                 ImPlot::SetupAxes("Pixel value", "Density",
                                   ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
-                ImPlot::PlotHistogram("##Histogram", data.data(), static_cast<int>(data.size()),
-                                      100, false, true);
+                if (policy != DISABLE_SLI) {
+                    ImPlot::PlotHistogram("##Histogram", data.data(), static_cast<int>(data.size()),
+                                          100, false, true);
+                }
                 ImPlot::EndPlot();
             }
         }
@@ -142,6 +147,18 @@ void ReconItem::renderIm() {
 
 void ReconItem::onFramebufferSizeChanged(int /* width */, int /* height */) {}
 
+void ReconItem::preRenderGl() {
+    for (auto& [_, policy, slice] : slices_) {
+        if (policy != DISABLE_SLI) slice->preRender();
+    }
+    if (volume_policy_ != DISABLE_VOL) volume_->preRender();
+
+    if (update_min_max_val_ && auto_levels_) {
+        updateMinMaxValues();
+        update_min_max_val_ = false;
+    }
+}
+
 void ReconItem::renderGl() {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
@@ -159,7 +176,7 @@ void ReconItem::renderGl() {
 
     volume_->bind();
     for (auto slice : sortedSlices()) {
-        slice->render(view, projection, min_val, max_val_);
+        slice->render(view, projection, min_val, max_val_, !volume_->empty() && volume_policy_ == PREVIEW_VOL);
     }
     volume_->unbind();
 
@@ -207,7 +224,7 @@ void ReconItem::setSliceData(const std::string& data,
         assert(data.size() == slice_data.size() * sizeof(Slice::DataType::value_type));
         ptr->setData(std::move(slice_data), {size[0], size[1]});
         log::info("Set slice data {}", sid);
-        maybeUpdateMinMaxValues();
+        update_min_max_val_ = true;
     } else {
         // Ignore outdated reconstructed slices.
         log::debug("Outdated slice received: {} ({})", sid, timestamp);
@@ -220,7 +237,7 @@ void ReconItem::setVolumeData(const std::string& data, const std::array<uint32_t
     assert(data.size() == volume_data.size() * sizeof(Volume::DataType::value_type));
     volume_->setData(std::move(volume_data), {size[0], size[1], size[2]});
     log::info("Set volume data");
-    maybeUpdateMinMaxValues();
+    update_min_max_val_ = true;
 }
 
 bool ReconItem::consume(const DataType& packet) {
@@ -300,6 +317,8 @@ bool ReconItem::handleMouseMoved(float x, float y) {
     // TODO: fix for screen ratio
     if (dragged_slice_ != nullptr) {
         dragged_slice_->setEmpty();
+        update_min_max_val_ = true;
+
         drag_machine_->onDrag(delta);
         return true;
     }
@@ -322,11 +341,7 @@ void ReconItem::renderImSliceControl(const char* header) {
 
     ImGui::PushStyleColor(ImGuiCol_Header, K_HEADER_COLOR);
     bool expand = ImGui::CollapsingHeader(header, ImGuiTreeNodeFlags_DefaultOpen);
-    if (ImGui::IsItemHovered()) {
-        slice->setHighlighted(true);
-    } else {
-        slice->setHighlighted(false);
-    }
+    slice->setHighlighted(ImGui::IsItemHovered());
 
     ImGui::PopStyleColor();
     if (expand) {
@@ -338,7 +353,7 @@ void ReconItem::renderImSliceControl(const char* header) {
         ImGui::SameLine();
         cd |= ImGui::RadioButton(BTN_DISABLE[index], &std::get<1>(slices_[index]), DISABLE_SLI);
 
-        if (cd) std::get<2>(slices_[index])->setVisible(std::get<1>(slices_[index]) != DISABLE_SLI);
+        if (cd) update_min_max_val_ = true;
 
         static const std::map<Slice::Plane, std::string> plane_options {
                 {Slice::Plane::XY, "X-Y"},
@@ -372,13 +387,11 @@ void ReconItem::renderImVolumeControl() {
         ImGui::SameLine();
         cd |= ImGui::RadioButton("Show##RECON_VOL", &volume_policy_, SHOW_VOL);
         ImGui::SameLine();
-        bool disabled = ImGui::RadioButton("Disable##RECON_VOL", &volume_policy_, DISABLE_VOL);
-        cd |= disabled;
+        cd |= ImGui::RadioButton("Disable##RECON_VOL", &volume_policy_, DISABLE_VOL);
 
-        if (cd) updateServerVolumeParams();
-        if (disabled) {
-            volume_->clearData();
-            maybeUpdateMinMaxValues();
+        if (cd) {
+            update_min_max_val_ = true;
+            updateServerVolumeParams();
         }
 
         ImGui::SliderFloat("Alpha##RECON_VOL", &volume_alpha_, 0.0f, 1.0f);
@@ -400,35 +413,29 @@ bool ReconItem::updateServerVolumeParams() {
 
 void ReconItem::updateHoveringSlice(float x, float y) {
     auto inv_matrix = glm::inverse(matrix_);
-    int slice_id = -1;
+    Slice* matched_slice = nullptr;
     float best_z = std::numeric_limits<float>::max();
-    for (auto& slice : slices_) {
-        Slice* ptr = std::get<2>(slice).get();
-        if (!ptr->visible()) continue;
-        ptr->setHovered(false);
-        auto maybe_point = intersectionPoint(inv_matrix, ptr->orientation4(), glm::vec2(x, y));
+    for (auto& [_, policy, slice] : slices_) {
+        if (policy == DISABLE_SLI) continue;
+        slice->setHovered(false);
+        auto maybe_point = intersectionPoint(inv_matrix, slice->orientation4(), glm::vec2(x, y));
         if (std::get<0>(maybe_point)) {
             auto z = std::get<1>(maybe_point);
             if (z < best_z) {
                 best_z = z;
-                slice_id = ptr->id();
+                matched_slice = slice.get();
             }
         }
     }
 
-    if (slice_id >= 0) {
-        Slice* slice = std::get<2>(slices_[slice_id]).get();
-        slice->setHovered(true);
-        hovered_slice_ = slice;
-    } else {
-        hovered_slice_ = nullptr;
-    }
+    if (matched_slice != nullptr) matched_slice->setHovered(true);
+    hovered_slice_ = matched_slice;
 }
 
 std::vector<Slice*> ReconItem::sortedSlices() const {
     std::vector<Slice*> sorted;
-    for (auto& [slice_id, _, slice] : slices_) {
-        if (!slice->visible()) continue;
+    for (auto& [_, policy, slice] : slices_) {
+        if (policy == DISABLE_SLI) continue;
         sorted.push_back(slice.get());
     }
     std::sort(sorted.begin(), sorted.end(), [](auto& lhs, auto& rhs) -> bool {
@@ -457,24 +464,38 @@ void ReconItem::maybeSwitchDragMachine(ReconItem::DragType type) {
     }
 }
 
-void ReconItem::maybeUpdateMinMaxValues() {
-    if (!auto_levels_) return;
+void ReconItem::updateMinMaxValues() {
+    min_val_ = std::numeric_limits<float>::max();
+    max_val_ = std::numeric_limits<float>::min();
+    bool has_value = false;
 
-    auto overall_min = std::numeric_limits<float>::max();
-    auto overall_max = std::numeric_limits<float>::min();
+    for (auto& [_, policy, slice] : slices_) {
+        if (policy == DISABLE_SLI) continue;
 
-    for (auto& slice : slices_) {
-        Slice* ptr = std::get<2>(slice).get();
-        if (ptr->empty()) continue;
+        auto& min_max_v = slice->minMaxVals();
+        if (min_max_v) {
+            auto [min_v, max_v] = min_max_v.value();
+            min_val_ = min_v < min_val_ ? min_v : min_val_;
+            max_val_ = max_v > max_val_ ? max_v : max_val_;
+            has_value = true;
+        }
 
-        auto [min_v, max_v] = ptr->minMaxVals();
-        overall_min = min_v < overall_min ? min_v : overall_min;
-        overall_max = max_v > overall_max ? max_v : overall_max;
     }
 
-    auto [min_v, max_v] = volume_->minMaxVals();
-    min_val_ = min_v < overall_min ? min_v : overall_min;
-    max_val_ = max_v > overall_max ? max_v : overall_max;
+    if (volume_policy_ != DISABLE_VOL) {
+        auto& min_max_v = volume_->minMaxVals();
+        if (min_max_v) {
+            auto [min_v, max_v] = min_max_v.value();
+            min_val_ = min_v < min_val_ ? min_v : min_val_;
+            max_val_ = max_v > max_val_ ? max_v : max_val_;
+            has_value = true;
+        }
+    }
+
+    if (!has_value) {
+        min_val_ = 0.f;
+        max_val_ = 0.f;
+    }
 }
 
 // ReconItem::DragMachine
@@ -502,15 +523,13 @@ void ReconItem::SliceTranslator::onDrag(const glm::vec2& delta) {
     // project the normal vector to screen coordinates
     // FIXME maybe need window matrix here too which would be kind of
     // painful maybe
-    auto base_point_normal =
-        glm::vec3(o[2][0], o[2][1], o[2][2]) + 0.5f * (axis1 + axis2);
+    auto base_point_normal = glm::vec3(o[2][0], o[2][1], o[2][2]) + 0.5f * (axis1 + axis2);
     auto end_point_normal = base_point_normal + normal;
 
     auto a = comp_.matrix_ * glm::vec4(base_point_normal, 1.0f);
     auto b = comp_.matrix_ * glm::vec4(end_point_normal, 1.0f);
     auto normal_delta = b - a;
-    float difference =
-        glm::dot(glm::vec2(normal_delta.x, normal_delta.y), delta);
+    float difference = glm::dot(glm::vec2(normal_delta.x, normal_delta.y), delta);
 
     // take the inner product of delta x and this normal vector
 

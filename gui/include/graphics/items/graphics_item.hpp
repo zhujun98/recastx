@@ -73,6 +73,8 @@ public:
 
     virtual void onFramebufferSizeChanged(int width, int height) = 0;
 
+    virtual void preRenderGl() {};
+
     virtual void renderGl() = 0;
 };
 
