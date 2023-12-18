@@ -51,6 +51,7 @@ class Slice {
 
     bool hovered_ = false;
     bool highlighted_ = false;
+    static constexpr glm::vec4 frame_color_ {0.6, 0.6, 0.0, 1.};
 
     Plane plane_;
     Orient4Type orient_;

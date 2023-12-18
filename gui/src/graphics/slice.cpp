@@ -65,24 +65,32 @@ void Slice::render(const glm::mat4& view,
                    float min_v,
                    float max_v,
                    bool fallback_to_volume) {
-    if (data_.empty() && !fallback_to_volume) return;
-
     shader_->use();
-    shader_->setInt("colormap", 0);
-    shader_->setInt("sliceData", 1);
-    shader_->setInt("volumeData", 2);
-    shader_->setFloat("minValue", min_v);
-    shader_->setFloat("maxValue", max_v);
+
     shader_->setMat4("view", view);
     shader_->setMat4("projection", projection);
     shader_->setMat4("orientationMatrix", orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0)));
     shader_->setBool("highlighted", hovered_ || highlighted_);
-    shader_->setBool("useVolumeTexture", data_.empty() && fallback_to_volume);
+    shader_->setBool("empty", data_.empty());
+    shader_->setBool("fallback", fallback_to_volume);
 
-    texture_.bind();
-    glBindVertexArray(vao_);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    texture_.unbind();
+    if (data_.empty() && !fallback_to_volume) {
+        shader_->setVec4("frameColor", frame_color_);
+
+        glBindVertexArray(vao_);
+        glDrawArrays(GL_LINE_LOOP, 0, 4);
+    } else {
+        shader_->setInt("colormap", 0);
+        shader_->setInt("sliceData", 1);
+        shader_->setInt("volumeData", 2);
+        shader_->setFloat("minValue", min_v);
+        shader_->setFloat("maxValue", max_v);
+
+        texture_.bind();
+        glBindVertexArray(vao_);
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+        texture_.unbind();
+    }
 }
 
 void Slice::setOrientation(const glm::vec3& base, const glm::vec3& x, const glm::vec3& y) {
