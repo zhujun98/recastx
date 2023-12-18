@@ -168,6 +168,8 @@ void Volume::render(const glm::mat4& view,
                     float min_v,
                     float max_v,
                     float alpha) {
+    if (data_.empty()) return;
+
     shader_->use();
     shader_->setInt("colormap", 0);
     shader_->setInt("volumeData", 2);
