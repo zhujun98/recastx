@@ -106,24 +106,13 @@ bool Scene::handleKey(int key, int action, int mods) {
     return false;
 }
 
-void Scene::consumeData() {
-    auto& packets = RpcClient::packets();
-    while (!packets.empty()) {
-        auto data = std::move(packets.front());
-        packets.pop();
-
-        bool consumed = false;
-        for (auto& item : data_items_) {
-            if (item->consume(data)) {
-                consumed = true;
-                break;
-            };
-        }
-
-        if (!consumed) {
-            spdlog::warn("ReconData ignored!");
-        }
+bool Scene::consume(RpcClient::DataType&& data) {
+    for (auto& item : data_items_) {
+        if (item->consume(std::move(data))) {
+            return true;
+        };
     }
+    return false;
 }
 
 }  // namespace recastx::gui

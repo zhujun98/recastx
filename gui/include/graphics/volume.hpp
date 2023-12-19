@@ -11,6 +11,7 @@
 
 #include <array>
 #include <memory>
+#include <optional>
 
 #include "textures.hpp"
 #include "utils.hpp"
@@ -68,22 +69,23 @@ class Volume {
   public:
 
     using DataType = std::vector<float>;
-    using SizeType = std::array<size_t, 3>;
+    using ShapeType = std::array<size_t, 3>;
 
   private:
 
-    SizeType size_;
+    ShapeType shape_;
     DataType data_;
 
+    bool update_texture_ = false;
     VolumeTexture texture_;
+
+    std::optional<std::array<float, 2>> min_max_vals_;
 
     VolumeSlicer slicer_;
 
     GLuint vao_;
     GLuint vbo_;
     std::unique_ptr<ShaderProgram> shader_;
-
-    std::array<float, 2> min_max_vals_ {0.f, 0.f};
 
     void updateMinMaxVal();
 
@@ -92,9 +94,9 @@ public:
     Volume();
     ~Volume();
 
-    void setData(DataType&& data, const SizeType& size);
+    void setData(DataType&& data, const ShapeType& size);
 
-    void clearData();
+    void preRender();
 
     void render(const glm::mat4& view,
                 const glm::mat4& projection,
@@ -102,11 +104,20 @@ public:
                 float max_v,
                 float alpha);
 
-    void bind() const;
+    [[nodiscard]] bool empty() const { return data_.empty(); }
 
-    void unbind() const;
+    void setEmpty() {
+        data_.clear();
+        shape_.fill(0);
+        update_texture_ = true;
+    }
 
-    [[nodiscard]] const std::array<float, 2>& minMaxVals() const;
+    void bind() const { texture_.bind(); }
+
+    void unbind() const { texture_.unbind(); }
+
+    [[nodiscard]] const std::optional<std::array<float, 2>>& minMaxVals() const { return min_max_vals_; }
+
 };
 
 

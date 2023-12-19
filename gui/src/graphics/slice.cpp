@@ -44,54 +44,68 @@ Slice::~Slice() {
 
 int Slice::id() const { return id_; }
 
-void Slice::setData(DataType&& data, const SizeType& size) {
+void Slice::setData(DataType&& data, const ShapeType& shape) {
     data_ = std::move(data);
-    size_ = size;
+    shape_ = shape;
+    update_texture_ = true;
+}
 
-    updateMinMaxVal();
-
-    texture_.setData(data_, static_cast<int>(size_[0]), static_cast<int>(size_[1]));
+void Slice::preRender() {
+    if (update_texture_) {
+        if (!data_.empty()) {
+            texture_.setData(data_, static_cast<int>(shape_[0]), static_cast<int>(shape_[1]));
+        }
+        update_texture_ = false;
+        updateMinMaxVal();
+    }
 }
 
 void Slice::render(const glm::mat4& view,
                    const glm::mat4& projection,
                    float min_v,
-                   float max_v) {
+                   float max_v,
+                   bool fallback_to_preview) {
     shader_->use();
-    shader_->setInt("colormap", 0);
-    shader_->setInt("sliceData", 1);
-    shader_->setInt("volumeData", 2);
-    shader_->setFloat("minValue", min_v);
-    shader_->setFloat("maxValue", max_v);
+
     shader_->setMat4("view", view);
     shader_->setMat4("projection", projection);
     shader_->setMat4("orientationMatrix", orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0)));
     shader_->setBool("highlighted", hovered_ || highlighted_);
     shader_->setBool("empty", data_.empty());
+    shader_->setBool("fallback", fallback_to_preview);
 
-    texture_.bind();
-    glBindVertexArray(vao_);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    texture_.unbind();
-}
+    if (data_.empty() && !fallback_to_preview) {
+        shader_->setVec4("frameColor", frame_color_);
 
-void Slice::setEmpty() {
-    if (!data_.empty()) {
-        data_.clear();
-        // I think we can leave the texture as it is.
+        glBindVertexArray(vao_);
+        glDrawArrays(GL_LINE_LOOP, 0, 4);
+    } else {
+        shader_->setInt("colormap", 0);
+        shader_->setInt("sliceData", 1);
+        shader_->setInt("volumeData", 2);
+        shader_->setFloat("minValue", min_v);
+        shader_->setFloat("maxValue", max_v);
+
+        texture_.bind();
+        glBindVertexArray(vao_);
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+        texture_.unbind();
     }
 }
 
 void Slice::setOrientation(const glm::vec3& base, const glm::vec3& x, const glm::vec3& y) {
+    setEmpty();
+
     float orientation[16] = {x.x,  y.x,  base.x, 0.0f,  // 1
                              x.y,  y.y,  base.y, 0.0f,  // 2
                              x.z,  y.z,  base.z, 0.0f,  // 3
                              0.0f, 0.0f, 0.0f,   1.0f}; // 4
-
     orient_ = glm::transpose(glm::make_mat4(orientation));
 }
 
 void Slice::setOrientation(const Slice::Orient4Type& orient) {
+    setEmpty();
+
     orient_ = orient;
 }
 
@@ -120,6 +134,10 @@ Orientation Slice::orientation3() const {
 }
 
 void Slice::updateMinMaxVal() {
+    if (data_.empty()) {
+        min_max_vals_.reset();
+        return;
+    }
     auto [vmin, vmax] = std::minmax_element(data_.begin(), data_.end());
     min_max_vals_ = {*vmin, *vmax};
 }

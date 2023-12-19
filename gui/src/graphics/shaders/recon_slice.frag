@@ -10,8 +10,11 @@ uniform sampler2D sliceData;
 uniform sampler1D colormap;
 uniform sampler3D volumeData;
 
+uniform vec4 frameColor;
+
 uniform int highlighted;
 uniform int empty;
+uniform int fallback;
 uniform float minValue;
 uniform float maxValue;
 
@@ -22,21 +25,26 @@ float remapMinMax(float x, float x0, float x1) {
 }
 
 void main() {
-    float value;
-    if (minValue == maxValue) {
-        value = 1.f;
+    if (empty == 1 && fallback == 0) {
+        fColor = frameColor;
     } else {
-        if (empty == 1) {
-            value = remapMinMax(texture(volumeData, volumeCoord).x, minValue, maxValue);
+        float value;
+        bool use_fallback = empty == 1 && fallback == 1;
+        if (minValue == maxValue) {
+            value = 1.f;
         } else {
-            value = remapMinMax(texture(sliceData, sliceCoord).x, minValue, maxValue);
+            if (use_fallback) {
+                value = remapMinMax(texture(volumeData, volumeCoord).x, minValue, maxValue);
+            } else {
+                value = remapMinMax(texture(sliceData, sliceCoord).x, minValue, maxValue);
+            }
         }
-    }
 
-    fColor = vec4(texture(colormap, value).xyz, 1.0f);
+        fColor = vec4(texture(colormap, value).xyz, 1.0f);
 
-    if (empty == 1) {
-        fColor.a = 0.75f;
+        if (use_fallback) {
+            fColor.a = 0.75f;
+        }
     }
 
     if (highlighted == 1) {

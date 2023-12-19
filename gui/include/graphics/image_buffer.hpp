@@ -43,7 +43,7 @@ class ImageBuffer {
 
     void init() const;
 
-    std::array<int, 2> computeImageSize(int width, int height) const;
+    [[nodiscard]] std::array<int, 2> computeImageSize(int width, int height) const;
 
   public:
 
@@ -58,7 +58,7 @@ class ImageBuffer {
 
     void keepAspectRatio(bool keep) { keep_aspect_ratio_ = keep; }
 
-    GLuint texture() const { return texture_; }
+    [[nodiscard]] GLuint texture() const { return texture_; }
 };
 
 } // namespace recastx::gui

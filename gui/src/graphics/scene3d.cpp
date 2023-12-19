@@ -76,7 +76,10 @@ bool Scene3d::setScanMode() {
 }
 
 void Scene3d::render() {
-    for (auto& item: gl_items_) item->renderGl();
+    for (auto& item: gl_items_) {
+        item->preRenderGl();
+        item->renderGl();
+    }
 
     ImGui::SetNextWindowPos(pos_);
     ImGui::SetNextWindowSize(size_);

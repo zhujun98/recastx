@@ -27,7 +27,7 @@
 
 namespace recastx::gui::test {
 
-inline constexpr size_t K_RECON_INTERVAL = 200;
+inline constexpr int kReconInterval = 200;
 
 inline std::vector<ProDtype> generateRandomProcData(size_t s, ProDtype min_v = 0.f, ProDtype max_v = 1.f) {
     std::vector<ProDtype> vec(s);
@@ -113,13 +113,16 @@ class ProjectionTransferService final : public rpc::ProjectionTransfer::Service 
   class ReconstructionService final : public rpc::Reconstruction::Service {
 
     rpc::ServerState_State state_;
+    bool sino_uploaded_ = false;
 
     std::thread thread_;
 
+    bool on_demand_ = false;
     uint64_t timestamp_ {0};
+
     std::array<uint64_t, MAX_NUM_SLICES> timestamps_;
 
-    void setSliceData(rpc::ReconData* data, size_t id);
+    void setSliceData(rpc::ReconData* data, int id);
 
     void setVolumeData(rpc::ReconData* data);
 
@@ -139,7 +142,16 @@ class ProjectionTransferService final : public rpc::ProjectionTransfer::Service 
                               const google::protobuf::Empty*,
                               grpc::ServerWriter<rpc::ReconData>* writer) override;
 
-    void updateState(rpc::ServerState_State state) { state_ = state; }
+    void updateState(rpc::ServerState_State state) {
+        if (state != state_) {
+            if (state == rpc::ServerState_State_READY) {
+                on_demand_ = false;
+            } else if (state == rpc::ServerState_State_ACQUIRING) {
+                sino_uploaded_ = false;
+            }
+            state_ = state;
+        }
+    }
 };
 
 class RpcServer {
