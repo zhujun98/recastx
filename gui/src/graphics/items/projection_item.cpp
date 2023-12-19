@@ -173,7 +173,6 @@ void ProjectionItem::renderBuffer(int width, int height) {
     cm_->unbind();
 
     scene_.useViewport();
-    spdlog::info("Buffer rendered");
 }
 
 } // namespace recastx::gui
