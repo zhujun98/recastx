@@ -73,7 +73,7 @@ class Slice {
                 const glm::mat4& projection,
                 float min_v,
                 float max_v,
-                bool fallback_to_volume);
+                bool fallback_to_preview);
 
     [[nodiscard]] bool empty() const { return data_.empty(); }
 

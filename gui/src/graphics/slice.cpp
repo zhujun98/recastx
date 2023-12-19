@@ -64,7 +64,7 @@ void Slice::render(const glm::mat4& view,
                    const glm::mat4& projection,
                    float min_v,
                    float max_v,
-                   bool fallback_to_volume) {
+                   bool fallback_to_preview) {
     shader_->use();
 
     shader_->setMat4("view", view);
@@ -72,9 +72,9 @@ void Slice::render(const glm::mat4& view,
     shader_->setMat4("orientationMatrix", orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0)));
     shader_->setBool("highlighted", hovered_ || highlighted_);
     shader_->setBool("empty", data_.empty());
-    shader_->setBool("fallback", fallback_to_volume);
+    shader_->setBool("fallback", fallback_to_preview);
 
-    if (data_.empty() && !fallback_to_volume) {
+    if (data_.empty() && !fallback_to_preview) {
         shader_->setVec4("frameColor", frame_color_);
 
         glBindVertexArray(vao_);
@@ -94,15 +94,18 @@ void Slice::render(const glm::mat4& view,
 }
 
 void Slice::setOrientation(const glm::vec3& base, const glm::vec3& x, const glm::vec3& y) {
+    setEmpty();
+
     float orientation[16] = {x.x,  y.x,  base.x, 0.0f,  // 1
                              x.y,  y.y,  base.y, 0.0f,  // 2
                              x.z,  y.z,  base.z, 0.0f,  // 3
                              0.0f, 0.0f, 0.0f,   1.0f}; // 4
-
     orient_ = glm::transpose(glm::make_mat4(orientation));
 }
 
 void Slice::setOrientation(const Slice::Orient4Type& orient) {
+    setEmpty();
+
     orient_ = orient;
 }
 

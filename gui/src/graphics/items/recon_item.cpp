@@ -48,7 +48,6 @@ ReconItem::ReconItem(Scene& scene)
     slices_.emplace_back(1, SHOW2D_SLI, std::make_unique<Slice>(1, Slice::Plane::XZ));
     slices_.emplace_back(2, SHOW2D_SLI, std::make_unique<Slice>(2, Slice::Plane::XY));
     assert(slices_.size() == MAX_NUM_SLICES);
-
     update_min_max_val_ = true;
 }
 
@@ -176,7 +175,8 @@ void ReconItem::renderGl() {
 
     volume_->bind();
     for (auto slice : sortedSlices()) {
-        slice->render(view, projection, min_val, max_val_, !volume_->empty() && volume_policy_ == PREVIEW_VOL);
+        slice->render(view, projection, min_val, max_val_,
+                      !volume_->empty() && volume_policy_ == PREVIEW_VOL);
     }
     volume_->unbind();
 
@@ -337,7 +337,7 @@ void ReconItem::renderImSliceControl(const char* header) {
     static const char* COMBO[] = {"Orientation##RECON_PLANE_0", "Orientation##RECON_PLANE_1", "Orientation##RECON_PLANE_2"};
     static const ImVec4 K_HEADER_COLOR = (ImVec4)ImColor(65, 145, 151);
 
-    auto& slice = std::get<2>(slices_[index]);
+    auto& [timestamp, _, slice] = slices_[index];
 
     ImGui::PushStyleColor(ImGuiCol_Header, K_HEADER_COLOR);
     bool expand = ImGui::CollapsingHeader(header, ImGuiTreeNodeFlags_DefaultOpen);
@@ -366,8 +366,11 @@ void ReconItem::renderImSliceControl(const char* header) {
         Slice::Plane curr_plane = slice->plane();
         if (ImGui::BeginCombo(COMBO[index], plane_options.at(curr_plane).c_str())) {
             for (auto& [k, v] : plane_options) {
-                if (ImGui::Selectable(v.c_str(), curr_plane == k))
+                if (ImGui::Selectable(v.c_str(), curr_plane == k)) {
                     slice->setPlane(k);
+                    update_min_max_val_ = true;
+                    scene_.client()->setSlice(timestamp, slice->orientation3());
+                }
             }
             ImGui::EndCombo();
         }
