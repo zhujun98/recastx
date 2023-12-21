@@ -64,6 +64,8 @@ class Texture {
 
 protected:
 
+    bool ready_ = false;
+
     GLuint texture_id_ = 0;
 
 public:
@@ -73,6 +75,10 @@ public:
 
     virtual void bind() const = 0;
     virtual void unbind() const = 0;
+
+    [[nodiscard]] bool isReady() const { return ready_; }
+
+    void clear() { ready_ = false; }
 
     GLuint texture() const { return texture_id_; }
 };
@@ -129,6 +135,7 @@ public:
         x_ = x;
         assert((int)data.size() == 3 * x); // 3 channels: RGB
         genTexture(data);
+        ready_ = true;
     }
 
     void bind() const override {
@@ -261,6 +268,7 @@ class  ImageTexture : public Texture {
         y_ = y;
         assert((int)data.size() == x * y);
         genTexture(data);
+        ready_ = true;
     }
 
     [[nodiscard]] int x() const { return x_; }

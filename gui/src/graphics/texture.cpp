@@ -43,6 +43,7 @@ void SliceTexture::setData(const std::vector<DType>& data, int x, int y) {
     y_ = y;
     assert((int)data.size() == x * y);
     genTexture(data);
+    ready_ = true;
 }
 
 void SliceTexture::bind() const {
@@ -107,6 +108,7 @@ void VolumeTexture::setData(const std::vector<DType>& data, int x, int y, int z)
     z_ = z;
     assert((int)data.size() == x * y * z);
     genTexture(data);
+    ready_ = true;
 }
 
 void VolumeTexture::bind() const {

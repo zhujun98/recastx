@@ -69,15 +69,20 @@ class Volume {
   public:
 
     using DataType = std::vector<float>;
-    using ShapeType = std::array<size_t, 3>;
 
   private:
 
-    ShapeType shape_;
     DataType data_;
-
+    uint32_t x_;
+    uint32_t y_;
+    uint32_t z_;
     bool update_texture_ = false;
     VolumeTexture texture_;
+
+    DataType buffer_;
+    uint32_t b_x_;
+    uint32_t b_y_;
+    uint32_t b_z_;
 
     std::optional<std::array<float, 2>> min_max_vals_;
 
@@ -94,7 +99,9 @@ public:
     Volume();
     ~Volume();
 
-    void setData(DataType&& data, const ShapeType& size);
+    bool init(uint32_t x, uint32_t y, uint32_t z);
+
+    bool setShard(const std::string& shard, uint32_t pos);
 
     void preRender();
 
@@ -104,13 +111,11 @@ public:
                 float max_v,
                 float alpha);
 
-    [[nodiscard]] bool empty() const { return data_.empty(); }
+    [[nodiscard]] bool hasTexture() const { return texture_.isReady(); }
 
-    void setEmpty() {
-        data_.clear();
-        shape_.fill(0);
-        update_texture_ = true;
-    }
+    void clear();
+
+    void clearBuffer();
 
     void bind() const { texture_.bind(); }
 

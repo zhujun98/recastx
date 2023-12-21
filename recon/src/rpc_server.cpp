@@ -103,11 +103,13 @@ grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
     // - If the number of the logical threads are more than the number of the physical threads, 
     //   the volume_data could always have value.
     auto volume_data = app_->getVolumeData(0);
-    if (volume_data) {
+    if (!volume_data.empty()) {
         auto slice_data = app_->getSliceData(-1);
 
         if (app_->hasVolume()) {
-            writer->Write(volume_data.value());
+            for (const auto& item : volume_data) {
+                writer->Write(item);
+            }
             spdlog::debug("Volume data sent");
         }
         
@@ -123,8 +125,7 @@ grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
             for (const auto& item : slice_data) {
                 writer->Write(item);
                 auto ts = item.slice().timestamp();
-                spdlog::debug("On-demand slice data {} ({}) sent", 
-                              sliceIdFromTimestamp(ts), ts);
+                spdlog::debug("On-demand slice data {} ({}) sent", sliceIdFromTimestamp(ts), ts);
             }
         }
     }

@@ -226,7 +226,7 @@ class Application {
 
     bool hasVolume() const { return volume_required_; }
 
-    std::optional<rpc::ReconData> getVolumeData(int timeout);
+    std::vector<rpc::ReconData> getVolumeData(int timeout);
 
     std::vector<rpc::ReconData> getSliceData(int timeout);
 

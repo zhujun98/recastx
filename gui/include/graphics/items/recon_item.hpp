@@ -14,6 +14,7 @@
 #include <limits>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <tuple>
 
@@ -26,7 +27,6 @@
 
 namespace recastx::gui {
 
-class FpsCounter;
 class Slice;
 class Volume;
 class Wireframe;
@@ -84,6 +84,7 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
 
     friend class SliceRotator;
 
+    std::mutex slice_mtx_;
     std::vector<std::tuple<uint64_t, int, std::unique_ptr<Slice>>> slices_;
 
     GLuint rotation_axis_vao_;
@@ -100,6 +101,7 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
     float min_val_;
     float max_val_;
 
+    std::mutex volume_mtx_;
     std::unique_ptr<Volume> volume_;
     int volume_policy_ = PREVIEW_VOL;
     float volume_alpha_ = 1.f;
@@ -116,7 +118,8 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
     double prev_x_ = -1.1;
     double prev_y_ = -1.1;
 
-    FpsCounter fps_counter_;
+    FpsCounter slice_counter_;
+    FpsCounter volume_counter_;
 
     template<size_t index>
     void renderImSliceControl(const char* header);
@@ -153,12 +156,9 @@ public:
 
     bool updateServerParams() override;
 
-    void setSliceData(const std::string& data,
-                      const std::array<uint32_t, 2>& size,
-                      uint64_t timestamp);
+    bool setSliceData(const rpc::ReconSlice& data);
 
-    void setVolumeData(const std::string& data,
-                       const std::array<uint32_t, 3>& volume_size);
+    bool setVolumeData(const rpc::ReconVolumeShard& shard);
 
     bool consume(const DataType& packet) override;
 

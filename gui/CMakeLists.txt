@@ -110,7 +110,7 @@ target_link_libraries(${TARGET_NAME}
                 recastx_grpc_proto
         )
 
-if (UNIX)
+if (UNIX AND NOT APPLE)
     # required by glfw
     target_link_libraries(${TARGET_NAME} PRIVATE X11)
 endif()

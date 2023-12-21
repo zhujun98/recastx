@@ -101,8 +101,11 @@ void ReconItem::renderIm() {
     renderImSliceControl<2>("Slice 3##RECON");
 
     if (ImGui::Button("Reset all slices")) {
-        for (auto& slice : slices_) {
-            std::get<2>(slice)->reset();
+        {
+            std::lock_guard lck(slice_mtx_);
+            for (auto& slice : slices_) {
+                std::get<2>(slice)->reset();
+            }
         }
         updateServerSliceParams();
     }
@@ -123,6 +126,7 @@ void ReconItem::renderIm() {
                 ImPlot::SetupAxes("Pixel value", "Density",
                                   ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
                 if (policy != DISABLE_SLI) {
+                    std::lock_guard lck(slice_mtx_);
                     ImPlot::PlotHistogram("##Histogram", data.data(), static_cast<int>(data.size()),
                                           100, false, true);
                 }
@@ -140,17 +144,24 @@ void ReconItem::renderIm() {
 
     ImGui::Separator();
 
-    scene_.setStatus("volumeUpdateFrameRate", fps_counter_.volumeFrameRate());
-    scene_.setStatus("sliceUpdateFrameRate", fps_counter_.sliceFrameRate());
+    scene_.setStatus("volumeUpdateFrameRate", volume_counter_.frameRate());
+    scene_.setStatus("sliceUpdateFrameRate", slice_counter_.frameRate());
 }
 
 void ReconItem::onFramebufferSizeChanged(int /* width */, int /* height */) {}
 
 void ReconItem::preRenderGl() {
     for (auto& [_, policy, slice] : slices_) {
-        if (policy != DISABLE_SLI) slice->preRender();
+        if (policy != DISABLE_SLI) {
+            std::lock_guard lck(slice_mtx_);
+            slice->preRender();
+        }
     }
-    if (volume_policy_ != DISABLE_VOL) volume_->preRender();
+
+    if (volume_policy_ != DISABLE_VOL) {
+        std::lock_guard lck(volume_mtx_);
+        volume_->preRender();
+    }
 
     if (update_min_max_val_ && auto_levels_) {
         updateMinMaxValues();
@@ -176,7 +187,7 @@ void ReconItem::renderGl() {
     volume_->bind();
     for (auto slice : sortedSlices()) {
         slice->render(view, projection, min_val, max_val_,
-                      !volume_->empty() && volume_policy_ == PREVIEW_VOL);
+                      volume_->hasTexture() && volume_policy_ == PREVIEW_VOL);
     }
     volume_->unbind();
 
@@ -210,52 +221,64 @@ bool ReconItem::updateServerParams() {
     return updateServerSliceParams() || updateServerVolumeParams();
 }
 
-void ReconItem::setSliceData(const std::string& data,
-                             const std::array<uint32_t, 2>& size,
-                             uint64_t timestamp) {
+bool ReconItem::setSliceData(const rpc::ReconSlice& data) {
+    size_t timestamp = data.timestamp();
     size_t sid = sliceIdFromTimestamp(timestamp);
     auto& slice = slices_[sid];
     if (std::get<0>(slice) == timestamp) {
-        Slice* ptr = std::get<2>(slice).get();
-        if (ptr == dragged_slice_) return;
+        Slice *ptr = std::get<2>(slice).get();
+        if (ptr == dragged_slice_) return false;
 
-        Slice::DataType slice_data(size[0] * size[1]);
-        std::memcpy(slice_data.data(), data.data(), data.size());
-        assert(data.size() == slice_data.size() * sizeof(Slice::DataType::value_type));
-        ptr->setData(std::move(slice_data), {size[0], size[1]});
-        log::info("Set slice data {}", sid);
-        update_min_max_val_ = true;
-    } else {
-        // Ignore outdated reconstructed slices.
-        log::debug("Outdated slice received: {} ({})", sid, timestamp);
+        {
+            std::lock_guard lck(slice_mtx_);
+            ptr->setData(data.data(), data.col_count(), data.row_count());
+        }
+
+        log::info("New slice {} data is ready", sid);
+        return true;
     }
+
+    log::debug("Outdated slice received: {} ({})", sid, timestamp);
+    return false;
 }
 
-void ReconItem::setVolumeData(const std::string& data, const std::array<uint32_t, 3>& size) {
-    Volume::DataType volume_data(size[0] * size[1] * size[2]);
-    std::memcpy(volume_data.data(), data.data(), data.size());
-    assert(data.size() == volume_data.size() * sizeof(Volume::DataType::value_type));
-    volume_->setData(std::move(volume_data), {size[0], size[1], size[2]});
-    log::info("Set volume data");
-    update_min_max_val_ = true;
+bool ReconItem::setVolumeData(const rpc::ReconVolumeShard& shard) {
+    uint32_t pos = shard.pos();
+
+    bool ok;
+    {
+        std::lock_guard lck(volume_mtx_);
+
+        if (pos == 0 && volume_->init(shard.col_count(), shard.row_count(), shard.slice_count())) {
+            spdlog::warn("Volume data shape changed");
+        }
+        ok = volume_->setShard(shard.data(), pos);
+    }
+
+    spdlog::debug("Set volume shard ...");
+    if (ok) spdlog::info("New volume data is ready");
+    return ok;
 }
 
 bool ReconItem::consume(const DataType& packet) {
     if (std::holds_alternative<rpc::ReconData>(packet)) {
         const auto& data = std::get<rpc::ReconData>(packet);
         if (data.has_slice()) {
-            auto& slice = data.slice();
-            setSliceData(slice.data(), {slice.row_count(), slice.col_count()}, slice.timestamp());
-            fps_counter_.countSlice();
+            if (setSliceData(data.slice())) {
+                update_min_max_val_ = true;
+                slice_counter_.count();
+            }
             return true;
         }
 
-        if (volume_policy_ != DISABLE_VOL && data.has_volume()) {
-            auto& volume = data.volume();
-            setVolumeData(volume.data(), {volume.row_count(), volume.col_count(), volume.slice_count()});
-            fps_counter_.countVolume();
+        if (data.has_volume_shard()) {
+            if (volume_policy_ != DISABLE_VOL && setVolumeData(data.volume_shard())) {
+                update_min_max_val_ = true;
+                volume_counter_.count();
+            }
             return true;
         }
+
     }
 
     return false;
@@ -316,7 +339,7 @@ bool ReconItem::handleMouseMoved(float x, float y) {
 
     // TODO: fix for screen ratio
     if (dragged_slice_ != nullptr) {
-        dragged_slice_->setEmpty();
+        dragged_slice_->clear();
         update_min_max_val_ = true;
 
         drag_machine_->onDrag(delta);
@@ -386,6 +409,7 @@ void ReconItem::renderImVolumeControl() {
 
     if (expand) {
         bool cd = false;
+        int prev_volume_policy = volume_policy_;
         cd |= ImGui::RadioButton("Preview##RECON_VOL", &volume_policy_, PREVIEW_VOL);
         ImGui::SameLine();
         cd |= ImGui::RadioButton("Show##RECON_VOL", &volume_policy_, SHOW_VOL);
@@ -395,6 +419,10 @@ void ReconItem::renderImVolumeControl() {
         if (cd) {
             update_min_max_val_ = true;
             updateServerVolumeParams();
+            if (prev_volume_policy == DISABLE_VOL && volume_policy_ != DISABLE_VOL) {
+                std::lock_guard lck(volume_mtx_);
+                volume_->clearBuffer();
+            }
         }
 
         ImGui::SliderFloat("Alpha##RECON_VOL", &volume_alpha_, 0.0f, 1.0f);
