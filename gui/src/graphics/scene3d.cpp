@@ -34,13 +34,10 @@ Scene3d::Scene3d(RpcClient* client)
           statusbar_item_(new StatusbarItem(*this)),
           logging_item_(new LoggingItem(*this)),
           axiscube_item_(new AxiscubeItem(*this)),
-          server_state_(rpc::ServerState_State_READY),
           scan_mode_(rpc::ScanMode_Mode_CONTINUOUS),
           scan_update_interval_(K_MIN_SCAN_UPDATE_INTERVAL) {
-    camera_ = std::make_unique<Camera>();
-
     scene_status_["tomoUpdateFrameRate"] = 0.;
-
+    server_state_ = rpc::ServerState_State_READY;
     client_->start();
 }
 

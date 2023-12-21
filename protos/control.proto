@@ -11,10 +11,11 @@ service Control {
 
 message ServerState {
   enum State {
-    INIT = 0;
+    UNKNOWN = 0;
     READY = 1;
     ACQUIRING = 2;
-    PROCESSING = 3;
+    INITIALISING = 4;
+    PROCESSING = 8;
   }
 
   State state = 1;

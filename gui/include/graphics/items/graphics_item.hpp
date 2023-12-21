@@ -35,7 +35,7 @@ protected:
 
     Scene& scene_;
 
-    rpc::ServerState_State state_;
+    rpc::ServerState_State state_ = rpc::ServerState_State_UNKNOWN;
 
 public:
 

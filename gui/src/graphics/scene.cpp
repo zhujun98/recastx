@@ -19,7 +19,7 @@
 namespace recastx::gui {
 
 Scene::Scene(RpcClient* client)
-    : vp_(new Viewport()), client_(client) {}
+    : vp_(new Viewport()), camera_(new Camera()), client_(client) {}
 
 Scene::~Scene() = default;
 

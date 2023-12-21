@@ -41,12 +41,13 @@ Application::Application(size_t raw_buffer_size,
        ramp_filter_factory_(ramp_filter_factory),
        imgproc_params_(imageproc_params),
        recon_factory_(recon_factory),
-       server_state_(rpc::ServerState_State_INIT),
        scan_mode_(rpc::ScanMode_Mode_DISCRETE),
        scan_update_interval_(K_MIN_SCAN_UPDATE_INTERVAL),
        monitor_(new Monitor()),
        daq_client_(daq_client),
-       rpc_server_(new RpcServer(rpc_config.port, this)) {}
+       rpc_server_(new RpcServer(rpc_config.port, this)) {
+    server_state_ = rpc::ServerState_State_READY;
+}
 
 Application::~Application() { 
     running_ = false; 

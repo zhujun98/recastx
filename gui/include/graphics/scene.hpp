@@ -36,9 +36,9 @@ public:
 protected:
 
     std::unique_ptr<Viewport> vp_;
-
-    std::unique_ptr<ShaderProgram> program_;
     std::unique_ptr<Camera> camera_;
+    std::unique_ptr<ShaderProgram> program_;
+
     RpcClient* client_;
 
     std::vector<GraphicsItem*> items_;

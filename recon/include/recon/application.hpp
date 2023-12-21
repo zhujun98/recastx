@@ -121,7 +121,7 @@ class Application {
     std::condition_variable gpu_cv_;
     std::mutex gpu_mtx_;
 
-    rpc::ServerState_State server_state_;
+    rpc::ServerState_State server_state_ = rpc::ServerState_State_UNKNOWN;
     rpc::ScanMode_Mode scan_mode_;
     uint32_t scan_update_interval_;
 
