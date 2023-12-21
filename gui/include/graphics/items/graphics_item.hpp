@@ -21,7 +21,6 @@
 #include "input_handler.hpp"
 #include "projection.pb.h"
 #include "reconstruction.pb.h"
-#include "control.pb.h"
 
 namespace recastx::gui {
 
@@ -35,8 +34,6 @@ protected:
 
     Scene& scene_;
 
-    rpc::ServerState_State state_ = rpc::ServerState_State_UNKNOWN;
-
 public:
 
     explicit GraphicsItem(Scene& scene);
@@ -46,8 +43,6 @@ public:
     virtual void onWindowSizeChanged(int width, int height) = 0;
 
     virtual void renderIm() = 0;
-
-    virtual void setState(rpc::ServerState_State state) { state_ = state; }
 
     virtual bool updateServerParams() { return false; }
 

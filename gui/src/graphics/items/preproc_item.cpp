@@ -25,8 +25,8 @@ void PreprocItem::onWindowSizeChanged(int /*width*/, int /*height*/) {}
 void PreprocItem::renderIm() {
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "PREPROCESSING");
 
-    ImGui::BeginDisabled(state_ == rpc::ServerState_State_PROCESSING ||
-                         state_ == rpc::ServerState_State_ACQUIRING);
+    auto state = scene_.serverState();
+    ImGui::BeginDisabled(state & rpc::ServerState_State_PROCESSING);
 
     ImGui::AlignTextToFramePadding();
     ImGui::Text("Downsampling:");
@@ -68,7 +68,7 @@ void PreprocItem::renderIm() {
 
     ImGui::EndDisabled();
 
-    ImGui::BeginDisabled(state_ == rpc::ServerState_State_PROCESSING);
+    ImGui::BeginDisabled(state == rpc::ServerState_State_PROCESSING);
 
     // TODO: implement reconstruction with offsets
 //    ImGui::DragFloat("X offset", &x_offset_, 1, -50, 50, "%.1f");

@@ -6,14 +6,16 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
-#ifndef GUI_ZMQCLIENT_H
-#define GUI_ZMQCLIENT_H
+#ifndef GUI_RPCCLIENT_H
+#define GUI_RPCCLIENT_H
 
 #include <atomic>
 #include <cstring>
 #include <map>
 #include <memory>
+#include <optional>
 #include <queue>
+#include <string>
 #include <thread>
 #include <variant>
 
@@ -41,6 +43,16 @@ class RpcClient {
     static constexpr int min_timeout = 1;
     static constexpr int max_timeout = 100;
 
+    static std::string serverStateToString(rpc::ServerState_State state) {
+        if (state == rpc::ServerState_State_UNKNOWN) return "UNKNOWN";
+        if (state == rpc::ServerState_State_INITIALISING) return "INITIALIZING";
+        if (state == rpc::ServerState_State_READY) return "READY";
+        if (state == rpc::ServerState_State_ACQUIRING) return "ACQUIRING";
+        if (state == rpc::ServerState_State_PROCESSING) return "PROCESSING";
+        if (state == rpc::ServerState_State_STOPPING) return "STOPPING";
+        throw std::runtime_error(fmt::format("Unknown server state: {}", state));
+    }
+
   private:
 
     std::shared_ptr<grpc::Channel> channel_;
@@ -50,7 +62,7 @@ class RpcClient {
     std::unique_ptr<rpc::ProjectionTransfer::Stub> proj_trans_stub_;
     std::unique_ptr<rpc::Reconstruction::Stub> recon_stub_;
 
-    bool running_ = false;
+    bool streaming_ = false;
 
     std::thread thread_recon_;
 
@@ -82,7 +94,15 @@ class RpcClient {
 
     ~RpcClient();
 
-    bool setServerState(rpc::ServerState_State state);
+    bool startAcquiring();
+
+    bool stopAcquiring();
+
+    bool startProcessing();
+
+    bool stopProcessing();
+
+    std::optional<rpc::ServerState_State> getServerState();
 
     bool setScanMode(rpc::ScanMode_Mode mode, uint32_t update_interval);
 
@@ -96,11 +116,13 @@ class RpcClient {
 
     bool setVolume(bool required);
 
-    void start();
+    std::optional<rpc::ServerState_State> shakeHand();
+
+    void startStreaming();
 
     void toggleProjectionStream(bool state);
 };
 
 }  // namespace recastx::gui
 
-#endif //GUI_ZMQCLIENT_H
+#endif //GUI_RPCCLIENT_H

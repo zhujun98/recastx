@@ -8,6 +8,7 @@
 */
 #include <chrono>
 #include <complex>
+#include <exception>
 #include <numeric>
 
 #include <Eigen/Eigen>
@@ -45,9 +46,7 @@ Application::Application(size_t raw_buffer_size,
        scan_update_interval_(K_MIN_SCAN_UPDATE_INTERVAL),
        monitor_(new Monitor()),
        daq_client_(daq_client),
-       rpc_server_(new RpcServer(rpc_config.port, this)) {
-    server_state_ = rpc::ServerState_State_READY;
-}
+       rpc_server_(new RpcServer(rpc_config.port, this)) {}
 
 Application::~Application() { 
     running_ = false; 
@@ -247,9 +246,19 @@ void Application::spin(rpc::ServerState_State state) {
     startReconstructing();
 
     daq_client_->start();
-    rpc_server_->start();
 
-    onStateChanged(state);
+    if (state == rpc::ServerState_State_ACQUIRING) {
+        startAcquiring();
+    } else if (state == rpc::ServerState_State_PROCESSING) {
+        startProcessing();
+    } else if (state == rpc::ServerState_State_READY) {
+        server_state_ = rpc::ServerState_State_READY;
+    } else {
+        throw std::runtime_error(fmt::format(
+                "Cannot start reconstruction server from state: {}", server_state_));
+    }
+
+    rpc_server_->start();
 
     while (running_) {
         if (raw_buffer_.isReady()) {
@@ -298,25 +307,73 @@ void Application::setScanMode(rpc::ScanMode_Mode mode, uint32_t update_interval)
     }
 }
 
-void Application::onStateChanged(rpc::ServerState_State state) {
-    if (server_state_ == state) {
-        spdlog::debug("Server already in state: {}", static_cast<int>(state));
+void Application::startAcquiring() {
+    if (server_state_ == rpc::ServerState_State_ACQUIRING) {
+        spdlog::warn("Server already in state ACQUIRING");
+        return;
+    }
+    if (server_state_ == rpc::ServerState_State_PROCESSING) {
+        spdlog::warn("Server already in state PROCESSING");
         return;
     }
 
-    if (state == rpc::ServerState_State_PROCESSING) {
-        onStartProcessing();
-    } else if (state == rpc::ServerState_State_ACQUIRING) {
-        onStartAcquiring();
-    } else if (state == rpc::ServerState_State_READY) {
-        if (server_state_ == rpc::ServerState_State_ACQUIRING) {
-            onStopAcquiring();
-        } else if (server_state_ == rpc::ServerState_State_PROCESSING){
-            onStopProcessing();
-        }
+    initParams();
+
+    daq_client_->startAcquiring();
+
+    server_state_ = rpc::ServerState_State_ACQUIRING;
+    spdlog::info("Start acquiring data");
+}
+
+void Application::stopAcquiring() {
+    if (server_state_ != rpc::ServerState_State_ACQUIRING) {
+        spdlog::warn("Server not in state ACQUIRING");
+        return;
     }
-    
-    server_state_ = state;
+
+    daq_client_->stopAcquiring();
+    server_state_ = rpc::ServerState_State_READY;
+    spdlog::info("Stop acquiring data");
+
+    proj_mediator_->reset();
+}
+
+void Application::startProcessing() {
+    if (server_state_ == rpc::ServerState_State_PROCESSING) {
+        spdlog::warn("Server already in state PROCESSING");
+        return;
+    }
+
+    init();
+
+    daq_client_->startAcquiring();
+    server_state_ = rpc::ServerState_State_PROCESSING;
+    spdlog::info("Start acquiring and processing data:");
+
+    if (scan_mode_ == rpc::ScanMode_Mode_CONTINUOUS) {
+        spdlog::info("- Scan mode: continuous");
+        spdlog::info("- Update interval: {}", scan_update_interval_);
+    } else if (scan_mode_ == rpc::ScanMode_Mode_DISCRETE) {
+        spdlog::info("- Scan mode: discrete");
+    }
+
+    size_t s = proj_geom_.row_count * proj_geom_.col_count * group_size_ * sizeof(RawDtype);
+    monitor_.reset(new Monitor(s));
+}
+
+void Application::stopProcessing() {
+    if (server_state_ != rpc::ServerState_State_PROCESSING) {
+        spdlog::warn("Server not in state PROCESSING");
+        return;
+    }
+
+    daq_client_->stopAcquiring();
+    server_state_ = rpc::ServerState_State_READY;
+    spdlog::info("Stop acquiring and processing data");
+
+    proj_mediator_->reset();
+    monitor_->summarize();
+    monitor_->reset();
 }
 
 std::optional<rpc::ProjectionData> Application::getProjectionData(int timeout) {
@@ -414,46 +471,6 @@ void Application::preprocessProjections(oneapi::tbb::task_arena& arena) {
     });
 
     sino_buffer_.prepare();
-}
-
-void Application::onStartProcessing() {
-    init();
-
-    daq_client_->startAcquiring();
-    spdlog::info("Start acquiring and processing data:");
-
-    if (scan_mode_ == rpc::ScanMode_Mode_CONTINUOUS) {
-        spdlog::info("- Scan mode: continuous");
-        spdlog::info("- Update interval: {}", scan_update_interval_);
-    } else if (scan_mode_ == rpc::ScanMode_Mode_DISCRETE) {
-        spdlog::info("- Scan mode: discrete");
-    }
-
-    size_t s = proj_geom_.row_count * proj_geom_.col_count * group_size_ * sizeof(RawDtype);
-    monitor_.reset(new Monitor(s));
-}
-
-void Application::onStopProcessing() {
-    daq_client_->stopAcquiring();
-    spdlog::info("Stop acquiring and processing data");
-
-    proj_mediator_->reset();
-    monitor_->summarize();
-    monitor_->reset();
-}
-
-void Application::onStartAcquiring() {
-    initParams();
-
-    daq_client_->startAcquiring();
-    spdlog::info("Start acquiring data");
-}
-
-void Application::onStopAcquiring() {
-    daq_client_->stopAcquiring();
-    spdlog::info("Stop acquiring data");
-
-    proj_mediator_->reset();
 }
 
 void Application::init() {

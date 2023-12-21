@@ -6,16 +6,27 @@ import "google/protobuf/empty.proto";
 service Control {
   rpc SetServerState (ServerState) returns (google.protobuf.Empty) {}
 
+  rpc StartAcquiring (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+
+  rpc StopAcquiring (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+
+  rpc StartProcessing (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+
+  rpc StopProcessing (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+
+  rpc GetServerState (google.protobuf.Empty) returns (ServerState) {}
+
   rpc SetScanMode (ScanMode) returns (google.protobuf.Empty) {}
 }
 
 message ServerState {
   enum State {
-    UNKNOWN = 0;
-    READY = 1;
-    ACQUIRING = 2;
-    INITIALISING = 4;
-    PROCESSING = 8;
+    UNKNOWN = 0x00;
+    INITIALISING = 0x01;
+    READY = 0x02;
+    ACQUIRING = 0x04;
+    PROCESSING = 0x0c;
+    STOPPING = 0x16;
   }
 
   State state = 1;

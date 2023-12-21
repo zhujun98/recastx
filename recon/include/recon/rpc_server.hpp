@@ -36,13 +36,29 @@ class ControlService final : public rpc::Control::Service {
 
     explicit ControlService(Application* app);
 
-    grpc::Status SetServerState(grpc::ServerContext* context, 
-                                const rpc::ServerState* state,
-                                google::protobuf::Empty* ack) override;
+    grpc::Status StartAcquiring(grpc::ServerContext* context,
+                                const google::protobuf::Empty* req,
+                                google::protobuf::Empty* rep) override;
+
+    grpc::Status StopAcquiring(grpc::ServerContext* context,
+                               const google::protobuf::Empty* req,
+                               google::protobuf::Empty* rep) override;
+
+    grpc::Status StartProcessing(grpc::ServerContext* context,
+                                 const google::protobuf::Empty* req,
+                                 google::protobuf::Empty* rep) override;
+
+    grpc::Status StopProcessing(grpc::ServerContext* context,
+                                const google::protobuf::Empty* req,
+                                google::protobuf::Empty* rep) override;
+
+    grpc::Status GetServerState(grpc::ServerContext* context,
+                                const google::protobuf::Empty* req,
+                                rpc::ServerState* state) override;
 
     grpc::Status SetScanMode(grpc::ServerContext* context,
                              const rpc::ScanMode* mode,
-                             google::protobuf::Empty* ack) override;
+                             google::protobuf::Empty* rep) override;
 
 };
 
@@ -56,11 +72,11 @@ class ImageprocService final : public rpc::Imageproc::Service {
 
     grpc::Status SetDownsampling(grpc::ServerContext* context, 
                                  const rpc::DownsamplingParams* params,
-                                 google::protobuf::Empty* ack) override;
+                                 google::protobuf::Empty* rep) override;
 
     grpc::Status SetRampFilter(grpc::ServerContext* contest,
                                const rpc::RampFilterParams* params,
-                               google::protobuf::Empty* ack) override;
+                               google::protobuf::Empty* rep) override;
 };
 
 class ProjectionTransferService final : public rpc::ProjectionTransfer::Service {
@@ -73,7 +89,7 @@ class ProjectionTransferService final : public rpc::ProjectionTransfer::Service 
 
     grpc::Status SetProjection(grpc::ServerContext* context,
                                const rpc::Projection* request,
-                               google::protobuf::Empty* ack) override;
+                               google::protobuf::Empty* rep) override;
 
     grpc::Status GetProjectionData(grpc::ServerContext* context,
                                    const google::protobuf::Empty*,
@@ -93,11 +109,11 @@ class ReconstructionService final : public rpc::Reconstruction::Service {
 
     grpc::Status SetSlice(grpc::ServerContext* context,
                           const rpc::Slice* slice,
-                          google::protobuf::Empty* ack) override;
+                          google::protobuf::Empty* rep) override;
 
     grpc::Status SetVolume(grpc::ServerContext* context,
                            const rpc::Volume* volume,
-                           google::protobuf::Empty* ack) override;
+                           google::protobuf::Empty* rep) override;
 
     grpc::Status GetReconData(grpc::ServerContext* context,
                               const google::protobuf::Empty*,

@@ -154,11 +154,6 @@ class Application {
 
     void preprocessProjections(oneapi::tbb::task_arena& arena);
 
-    void onStartProcessing();
-    void onStopProcessing();
-    void onStartAcquiring();
-    void onStopAcquiring();
-
     bool waitForProcessing() const {
         if (server_state_ != rpc::ServerState_State_PROCESSING) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -220,7 +215,15 @@ class Application {
 
     void setScanMode(rpc::ScanMode_Mode mode, uint32_t update_inverval);
 
-    void onStateChanged(rpc::ServerState_State state);
+    void startAcquiring();
+
+    void stopAcquiring();
+
+    void startProcessing();
+
+    void stopProcessing();
+
+    rpc::ServerState_State getServerState() const { return server_state_; }
 
     std::optional<rpc::ProjectionData> getProjectionData(int timeout);
 

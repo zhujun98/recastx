@@ -39,16 +39,6 @@ class Scene3d : public Scene {
 
     std::unique_ptr<AxiscubeItem> axiscube_item_;
 
-    rpc::ServerState_State server_state_ = rpc::ServerState_State_UNKNOWN;
-    rpc::ScanMode_Mode  scan_mode_;
-    uint32_t scan_update_interval_;
-
-    void onStateChanged(rpc::ServerState_State state);
-
-    bool updateServerParams();
-
-    bool setScanMode();
-
 public:
 
     explicit Scene3d(RpcClient* client);
@@ -56,6 +46,7 @@ public:
     ~Scene3d() override;
 
     void render() override;
+
 };
 
 }  // namespace recastx::gui

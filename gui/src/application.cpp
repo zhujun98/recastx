@@ -89,6 +89,9 @@ void Application::spin(const std::string& endpoint) {
     rpc_client_ = std::make_unique<RpcClient>(endpoint);
 
     makeScene();
+    scene_->connectServer();
+
+    rpc_client_->startStreaming();
 
     std::atomic<bool> running = true;
     auto t = std::thread([&]() {

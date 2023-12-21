@@ -6,10 +6,14 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
+#include "application.hpp"
 #include "rpc_server.hpp"
 
-
 int main() {
-    recastx::gui::test::RpcServer server(9971);
+    using namespace recastx::gui::test;
+
+    Application app;
+
+    RpcServer server(9971, &app);
     server.start();
 }

@@ -20,16 +20,44 @@ using namespace std::string_literals;
 
 ControlService::ControlService(Application* app) : app_(app) {}
 
-grpc::Status ControlService::SetServerState(grpc::ServerContext* context, 
-                                            const rpc::ServerState* state,
-                                            google::protobuf::Empty* ack) {
-    app_->onStateChanged(state->state());
+grpc::Status ControlService::StartAcquiring(grpc::ServerContext* /*context*/,
+                                            const google::protobuf::Empty* /*req*/,
+                                            google::protobuf::Empty* /*rep*/) {
+    app_->startAcquiring();
     return grpc::Status::OK;
 }
 
-grpc::Status ControlService::SetScanMode(grpc::ServerContext* context,
+grpc::Status ControlService::StopAcquiring(grpc::ServerContext* /*context*/,
+                                           const google::protobuf::Empty*  /*req*/,
+                                           google::protobuf::Empty* /*rep*/) {
+    app_->stopAcquiring();
+    return grpc::Status::OK;
+}
+
+grpc::Status ControlService::StartProcessing(grpc::ServerContext* /*context*/,
+                                             const google::protobuf::Empty*  /*req*/,
+                                             google::protobuf::Empty* /*rep*/) {
+    app_->startProcessing();
+    return grpc::Status::OK;
+}
+
+grpc::Status ControlService::StopProcessing(grpc::ServerContext* /*context*/,
+                                            const google::protobuf::Empty*  /*req*/,
+                                            google::protobuf::Empty* /*rep*/) {
+    app_->stopProcessing();
+    return grpc::Status::OK;
+}
+
+grpc::Status ControlService::GetServerState(grpc::ServerContext* /*context*/,
+                                            const google::protobuf::Empty* /*req*/,
+                                            rpc::ServerState* state) {
+    state->set_state(app_->getServerState());
+    return grpc::Status::OK;
+}
+
+grpc::Status ControlService::SetScanMode(grpc::ServerContext* /*context*/,
                                          const rpc::ScanMode* mode,
-                                         google::protobuf::Empty* ack) {
+                                         google::protobuf::Empty* /*rep*/) {
     app_->setScanMode(mode->mode(), mode->update_interval());
     return grpc::Status::OK;
 }
@@ -37,18 +65,18 @@ grpc::Status ControlService::SetScanMode(grpc::ServerContext* context,
 
 ImageprocService::ImageprocService(Application* app) : app_(app) {}
 
-grpc::Status ImageprocService::SetDownsampling(grpc::ServerContext* context, 
+grpc::Status ImageprocService::SetDownsampling(grpc::ServerContext* /*context*/,
                                                const rpc::DownsamplingParams* params,
-                                               google::protobuf::Empty* ack) {
+                                               google::protobuf::Empty* /*rep*/) {
     auto col = params->col();
     auto row = params->row();
     app_->setDownsampling(col, row);
     return grpc::Status::OK;
 }
 
-grpc::Status ImageprocService::SetRampFilter(grpc::ServerContext* contest,
+grpc::Status ImageprocService::SetRampFilter(grpc::ServerContext* /*context*/,
                                              const rpc::RampFilterParams* params,
-                                             google::protobuf::Empty* ack) {
+                                             google::protobuf::Empty* /*rep*/) {
     app_->setRampFilter(std::move(params->name()));
     return grpc::Status::OK;
 }
@@ -56,15 +84,15 @@ grpc::Status ImageprocService::SetRampFilter(grpc::ServerContext* contest,
 
 ProjectionTransferService::ProjectionTransferService(Application* app) : app_(app) {}
 
-grpc::Status ProjectionTransferService::SetProjection(grpc::ServerContext* context,
+grpc::Status ProjectionTransferService::SetProjection(grpc::ServerContext* /*context*/,
                                                       const rpc::Projection* request,
-                                                      google::protobuf::Empty* ack) {
+                                                      google::protobuf::Empty* /*rep*/) {
     app_->setProjectionReq(request->id());
     return grpc::Status::OK;
 }
 
 grpc::Status ProjectionTransferService::GetProjectionData(
-        grpc::ServerContext* context,
+        grpc::ServerContext* /*context*/,
         const google::protobuf::Empty*,
         grpc::ServerWriter<rpc::ProjectionData>* writer) {
     auto proj = app_->getProjectionData(100);
@@ -79,24 +107,24 @@ grpc::Status ProjectionTransferService::GetProjectionData(
 
 ReconstructionService::ReconstructionService(Application* app) : app_(app) {}
 
-grpc::Status ReconstructionService::SetSlice(grpc::ServerContext* context, 
+grpc::Status ReconstructionService::SetSlice(grpc::ServerContext* /*context*/,
                                              const rpc::Slice* slice,
-                                             google::protobuf::Empty* ack) {
+                                             google::protobuf::Empty* /*rep*/) {
     Orientation orient;
     std::copy(slice->orientation().begin(), slice->orientation().end(), orient.begin());
     app_->setSliceReq(slice->timestamp(), orient);
     return grpc::Status::OK;
 }
 
-grpc::Status ReconstructionService::SetVolume(grpc::ServerContext* context,
+grpc::Status ReconstructionService::SetVolume(grpc::ServerContext* /*context*/,
                                               const rpc::Volume* volume,
-                                              google::protobuf::Empty* ack) {
+                                              google::protobuf::Empty* /*rep*/) {
 
     app_->setVolumeReq(volume->required());
     return grpc::Status::OK;
 }
 
-grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
+grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* /*context*/,
                                                  const google::protobuf::Empty*,
                                                  grpc::ServerWriter<rpc::ReconData>* writer) {
     // - Do not block because slice request needs to be responsive

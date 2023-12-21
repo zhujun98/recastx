@@ -32,20 +32,56 @@ RpcClient::RpcClient(const std::string& address) {
 }
 
 RpcClient::~RpcClient() {
-    running_ = false;
+    streaming_ = false;
     if (thread_proj_.joinable()) thread_proj_.join();
     if (thread_recon_.joinable()) thread_recon_.join();
 }
 
-bool RpcClient::setServerState(rpc::ServerState_State state) {
-    rpc::ServerState request;
-    request.set_state(state);
-
+bool RpcClient::startAcquiring() {
+    google::protobuf::Empty request;
     google::protobuf::Empty reply;
 
     grpc::ClientContext context;
-    grpc::Status status = control_stub_->SetServerState(&context, request, &reply);
+    grpc::Status status = control_stub_->StartAcquiring(&context, request, &reply);
     return checkStatus(status);
+}
+
+bool RpcClient::stopAcquiring() {
+    google::protobuf::Empty request;
+    google::protobuf::Empty reply;
+
+    grpc::ClientContext context;
+    grpc::Status status = control_stub_->StopAcquiring(&context, request, &reply);
+    return checkStatus(status);
+}
+
+bool RpcClient::startProcessing() {
+    google::protobuf::Empty request;
+    google::protobuf::Empty reply;
+
+    grpc::ClientContext context;
+    grpc::Status status = control_stub_->StartProcessing(&context, request, &reply);
+    return checkStatus(status);
+}
+
+bool RpcClient::stopProcessing() {
+    google::protobuf::Empty request;
+    google::protobuf::Empty reply;
+
+    grpc::ClientContext context;
+    grpc::Status status = control_stub_->StopProcessing(&context, request, &reply);
+    return checkStatus(status);
+}
+
+std::optional<rpc::ServerState_State> RpcClient::getServerState() {
+    google::protobuf::Empty request;
+
+    rpc::ServerState reply;
+
+    grpc::ClientContext context;
+    grpc::Status status = control_stub_->GetServerState(&context, request, &reply);
+    if (checkStatus(status)) return std::nullopt;
+    return reply.state();
 }
 
 bool RpcClient::setScanMode(rpc::ScanMode_Mode mode, uint32_t update_interval) {
@@ -123,10 +159,16 @@ bool RpcClient::setVolume(bool required) {
     return checkStatus(status);
 }
 
-void RpcClient::start() {
-    if (running_) return;
+std::optional<rpc::ServerState_State> RpcClient::shakeHand() {
+    auto state = getServerState();
+    if (!state) return std::nullopt;
+    return state.value();
+}
 
-    running_ = true;
+void RpcClient::startStreaming() {
+    if (streaming_) return;
+
+    streaming_ = true;
     startReadingReconStream();
     startReadingProjectionStream();
 }
@@ -141,7 +183,7 @@ void RpcClient::startReadingReconStream() {
 
         google::protobuf::Empty request;
         rpc::ReconData reply;
-        while (running_) {
+        while (streaming_) {
             grpc::ClientContext context;
             std::unique_ptr<grpc::ClientReader<rpc::ReconData> > reader(
                     recon_stub_->GetReconData(&context, request));
@@ -163,7 +205,7 @@ void RpcClient::startReadingProjectionStream() {
 
         google::protobuf::Empty request;
         rpc::ProjectionData reply;
-        while (running_) {
+        while (streaming_) {
             if (!streaming_proj_.load(std::memory_order_acquire)) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                 continue;
