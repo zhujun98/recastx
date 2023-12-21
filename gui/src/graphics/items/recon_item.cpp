@@ -223,7 +223,7 @@ bool ReconItem::updateServerParams() {
 
 bool ReconItem::setSliceData(const rpc::ReconSlice& data) {
     size_t timestamp = data.timestamp();
-    size_t sid = sliceIdFromTimestamp(data.timestamp());
+    size_t sid = sliceIdFromTimestamp(timestamp);
     auto& slice = slices_[sid];
     if (std::get<0>(slice) == timestamp) {
         Slice *ptr = std::get<2>(slice).get();
