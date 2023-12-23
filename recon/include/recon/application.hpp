@@ -121,7 +121,7 @@ class Application {
     std::condition_variable gpu_cv_;
     std::mutex gpu_mtx_;
 
-    rpc::ServerState_State server_state_;
+    rpc::ServerState_State server_state_ = rpc::ServerState_State_UNKNOWN;
     rpc::ScanMode_Mode scan_mode_;
     uint32_t scan_update_interval_;
 
@@ -153,11 +153,6 @@ class Application {
     void tryComputeReciprocal();
 
     void preprocessProjections(oneapi::tbb::task_arena& arena);
-
-    void onStartProcessing();
-    void onStopProcessing();
-    void onStartAcquiring();
-    void onStopAcquiring();
 
     bool waitForProcessing() const {
         if (server_state_ != rpc::ServerState_State_PROCESSING) {
@@ -220,7 +215,15 @@ class Application {
 
     void setScanMode(rpc::ScanMode_Mode mode, uint32_t update_inverval);
 
-    void onStateChanged(rpc::ServerState_State state);
+    void startAcquiring();
+
+    void stopAcquiring();
+
+    void startProcessing();
+
+    void stopProcessing();
+
+    rpc::ServerState_State getServerState() const { return server_state_; }
 
     std::optional<rpc::ProjectionData> getProjectionData(int timeout);
 

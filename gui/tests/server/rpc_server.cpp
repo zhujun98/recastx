@@ -9,6 +9,7 @@
 #include <spdlog/spdlog.h>
 
 #include "common/utils.hpp"
+#include "application.hpp"
 #include "rpc_server.hpp"
 
 namespace recastx::gui::test {
@@ -16,20 +17,42 @@ namespace recastx::gui::test {
 using namespace std::string_literals;
 using namespace std::chrono_literals;
 
-ControlService::ControlService(RpcServer* server) : server_(server) {}
+ControlService::ControlService(Application* app) : app_(app) {}
 
-grpc::Status ControlService::SetServerState(grpc::ServerContext* context,
-                                            const rpc::ServerState* state,
-                                            google::protobuf::Empty* ack) {
-    state_ = state->state();
-    if (state_ == rpc::ServerState_State_PROCESSING) {
-        spdlog::info("Start acquiring & processing data");
-    } else if (state_ == rpc::ServerState_State_ACQUIRING) {
-        spdlog::info("Start acquiring data");
-    } else if (state_ == rpc::ServerState_State_READY) {
-        spdlog::info("Stop acquiring & processing data");
-    }
-    server_->updateState(state_);
+grpc::Status ControlService::StartAcquiring(grpc::ServerContext* /*context*/,
+                                            const google::protobuf::Empty* /*req*/,
+                                            google::protobuf::Empty* /*rep*/) {
+    app_->startAcquiring();
+    return grpc::Status::OK;
+}
+
+grpc::Status ControlService::StopAcquiring(grpc::ServerContext* /*context*/,
+                                           const google::protobuf::Empty*  /*req*/,
+                                           google::protobuf::Empty* /*rep*/) {
+    app_->stopAcquiring();
+    return grpc::Status::OK;
+}
+
+grpc::Status ControlService::StartProcessing(grpc::ServerContext* /*context*/,
+                                             const google::protobuf::Empty*  /*req*/,
+                                             google::protobuf::Empty* /*rep*/) {
+    app_->startProcessing();
+    return grpc::Status::OK;
+}
+
+grpc::Status ControlService::StopProcessing(grpc::ServerContext* /*context*/,
+                                            const google::protobuf::Empty*  /*req*/,
+                                            google::protobuf::Empty* /*rep*/) {
+    app_->stopProcessing();
+    return grpc::Status::OK;
+}
+
+grpc::Status ControlService::GetServerState(grpc::ServerContext* context,
+                                            const google::protobuf::Empty* req,
+                                            rpc::ServerState* state) {
+    auto ret = app_->serverState();
+    spdlog::info("Get server state: {}", ret);
+    state->set_state(ret);
     return grpc::Status::OK;
 }
 
@@ -47,6 +70,8 @@ grpc::Status ControlService::SetScanMode(grpc::ServerContext* context,
     return grpc::Status::OK;
 }
 
+ImageprocService::ImageprocService(Application* app) : app_(app) {}
+
 grpc::Status ImageprocService::SetDownsampling(grpc::ServerContext* context,
                                                const rpc::DownsamplingParams* params,
                                                google::protobuf::Empty* ack) {
@@ -61,6 +86,8 @@ grpc::Status ImageprocService::SetRampFilter(grpc::ServerContext* contest,
     return grpc::Status::OK;
 }
 
+ProjectionTransferService::ProjectionTransferService(Application* app) : app_(app) {}
+
 grpc::Status ProjectionTransferService::SetProjection(grpc::ServerContext* context,
                                                       const rpc::Projection* request,
                                                       google::protobuf::Empty* ack) {
@@ -72,8 +99,9 @@ grpc::Status ProjectionTransferService::SetProjection(grpc::ServerContext* conte
 grpc::Status ProjectionTransferService::GetProjectionData(grpc::ServerContext* context,
                                                           const google::protobuf::Empty*,
                                                           grpc::ServerWriter<rpc::ProjectionData>* writer) {
-    if (state_ == rpc::ServerState_State_PROCESSING || state_ == rpc::ServerState_State_ACQUIRING) {
-        if (state_ == rpc::ServerState_State_PROCESSING) {
+    auto state = app_->serverState();
+    if (state & rpc::ServerState_State_PROCESSING) {
+        if (state == rpc::ServerState_State_PROCESSING) {
             std::this_thread::sleep_for(std::chrono::milliseconds(kReconInterval));
         }
 
@@ -94,7 +122,7 @@ void ProjectionTransferService::setProjectionData(rpc::ProjectionData *data) {
     data->set_data(vec.data(), vec.size() * sizeof(decltype(vec)::value_type));
 }
 
-ReconstructionService::ReconstructionService() : timestamps_ {0, 1, 2} {}
+ReconstructionService::ReconstructionService(Application* app) : app_(app), timestamps_ {0, 1, 2} {}
 
 grpc::Status ReconstructionService::SetSlice(grpc::ServerContext* context,
                                              const rpc::Slice* slice,
@@ -104,7 +132,7 @@ grpc::Status ReconstructionService::SetSlice(grpc::ServerContext* context,
     spdlog::info("Update slice parameters: {} ({})", id, ts);
 
     timestamp_ = ts;
-    on_demand_ = true;
+    app_->setOnDemand(true);
 
     timestamps_.at(id) = ts;
     return grpc::Status::OK;
@@ -123,8 +151,8 @@ grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
     std::this_thread::sleep_for(std::chrono::milliseconds(kReconInterval));
 
     rpc::ReconData data;
-    if (state_ == rpc::ServerState_State_PROCESSING) {
-        sino_uploaded_ = true;
+    if (app_->serverState() == rpc::ServerState_State_PROCESSING) {
+        app_->setSinoUploaded(true);
 
         for (auto i = 0; i < volume_z_; ++i) {
             setVolumeShardData(&data, i);
@@ -135,16 +163,16 @@ grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
         for (int i = 0; i < timestamps_.size(); ++i) {
             setSliceData(&data, i);
             writer->Write(data);
-            if (timestamps_.at(i) == timestamp_) on_demand_ = false;
+            if (timestamps_.at(i) == timestamp_) app_->setOnDemand(false);
         }
         spdlog::info("Slice data sent");
     }
 
-    if (on_demand_ && sino_uploaded_) {
+    if (app_->onDemand() && app_->sinoUploaded()) {
         setSliceData(&data, -1);
         writer->Write(data);
         spdlog::info("On-demand slice data: {} sent", timestamp_);
-        on_demand_ = false;
+        app_->setOnDemand(false);
     }
     return grpc::Status::OK;
 }
@@ -175,9 +203,12 @@ void ReconstructionService::setVolumeShardData(rpc::ReconData* data, uint32_t in
     shard->set_pos(index * volume_x_ * volume_y_);
 }
 
-RpcServer::RpcServer(int port)
+RpcServer::RpcServer(int port, Application* app)
         : address_("0.0.0.0:" + std::to_string(port)),
-          control_service_(this) {
+          control_service_(app),
+          imageproc_service_(app),
+          proj_trans_service_(app),
+          reconstruction_service_(app) {
 }
 
 void RpcServer::start() {
@@ -192,12 +223,6 @@ void RpcServer::start() {
 
     server_ = builder.BuildAndStart();
     server_->Wait();
-}
-
-void RpcServer::updateState(rpc::ServerState_State state) {
-    imageproc_service_.updateState(state);
-    proj_trans_service_.updateState(state);
-    reconstruction_service_.updateState(state);
 }
 
 } // namespace recastx::gui::test

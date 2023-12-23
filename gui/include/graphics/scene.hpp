@@ -36,9 +36,9 @@ public:
 protected:
 
     std::unique_ptr<Viewport> vp_;
-
-    std::unique_ptr<ShaderProgram> program_;
     std::unique_ptr<Camera> camera_;
+    std::unique_ptr<ShaderProgram> program_;
+
     RpcClient* client_;
 
     std::vector<GraphicsItem*> items_;
@@ -50,7 +50,16 @@ protected:
 
     SceneStatus scene_status_;
 
-  public:
+    rpc::ServerState_State server_state_ = rpc::ServerState_State_UNKNOWN;
+
+    rpc::ScanMode_Mode  scan_mode_ = rpc::ScanMode_Mode_CONTINUOUS;
+    uint32_t scan_update_interval_;
+
+    bool setScanMode();
+
+    bool updateServerParams();
+
+public:
 
     explicit Scene(RpcClient* client);
 
@@ -91,6 +100,18 @@ protected:
     const std::any& getStatus(const std::string& key) {
         return scene_status_.at(key);
     }
+
+    rpc::ServerState_State serverState() const { return server_state_; }
+
+    void connectServer();
+
+    void startAcquiring();
+
+    void stopAcquiring();
+
+    void startProcessing();
+
+    void stopProcessing();
 };
 
 }  // namespace recastx::gui

@@ -19,7 +19,10 @@
 namespace recastx::gui {
 
 Scene::Scene(RpcClient* client)
-    : vp_(new Viewport()), client_(client) {}
+    : vp_(new Viewport()),
+      camera_(new Camera()),
+      client_(client),
+      scan_update_interval_(K_MIN_SCAN_UPDATE_INTERVAL) {}
 
 Scene::~Scene() = default;
 
@@ -111,6 +114,68 @@ bool Scene::consume(RpcClient::DataType&& data) {
         if (item->consume(std::move(data))) {
             return true;
         };
+    }
+    return false;
+}
+
+void Scene::connectServer() {
+    auto server_state = client_->shakeHand();
+    if (server_state) {
+        auto s = server_state.value();
+
+        log::info("Connected to reconstruction server");
+        if (s == rpc::ServerState_State_UNKNOWN) {
+            log::error("Reconstruction server in {} state", RpcClient::serverStateToString(s));
+        } else {
+            log::info("Reconstruction server in {} state", RpcClient::serverStateToString(s));
+            if (s != rpc::ServerState_State_READY) {
+                log::warn("Client and reconstruction server are not synchronised. "
+                          "Manually stop and restart data acquisition and/or processing");
+            }
+        }
+
+        server_state_ = server_state.value();
+    }
+}
+
+void Scene::startAcquiring() {
+    if (updateServerParams()) return;
+    if (!client_->startAcquiring()) {
+        server_state_ = rpc::ServerState_State_ACQUIRING;
+        log::info("Started acquiring data");
+    }
+}
+
+void Scene::stopAcquiring() {
+    if (!client_->stopAcquiring()) {
+        server_state_ = rpc::ServerState_State_READY;
+        log::info("Stopped acquiring data");
+    }
+}
+
+void Scene::startProcessing() {
+    if (updateServerParams()) return;
+    if (!client_->startProcessing()) {
+        server_state_ = rpc::ServerState_State_PROCESSING;
+        log::info("Started acquiring & processing data");
+    }
+}
+
+void Scene::stopProcessing() {
+    if (!client_->stopProcessing()) {
+        server_state_ = rpc::ServerState_State_READY;
+        log::info("Stopped acquiring & processing data");
+    }
+}
+
+bool Scene::setScanMode() {
+    return client_->setScanMode(scan_mode_, scan_update_interval_);
+}
+
+bool Scene::updateServerParams() {
+    if (setScanMode()) return true;
+    for (auto item : items_) {
+        if (item->updateServerParams()) return true;
     }
     return false;
 }

@@ -27,6 +27,8 @@
 
 namespace recastx::gui::test {
 
+class Application;
+
 inline constexpr int kReconInterval = 200;
 
 inline std::vector<ProDtype> generateRandomProcData(size_t s, ProDtype min_v = 0.f, ProDtype max_v = 1.f) {
@@ -53,30 +55,44 @@ class RpcServer;
 
 class ControlService final : public rpc::Control::Service {
 
-    rpc::ServerState_State state_;
-
-    RpcServer* server_;
+    Application* app_;
 
   public:
 
-    explicit ControlService(RpcServer* server);
+    explicit ControlService(Application* app);
 
-    grpc::Status SetServerState(grpc::ServerContext* context,
-                                const rpc::ServerState* state,
-                                google::protobuf::Empty* ack) override;
+    grpc::Status StartAcquiring(grpc::ServerContext* context,
+                                const google::protobuf::Empty* req,
+                                google::protobuf::Empty* rep) override;
+
+    grpc::Status StopAcquiring(grpc::ServerContext* context,
+                                const google::protobuf::Empty* req,
+                                google::protobuf::Empty* rep) override;
+
+    grpc::Status StartProcessing(grpc::ServerContext* context,
+                                const google::protobuf::Empty* req,
+                                google::protobuf::Empty* rep) override;
+
+    grpc::Status StopProcessing(grpc::ServerContext* context,
+                                const google::protobuf::Empty* req,
+                                google::protobuf::Empty* rep) override;
+
+    grpc::Status GetServerState(grpc::ServerContext* context,
+                                const google::protobuf::Empty* req,
+                                rpc::ServerState* state) override;
 
     grpc::Status SetScanMode(grpc::ServerContext* context,
                              const rpc::ScanMode* mode,
                              google::protobuf::Empty* ack) override;
-
-    void updateState(rpc::ServerState_State state) { state_ = state; }
 };
 
 class ImageprocService final : public rpc::Imageproc::Service {
 
-    rpc::ServerState_State state_;
+    Application* app_;
 
-  public:
+public:
+
+    explicit ImageprocService(Application* app);
 
     grpc::Status SetDownsampling(grpc::ServerContext* context,
                                  const rpc::DownsamplingParams* params,
@@ -85,22 +101,22 @@ class ImageprocService final : public rpc::Imageproc::Service {
     grpc::Status SetRampFilter(grpc::ServerContext* contest,
                                const rpc::RampFilterParams* params,
                                google::protobuf::Empty* ack) override;
-
-    void updateState(rpc::ServerState_State state) { state_ = state; }
 };
 
 class ProjectionTransferService final : public rpc::ProjectionTransfer::Service {
+
+    Application* app_;
 
     static constexpr uint32_t x_ = 1024;
     static constexpr uint32_t y_ = 1024;
 
     uint32_t proj_id_;
 
-    rpc::ServerState_State state_;
-
     void setProjectionData(rpc::ProjectionData* data);
 
   public:
+
+    explicit ProjectionTransferService(Application* app);
 
     grpc::Status SetProjection(grpc::ServerContext* context,
                                const rpc::Projection* request,
@@ -109,11 +125,11 @@ class ProjectionTransferService final : public rpc::ProjectionTransfer::Service 
     grpc::Status GetProjectionData(grpc::ServerContext* context,
                                    const google::protobuf::Empty*,
                                    grpc::ServerWriter<rpc::ProjectionData>* writer) override;
-
-    void updateState(rpc::ServerState_State state) { state_ = state; }
 };
 
 class ReconstructionService final : public rpc::Reconstruction::Service {
+
+    Application* app_;
 
     static constexpr uint32_t slice_x_ = 1024;
     static constexpr uint32_t slice_y_ = 512;
@@ -122,12 +138,8 @@ class ReconstructionService final : public rpc::Reconstruction::Service {
     static constexpr uint32_t volume_y_ = 128;
     static constexpr uint32_t volume_z_ = 128;
 
-    rpc::ServerState_State state_;
-    bool sino_uploaded_ = false;
-
     std::thread thread_;
 
-    bool on_demand_ = false;
     uint64_t timestamp_ {0};
 
     std::array<uint64_t, MAX_NUM_SLICES> timestamps_;
@@ -138,7 +150,7 @@ class ReconstructionService final : public rpc::Reconstruction::Service {
 
   public:
 
-    ReconstructionService();
+    explicit ReconstructionService(Application* app);
 
     grpc::Status SetSlice(grpc::ServerContext* context,
                           const rpc::Slice* slice,
@@ -152,16 +164,6 @@ class ReconstructionService final : public rpc::Reconstruction::Service {
                               const google::protobuf::Empty*,
                               grpc::ServerWriter<rpc::ReconData>* writer) override;
 
-    void updateState(rpc::ServerState_State state) {
-        if (state != state_) {
-            if (state == rpc::ServerState_State_READY) {
-                on_demand_ = false;
-            } else if (state == rpc::ServerState_State_ACQUIRING) {
-                sino_uploaded_ = false;
-            }
-            state_ = state;
-        }
-    }
 };
 
 class RpcServer {
@@ -176,11 +178,9 @@ class RpcServer {
 
   public:
 
-    explicit RpcServer(int port);
+    RpcServer(int port, Application* app);
 
     void start();
-
-    void updateState(rpc::ServerState_State state);
 };
 
 
