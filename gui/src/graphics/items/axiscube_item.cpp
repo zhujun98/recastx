@@ -22,10 +22,10 @@ namespace recastx::gui {
 
 AxiscubeItem::AxiscubeItem(Scene &scene)
         : GraphicsItem(scene),
-          vp_(new Viewport(false)),
           text_color_(glm::vec3(1.f, 1.f, 1.f)),
           top_(glm::translate(glm::vec3(-0.2f, 0.2f, 0.501f))
-               * glm::rotate(glm::radians(-90.f), glm::vec3(0.0f, .0f, 1.0f))) {
+               * glm::rotate(glm::radians(-90.f), glm::vec3(0.0f, .0f, 1.0f))),
+          vp_(new Viewport(false)) {
     scene.addItem(this);
 
     glGenVertexArrays(1, &vao_);
@@ -61,7 +61,10 @@ AxiscubeItem::AxiscubeItem(Scene &scene)
     glyph_renderer_->init(24, 24);
 }
 
-AxiscubeItem::~AxiscubeItem() = default;
+AxiscubeItem::~AxiscubeItem() {
+    glDeleteVertexArrays(1, &vao_);
+    glDeleteBuffers(1, &vbo_);
+}
 
 void AxiscubeItem::onWindowSizeChanged(int /*width*/, int /*height*/) {}
 

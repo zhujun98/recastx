@@ -60,6 +60,9 @@ Application::Application() {
 }
 
 Application::~Application() {
+    running_ = false;
+    consumer_thread_.join();
+
     shutdownImgui();
 
     glfwDestroyWindow(glfw_window_);
@@ -93,29 +96,14 @@ void Application::spin(const std::string& endpoint) {
 
     rpc_client_->startStreaming();
 
-    std::atomic<bool> running = true;
-    auto t = std::thread([&]() {
-        auto& packets = RpcClient::packets();
-        while (running) {
-            if (!packets.empty()) {
-                auto data = std::move(packets.front());
-                packets.pop();
-
-                if (!scene_->consume(std::move(data))) {
-                    spdlog::warn("Data ignored!");
-                }
-            } else {
-                std::this_thread::sleep_for(std::chrono::microseconds(1));
-            }
-        }
-    });
+    startConsumer();
 
     while (!glfwWindowShouldClose(glfw_window_)) {
         glfwPollEvents();
         render();
     }
 
-    running = false;
+    instance_.reset();
 }
 
 void Application::initImgui() {
@@ -212,6 +200,25 @@ void Application::render() {
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
     glfwSwapBuffers(glfw_window_);
+}
+
+void Application::startConsumer() {
+    running_ = true;
+    consumer_thread_ = std::thread([&]() {
+        auto& packets = RpcClient::packets();
+        while (running_) {
+            if (!packets.empty()) {
+                auto data = std::move(packets.front());
+                packets.pop();
+
+                if (!scene_->consume(std::move(data))) {
+                    spdlog::warn("Data ignored!");
+                }
+            } else {
+                std::this_thread::sleep_for(std::chrono::microseconds(1));
+            }
+        }
+    });
 }
 
 std::array<float, 2> Application::normalizeCursorPos(GLFWwindow* window, double xpos, double ypos) {
