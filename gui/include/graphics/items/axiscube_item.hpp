@@ -22,17 +22,16 @@ class Viewport;
 
 class AxiscubeItem : public GraphicsItem, public GraphicsGLItem {
 
+    glm::vec3 text_color_;
+    glm::mat4 top_;
+    std::unique_ptr<ShaderProgram> glyph_shader_;
+    std::unique_ptr<GlyphRenderer> glyph_renderer_;
+
     GLuint vao_;
     GLuint vbo_;
     std::unique_ptr<ShaderProgram> shader_;
 
-    std::unique_ptr<ShaderProgram> glyph_shader_;
-    std::unique_ptr<GlyphRenderer> glyph_renderer_;
-
     std::unique_ptr<Viewport> vp_;
-
-    glm::vec3 text_color_;
-    glm::mat4 top_;
 
 public:
 

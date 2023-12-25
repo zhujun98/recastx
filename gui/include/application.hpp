@@ -10,9 +10,11 @@
 #define GUI_APPLICATION_H
 
 #include <array>
+#include <atomic>
 #include <iostream>
 #include <memory>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <vector>
 
@@ -40,8 +42,12 @@ class Application {
 
     GLFWwindow* glfw_window_ = nullptr;
 
-    std::unique_ptr<RpcClient> rpc_client_;
+    std::atomic_bool running_ = false;
+    std::thread consumer_thread_;
+
+    // Caveat: sequence
     std::unique_ptr<Scene> scene_;
+    std::unique_ptr<RpcClient> rpc_client_;
 
     inline static std::unique_ptr<Application> instance_;
 
@@ -64,6 +70,8 @@ class Application {
     static void charCallback(GLFWwindow* window, unsigned int c);
 
     void render();
+
+    void startConsumer();
 
     static std::array<float, 2> normalizeCursorPos(GLFWwindow* window, double xpos, double ypos);
 
