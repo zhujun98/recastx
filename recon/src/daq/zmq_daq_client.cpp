@@ -18,19 +18,18 @@
 namespace recastx::recon {
 
 ZmqDaqClient::ZmqDaqClient(const std::string& endpoint, const std::string& socket_type, size_t concurrency)
-        : DaqClientInterface(),
+        : DaqClientInterface(concurrency),
           buffer_(k_DAQ_BUFFER_SIZE),
           context_(1),
-          socket_(context_, parseSocketType(socket_type)),
-          concurrency_(concurrency) {
+          socket_(context_, parseSocketType(socket_type)) {
     socket_.set(zmq::sockopt::rcvtimeo, 100);
     socket_.connect(endpoint);
 
     if(socket_.get(zmq::sockopt::type) == static_cast<int>(zmq::socket_type::sub)) {
-        spdlog::info("Connected to data server (PUB-SUB) at {}", endpoint);
+        spdlog::info("[DAQ client] Connected to data server (PUB-SUB) at {}", endpoint);
         socket_.set(zmq::sockopt::subscribe, "");
     } else if (socket_.get(zmq::sockopt::type) == static_cast<int>(zmq::socket_type::pull)) {
-        spdlog::info("Connected to data server (PUSH-PULL) {}", endpoint);
+        spdlog::info("[DAQ client] Connected to data server (PUSH-PULL) {}", endpoint);
     }
 }
 
@@ -49,11 +48,11 @@ void ZmqDaqClient::stopAcquiring() {
 
 void ZmqDaqClient::start() {
     if (running_) {
-        spdlog::warn("DAQ client is already running!");
+        spdlog::warn("[DAQ client] DAQ client is already running!");
         return;
     }
 
-    spdlog::info("Starting DAQ client (concurrency = {})", concurrency_);
+    spdlog::info("[DAQ client] Starting DAQ client (concurrency = {})", concurrency_);
 
     running_ = true;
     for (size_t i = 0; i < concurrency_; ++i) {
@@ -92,7 +91,7 @@ void ZmqDaqClient::start() {
 
                 while (running_) {
                     if (buffer_.tryPush(data.value())) break;
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 }
             }
         });
@@ -109,7 +108,7 @@ std::optional<nlohmann::json> ZmqDaqClient::parseMeta(const zmq::message_t& msg)
     try {
         return nlohmann::json::parse(msg.to_string());
     } catch (const nlohmann::json::parse_error& ex) {
-        spdlog::error("Failed to parse metadata: {}", ex.what());
+        spdlog::error("[DAQ client] Failed to parse metadata: {}", ex.what());
         return std::nullopt;
     }
 }
@@ -118,7 +117,7 @@ bool ZmqDaqClient::isDataShapeValid(size_t num_rows, size_t num_cols) {
     if (initialized_) {
         if (num_rows != num_rows_ || num_cols != num_cols_) {
             // monitor only
-            spdlog::warn("Received image data with a different shape. Current: {} x {}, "
+            spdlog::warn("[DAQ client] Received image data with a different shape. Current: {} x {}, "
                          "before: {} x {}", num_rows, num_cols, num_rows_, num_cols_);
             return false;
         }
@@ -142,7 +141,7 @@ void ZmqDaqClient::monitor(const Projection<>& proj) {
     if (proj.type == ProjectionType::PROJECTION) {
         ++projection_received_;
         if (projection_received_ % k_DAQ_MONITOR_EVERY == 0) {
-            spdlog::info("# of projections received: {}", projection_received_);
+            spdlog::info("[DAQ client] # of projections received: {}", projection_received_);
         }                
     } else {
         // reset the counter when receiving a dark or a flat

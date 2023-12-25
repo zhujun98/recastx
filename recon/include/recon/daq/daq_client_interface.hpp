@@ -19,6 +19,8 @@ class DaqClientInterface {
 
   protected:
 
+    size_t concurrency_;
+
     static ProjectionType parseProjectionType(int v) {
         if (v != static_cast<int>(ProjectionType::DARK) &&
             v != static_cast<int>(ProjectionType::FLAT) && 
@@ -30,6 +32,8 @@ class DaqClientInterface {
 
   public:
 
+    explicit DaqClientInterface(size_t concurrency) : concurrency_(concurrency) {}
+
     virtual ~DaqClientInterface() = default;
 
     virtual void start() = 0;
@@ -38,6 +42,8 @@ class DaqClientInterface {
     virtual void stopAcquiring() = 0;
 
     [[nodiscard]] virtual bool next(Projection<>& proj) = 0;
+
+    [[nodiscard]] size_t concurrency() const { return concurrency_; }
 };
 
 

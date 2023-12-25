@@ -9,6 +9,7 @@
 #ifndef RECON_MONITOR_H
 #define RECON_MONITOR_H
 
+#include <atomic>
 #include <chrono>
 
 namespace recastx::recon {
@@ -17,7 +18,7 @@ class Monitor {
 
     size_t num_darks_ = 0;
     size_t num_flats_ = 0;
-    size_t num_projections_= 0;
+    std::atomic<size_t> num_projections_= 0;
     size_t num_tomograms_ = 0;
 
     size_t scan_byte_size_;

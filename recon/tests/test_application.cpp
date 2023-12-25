@@ -29,6 +29,8 @@ class MockDaqClient : public DaqClientInterface {
 
   public:
 
+    MockDaqClient() : DaqClientInterface(1) {}
+
     void start() override {}
 
     void startAcquiring() override {}
@@ -157,7 +159,7 @@ class ApplicationTest : public testing::Test {
     }
 
     ~ApplicationTest() override {
-        app_.onStateChanged(rpc::ServerState_State_READY);
+//        app_.onStateChanged(rpc::ServerState_State_READY);
     };
 
     void SetUp() override { 
@@ -177,8 +179,7 @@ class ApplicationTest : public testing::Test {
                 ProjectionType::DARK, i, num_cols_, num_rows_, 
                 reinterpret_cast<void*>(img.data()), img.size() * sizeof(RawDtype));
         }
-        while(app_.consume());
-    } 
+    }
 
     void pushFlats(int n) {
         std::vector<RawDtype> img(pixels_, 1);
@@ -187,8 +188,7 @@ class ApplicationTest : public testing::Test {
                 ProjectionType::FLAT, i, num_cols_, num_rows_, 
                 reinterpret_cast<void*>(img.data()), img.size() * sizeof(RawDtype));
         }
-        while(app_.consume());
-    } 
+    }
 
     void pushProjection(int start, int end) {
         std::vector<RawDtype> img_base {
@@ -206,13 +206,13 @@ class ApplicationTest : public testing::Test {
                 ProjectionType::PROJECTION, i, num_cols_, num_rows_,
                 reinterpret_cast<void*>(img.data()), img.size() * sizeof(RawDtype));
         }
-        while(app_.consume());
     }
 };
 
 TEST_F(ApplicationTest, TestPushProjection) {
+    app_.startConsuming();
     app_.startPreprocessing();
-    app_.onStateChanged(rpc::ServerState_State_PROCESSING);
+    app_.startProcessing();
 
     pushDarks(num_darks_);
     pushFlats(num_flats_);
@@ -224,30 +224,31 @@ TEST_F(ApplicationTest, TestPushProjection) {
     auto& sino = app_.sinoBuffer().ready();
     auto& projs_ready = app_.rawBuffer().ready();
     EXPECT_EQ(projs_ready[0], 2.f);
-    EXPECT_EQ(projs_ready[(num_angles_ - 1) * pixels_ - 1], 3.f); 
+    EXPECT_EQ(projs_ready[(num_angles_ - 1) * pixels_ - 1], 3.f);
 
     // push projections to fill the buffer
     pushProjection(num_angles_ - 1, num_angles_);
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     auto& projs_front = app_.rawBuffer().front();
-    EXPECT_THAT(std::vector<float>(projs_front.begin(), projs_front.begin() + 10), 
+    EXPECT_THAT(std::vector<float>(projs_front.begin(), projs_front.begin() + 10),
                 Pointwise(FloatNear(1e-6), { 0.30685282f, -0.60943794f, -0.09861231f, -0.9459102f,  1.f,
                                             -0.38629436f, -0.7917595f,   0.30685282f, -1.1972246f, -0.60943794f}));
-    EXPECT_THAT(std::vector<float>(projs_front.end() - 10, projs_front.end()), 
+    EXPECT_THAT(std::vector<float>(projs_front.end() - 10, projs_front.end()),
                 Pointwise(FloatNear(1e-6), { 0.30685282f, -0.38629436f, -1.0794415f, -0.7917595f, -1.1972246f,
                                             -0.9459102f,  -1.1972246f,  -1.1972246f, -1.0794415f, -0.38629436f}));
-    EXPECT_THAT(std::vector<float>(sino.begin(), sino.begin() + 10), 
+    EXPECT_THAT(std::vector<float>(sino.begin(), sino.begin() + 10),
                 Pointwise(FloatNear(1e-6), {-0.7917595f, -1.0794415f, -1.0794415f, -0.9459102f, -0.09861231f,
                                             -0.9459102f, -1.1972246f, -1.1972246f, -1.0794415f, -0.38629436f}));
-    EXPECT_THAT(std::vector<float>(sino.end() - 10, sino.end()), 
+    EXPECT_THAT(std::vector<float>(sino.end() - 10, sino.end()),
                 Pointwise(FloatNear(1e-6), { 0.30685282f, -0.60943794f, -0.09861231f, -0.9459102f, 1.f,
                                             -0.09861231f, -0.7917595f,  -0.38629436f, -1.0794415f, 0.30685282f}));
 }
 
 TEST_F(ApplicationTest, TestMemoryBufferReset) {
+    app_.startConsuming();
     app_.startPreprocessing();
-    app_.onStateChanged(rpc::ServerState_State_PROCESSING);
+    app_.startProcessing();
 
     pushDarks(num_darks_);
     pushFlats(num_flats_);
@@ -265,8 +266,9 @@ TEST_F(ApplicationTest, TestMemoryBufferReset) {
 }
 
 TEST_F(ApplicationTest, TestPushProjectionUnordered) {
+    app_.startConsuming();
     app_.startPreprocessing();
-    app_.onStateChanged(rpc::ServerState_State_PROCESSING);
+    app_.startProcessing();
     
     pushDarks(num_darks_);
     pushFlats(num_flats_);
@@ -306,10 +308,11 @@ TEST_F(ApplicationTest, TestPushProjectionUnordered) {
 }
 
 TEST_F(ApplicationTest, TestReconstructing) {
+    app_.startConsuming();
     app_.startPreprocessing();
     app_.startUploading();
     app_.startReconstructing();
-    app_.onStateChanged(rpc::ServerState_State_PROCESSING);
+    app_.startProcessing();
 
     pushDarks(num_darks_);
     pushFlats(num_flats_);
@@ -331,8 +334,9 @@ TEST_F(ApplicationTest, TestWithPagagin) {
     // float distance = 40.f;
     // app_.setPaganinParams(pixel_size, lambda, delta, beta, distance);
 
+    app_.startConsuming();
     app_.startPreprocessing();
-    app_.onStateChanged(rpc::ServerState_State_PROCESSING);
+    app_.startProcessing();
     
     // pushDarks(num_darks_);
     // pushFlats(num_flats_);
@@ -340,16 +344,17 @@ TEST_F(ApplicationTest, TestWithPagagin) {
 }
 
 TEST_F(ApplicationTest, TestDownsampling) {
+    app_.startConsuming();
     app_.startPreprocessing();
-    app_.onStateChanged(rpc::ServerState_State_PROCESSING);
+    app_.startProcessing();
 
     pushDarks(num_darks_);
     pushFlats(num_flats_);
     pushProjection(0, num_angles_);
 
-    app_.onStateChanged(rpc::ServerState_State_READY);
+    app_.stopProcessing();
     app_.setDownsampling(2u, 2u);
-    app_.onStateChanged(rpc::ServerState_State_PROCESSING);
+    app_.startProcessing();
     pushProjection(0, num_angles_);
 }
 
