@@ -19,6 +19,8 @@ namespace recastx::recon::test {
 TEST(MonitorTest, TestGeneral) {
     Monitor mon(1, 10);
 
+    mon.summarize(); // test with zero counts
+
     for (size_t i = 0; i < 3; ++i) mon.countDark();
     ASSERT_EQ(mon.numDarks(), 3);
 

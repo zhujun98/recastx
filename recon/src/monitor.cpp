@@ -65,7 +65,7 @@ void Monitor::countTomogram() {
         // The number for the first <report_tomo_throughput_every_> tomograms 
         // underestimates the throughput! 
         size_t dt = std::chrono::duration_cast<std::chrono::microseconds>(end -  tomo_start_).count();
-        double throughput_per_tomo = 1000000. * report_tomo_throughput_every_ / dt;
+        double throughput_per_tomo = dt == 0 ? 0. : 1000000. * report_tomo_throughput_every_ / dt;
         spdlog::info("Throughput (averaged over the last {} tomograms): {:.1f} (tomo/s)",
                      report_tomo_throughput_every_, throughput_per_tomo);
         tomo_start_ = end_;
@@ -75,8 +75,8 @@ void Monitor::countTomogram() {
 
 void Monitor::summarize() const {
     size_t dt = std::chrono::duration_cast<std::chrono::microseconds>(end_ -  start_).count();
-    float throughput = image_byte_size_ * num_projections_ / dt;
-    float throughput_per_tomo = 1000000. * num_tomograms_ / dt;
+    float throughput = dt == 0 ? 0. : image_byte_size_ * num_projections_ / dt;
+    float throughput_per_tomo = dt == 0 ? 0. : 1000000. * num_tomograms_ / dt;
 
     spdlog::info("--------------------------------------------------------------------------------");
     spdlog::info("Summarise of run:");
