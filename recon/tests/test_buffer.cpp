@@ -50,8 +50,9 @@ TEST(TripleTensorBufferTest, TestPrepareAndFetch) {
     ASSERT_FALSE(b2f.fetch(1)); // test timeout
 
     std::copy(data2.begin(), data2.end(), b2f.back().begin());
-    b2f.prepare();
+    ASSERT_FALSE(b2f.prepare());
     EXPECT_THAT(b2f.ready(), Pointwise(FloatNear(1e-6), data2));
+    ASSERT_TRUE(b2f.prepare());
 }
 
 
@@ -241,4 +242,58 @@ TEST_F(MemoryBufferTest, TestReshape) {
     EXPECT_THAT(buffer_.shape(), ElementsAre(4, 2, 3));
     ASSERT_EQ(buffer_.size(), 24);
 }
+
+TEST(MemoryBufferTest2, TestMWSR) {
+    const size_t capacity = 600;
+    const size_t chunk_size = 10;
+    MemoryBuffer<float, 3> buffer {capacity};
+    buffer.resize({chunk_size, 2, 3});
+
+    auto w1 = std::thread([&] {
+        for (int i = 0; i < chunk_size * capacity; i += 3) {
+            buffer.fill<RawDtype>(i, _produceRawData({1, 2, 3, 4, 5, 6}).data());
+            std::this_thread::sleep_for(std::chrono::microseconds(1));
+        }
+    });
+    auto w2 = std::thread([&] {
+        for (int i = 1; i < chunk_size * capacity; i += 3) {
+            buffer.fill<RawDtype>(i, _produceRawData({1, 2, 3, 4, 5, 6}).data());
+            std::this_thread::sleep_for(std::chrono::microseconds(1));
+        }
+    });
+    auto w3 = std::thread([&] {
+        for (int i = 2; i < chunk_size * capacity; i += 3) {
+            buffer.fill<RawDtype>(i, _produceRawData({1, 2, 3, 4, 5, 6}).data());
+            std::this_thread::sleep_for(std::chrono::microseconds(1));
+        }
+    });
+
+    int fetched = 0;
+    auto r = std::thread([&] {
+        for (int i = 0; i < capacity; ++i) {
+            if (buffer.fetch(10)) {
+                EXPECT_THAT(buffer.front(), ElementsAre(1, 2, 3, 4, 5, 6,
+                                                        1, 2, 3, 4, 5, 6,
+                                                        1, 2, 3, 4, 5, 6,
+                                                        1, 2, 3, 4, 5, 6,
+                                                        1, 2, 3, 4, 5, 6,
+                                                        1, 2, 3, 4, 5, 6,
+                                                        1, 2, 3, 4, 5, 6,
+                                                        1, 2, 3, 4, 5, 6,
+                                                        1, 2, 3, 4, 5, 6,
+                                                        1, 2, 3, 4, 5, 6));
+                ++fetched;
+            }
+        }
+    });
+    w1.join();
+    w2.join();
+    w3.join();
+    r.join();
+
+    ASSERT_EQ(fetched, capacity);
+    ASSERT_EQ(buffer.occupied(), 0);
+    ASSERT_FALSE(buffer.isReady());
+}
+
 } // namespace recastx::recon::test

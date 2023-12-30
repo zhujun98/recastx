@@ -52,7 +52,9 @@ void SliceMediator::reconAll(Reconstructor* recon, int gpu_buffer_index) {
         updated_.clear();
     }
 
-    all_slices_.prepare();
+    if (all_slices_.prepare()) {
+        spdlog::debug("Reconstructed slices dropped due to slowness of clients");
+    }
 }
 
 void SliceMediator::reconOnDemand(Reconstructor* recon, int gpu_buffer_index) {
@@ -73,7 +75,9 @@ void SliceMediator::reconOnDemand(Reconstructor* recon, int gpu_buffer_index) {
             updated_.clear();
         }
 
-        ondemand_slices_.prepare();
+        if (ondemand_slices_.prepare()) {
+            spdlog::debug("On-demand reconstructed slices dropped due to slowness of clients");
+        }
     }
 }
 

@@ -24,7 +24,6 @@ void Monitor::reset() {
     num_darks_ = 0;
     num_flats_ = 0;
     num_projections_ = 0;
-    num_tomograms_ = 0;
 
     resetTimer();
 }
@@ -74,12 +73,14 @@ void Monitor::summarize() const {
         std::chrono::steady_clock::now() -  start_).count();
     float throughput = scan_byte_size_ * num_tomograms_ / dt;
 
-    spdlog::info("Summarise of run:");
+    spdlog::info("--------------------------------------------------------------------------------");
+    spdlog::info("- Summarise of run:");
     spdlog::info("- Number of darks processed: {}", num_darks_);
     spdlog::info("- Number of flats processed: {}", num_flats_);
     spdlog::info("- Number of projections processed: {}", num_projections_);
-    spdlog::info("- Tomograms reconstructed: {}, average throughput: {:.1f} (MB/s)", 
+    spdlog::info("- Tomograms reconstructed: {}, average throughput: {:.1f} (MB/s)",
                     num_tomograms_, throughput);
+    spdlog::info("--------------------------------------------------------------------------------");
 }
 
 } // namespace recastx::recon

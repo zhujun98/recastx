@@ -37,6 +37,7 @@ Application::Application(size_t raw_buffer_size,
                          ReconstructorFactory* recon_factory,
                          const RpcServerConfig& rpc_config)
      : raw_buffer_(raw_buffer_size),
+       monitor_(new Monitor()),
        proj_mediator_(new ProjectionMediator(k_PROJECTION_MEDIATOR_BUFFER_SIZE)),
        slice_mediator_(new SliceMediator()),
        ramp_filter_factory_(ramp_filter_factory),
@@ -44,12 +45,13 @@ Application::Application(size_t raw_buffer_size,
        recon_factory_(recon_factory),
        scan_mode_(rpc::ScanMode_Mode_DISCRETE),
        scan_update_interval_(K_MIN_SCAN_UPDATE_INTERVAL),
-       monitor_(new Monitor()),
        daq_client_(daq_client),
-       rpc_server_(new RpcServer(rpc_config.port, this)) {}
+       rpc_server_(new RpcServer(rpc_config.port, this)) {
+}
 
 Application::~Application() { 
-    running_ = false; 
+    closing_ = true;
+    for (auto& t : consumer_threads_) t.join();
 }
 
 void Application::setProjectionGeometry(BeamShape beam_shape, size_t col_count, size_t row_count,
@@ -74,10 +76,10 @@ void Application::setReconGeometry(std::optional<size_t> slice_size, std::option
     // initialization is delayed
 }
 
-void Application::tryComputeReciprocal() {
+bool Application::tryComputeReciprocal() {
     if (darks_.empty() && flats_.empty()) {
         spdlog::warn("Send dark and flat images first! Projection ignored.");
-        return;
+        return false;
     }
 
     spdlog::info("Computing reciprocal for flat field correction "
@@ -98,15 +100,22 @@ void Application::tryComputeReciprocal() {
 
     reciprocal_computed_ = true;
     spdlog::info("Reciprocal computed!");
+    return true;
+}
+
+void Application::startConsuming() {
+    for (size_t i = 0; i < 2 * daq_client_->concurrency(); ++i) {
+        consumer_threads_.emplace_back(&Application::consume, this);
+    }
 }
 
 void Application::startPreprocessing() {
     auto t = std::thread([&] {
         oneapi::tbb::task_arena arena(imgproc_params_.num_threads);
-        while (running_) {
+        while (!closing_) {
             if (waitForProcessing()) continue;
 
-            if (!raw_buffer_.fetch(100)) continue; 
+            if (!raw_buffer_.fetch(100)) continue;
 
             spdlog::info("Preprocessing projections ...");
             preprocessProjections(arena);
@@ -119,7 +128,7 @@ void Application::startPreprocessing() {
 
 void Application::startUploading() {
     auto t = std::thread([&] {
-        while (running_) {
+        while (!closing_) {
             if(waitForProcessing()) continue;
 
             if (!sino_buffer_.fetch(100)) continue;
@@ -129,13 +138,14 @@ void Application::startUploading() {
             {
                 if (scan_mode_ == rpc::ScanMode_Mode_DISCRETE) {
                     recon_->uploadSinograms(1 - gpu_buffer_index_, sino_buffer_.front().data(), chunk_size);
+
                     std::lock_guard<std::mutex> lck(gpu_mtx_);
                     gpu_buffer_index_ = 1 - gpu_buffer_index_;
                     sino_uploaded_ = true;
                 } else {
                     std::lock_guard<std::mutex> lck(gpu_mtx_);
-                    sino_uploaded_ = true;
                     recon_->uploadSinograms(gpu_buffer_index_, sino_buffer_.front().data(), chunk_size);
+                    sino_uploaded_ = true;
                 }
 
                 sino_initialized_ = true;
@@ -152,7 +162,7 @@ void Application::startUploading() {
 void Application::startReconstructing() {
 
     auto t = std::thread([&] {
-        while (running_) {          
+        while (!closing_) {
             {
                 std::unique_lock<std::mutex> lck(gpu_mtx_);
                 if (gpu_cv_.wait_for(lck, 10ms, [&] { return sino_uploaded_; })) {
@@ -177,7 +187,9 @@ void Application::startReconstructing() {
             spdlog::debug("Volume and slices reconstructed!");
             monitor_->countTomogram();
 
-            volume_buffer_.prepare();
+            if (volume_buffer_.prepare()) {
+                spdlog::debug("Reconstructed volume dropped due to slowness of clients");
+            }
         }
 
     });
@@ -185,65 +197,58 @@ void Application::startReconstructing() {
     t.detach();
 }
 
-void Application::pushProjection(const Projection<>& proj) {
-    // TODO: compute the average on the fly instead of storing the data in the buffer
-    raw_buffer_.fill<RawDtype>(
-        proj.index, reinterpret_cast<const char*>(proj.data.data()), proj.data.shape());
-}
-
-bool Application::consume() {
+void Application::consume() {
     Projection<> proj;
-    if (!daq_client_->next(proj)) return false;
+    while (!closing_) {
+        if (!daq_client_->next(proj)) continue;
 
-    switch(proj.type) {
-        case ProjectionType::PROJECTION: {
-            if (server_state_ == rpc::ServerState_State_PROCESSING) {
-                if (!reciprocal_computed_) {
-                    tryComputeReciprocal();
-                    if (!reciprocal_computed_) break; 
-                    monitor_->resetTimer();
+        switch(proj.type) {
+            case ProjectionType::PROJECTION: {
+                if (server_state_ == rpc::ServerState_State_PROCESSING) {
+                    {
+                        std::lock_guard lck(reciprocal_mtx_);
+                        if (!reciprocal_computed_) {
+                            if (!tryComputeReciprocal()) break;
+                            monitor_->resetTimer();
+                        }
+                    }
+
+                    pushProjection(proj);
                 }
 
-                pushProjection(proj);
+                proj_mediator_->push(std::move(proj));
+                monitor_->countProjection();
+                break;
             }
-
-            proj_mediator_->push(std::move(proj));
-            monitor_->countProjection();
-            break;
-        }
-        case ProjectionType::DARK: {
-            if (server_state_ == rpc::ServerState_State_PROCESSING) {
-                maybeResetDarkAndFlatAcquisition();
-                darks_.emplace_back(std::move(proj.data));
-                if (darks_.size() > k_MAX_NUM_DARKS) {
-                    spdlog::warn("Maximum number of dark images received. Data ignored!");
+            case ProjectionType::DARK: {
+                std::lock_guard lck(reciprocal_mtx_);
+                if (server_state_ == rpc::ServerState_State_PROCESSING) {
+                    maybeResetDarkAndFlatAcquisition();
+                    pushDark(std::move(proj));
                 }
+                monitor_->countDark();
+                break;
             }
-            monitor_->countDark();
-            break;
-        }
-        case ProjectionType::FLAT: {
-            if (server_state_ == rpc::ServerState_State_PROCESSING) {
-                maybeResetDarkAndFlatAcquisition();
-                flats_.emplace_back(std::move(proj.data));
-                if (flats_.size() > k_MAX_NUM_FLATS) {
-                    spdlog::warn("Maximum number of flat images received. Data ignored!");
+            case ProjectionType::FLAT: {
+                std::lock_guard lck(reciprocal_mtx_);
+                if (server_state_ == rpc::ServerState_State_PROCESSING) {
+                    maybeResetDarkAndFlatAcquisition();
+                    pushFlat(std::move(proj));
                 }
+                monitor_->countFlat();
+                break;
             }
-            monitor_->countFlat();
-            break;
+            default:
+                throw std::runtime_error("Unexpected projection type");
         }
-        default:
-            throw std::runtime_error("Unexpected projection type");
     }
-
-    return true;
 }
 
 void Application::spin(rpc::ServerState_State state) {
-    startPreprocessing();
-    startUploading();
     startReconstructing();
+    startUploading();
+    startPreprocessing();
+    startConsuming();
 
     daq_client_->start();
 
@@ -260,14 +265,8 @@ void Application::spin(rpc::ServerState_State state) {
 
     rpc_server_->start();
 
-    while (running_) {
-        if (raw_buffer_.isReady()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
-
-        if (!consume()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
+    while (!closing_) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(5000));
     }
 }
 
@@ -336,6 +335,8 @@ void Application::stopAcquiring() {
     spdlog::info("Stop acquiring data");
 
     proj_mediator_->reset();
+    monitor_->summarize();
+    monitor_->reset();
 }
 
 void Application::startProcessing() {
@@ -470,7 +471,9 @@ void Application::preprocessProjections(oneapi::tbb::task_arena& arena) {
         });
     });
 
-    sino_buffer_.prepare();
+    if (sino_buffer_.prepare()) {
+        spdlog::warn("Sinogram data dropped due to slowness of downstream pipeline");
+    }
 }
 
 void Application::init() {
@@ -589,6 +592,7 @@ void Application::maybeResetDarkAndFlatAcquisition() {
         darks_.clear();
         flats_.clear();
         reciprocal_computed_ = false;
+        spdlog::info("Re-collecting dark and flat images");
     }
 }
 

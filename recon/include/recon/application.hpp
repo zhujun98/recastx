@@ -79,6 +79,12 @@ class Application {
     // Why did I choose ProDtype over RawDtype?
     MemoryBuffer<ProDtype, 3> raw_buffer_;
 
+    std::atomic_bool closing_ = false;
+    std::vector<std::thread> consumer_threads_;
+
+    std::unique_ptr<Monitor> monitor_;
+
+    std::mutex reciprocal_mtx_;
     std::vector<RawImageData> darks_;
     std::vector<RawImageData> flats_;
     ProImageData dark_avg_;
@@ -125,10 +131,6 @@ class Application {
     rpc::ScanMode_Mode scan_mode_;
     uint32_t scan_update_interval_;
 
-    // It's not a State because there might be race conditions.
-    bool running_ = true;
-    std::unique_ptr<Monitor> monitor_;
-
     DaqClientInterface* daq_client_;
     std::unique_ptr<RpcServer> rpc_server_;
 
@@ -148,9 +150,33 @@ class Application {
 
     void maybeResetDarkAndFlatAcquisition();
 
-    void pushProjection(const Projection<>& proj);
+    void pushDark(Projection<>&& proj) {
+        darks_.emplace_back(std::move(proj.data));
+        if (darks_.size() > k_MAX_NUM_DARKS) {
+            spdlog::warn("Maximum number of dark images received. Data ignored!");
+        }
+    }
 
-    void tryComputeReciprocal();
+    void pushFlat(Projection<>&& proj) {
+        flats_.emplace_back(std::move(proj.data));
+        if (flats_.size() > k_MAX_NUM_FLATS) {
+            spdlog::warn("Maximum number of flat images received. Data ignored!");
+        }
+    }
+
+    void pushProjection(const Projection<>& proj) {
+        if (raw_buffer_.isReady()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+
+        // TODO: compute the average on the fly instead of storing the data in the buffer
+        raw_buffer_.fill<RawDtype>(
+                proj.index, reinterpret_cast<const char*>(proj.data.data()), proj.data.shape());
+    }
+
+    void consume();
+
+    bool tryComputeReciprocal();
 
     void preprocessProjections(oneapi::tbb::task_arena& arena);
 
@@ -193,7 +219,7 @@ class Application {
                           std::optional<float> min_y, std::optional<float> max_y, 
                           std::optional<float> min_z, std::optional<float> max_z);
 
-    bool consume();
+    void startConsuming();
 
     void startPreprocessing();
 
