@@ -12,11 +12,12 @@
 
 namespace recastx::recon {
 
-Monitor::Monitor(size_t scan_byte_size, 
+Monitor::Monitor(size_t image_byte_size,
                  size_t report_tomo_throughput_every) : 
-    scan_byte_size_(scan_byte_size),
+    image_byte_size_(image_byte_size),
     start_(std::chrono::steady_clock::now()),
     tomo_start_(start_),
+    end_(start_),
     report_tomo_throughput_every_(report_tomo_throughput_every) {
 }
 
@@ -31,6 +32,7 @@ void Monitor::reset() {
 void Monitor::resetTimer() {
     start_ = std::chrono::steady_clock::now();
     tomo_start_ = start_;
+    end_ = start_;
 }
 
 void Monitor::countDark() {
@@ -45,6 +47,11 @@ void Monitor::countFlat() {
     }
 }
 
+void Monitor::countProjection() {
+    ++num_projections_;
+    end_ = std::chrono::steady_clock::now();
+}
+
 void Monitor::countTomogram() {
     ++num_tomograms_;
 
@@ -54,32 +61,31 @@ void Monitor::countTomogram() {
 
 #if (VERBOSITY >= 2)
     if (num_tomograms_ % report_tomo_throughput_every_ == 0) {
+        auto end = std::chrono::steady_clock::now();
         // The number for the first <report_tomo_throughput_every_> tomograms 
         // underestimates the throughput! 
-        auto end = std::chrono::steady_clock::now();
-        size_t dt = std::chrono::duration_cast<std::chrono::microseconds>(
-            end -  tomo_start_).count();
-        double throughput = scan_byte_size_ * report_tomo_throughput_every_ / dt;
+        size_t dt = std::chrono::duration_cast<std::chrono::microseconds>(end -  tomo_start_).count();
         double throughput_per_tomo = 1000000. * report_tomo_throughput_every_ / dt;
-        spdlog::info("Throughput (averaged over the last {} tomograms): {:.1f} (MB/s) / {:.1f} (tomo/s)", 
-                     report_tomo_throughput_every_, throughput, throughput_per_tomo);
-        tomo_start_ = end;
+        spdlog::info("Throughput (averaged over the last {} tomograms): {:.1f} (tomo/s)",
+                     report_tomo_throughput_every_, throughput_per_tomo);
+        tomo_start_ = end_;
     }
 #endif    
 }
 
 void Monitor::summarize() const {
-    size_t dt = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now() -  start_).count();
-    float throughput = scan_byte_size_ * num_tomograms_ / dt;
+    size_t dt = std::chrono::duration_cast<std::chrono::microseconds>(end_ -  start_).count();
+    float throughput = image_byte_size_ * num_projections_ / dt;
+    float throughput_per_tomo = 1000000. * num_tomograms_ / dt;
 
     spdlog::info("--------------------------------------------------------------------------------");
-    spdlog::info("- Summarise of run:");
+    spdlog::info("Summarise of run:");
+    spdlog::info("- Duration: {:.1f} s", static_cast<double>(dt) * 0.000001);
     spdlog::info("- Number of darks processed: {}", num_darks_);
     spdlog::info("- Number of flats processed: {}", num_flats_);
     spdlog::info("- Number of projections processed: {}", num_projections_);
-    spdlog::info("- Tomograms reconstructed: {}, average throughput: {:.1f} (MB/s)",
-                    num_tomograms_, throughput);
+    spdlog::info("- Tomograms reconstructed: {}", num_tomograms_);
+    spdlog::info("- Average throughput: {:.1f} (MB/s) / {:.1f} (tomo/s)", throughput, throughput_per_tomo);
     spdlog::info("--------------------------------------------------------------------------------");
 }
 

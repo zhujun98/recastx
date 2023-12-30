@@ -21,17 +21,19 @@ class Monitor {
     std::atomic<size_t> num_projections_= 0;
     size_t num_tomograms_ = 0;
 
-    size_t scan_byte_size_;
+    size_t image_byte_size_;
 
     std::chrono::time_point<std::chrono::steady_clock> start_;
     std::chrono::time_point<std::chrono::steady_clock> tomo_start_;
+    std::chrono::time_point<std::chrono::steady_clock> end_;
+
     size_t report_tomo_throughput_every_;
     const size_t report_darks_every_ = 10;
     const size_t report_flats_every_ = 10;
 
   public:
 
-    Monitor(size_t scan_byte_size = 0,
+    Monitor(size_t image_byte_size = 0,
             size_t report_tomo_throughput_every = 10);
 
     void reset();
@@ -42,7 +44,7 @@ class Monitor {
     
     void countFlat();
 
-    void countProjection() { ++num_projections_; }
+    void countProjection();
 
     void countTomogram();
 
