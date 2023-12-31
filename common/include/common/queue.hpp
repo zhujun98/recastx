@@ -6,8 +6,8 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
-#ifndef RECON_QUEUE_H
-#define RECON_QUEUE_H
+#ifndef COMMON_QUEUE_H
+#define COMMON_QUEUE_H
 
 #include <atomic>
 #include <cassert>
@@ -18,7 +18,7 @@
 #include <thread>
 #include <condition_variable>
 
-namespace recastx::recon {
+namespace recastx {
 
 template<typename T>
 class ThreadSafeQueue {
@@ -149,4 +149,4 @@ class ThreadSafeQueue {
 
 } // namespace recastx::recon
 
-#endif // RECON_QUEUE_H
+#endif // COMMON_QUEUE_H

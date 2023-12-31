@@ -91,7 +91,7 @@ public:
 
     bool handleKey(int key, int action, int mods) override;
 
-    bool consume(RpcClient::DataType&& data);
+    bool consume(const RpcClient::DataType& data);
 
     void setStatus(const std::string& key, const std::any& value) {
         scene_status_[key] = value;

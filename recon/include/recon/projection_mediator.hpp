@@ -9,9 +9,7 @@
 #ifndef RECON_PROJECTIONMEDIATOR_H
 #define RECON_PROJECTIONMEDIATOR_H
 
-#include <queue>
-
-#include "queue.hpp"
+#include "common/queue.hpp"
 #include "projection.hpp"
 
 namespace recastx::recon {

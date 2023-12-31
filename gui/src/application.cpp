@@ -205,17 +205,13 @@ void Application::render() {
 void Application::startConsumer() {
     running_ = true;
     consumer_thread_ = std::thread([&]() {
-        auto& packets = RpcClient::packets();
+        auto& packets = rpc_client_->packets();
+        RpcClient::DataType data;
         while (running_) {
-            if (!packets.empty()) {
-                auto data = std::move(packets.front());
-                packets.pop();
-
-                if (!scene_->consume(std::move(data))) {
-                    spdlog::warn("Data ignored!");
-                }
-            } else {
+            if (!packets.tryPop(data)) {
                 std::this_thread::sleep_for(std::chrono::microseconds(1));
+            } else if (!scene_->consume(data)) {
+                spdlog::warn("Data ignored!");
             }
         }
     });
