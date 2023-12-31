@@ -84,10 +84,6 @@ void ZmqDaqClient::start() {
 
                 auto data = parseData(meta.value(), update);
                 if (!data) continue;
-    
-    #if (VERBOSITY >= 1)
-                monitor(data.value());
-    #endif
 
                 while (running_) {
                     if (buffer_.tryPush(data.value())) break;
@@ -135,18 +131,6 @@ zmq::socket_type ZmqDaqClient::parseSocketType(const std::string& socket_type) c
     if (socket_type == "pull") return zmq::socket_type::pull;
     if (socket_type == "sub") return zmq::socket_type::sub;
     throw std::invalid_argument(fmt::format("Unsupported socket type: {}", socket_type)); 
-}
-
-void ZmqDaqClient::monitor(const Projection<>& proj) {
-    if (proj.type == ProjectionType::PROJECTION) {
-        ++projection_received_;
-        if (projection_received_ % k_DAQ_MONITOR_EVERY == 0) {
-            spdlog::info("[DAQ client] # of projections received: {}", projection_received_);
-        }                
-    } else {
-        // reset the counter when receiving a dark or a flat
-        projection_received_ = 0;
-    }
 }
 
 } // namespace recastx::recon

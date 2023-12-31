@@ -209,7 +209,7 @@ void Application::consume() {
                         std::lock_guard lck(reciprocal_mtx_);
                         if (!reciprocal_computed_) {
                             if (!tryComputeReciprocal()) break;
-                            monitor_->resetTimer();
+                            monitor_->resetPerf();
                         }
                     }
 
@@ -322,6 +322,8 @@ void Application::startAcquiring() {
 
     server_state_ = rpc::ServerState_State_ACQUIRING;
     spdlog::info("Start acquiring data");
+
+    monitor_.reset(new Monitor(proj_geom_.row_count * proj_geom_.col_count * sizeof(RawDtype), group_size_));
 }
 
 void Application::stopAcquiring() {
@@ -336,7 +338,6 @@ void Application::stopAcquiring() {
 
     proj_mediator_->reset();
     monitor_->summarize();
-    monitor_->reset();
 }
 
 void Application::startProcessing() {
@@ -358,7 +359,7 @@ void Application::startProcessing() {
         spdlog::info("- Scan mode: discrete");
     }
 
-    monitor_.reset(new Monitor(proj_geom_.row_count * proj_geom_.col_count * sizeof(RawDtype)));
+    monitor_.reset(new Monitor(proj_geom_.row_count * proj_geom_.col_count * sizeof(RawDtype), group_size_));
 }
 
 void Application::stopProcessing() {
@@ -373,7 +374,6 @@ void Application::stopProcessing() {
 
     proj_mediator_->reset();
     monitor_->summarize();
-    monitor_->reset();
 }
 
 std::optional<rpc::ProjectionData> Application::getProjectionData(int timeout) {

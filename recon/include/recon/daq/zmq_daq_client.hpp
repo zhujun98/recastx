@@ -9,7 +9,6 @@
 #ifndef RECON_ZMQDAQCLIENT_H
 #define RECON_ZMQDAQCLIENT_H
 
-#include <atomic>
 #include <memory>
 #include <string>
 #include <thread>
@@ -30,11 +29,7 @@ class ZmqDaqClient : public DaqClientInterface {
     size_t num_rows_;
     size_t num_cols_;
 
-    std::atomic<size_t> projection_received_ = 0;
-
     [[nodiscard]] zmq::socket_type parseSocketType(const std::string& socket_type) const;
-
-    void monitor(const Projection<>& proj);
 
   protected:
 
