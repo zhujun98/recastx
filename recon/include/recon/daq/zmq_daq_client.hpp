@@ -19,7 +19,7 @@
 #include <nlohmann/json.hpp>
 
 #include "daq_client_interface.hpp"
-#include "recon/queue.hpp"
+#include "common/queue.hpp"
 #include "recon/projection.hpp"
 
 namespace recastx::recon {

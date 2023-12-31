@@ -109,9 +109,9 @@ bool Scene::handleKey(int key, int action, int mods) {
     return false;
 }
 
-bool Scene::consume(RpcClient::DataType&& data) {
+bool Scene::consume(const RpcClient::DataType& data) {
     for (auto& item : data_items_) {
-        if (item->consume(std::move(data))) {
+        if (item->consume(data)) {
             return true;
         };
     }

@@ -14,13 +14,9 @@
 #include <map>
 #include <memory>
 #include <optional>
-#include <queue>
 #include <string>
 #include <thread>
 #include <variant>
-
-#include "logger.hpp"
-#include "common/config.hpp"
 
 #include <grpcpp/channel.h>
 #include <grpcpp/create_channel.h>
@@ -29,6 +25,10 @@
 #include "imageproc.grpc.pb.h"
 #include "projection.grpc.pb.h"
 #include "reconstruction.grpc.pb.h"
+
+#include "logger.hpp"
+#include "common/config.hpp"
+#include "common/queue.hpp"
 
 namespace recastx::gui {
 
@@ -69,9 +69,9 @@ class RpcClient {
     std::atomic<bool> streaming_proj_ = false;
     std::thread thread_proj_;
 
-    inline static std::queue<DataType> packets_;
+    ThreadSafeQueue<DataType> packets_;
 
-    inline void updateTimeout(int& timeout, const grpc::Status& status) {
+    void updateTimeout(int& timeout, const grpc::Status& status) {
         if (checkStatus(status, false)) {
             std::this_thread::sleep_for(std::chrono::milliseconds(timeout));
             timeout = std::min(2 * timeout, max_timeout);
@@ -88,7 +88,7 @@ class RpcClient {
 
   public:
 
-    static std::queue<DataType>& packets();
+    ThreadSafeQueue<DataType>& packets();
 
     explicit RpcClient(const std::string& address);
 

@@ -16,7 +16,7 @@ namespace recastx::gui {
 
 using namespace std::string_literals;
 
-std::queue<RpcClient::DataType>& RpcClient::packets() { return packets_; }
+ThreadSafeQueue<RpcClient::DataType>& RpcClient::packets() { return packets_; }
 
 RpcClient::RpcClient(const std::string& address) {
 
@@ -189,7 +189,7 @@ void RpcClient::startReadingReconStream() {
                     recon_stub_->GetReconData(&context, request));
             while(reader->Read(&reply)) {
                 log::debug("Received ReconData");
-                packets_.emplace(std::move(reply));
+                packets_.push(reply);
             }
 
             updateTimeout(timeout, reader->Finish());
@@ -216,7 +216,7 @@ void RpcClient::startReadingProjectionStream() {
                     proj_trans_stub_->GetProjectionData(&context, request));
             while(reader->Read(&reply)) {
                 log::debug("Received ProjectionData");
-                packets_.emplace(std::move(reply));
+                packets_.push(reply);
             }
 
             updateTimeout(timeout, reader->Finish());

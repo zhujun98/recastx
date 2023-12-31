@@ -15,7 +15,7 @@
 
 #include "recon/application.hpp"
 #include "recon/preprocessing.hpp"
-#include "recon/queue.hpp"
+#include "common/queue.hpp"
 
 
 namespace recastx::recon::test {

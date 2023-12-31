@@ -11,7 +11,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include <recon/queue.hpp>
+#include "common/queue.hpp"
 
 namespace recastx::recon::test {
 
