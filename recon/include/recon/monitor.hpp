@@ -16,29 +16,31 @@ namespace recastx::recon {
 
 class Monitor {
 
-    size_t num_darks_ = 0;
-    size_t num_flats_ = 0;
-    std::atomic<size_t> num_projections_= 0;
-    size_t num_tomograms_ = 0;
-
-    size_t image_byte_size_;
-
     std::chrono::time_point<std::chrono::steady_clock> start_;
-    std::chrono::time_point<std::chrono::steady_clock> tomo_start_;
-    std::chrono::time_point<std::chrono::steady_clock> end_;
 
-    size_t report_tomo_throughput_every_;
+    size_t num_darks_ = 0;
     const size_t report_darks_every_ = 10;
+
+    size_t num_flats_ = 0;
     const size_t report_flats_every_ = 10;
+
+    std::atomic<size_t> num_projections_= 0;
+    const size_t report_projections_every_;
+    size_t image_byte_size_;
+    std::chrono::time_point<std::chrono::steady_clock> perf_start_;
+    std::chrono::time_point<std::chrono::steady_clock> perf_end_;
+
+    size_t num_tomograms_ = 0;
+    const size_t report_tomo_throughput_every_ = 10;
+    std::vector<std::chrono::time_point<std::chrono::steady_clock>> perf_tomo_;
 
   public:
 
-    Monitor(size_t image_byte_size = 0,
-            size_t report_tomo_throughput_every = 10);
+    explicit Monitor(size_t image_byte_size = 0, size_t report_projections_every_ = 100);
 
     void reset();
 
-    void resetTimer();
+    void resetPerf();
 
     void countDark();
     
@@ -50,9 +52,10 @@ class Monitor {
 
     void summarize() const;
   
-    size_t numDarks() const { return num_darks_; }
-    size_t numFlats() const { return num_flats_; }
-    size_t numProjections() const { return num_projections_; }
+    [[nodiscard]] size_t numDarks() const { return num_darks_; }
+    [[nodiscard]] size_t numFlats() const { return num_flats_; }
+    [[nodiscard]] size_t numProjections() const { return num_projections_; }
+    [[nodiscard]] size_t numTomograms() const { return num_tomograms_; }
 };
 
 } // namespace recastx::recon
