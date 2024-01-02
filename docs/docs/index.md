@@ -46,7 +46,7 @@ information which could lead to scientific discoveries.
         <div class="content">
             <h3 class="card-title">High-throughput</h3>
             <p class="card-text">
-                Pipeline throughput reaches 2 - 3 GB/s (a few tomograms/s) on an ordinary GPU node.
+                Throughput reaches 2 - 3 GB/s of 16-bit raw pixel data (a few tomograms/s) on an ordinary GPU node.
             </p>
         </div>
     </div>
