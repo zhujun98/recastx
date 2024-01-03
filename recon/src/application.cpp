@@ -443,9 +443,11 @@ void Application::preprocessProjections(oneapi::tbb::task_arena& arena) {
 
                 flatField(p, num_pixels, dark_avg_, reciprocal_);
 
-                if (paganin_) paganin_->apply(p, i % imgproc_params_.num_threads);
-                else
+                if (paganin_) {
+                    paganin_->apply(p, i % imgproc_params_.num_threads);
+                } else if (!imgproc_params_.disable_negative_log) {
                     negativeLog(p, num_pixels);
+                }
 
                 ramp_filter_->apply(p, tbb::this_task_arena::current_thread_index());
 
