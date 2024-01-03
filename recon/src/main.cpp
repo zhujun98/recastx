@@ -101,12 +101,16 @@ int main(int argc, char** argv) {
     ;
 
     bool retrieve_phase = false;
+    bool disable_negative_log = false;
     po::options_description preprocessing_desc("Preprocessing options");
     preprocessing_desc.add_options()
         ("retrieve-phase", po::bool_switch(&retrieve_phase),
          "switch to Paganin filter")
         ("ramp-filter", po::value<std::string>()->default_value("shepp"),
-         "Supported filters are: shepp (Shepp-Logan), ramlak (Ram-Lak)")
+         "supported filters are: shepp (Shepp-Logan), ramlak (Ram-Lak)")
+        ("disable-negative-log", po::bool_switch(&disable_negative_log),
+         "Negative logarithm will not be applied to sinogram, "
+         "e.g. when the raw data were generated from a phantom")
     ;
 
     po::options_description reconstruction_desc("Reconstruction options");
@@ -119,8 +123,6 @@ int main(int argc, char** argv) {
          "maximum number of projection groups to be cached in the memory buffer")
         ("retrieve-phase", po::bool_switch(&retrieve_phase),
          "switch to Paganin filter")
-        ("filter", po::value<std::string>()->default_value("shepp"),
-         "Supported filters are: shepp (Shepp-Logan), ramlak (Ram-Lak)")
     ;
 
     po::options_description paganin_desc("Paganin options");
@@ -213,7 +215,7 @@ int main(int argc, char** argv) {
     recastx::recon::AstraReconstructorFactory recon_factory;
     recastx::RpcServerConfig rpc_server_cfg {rpc_port};
     recastx::ImageprocParams imageproc_params {
-        imageproc_threads, downsampling_col, downsampling_row, { ramp_filter }
+        imageproc_threads, downsampling_col, downsampling_row, disable_negative_log, { ramp_filter }
     };
     recastx::recon::Application app(raw_buffer_size, imageproc_params, 
                                     daq_client.get(), &ramp_filter_factory, &recon_factory, rpc_server_cfg);
