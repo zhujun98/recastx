@@ -69,8 +69,6 @@ Paganin::Paganin(float pixel_size, float lambda, float delta, float beta, float 
                                      num_cols_, num_rows_);
 }
 
-Paganin::~Paganin() = default;
-
 void Paganin::apply(float* data, int idx) {
     // take fft of proj
     // FIXME: cause segmentation fault in unittest
@@ -93,4 +91,4 @@ void Paganin::apply(float* data, int idx) {
     }
 }
 
-}; // namespace recastx::recon
+} // namespace recastx::recon

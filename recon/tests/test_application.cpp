@@ -145,7 +145,7 @@ class ApplicationTest : public testing::Test {
 
     const RpcServerConfig rpc_cfg {12347};
     const ImageprocParams imgproc_params {
-        threads_, downsampling_col_, downsampling_row_, {filter_name_}    
+        threads_, downsampling_col_, downsampling_row_, false, {filter_name_}
     };
 
     Application app_;

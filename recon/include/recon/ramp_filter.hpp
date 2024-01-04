@@ -44,8 +44,6 @@ class RampFilter : public Filter {
   
     RampFilter(float* data, int num_cols, int num_rows, int buffer_size);
 
-    ~RampFilter();
-
     void apply(float* data, int buffer_index) override;
 
     static DataType generate(int n);

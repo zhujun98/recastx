@@ -10,19 +10,20 @@
 #define RECON_PREPROCESSING_H
 
 #include <cassert>
+#include <memory>
+#include <optional>
 #include <vector>
-
-#include <spdlog/spdlog.h>
 
 #include "common/config.hpp"
 #include "common/scoped_timer.hpp"
+#include "buffer.hpp"
 #include "tensor.hpp"
 
 namespace recastx::recon {
 
-inline void downsample(const ProImageData& src, ProImageData& dst) {
-    auto& src_shape = src.shape();
-    auto& dst_shape = dst.shape();
+inline void downsample(const ProImageData &src, ProImageData &dst) {
+    auto &src_shape = src.shape();
+    auto &dst_shape = dst.shape();
     size_t ds_row = src_shape[0] / dst_shape[0];
     size_t ds_col = src_shape[1] / dst_shape[1];
     assert (ds_row >= 1);
@@ -35,9 +36,9 @@ inline void downsample(const ProImageData& src, ProImageData& dst) {
 }
 
 namespace details {
-    inline ProImageData computeReciprocal(const ProImageData& dark_avg, const ProImageData& flat_avg) {
-        const auto& shape = dark_avg.shape();
-        ProImageData reciprocal {shape};
+    inline ProImageData computeReciprocal(const ProImageData &dark_avg, const ProImageData &flat_avg) {
+        const auto &shape = dark_avg.shape();
+        ProImageData reciprocal{shape};
         for (size_t i = 0; i < shape[0] * shape[1]; ++i) {
             if (dark_avg[i] == flat_avg[i]) {
                 reciprocal[i] = 1.0f;
@@ -50,7 +51,7 @@ namespace details {
 } // namespace details
 
 inline std::pair<ProImageData, ProImageData> computeReciprocal(
-        const std::vector<RawImageData>& darks, const std::vector<RawImageData>& flats) {
+        const std::vector<RawImageData> &darks, const std::vector<RawImageData> &flats) {
     assert(!darks.empty() || !flats.empty());
 
     if (darks.empty()) {
@@ -63,7 +64,7 @@ inline std::pair<ProImageData, ProImageData> computeReciprocal(
         auto dark_avg = math::average<ProDtype>(darks);
         auto flat_avg = dark_avg + 1;
         return {dark_avg, details::computeReciprocal(dark_avg, flat_avg)};
-    } 
+    }
 
     auto dark_avg = math::average<ProDtype>(darks);
     auto flat_avg = math::average<ProDtype>(flats);
@@ -71,16 +72,16 @@ inline std::pair<ProImageData, ProImageData> computeReciprocal(
 
 }
 
-inline void flatField(float* data, 
-                      size_t size, 
-                      const ProImageData& dark, 
-                      const ProImageData& reciprocal) {
+inline void flatField(float *data,
+                      size_t size,
+                      const ProImageData &dark,
+                      const ProImageData &reciprocal) {
     for (size_t i = 0; i < size; ++i) {
         data[i] = (data[i] - dark[i]) * reciprocal[i];
-    } 
+    }
 }
 
-inline void negativeLog(float* data, size_t size) {
+inline void negativeLog(float *data, size_t size) {
     for (size_t i = 0; i < size; ++i) {
         data[i] = data[i] <= 0.0f ? 0.0f : -std::log(data[i]);
     }

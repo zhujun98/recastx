@@ -78,6 +78,7 @@ set(RECASTX_RECON_APP_TEST test_application)
 add_executable(${RECASTX_RECON_APP_TEST} main.cpp test_application.cpp 
         ${RECASTX_RECON_TEST_SRC_FILE_DIR}/application.cpp
         ${RECASTX_RECON_TEST_SRC_FILE_DIR}/monitor.cpp
+        ${RECASTX_RECON_TEST_SRC_FILE_DIR}/preprocessor.cpp
         ${RECASTX_RECON_TEST_SRC_FILE_DIR}/projection_mediator.cpp
         ${RECASTX_RECON_TEST_SRC_FILE_DIR}/slice_mediator.cpp
         ${RECASTX_RECON_TEST_SRC_FILE_DIR}/phase.cpp

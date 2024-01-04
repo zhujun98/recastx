@@ -44,8 +44,6 @@ class Paganin {
     Paganin(float pixel_size, float lambda, float delta, float beta, float distance, 
             float* data, int num_cols, int num_rows);
 
-    ~Paganin();
-
     void apply(float* data, int idx=1);
 
 };

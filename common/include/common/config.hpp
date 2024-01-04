@@ -48,7 +48,7 @@ namespace recastx {
         RampFilter ramp_filter;
     };
 
-    struct PaganinConfig {
+    struct PaganinParams {
         float pixel_size;
         float lambda;
         float delta;

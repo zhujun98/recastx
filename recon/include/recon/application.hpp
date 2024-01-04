@@ -19,7 +19,6 @@
 #include <vector>
 
 #include <spdlog/spdlog.h>
-#include <oneapi/tbb.h>
 
 extern "C" {
 #include <fftw3.h>
@@ -42,7 +41,7 @@ extern "C" {
 namespace recastx::recon {
 
 class Monitor;
-class Paganin;
+class Preprocessor;
 class ProjectionMediator;
 class RpcServer;
 class SliceMediator;
@@ -98,13 +97,9 @@ class Application {
 
     TripleTensorBuffer<ProDtype, 3> volume_buffer_;
 
-    std::optional<PaganinConfig> paganin_cfg_;
-    std::unique_ptr<Paganin> paganin_;
-    
-    FilterFactory* ramp_filter_factory_;
-    std::unique_ptr<Filter> ramp_filter_;
-
     ImageprocParams imgproc_params_;
+    std::optional<PaganinParams> paganin_cfg_;
+    std::unique_ptr<Preprocessor> preproc_;
 
     std::optional<size_t> slice_size_;
     std::optional<size_t> volume_size_;
@@ -137,10 +132,6 @@ class Application {
     void init();
 
     void initParams();
-
-    void initPaganin(size_t col_count, size_t row_count);
-
-    void initFilter(size_t col_count, size_t row_count);
 
     void initReconstructor(size_t col_count, size_t row_count);
 
@@ -177,8 +168,6 @@ class Application {
     void consume();
 
     bool tryComputeReciprocal();
-
-    void preprocessProjections(oneapi::tbb::task_arena& arena);
 
     bool waitForProcessing() const {
         if (server_state_ != rpc::ServerState_State_PROCESSING) {
