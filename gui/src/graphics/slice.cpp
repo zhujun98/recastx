@@ -84,23 +84,24 @@ void Slice::render(const glm::mat4& view,
     shader_->setBool("empty", !texture_.isReady());
     shader_->setBool("fallback", fallback_to_preview);
 
+    shader_->setInt("colormap", 0);
+    shader_->setInt("sliceData", 1);
+    shader_->setInt("volumeData", 2);
+
+    texture_.bind();
     if (!texture_.isReady() && !fallback_to_preview) {
         shader_->setVec4("frameColor", frame_color_);
 
         glBindVertexArray(vao_);
         glDrawArrays(GL_LINE_LOOP, 0, 4);
     } else {
-        shader_->setInt("colormap", 0);
-        shader_->setInt("sliceData", 1);
-        shader_->setInt("volumeData", 2);
         shader_->setFloat("minValue", min_v);
         shader_->setFloat("maxValue", max_v);
 
-        texture_.bind();
         glBindVertexArray(vao_);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-        texture_.unbind();
     }
+    texture_.unbind();
 }
 
 void Slice::clear() {
