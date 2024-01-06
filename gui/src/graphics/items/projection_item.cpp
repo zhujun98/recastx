@@ -49,8 +49,11 @@ void ProjectionItem::onWindowSizeChanged(int width, int height) {
 }
 
 void ProjectionItem::renderIm() {
-    bool rerender = false;
+    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "PROJECTION");
+
     bool cd = ImGui::Checkbox("Show projection: ", &visible_);
+
+    bool rerender = false;
     if (visible_) {
         ImGui::SetNextWindowPos(pos_);
         ImGui::SetNextWindowSize(size_);

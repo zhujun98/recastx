@@ -34,6 +34,8 @@ protected:
 
     Scene& scene_;
 
+    bool visible_ = true;
+
 public:
 
     explicit GraphicsItem(Scene& scene);
@@ -47,6 +49,10 @@ public:
     virtual bool updateServerParams() { return false; }
 
     [[nodiscard]] Scene& scene() const { return scene_; }
+
+    bool visible() const { return visible_; }
+
+    void setVisible(bool visible) { visible_ = visible; }
 };
 
 

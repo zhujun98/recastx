@@ -40,54 +40,49 @@ void LoggingItem::onWindowSizeChanged(int width, int height) {
 }
 
 void LoggingItem::renderIm() {
-    ImGui::Checkbox("Show logging", &visible_);
+    if (!visible_) return;
 
-    if (visible_) {
-        ImGui::SetNextWindowPos(pos_);
-        ImGui::SetNextWindowSize(size_);
+    ImGui::SetNextWindowPos(pos_);
+    ImGui::SetNextWindowSize(size_);
 
-        ImGui::Begin("Logging", NULL, ImGuiWindowFlags_NoDecoration);
+    ImGui::Begin("Logging", NULL, ImGuiWindowFlags_NoDecoration);
 
-        // Main window
-        ImGui::AlignTextToFramePadding();
-        ImGui::PushItemWidth(100);
-        ImGui::Combo("Log levels", &current_level_, log_levels_.data(), log_levels_.size());
-        ImGui::PopItemWidth();
-        ImGui::SameLine();
-        filter_.Draw("Filter", -200.f);
-        ImGui::SameLine();
-        bool clear_text = ImGui::Button("Clear");
+    // Main window
+    ImGui::AlignTextToFramePadding();
+    ImGui::PushItemWidth(100);
+    ImGui::Combo("Log levels", &current_level_, log_levels_.data(), log_levels_.size());
+    ImGui::PopItemWidth();
+    ImGui::SameLine();
+    filter_.Draw("Filter", -200.f);
+    ImGui::SameLine();
+    bool clear_text = ImGui::Button("Clear");
 
-        ImGui::BeginChild("scrolling", ImVec2(0, 0), false,
-                          ImGuiWindowFlags_HorizontalScrollbar);
+    ImGui::BeginChild("scrolling", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
 
-        if (clear_text) clear();
+    if (clear_text) clear();
 
-        if (filter_.IsActive()) {
-            for (auto& line: buf_) {
-                std::string_view msg = std::get<1>(line);
-                auto s = msg.data();
-                auto e = s + msg.size();
-                if (filter_.PassFilter(s, e))
-                    print(std::get<0>(line), s, e);
-            }
-        } else {
-            for (auto& line: buf_) {
-                std::string_view msg = std::get<1>(line);
-                auto s = msg.data();
-                auto e = s + msg.size();
+    if (filter_.IsActive()) {
+        for (auto& line: buf_) {
+            std::string_view msg = std::get<1>(line);
+            auto s = msg.data();
+            auto e = s + msg.size();
+            if (filter_.PassFilter(s, e))
                 print(std::get<0>(line), s, e);
-            }
         }
-
-        if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
-            ImGui::SetScrollHereY(1.0f);
-
-        ImGui::EndChild();
-        ImGui::End();
+    } else {
+        for (auto& line: buf_) {
+            std::string_view msg = std::get<1>(line);
+            auto s = msg.data();
+            auto e = s + msg.size();
+            print(std::get<0>(line), s, e);
+        }
     }
 
-    ImGui::Separator();
+    if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
+        ImGui::SetScrollHereY(1.0f);
+
+    ImGui::EndChild();
+    ImGui::End();
 }
 
 void LoggingItem::clear() {

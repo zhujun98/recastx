@@ -38,6 +38,8 @@ class Scene3d : public Scene {
     std::unique_ptr<LoggingItem> logging_item_;
     std::unique_ptr<AxiscubeItem> axiscube_item_;
 
+    void renderMenubar();
+
 public:
 
     explicit Scene3d(RpcClient* client);

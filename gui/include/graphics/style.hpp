@@ -13,6 +13,8 @@
 
 namespace recastx::gui {
 
+enum RenderQuality { LOW = 0, MEDIUM = 1, HIGH = 2};
+
 struct Style {
     static constexpr float MARGIN = 0.01f;
     static constexpr float ICON_HEIGHT = 0.15f;
@@ -37,6 +39,7 @@ struct Style {
         colors[ImGuiCol_TitleBg]                = ImVec4(0.00f, 0.00f, 0.00f, 0.40f);
         colors[ImGuiCol_TitleBgActive]          = ImVec4(0.20f, 0.20f, 0.20f, 0.40f);
         colors[ImGuiCol_TitleBgCollapsed]       = ImVec4(0.00f, 0.00f, 0.00f, 0.30f);
+        colors[ImGuiCol_MenuBarBg]              = ImVec4(0.40f, 0.40f, 0.40f, 0.40f);
         colors[ImGuiCol_CheckMark]              = ImVec4(0.90f, 0.90f, 0.90f, 1.00f);
         colors[ImGuiCol_Button]                 = ImVec4(0.00f, 0.00f, 0.00f, 0.30f);
         colors[ImGuiCol_Separator]              = ImVec4(0.90f, 0.90f, 0.90f, 0.60f);
@@ -45,6 +48,7 @@ struct Style {
         colors[ImGuiCol_ScrollbarGrab]          = ImVec4(0.50f, 0.50f, 0.50f, 0.60f);
         colors[ImGuiCol_ScrollbarGrabHovered]   = ImVec4(0.55f, 0.55f, 0.55f, 0.60f);
         colors[ImGuiCol_ScrollbarGrabActive]    = ImVec4(0.60f, 0.60f, 0.60f, 0.60f);
+        colors[ImGuiCol_PopupBg]                = ImVec4(0.30f, 0.30f, 0.30f, 1.00f);
     }
 
     static constexpr ImVec4 BG_COLOR = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);

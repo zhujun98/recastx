@@ -22,6 +22,7 @@
 #include "graphics/aesthetics.hpp"
 #include "graphics/scene.hpp"
 #include "graphics/shader_program.hpp"
+#include "graphics/style.hpp"
 #include "graphics/textures.hpp"
 #include "utils.hpp"
 
@@ -170,6 +171,10 @@ public:
     void setDraggedSlice(Slice* slice) { dragged_slice_ = slice; }
 
     Slice* hoveredSlice() { return hovered_slice_; }
+
+    RenderQuality volumeRenderQuality() const;
+
+    void setVolumeRenderQuality(RenderQuality level);
 };
 
 } // namespace recastx::gui

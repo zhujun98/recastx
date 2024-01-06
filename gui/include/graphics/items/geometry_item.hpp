@@ -20,8 +20,6 @@ class Axes;
 
 class GeometryItem : public GraphicsItem, public GraphicsGLItem {
 
-    bool visible_ = true;
-
     std::unique_ptr<Axes> axes_;
 
 public:

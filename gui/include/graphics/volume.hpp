@@ -13,21 +13,24 @@
 #include <memory>
 #include <optional>
 
+#include "style.hpp"
 #include "textures.hpp"
 #include "utils.hpp"
 
 namespace recastx::gui {
 
-inline constexpr size_t K_NUM_SLICES = 128;
-
 class VolumeSlicer {
   public:
 
-    using DataType = std::array<glm::vec3, K_NUM_SLICES * 12>;
+    using DataType = std::vector<glm::vec3>;
 
   private:
 
+    size_t num_slices_;
     DataType slices_;
+
+    GLuint vao_;
+    GLuint vbo_;
 
     static constexpr int ids_[12] = {0, 1, 2, 0, 2, 3, 0, 3, 4, 0, 4, 5};
 
@@ -55,11 +58,19 @@ class VolumeSlicer {
 
     std::tuple<float, float, int> sortVertices(const glm::vec3& view_dir);
 
+    void init();
+
   public:
 
-    [[nodiscard]] const DataType& slices() const { return slices_; }
+    explicit VolumeSlicer(size_t num_slices);
+
+    ~VolumeSlicer();
+
+    void resize(size_t num_slices);
 
     void update(const glm::vec3& view_dir);
+
+    void draw();
 };
 
 class ShaderProgram;
@@ -86,10 +97,9 @@ class Volume {
 
     std::optional<std::array<float, 2>> min_max_vals_;
 
+    RenderQuality volume_render_quality_;
     VolumeSlicer slicer_;
 
-    GLuint vao_;
-    GLuint vbo_;
     std::unique_ptr<ShaderProgram> shader_;
 
     void updateMinMaxVal();
@@ -97,7 +107,6 @@ class Volume {
 public:
 
     Volume();
-    ~Volume();
 
     bool init(uint32_t x, uint32_t y, uint32_t z);
 
@@ -123,6 +132,9 @@ public:
 
     [[nodiscard]] const std::optional<std::array<float, 2>>& minMaxVals() const { return min_max_vals_; }
 
+    RenderQuality renderQuality() const { return volume_render_quality_; }
+
+    void setRenderQuality(RenderQuality level);
 };
 
 
