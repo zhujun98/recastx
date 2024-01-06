@@ -21,8 +21,6 @@ class LoggingItem : public GraphicsItem {
     ImVec2 pos_;
     ImVec2 size_;
 
-    bool visible_ = true;
-
     std::vector<const char*> log_levels_;
     int current_level_;
 

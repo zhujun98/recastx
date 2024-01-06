@@ -33,26 +33,22 @@ void StatusbarItem::onWindowSizeChanged(int width, int height) {
 }
 
 void StatusbarItem::renderIm() {
-    ImGui::Checkbox("Show status bar", &visible_);
+    if (!visible_) return;
 
-    if (visible_) {
-        ImGui::SetNextWindowPos(pos_);
-        ImGui::SetNextWindowSize(size_);
+    ImGui::SetNextWindowPos(pos_);
+    ImGui::SetNextWindowSize(size_);
 
-        ImGui::Begin("Status bar", NULL, ImGuiWindowFlags_NoDecoration);
+    ImGui::Begin("Status bar", NULL, ImGuiWindowFlags_NoDecoration);
 
-        auto& io = ImGui::GetIO();
-        ImGui::Text("GUI FPS: %.1f", io.Framerate);
-        ImGui::Text("Volume frame rate: %.1f Hz",
-                    std::any_cast<double>(scene_.getStatus("volumeUpdateFrameRate")));
-        ImGui::Text("Slice frame rate: %.1f Hz",
-                    std::any_cast<double>(scene_.getStatus("sliceUpdateFrameRate")));
-        ImGui::Text("Projection frame rate: %.1f Hz",
-                    std::any_cast<double>(scene_.getStatus("projectionUpdateFrameRate")));
-        ImGui::End();
-    }
-
-    ImGui::Separator();
+    auto& io = ImGui::GetIO();
+    ImGui::Text("GUI FPS: %.1f", io.Framerate);
+    ImGui::Text("Volume frame rate: %.1f Hz",
+                std::any_cast<double>(scene_.getStatus("volumeUpdateFrameRate")));
+    ImGui::Text("Slice frame rate: %.1f Hz",
+                std::any_cast<double>(scene_.getStatus("sliceUpdateFrameRate")));
+    ImGui::Text("Projection frame rate: %.1f Hz",
+                std::any_cast<double>(scene_.getStatus("projectionUpdateFrameRate")));
+    ImGui::End();
 }
 
 } // namespace recastx::gui

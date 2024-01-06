@@ -46,7 +46,10 @@ void Scene3d::render() {
     ImGui::SetNextWindowPos(pos_);
     ImGui::SetNextWindowSize(size_);
 
-    ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoResize);
+    ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_MenuBar);
+
+    renderMenubar();
+
     // 2/3 of the space for widget and 1/3 for labels
     ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.65f);
 
@@ -139,6 +142,41 @@ void Scene3d::render() {
     logging_item_->renderIm();
 
     ImGui::End();
+}
+
+void Scene3d::renderMenubar() {
+    if (ImGui::BeginMenuBar()) {
+        if (ImGui::BeginMenu("View")) {
+            static bool show_statusbar = statusbar_item_->visible();
+            if (ImGui::Checkbox("Show status bar", &show_statusbar)) {
+                statusbar_item_->setVisible(show_statusbar);
+            };
+
+            static bool show_logger = logging_item_->visible();
+            if (ImGui::Checkbox("Show logging", &show_logger)) {
+                logging_item_->setVisible(show_logger);
+            }
+
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Render")) {
+            if (ImGui::BeginMenu("Volume quality")) {
+                static int quality = recon_item_->volumeRenderQuality();
+                bool cd = ImGui::RadioButton("Low##VOLUME_RENDER_QUALITY", &quality, RenderQuality::LOW);
+                ImGui::SameLine();
+                cd |= ImGui::RadioButton("Medium##VOLUME_RENDER_QUALITY", &quality, RenderQuality::MEDIUM);
+                ImGui::SameLine();
+                cd |= ImGui::RadioButton("High##VOLUME_RENDER_QUALITY", &quality, RenderQuality::HIGH);
+                ImGui::EndMenu();
+
+                if (cd) recon_item_->setVolumeRenderQuality(RenderQuality(quality));
+            }
+
+            ImGui::EndMenu();
+        }
+
+        ImGui::EndMenuBar();
+    }
 }
 
 } // namespace recastx::gui

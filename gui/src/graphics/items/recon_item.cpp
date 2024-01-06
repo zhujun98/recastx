@@ -351,6 +351,14 @@ bool ReconItem::handleMouseMoved(float x, float y) {
     return false;
 }
 
+RenderQuality ReconItem::volumeRenderQuality() const {
+    return volume_->renderQuality();
+}
+
+void ReconItem::setVolumeRenderQuality(RenderQuality level) {
+    volume_->setRenderQuality(level);
+}
+
 template<size_t index>
 void ReconItem::renderImSliceControl(const char* header) {
 

@@ -14,6 +14,27 @@
 
 namespace recastx::gui {
 
+VolumeSlicer::VolumeSlicer(size_t num_slices): num_slices_(num_slices), slices_(12 * num_slices) {
+    glGenVertexArrays(1, &vao_);
+    glGenBuffers(1, &vbo_);
+
+    init();
+}
+
+VolumeSlicer::~VolumeSlicer() {
+    glDeleteVertexArrays(1, &vao_);
+    glDeleteBuffers(1, &vbo_);
+}
+
+void VolumeSlicer::resize(size_t num_slices) {
+    if (num_slices != num_slices_) {
+        num_slices_ = num_slices;
+        slices_.resize(12 * num_slices);
+        init();
+    }
+}
+
+
 void VolumeSlicer::update(const glm::vec3& view_dir) {
     auto [min_dist, max_dist, max_index] = sortVertices(view_dir);
 
@@ -24,7 +45,7 @@ void VolumeSlicer::update(const glm::vec3& view_dir) {
     float denom;
 
     float plane_dist = min_dist;
-    float plane_dist_inc = (max_dist - min_dist) / float(K_NUM_SLICES);
+    float plane_dist_inc = (max_dist - min_dist) / float(num_slices_);
 
     for (int e = 0; e < 12; e++) {
         auto edge = egs_[pts_[max_index][e]];
@@ -46,7 +67,7 @@ void VolumeSlicer::update(const glm::vec3& view_dir) {
     float dl[12];
 
     int count = 0;
-    for (int i = K_NUM_SLICES - 1; i >= 0; i--) {
+    for (int i = num_slices_ - 1; i >= 0; i--) {
         for (int e = 0; e < 12; e++) dl[e] = lambda[e] + i * lambda_inc[e];
 
         if  (dl[0] >= 0.0 && dl[0] < 1.0)	{
@@ -97,6 +118,26 @@ void VolumeSlicer::update(const glm::vec3& view_dir) {
     }
 }
 
+void VolumeSlicer::draw() {
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * slices_.size(), slices_.data());
+
+    glBindVertexArray(vao_);
+    glDrawArrays(GL_TRIANGLES, 0, static_cast<int>(slices_.size()));
+}
+
+void VolumeSlicer::init() {
+    glBindVertexArray(vao_);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_);
+
+    glBufferData(GL_ARRAY_BUFFER,
+                 sizeof(glm::vec3) * slices_.size(),
+                 0,
+                 GL_DYNAMIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+}
+
 std::tuple<float, float, int> VolumeSlicer::sortVertices(const glm::vec3& view_dir) {
     float max_dist = 0;
     float min_dist = max_dist;
@@ -120,18 +161,7 @@ std::tuple<float, float, int> VolumeSlicer::sortVertices(const glm::vec3& view_d
 }
 
 
-Volume::Volume() {
-    glGenVertexArrays(1, &vao_);
-    glBindVertexArray(vao_);
-    glGenBuffers(1, &vbo_);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-    glBufferData(GL_ARRAY_BUFFER,
-                 sizeof(VolumeSlicer::DataType::value_type) * slicer_.slices().size(),
-                 0,
-                 GL_DYNAMIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(0);
-
+Volume::Volume() : volume_render_quality_(RenderQuality::LOW), slicer_(128) {
     auto vert =
 #include "shaders/recon_volume.vert"
     ;
@@ -140,11 +170,6 @@ Volume::Volume() {
     ;
     shader_ = std::make_unique<ShaderProgram>(vert, frag);
 };
-
-Volume::~Volume() {
-    glDeleteVertexArrays(1, &vao_);
-    glDeleteBuffers(1, &vbo_);
-}
 
 bool Volume::init(uint32_t x, uint32_t y, uint32_t z) {
     if (x != b_x_ || y != b_y_ || z != b_z_) {
@@ -210,17 +235,7 @@ void Volume::render(const glm::mat4& view,
     slicer_.update(view_dir);
 
     texture_.bind();
-
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-    auto count = static_cast<int>(slicer_.slices().size());
-    glBufferSubData(GL_ARRAY_BUFFER,
-                    0,
-                    sizeof(VolumeSlicer::DataType::value_type) * count,
-                    slicer_.slices().data());
-
-    glBindVertexArray(vao_);
-    glDrawArrays(GL_TRIANGLES, 0, count);
-
+    slicer_.draw();
     texture_.unbind();
 }
 
@@ -237,6 +252,21 @@ void Volume::clearBuffer() {
     b_x_ = 0;
     b_y_ = 0;
     b_z_ = 0;
+}
+
+void Volume::setRenderQuality(RenderQuality level) {
+    if (volume_render_quality_ != level) {
+        volume_render_quality_ = level;
+        if (level == RenderQuality::LOW) {
+            slicer_.resize(128);
+        } else if (level == RenderQuality::MEDIUM) {
+            slicer_.resize(256);
+        } else if (level == RenderQuality::HIGH) {
+            slicer_.resize(512);
+        } else {
+            throw;
+        }
+    }
 }
 
 void Volume::updateMinMaxVal() {

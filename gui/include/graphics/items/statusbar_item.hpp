@@ -20,8 +20,6 @@ class StatusbarItem : public GraphicsItem {
     ImVec2 pos_;
     ImVec2 size_;
 
-    bool visible_ = true;
-
 public:
 
     explicit StatusbarItem(Scene& scene);
