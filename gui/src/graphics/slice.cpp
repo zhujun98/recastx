@@ -93,6 +93,7 @@ void Slice::render(const glm::mat4& view,
         shader_->setVec4("frameColor", frame_color_);
 
         glBindVertexArray(vao_);
+        glLineWidth(2.0f);
         glDrawArrays(GL_LINE_LOOP, 0, 4);
     } else {
         shader_->setFloat("minValue", min_v);

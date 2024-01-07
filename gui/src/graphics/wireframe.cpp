@@ -12,9 +12,8 @@
 
 namespace recastx::gui {
 
-Wireframe::Wireframe(const glm::vec4& color, float line_width)
-        : color_(color),
-          lw_(line_width) {
+Wireframe::Wireframe(const glm::vec4& color)
+        : color_(color) {
     glGenVertexArrays(1, &vao_);
     glBindVertexArray(vao_);
     glGenBuffers(1, &ebo_);
@@ -50,7 +49,7 @@ void Wireframe::render(const glm::mat4& view, const glm::mat4& projection) {
     shader_->setVec4("color", color_);
 
     glBindVertexArray(vao_);
-    glLineWidth(lw_);
+    glLineWidth(1.f);
     glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, nullptr);
 }
 

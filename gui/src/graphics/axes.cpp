@@ -56,7 +56,7 @@ void Axes::render(const glm::mat4& view, const glm::mat4& projection, float scal
     shader_->setMat4("projection", projection);
 
     glBindVertexArray(vao_);
-    glLineWidth(3.0f);
+    glLineWidth(1.0f);
     glDrawArrays(GL_LINES, 0, 6);
 }
 
