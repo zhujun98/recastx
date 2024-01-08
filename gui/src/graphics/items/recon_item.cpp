@@ -109,8 +109,7 @@ void ReconItem::renderIm() {
         }
         updateServerSliceParams();
     }
-    ImGui::SameLine();
-    ImGui::Checkbox("Show slice histograms", &show_statistics_);
+
     if (show_statistics_) {
         ImGui::SetNextWindowPos(st_win_pos_);
         ImGui::SetNextWindowSize(st_win_size_);
@@ -139,10 +138,6 @@ void ReconItem::renderIm() {
     }
 
     renderImVolumeControl();
-
-    ImGui::Checkbox("Show wireframe##RECON", &show_wireframe_);
-
-    ImGui::Separator();
 
     scene_.setStatus("volumeUpdateFrameRate", volume_counter_.frameRate());
     scene_.setStatus("sliceUpdateFrameRate", slice_counter_.frameRate());

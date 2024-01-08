@@ -10,7 +10,8 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-#include "graphics/items/axiscube_item.hpp"
+#include "graphics/items/axis_item.hpp"
+#include "graphics/axes.hpp"
 #include "graphics/camera3d.hpp"
 #include "graphics/glyph_renderer.hpp"
 #include "graphics/primitives.hpp"
@@ -20,8 +21,9 @@
 
 namespace recastx::gui {
 
-AxiscubeItem::AxiscubeItem(Scene &scene)
+AxisItem::AxisItem(Scene &scene)
         : GraphicsItem(scene),
+          axes_(new Axes),
           text_color_(glm::vec3(1.f, 1.f, 1.f)),
           top_(glm::translate(glm::vec3(-0.2f, 0.2f, 0.501f))
                * glm::rotate(glm::radians(-90.f), glm::vec3(0.0f, .0f, 1.0f))),
@@ -61,16 +63,16 @@ AxiscubeItem::AxiscubeItem(Scene &scene)
     glyph_renderer_->init(24, 24);
 }
 
-AxiscubeItem::~AxiscubeItem() {
+AxisItem::~AxisItem() {
     glDeleteVertexArrays(1, &vao_);
     glDeleteBuffers(1, &vbo_);
 }
 
-void AxiscubeItem::onWindowSizeChanged(int /*width*/, int /*height*/) {}
+void AxisItem::onWindowSizeChanged(int /*width*/, int /*height*/) {}
 
-void AxiscubeItem::renderIm() {}
+void AxisItem::renderIm() {}
 
-void AxiscubeItem::onFramebufferSizeChanged(int width, int height) {
+void AxisItem::onFramebufferSizeChanged(int width, int height) {
     int h = static_cast<int>(Style::TOP_PANEL_HEIGHT * (float)height);
     int w = h;
     vp_->update(width - w - int(Style::MARGIN * (float)width),
@@ -79,7 +81,17 @@ void AxiscubeItem::onFramebufferSizeChanged(int width, int height) {
                 h);
 }
 
-void AxiscubeItem::renderGl() {
+void AxisItem::renderGl() {
+    const auto& view = scene_.viewMatrix();
+
+    // axis
+
+    if (show_axis_) {
+        axes_->render(view, scene_.projectionMatrix(), scene_.cameraDistance());
+    }
+
+    // axis cube
+
     vp_->use();
 
     glEnable(GL_DEPTH_TEST);
@@ -87,7 +99,6 @@ void AxiscubeItem::renderGl() {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     const auto& projection = vp_->projection();
-    const auto& view = scene_.viewMatrix();
 
     shader_->use();
     shader_->setMat4("view", view);

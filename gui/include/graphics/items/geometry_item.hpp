@@ -16,11 +16,8 @@
 namespace recastx::gui {
 
 class Scene;
-class Axes;
 
 class GeometryItem : public GraphicsItem, public GraphicsGLItem {
-
-    std::unique_ptr<Axes> axes_;
 
 public:
 

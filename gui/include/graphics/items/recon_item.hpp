@@ -170,11 +170,16 @@ public:
     Slice* draggedSlice() { return dragged_slice_; }
     void setDraggedSlice(Slice* slice) { dragged_slice_ = slice; }
 
-    Slice* hoveredSlice() { return hovered_slice_; }
+    [[nodiscard]] Slice* hoveredSlice() { return hovered_slice_; }
 
-    RenderQuality volumeRenderQuality() const;
-
+    [[nodiscard]] RenderQuality volumeRenderQuality() const;
     void setVolumeRenderQuality(RenderQuality level);
+
+    [[nodiscard]] bool wireframeVisible() const { return show_wireframe_; }
+    void setWireframeVisible(bool visible) { show_wireframe_ = visible; }
+
+    [[nodiscard]] bool histogramVisible() const { return show_statistics_; }
+    void setHistogramVisible(bool visible) { show_statistics_ = visible; }
 };
 
 } // namespace recastx::gui

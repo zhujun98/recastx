@@ -6,8 +6,8 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
-#ifndef GUI_AXISCUBEITEM_H
-#define GUI_AXISCUBEITEM_H
+#ifndef GUI_AXISITEM_H
+#define GUI_AXISITEM_H
 
 #include <memory>
 
@@ -16,11 +16,19 @@
 
 namespace recastx::gui {
 
+class Axes;
 class GlyphRenderer;
 class Scene;
 class Viewport;
 
-class AxiscubeItem : public GraphicsItem, public GraphicsGLItem {
+class AxisItem : public GraphicsItem, public GraphicsGLItem {
+
+    // axis
+
+    bool show_axis_ = true;
+    std::unique_ptr<Axes> axes_;
+
+    // axis cube
 
     glm::vec3 text_color_;
     glm::mat4 top_;
@@ -35,9 +43,9 @@ class AxiscubeItem : public GraphicsItem, public GraphicsGLItem {
 
 public:
 
-    explicit AxiscubeItem(Scene& scene);
+    explicit AxisItem(Scene& scene);
 
-    ~AxiscubeItem() override;
+    ~AxisItem() override;
 
     void onWindowSizeChanged(int width, int height) override;
 
@@ -46,8 +54,11 @@ public:
     void onFramebufferSizeChanged(int width, int height) override;
 
     void renderGl() override;
+
+    [[nodiscard]] bool axisVisible() const { return show_axis_; }
+    void setAxisVisible(bool visible) { show_axis_ = visible; }
 };
 
 }  // namespace recastx::gui
 
-#endif // GUI_AXISCUBEITEM_H
+#endif // GUI_AXISITEM_H
