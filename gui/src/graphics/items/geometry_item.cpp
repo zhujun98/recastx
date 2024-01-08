@@ -9,13 +9,12 @@
 #include <imgui.h>
 
 #include "graphics/items/geometry_item.hpp"
-#include "graphics/axes.hpp"
 #include "graphics/scene.hpp"
 #include "graphics/shader_program.hpp"
 
 namespace recastx::gui {
 
-GeometryItem::GeometryItem(Scene &scene) : GraphicsItem(scene), axes_(new Axes) {
+GeometryItem::GeometryItem(Scene &scene) : GraphicsItem(scene) {
     scene.addItem(this);
 }
 
@@ -24,21 +23,14 @@ GeometryItem::~GeometryItem() = default;
 void GeometryItem::onWindowSizeChanged(int /*width*/, int /*height*/) {}
 
 void GeometryItem::renderIm() {
-    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "GEOMETRY");
-
-    ImGui::Checkbox("Show axes", &visible_);
-
-    ImGui::Separator();
+//    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "GEOMETRY");
+//
+//    ImGui::Separator();
 }
 
 void GeometryItem::onFramebufferSizeChanged(int /* width */, int /* height */) {}
 
 void GeometryItem::renderGl() {
-    if (!visible_) return;
-
-    axes_->render(scene_.viewMatrix(),
-                  scene_.projectionMatrix(),
-                  scene_.cameraDistance());
 }
 
 } // namespace recastx::gui
