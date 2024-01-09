@@ -44,7 +44,7 @@ void Preprocessor::process(RawBufferType& raw_buffer,
     ScopedTimer timer("Bench", "Preprocessing projections");
 #endif
 
-    auto projs = raw_buffer.front().data();
+    auto& projs = raw_buffer.front();
     auto& sinos = sino_buffer.back();
 
     using namespace oneapi;
@@ -66,13 +66,7 @@ void Preprocessor::process(RawBufferType& raw_buffer,
 
                                   // TODO: Add FDK scaler for cone beam
 
-                                  // (projection_id, rows, cols) -> (rows, projection_id, cols).
-                                  for (size_t j = 0; j < row_count; ++j) {
-                                      for (size_t k = 0; k < col_count; ++k) {
-                                          sinos[(row_count - 1 - j) * chunk_size * col_count + i * col_count + k] =
-                                                  projs[i * col_count * row_count + j * col_count + k];
-                                      }
-                                  }
+                                  copyToSinogram(sinos, projs, i, chunk_size, row_count, col_count);
                               }
         });
     });

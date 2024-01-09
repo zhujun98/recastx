@@ -106,4 +106,27 @@ TEST(TestPreprocessing, TestComputeReciprocal) {
     }
 }
 
+TEST(TestPreprocessing, TestCopyToSinogram) {
+
+    // (chunk_idx, rows, cols) -> (rows, chunk_idx, cols).
+    Tensor<int, 3> src ({2, 3, 4}, std::vector<int>(24, 1));
+    Tensor<int, 3> dst ({3, 2, 4});
+
+    copyToSinogram(dst, src, 0, 2, 3, 4);
+    EXPECT_THAT(dst, ElementsAreArray({1, 1, 1, 1,
+                                       0, 0, 0, 0,
+                                       1, 1, 1, 1,
+                                       0, 0, 0, 0,
+                                       1, 1, 1, 1,
+                                       0, 0, 0, 0}));
+
+    copyToSinogram(dst, src, 1, 2, 3, 4);
+    EXPECT_THAT(dst, ElementsAreArray({1, 1, 1, 1,
+                                       1, 1, 1, 1,
+                                       1, 1, 1, 1,
+                                       1, 1, 1, 1,
+                                       1, 1, 1, 1,
+                                       1, 1, 1, 1}));
+}
+
 } // namespace recastx::recon::test

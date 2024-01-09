@@ -95,6 +95,18 @@ inline std::vector<float> defaultAngles(int n) {
     return angles;
 }
 
+
+template<typename T1, typename T2>
+inline void copyToSinogram(T1& dst, const T2& src, size_t chunk_idx, size_t chunk_size, size_t row_count, size_t col_count) {
+    // (chunk_idx, rows, cols) -> (rows, chunk_idx, cols).
+    for (size_t j = 0; j < row_count; ++j) {
+        for (size_t k = 0; k < col_count; ++k) {
+            dst[(row_count - 1 - j) * chunk_size * col_count + chunk_idx * col_count + k] =
+                    src[chunk_idx * col_count * row_count + j * col_count + k];
+        }
+    }
+}
+
 } // namespace recastx::recon
 
 #endif // RECON_PREPROCESSING_H
