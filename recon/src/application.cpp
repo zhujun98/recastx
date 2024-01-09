@@ -114,7 +114,7 @@ void Application::startPreprocessing() {
 
             if (!raw_buffer_.fetch(100)) continue;
 
-            spdlog::info("Preprocessing projections ...");
+            spdlog::info("Preprocessing - started");
 
             preproc_->process(raw_buffer_, sino_buffer_, dark_avg_, reciprocal_);
 
@@ -122,7 +122,7 @@ void Application::startPreprocessing() {
                 if (closing_) return;
             }
 
-            spdlog::debug("Projection preprocessing finished!");
+            spdlog::info("Preprocessing - finished");
         }
     });
 
@@ -136,7 +136,7 @@ void Application::startUploading() {
 
             if (!sino_buffer_.fetch(100)) continue;
 
-            spdlog::info("Uploading sinograms to GPU ...");
+            spdlog::info("Uploading sinograms to GPU - started");
             size_t chunk_size = sino_buffer_.front().shape()[0];
             {
                 if (scan_mode_ == rpc::ScanMode_Mode_DISCRETE) {
@@ -152,7 +152,7 @@ void Application::startUploading() {
                 }
 
                 sino_initialized_ = true;
-                spdlog::debug("Sinogram uploaded!");
+                spdlog::info("Uploading sinograms to GPU - finished");
             }
 
             gpu_cv_.notify_one();
@@ -170,10 +170,10 @@ void Application::startReconstructing() {
                 std::unique_lock<std::mutex> lck(gpu_mtx_);
                 if (gpu_cv_.wait_for(lck, 10ms, [&] { return sino_uploaded_; })) {
                     if (volume_required_) {
-                        spdlog::info("Reconstructing volume and slices ...");
+                        spdlog::info("Reconstruction (volume and slices) - started");
                         recon_->reconstructVolume(gpu_buffer_index_, volume_buffer_.back());
                     } else {
-                        spdlog::info("Reconstructing slices ...");
+                        spdlog::info("Reconstruction (slices) - started");
                     }
 
                 } else {
@@ -187,7 +187,7 @@ void Application::startReconstructing() {
                 sino_uploaded_ = false;
             }
             
-            spdlog::debug("Volume and slices reconstructed!");
+            spdlog::info("Reconstruction - finished");
             monitor_->countTomogram();
 
             if (volume_buffer_.prepare()) {
