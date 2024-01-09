@@ -30,8 +30,6 @@ RampFilter::RampFilter(float* data, int num_cols, int num_rows, int buffer_size)
         FFTW_ESTIMATE);
 }
 
-RampFilter::~RampFilter() = default;
-
 void RampFilter::apply(float *data, int buffer_index) {
     for (int r = 0; r < num_rows_; ++r) {
         auto idx = r * num_cols_;

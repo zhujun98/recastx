@@ -44,6 +44,7 @@ set(RECON_SOURCES
         "src/utils.cpp"
         "src/ramp_filter.cpp"
         "src/phase.cpp"
+        "src/preprocessor.cpp"
         "src/reconstructor.cpp"
         "src/projection_mediator.cpp"
         "src/slice_mediator.cpp"

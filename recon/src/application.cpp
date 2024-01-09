@@ -9,9 +9,7 @@
 #include <chrono>
 #include <complex>
 #include <exception>
-#include <numeric>
 
-#include <Eigen/Eigen>
 #include <spdlog/spdlog.h>
 
 #include "common/scoped_timer.hpp"
@@ -19,8 +17,8 @@
 #include "recon/application.hpp"
 #include "recon/encoder.hpp"
 #include "recon/monitor.hpp"
-#include "recon/phase.hpp"
 #include "recon/preprocessing.hpp"
+#include "recon/preprocessor.hpp"
 #include "recon/projection_mediator.hpp"
 #include "recon/rpc_server.hpp"
 #include "recon/slice_mediator.hpp"
@@ -40,8 +38,8 @@ Application::Application(size_t raw_buffer_size,
        monitor_(new Monitor()),
        proj_mediator_(new ProjectionMediator(k_PROJECTION_MEDIATOR_BUFFER_SIZE)),
        slice_mediator_(new SliceMediator()),
-       ramp_filter_factory_(ramp_filter_factory),
        imgproc_params_(imageproc_params),
+       preproc_(new Preprocessor(ramp_filter_factory, imageproc_params.num_threads)),
        recon_factory_(recon_factory),
        scan_mode_(rpc::ScanMode_Mode_DISCRETE),
        scan_update_interval_(K_MIN_SCAN_UPDATE_INTERVAL),
@@ -84,12 +82,12 @@ bool Application::tryComputeReciprocal() {
 
     spdlog::info("Computing reciprocal for flat field correction "
                  "with {} darks and {} flats ...", darks_.size(), flats_.size());
-    
-    {    
+
+    {
 #if (VERBOSITY >= 2)
         ScopedTimer timer("Bench", "Computing reciprocal");
 #endif
-    
+
         auto [dark_avg, reciprocal] = recastx::recon::computeReciprocal(darks_, flats_);
 
         spdlog::debug("Downsampling dark ... ");
@@ -111,14 +109,13 @@ void Application::startConsuming() {
 
 void Application::startPreprocessing() {
     auto t = std::thread([&] {
-        oneapi::tbb::task_arena arena(imgproc_params_.num_threads);
         while (!closing_) {
             if (waitForProcessing()) continue;
 
             if (!raw_buffer_.fetch(100)) continue;
 
             spdlog::info("Preprocessing projections ...");
-            preprocessProjections(arena);
+            preproc_->process(raw_buffer_, sino_buffer_, dark_avg_, reciprocal_);
             spdlog::debug("Projection preprocessing finished!");
         }
     });
@@ -279,6 +276,7 @@ void Application::setDownsampling(uint32_t col, uint32_t row) {
 
 void Application::setRampFilter(std::string filter_name) {
     imgproc_params_.ramp_filter.name = std::move(filter_name);
+
     spdlog::debug("Set ramp filter: {}", filter_name);
 }
 
@@ -422,62 +420,9 @@ std::vector<rpc::ReconData> Application::getOnDemandSliceData(int timeout) {
     return ret;
 }
 
-void Application::preprocessProjections(oneapi::tbb::task_arena& arena) {
-
-    auto& shape = raw_buffer_.shape();
-    auto [chunk_size, row_count, col_count] = shape;
-    size_t num_pixels = row_count * col_count;
-
-#if (VERBOSITY >= 2)
-    ScopedTimer timer("Bench", "Preprocessing projections");
-#endif
-
-    auto projs = raw_buffer_.front().data();
-
-    using namespace oneapi;
-    arena.execute([&]{
-        tbb::parallel_for(tbb::blocked_range<int>(0, static_cast<int>(chunk_size)),
-                          [&](const tbb::blocked_range<int> &block) {
-            for (auto i = block.begin(); i != block.end(); ++i) {
-                float* p = &projs[i * num_pixels];
-
-                flatField(p, num_pixels, dark_avg_, reciprocal_);
-
-                if (paganin_) {
-                    paganin_->apply(p, i % imgproc_params_.num_threads);
-                } else if (!imgproc_params_.disable_negative_log) {
-                    negativeLog(p, num_pixels);
-                }
-
-                ramp_filter_->apply(p, tbb::this_task_arena::current_thread_index());
-
-                // TODO: Add FDK scaler for cone beam
-            }
-        });
-    });
-
-    // (projection_id, rows, cols) -> (rows, projection_id, cols).
-    auto& sinos = sino_buffer_.back();
-    arena.execute([&]{
-        tbb::parallel_for(tbb::blocked_range<int>(0, row_count),
-                          [&](const tbb::blocked_range<int> &block) {
-            for (auto i = block.begin(); i != block.end(); ++i) {
-                for (size_t j = 0; j < chunk_size; ++j) {
-                    for (size_t k = 0; k < col_count; ++k) {
-                        sinos[(row_count - 1 - i) * chunk_size * col_count + j * col_count + k] = 
-                            projs[j * col_count * row_count + i * col_count + k];
-                    }
-                }
-            }
-        });
-    });
-
-    if (sino_buffer_.prepare()) {
-        spdlog::warn("Sinogram data dropped due to slowness of downstream pipeline");
-    }
-}
-
 void Application::init() {
+    spdlog::info("Initial parameters for real-time 3D tomographic reconstruction:");
+
     initParams();
 
     uint32_t downsampling_col = imgproc_params_.downsampling_col;
@@ -487,20 +432,15 @@ void Application::init() {
 
     maybeInitFlatFieldBuffer(row_count, col_count);
 
+    preproc_->init(raw_buffer_, col_count, row_count, imgproc_params_, paganin_cfg_);
+
     maybeInitReconBuffer(col_count, row_count);
 
-    initPaganin(col_count, row_count);
-    
-    initFilter(col_count, row_count);
-    
     initReconstructor(col_count, row_count);
 
-    spdlog::info("Initial parameters for real-time 3D tomographic reconstruction:");
     spdlog::info("- Number of projection images per tomogram: {}", proj_geom_.angles.size());
     spdlog::info("- Projection image size: {} ({}) x {} ({})", 
                  col_count, downsampling_col, row_count, downsampling_row);
-    spdlog::info("- Ramp filter: {}", imgproc_params_.ramp_filter.name);
-    spdlog::info("- Number of image-processing threads: {}", imgproc_params_.num_threads);
 }
 
 void Application::initParams() {
@@ -510,20 +450,6 @@ void Application::initParams() {
 
     sino_initialized_ = false;
     gpu_buffer_index_ = 0;
-}
-
-void Application::initPaganin(size_t col_count, size_t row_count) {
-    if (paganin_cfg_.has_value()) {
-        auto& cfg = paganin_cfg_.value();
-        paganin_ = std::make_unique<Paganin>(
-            cfg.pixel_size, cfg.lambda, cfg.delta, cfg.beta, cfg.distance, 
-            &raw_buffer_.front()[0], col_count, row_count);
-    }
-}
-
-void Application::initFilter(size_t col_count, size_t row_count) {
-    ramp_filter_ = ramp_filter_factory_->create(imgproc_params_.ramp_filter.name, &raw_buffer_.front()[0], 
-                                                col_count, row_count, imgproc_params_.num_threads);
 }
 
 void Application::initReconstructor(size_t col_count, size_t row_count) {
