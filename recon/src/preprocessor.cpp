@@ -45,6 +45,7 @@ void Preprocessor::process(RawBufferType& raw_buffer,
 #endif
 
     auto projs = raw_buffer.front().data();
+    auto& sinos = sino_buffer.back();
 
     using namespace oneapi;
     arena_.execute([&]{
@@ -64,24 +65,16 @@ void Preprocessor::process(RawBufferType& raw_buffer,
                                   ramp_filter_->apply(p, tbb::this_task_arena::current_thread_index());
 
                                   // TODO: Add FDK scaler for cone beam
-                            }
-        });
-    });
 
-    // (projection_id, rows, cols) -> (rows, projection_id, cols).
-    auto& sinos = sino_buffer.back();
-    arena_.execute([&]{
-        tbb::parallel_for(tbb::blocked_range<int>(0, row_count),
-                          [&](const tbb::blocked_range<int> &block) {
-                              for (auto i = block.begin(); i != block.end(); ++i) {
-                                  for (size_t j = 0; j < chunk_size; ++j) {
+                                  // (projection_id, rows, cols) -> (rows, projection_id, cols).
+                                  for (size_t j = 0; j < row_count; ++j) {
                                       for (size_t k = 0; k < col_count; ++k) {
-                                          sinos[(row_count - 1 - i) * chunk_size * col_count + j * col_count + k] =
-                                                projs[j * col_count * row_count + i * col_count + k];
+                                          sinos[(row_count - 1 - j) * chunk_size * col_count + i * col_count + k] =
+                                                  projs[i * col_count * row_count + j * col_count + k];
                                       }
                                   }
                               }
-                          });
+        });
     });
 
     if (sino_buffer.prepare()) {
