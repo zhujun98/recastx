@@ -51,8 +51,11 @@ TEST(TripleTensorBufferTest, TestPrepareAndFetch) {
 
     std::copy(data2.begin(), data2.end(), b2f.back().begin());
     ASSERT_FALSE(b2f.prepare());
+    ASSERT_FALSE(b2f.tryPrepare(1));
     EXPECT_THAT(b2f.ready(), Pointwise(FloatNear(1e-6), data2));
     ASSERT_TRUE(b2f.prepare());
+    b2f.fetch(0);
+    ASSERT_TRUE(b2f.tryPrepare(1));
 }
 
 

@@ -119,7 +119,7 @@ int main(int argc, char** argv) {
          "size of the square reconstructed slice in pixels. Default to detector columns.")
         ("volume-size", po::value<size_t>(),
          "size of the cubic reconstructed volume. Default to 128.")
-        ("raw-buffer-size", po::value<size_t>()->default_value(10),
+        ("raw-buffer-size", po::value<size_t>()->default_value(2),
          "maximum number of projection groups to be cached in the memory buffer")
         ("retrieve-phase", po::bool_switch(&retrieve_phase),
          "switch to Paganin filter")

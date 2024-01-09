@@ -56,6 +56,7 @@ template<typename T>
 class TripleBuffer : public BufferInterface<T> {
 
     bool is_ready_ = false;
+    std::condition_variable cv2_;
 
 protected:
 
@@ -77,6 +78,8 @@ public:
 
     virtual bool prepare();
 
+    virtual bool tryPrepare(int timeout);
+
     const T& ready() const { return ready_; }
 
     T& back() { return back_; };
@@ -85,16 +88,19 @@ public:
 
 template<typename T>
 bool TripleBuffer<T>::fetch(int timeout) {
-    std::unique_lock lk(this->mtx_);
-    if (timeout < 0) {
-        this->cv_.wait(lk, [this] { return is_ready_; });
-    } else {
-        if (!(this->cv_.wait_for(lk, timeout * 1ms, [this] { return is_ready_; }))) {
-            return false;
+    {
+        std::unique_lock lk(this->mtx_);
+        if (timeout < 0) {
+            this->cv_.wait(lk, [this] { return is_ready_; });
+        } else {
+            if (!this->cv_.wait_for(lk, timeout * 1ms, [this] { return is_ready_; })) {
+                return false;
+            }
         }
+        this->swap(this->front_, ready_);
+        is_ready_ = false;
     }
-    this->swap(this->front_, ready_);
-    is_ready_ = false;
+    this->cv2_.notify_one();
     return true;
 }
 
@@ -105,10 +111,28 @@ bool TripleBuffer<T>::prepare() {
         std::lock_guard lk(this->mtx_);
         dropped = is_ready_;
         this->swap(ready_, back_);
-        is_ready_ = true;    
+        is_ready_ = true;
     }
     this->cv_.notify_one();
     return dropped;
+}
+
+template<typename T>
+bool TripleBuffer<T>::tryPrepare(int timeout) {
+    {
+        std::unique_lock lk(this->mtx_);
+        if (timeout < 0) {
+            this->cv2_.wait(lk, [this] { return !is_ready_; });
+        } else {
+            if (!this->cv2_.wait_for(lk, timeout * 1ms, [this] { return !is_ready_; })) {
+                return false;
+            }
+        }
+        this->swap(ready_, back_);
+        is_ready_ = true;
+    }
+    this->cv_.notify_one();
+    return true;
 }
 
 template<typename T, size_t N>

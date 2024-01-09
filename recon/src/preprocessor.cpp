@@ -67,10 +67,6 @@ void Preprocessor::process(RawBufferType& raw_buffer,
                               }
         });
     });
-
-    if (sino_buffer.prepare()) {
-        spdlog::warn("Sinogram data dropped due to slowness of downstream pipeline");
-    }
 }
 
 void Preprocessor::initPaganin(const std::optional<PaganinParams> &params,

@@ -115,7 +115,13 @@ void Application::startPreprocessing() {
             if (!raw_buffer_.fetch(100)) continue;
 
             spdlog::info("Preprocessing projections ...");
+
             preproc_->process(raw_buffer_, sino_buffer_, dark_avg_, reciprocal_);
+
+            while (!sino_buffer_.tryPrepare(100)) {
+                if (closing_) return;
+            }
+
             spdlog::debug("Projection preprocessing finished!");
         }
     });
