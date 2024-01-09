@@ -418,7 +418,9 @@ void MemoryBuffer<T, N>::fill(size_t index, const char* src, const std::array<si
     } else if (chunk_idx > chunk_indices_.back()) {
         for (size_t i = chunk_indices_.back() + 1; i <= chunk_idx; ++i) {
             if (unoccupied_.empty()) {
+#if (VERBOSITY >= 1)
                 int idx = chunk_indices_.front();
+#endif
                 popChunk();
 #if (VERBOSITY >= 1)
                 spdlog::warn("[Image buffer] Memory buffer is full! Chunk {} dropped!", idx);
