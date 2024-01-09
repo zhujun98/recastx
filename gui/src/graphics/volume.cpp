@@ -260,9 +260,9 @@ void Volume::setRenderQuality(RenderQuality level) {
         if (level == RenderQuality::LOW) {
             slicer_.resize(128);
         } else if (level == RenderQuality::MEDIUM) {
-            slicer_.resize(256);
-        } else if (level == RenderQuality::HIGH) {
             slicer_.resize(512);
+        } else if (level == RenderQuality::HIGH) {
+            slicer_.resize(1024);
         } else {
             throw;
         }
