@@ -9,9 +9,7 @@
 #include <chrono>
 #include <complex>
 #include <exception>
-#include <numeric>
 
-#include <Eigen/Eigen>
 #include <spdlog/spdlog.h>
 
 #include "common/scoped_timer.hpp"

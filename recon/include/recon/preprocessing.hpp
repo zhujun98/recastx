@@ -16,7 +16,6 @@
 
 #include "common/config.hpp"
 #include "common/scoped_timer.hpp"
-#include "buffer.hpp"
 #include "tensor.hpp"
 
 namespace recastx::recon {

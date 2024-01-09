@@ -12,9 +12,6 @@
 
 namespace recastx::recon {
 
-Preprocessor::Preprocessor() : num_threads_(1), arena_(oneapi::tbb::task_arena(num_threads_)) {
-}
-
 Preprocessor::Preprocessor(FilterFactory *ramp_filter_factory, uint32_t num_threads)
         : num_threads_(num_threads),
     arena_(oneapi::tbb::task_arena(num_threads_)),

@@ -21,7 +21,6 @@
 #include "buffer.hpp"
 #include "filter_interface.hpp"
 #include "phase.hpp"
-#include "tensor.hpp"
 
 namespace recastx::recon {
 
@@ -54,8 +53,6 @@ private:
                     size_t row_count);
 
 public:
-
-    explicit Preprocessor();
 
     explicit Preprocessor(FilterFactory *ramp_filter_factory, uint32_t num_threads);
 
