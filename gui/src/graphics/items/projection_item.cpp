@@ -32,28 +32,52 @@ ProjectionItem::ProjectionItem(Scene& scene)
 ProjectionItem::~ProjectionItem() = default;
 
 void ProjectionItem::onWindowSizeChanged(int width, int height) {
-    size_ = {
-            Style::PROJECTION_WIDTH * (float)width,
-            Style::PROJECTION_HEIGHT * (float)height
-    };
+    float s = Style::PROJECTION_SIZE * (float)width;
+    size_ = { s, s };
 
     pos_ = {
-            (1.0f - Style::MARGIN - Style::PROJECTION_WIDTH) * (float)width,
-            (1.0f - Style::PROJECTION_HEIGHT - Style::STATUS_BAR_HEIGHT - 2.f * Style::MARGIN) * (float)(height)
+            (1.0f - Style::MARGIN) * (float)width - s,
+            (1.0f - Style::STATUS_BAR_HEIGHT - 2.f * Style::MARGIN) * (float)(height) - s
     };
 
     // Caveat: don't use framebuffer size because of high-resolution display like Retinal
     static constexpr int K_PADDING = 5;
-    img_size_ = { Style::PROJECTION_WIDTH * (float)width - 2 * K_PADDING,
-                  Style::PROJECTION_HEIGHT * (float)height - 2 * K_PADDING - 3 * Style::LINE_HEIGHT };
+    img_size_ = { s - 2 * K_PADDING, s - 2 * K_PADDING - 3 * Style::LINE_HEIGHT };
 }
 
 void ProjectionItem::renderIm() {
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "PROJECTION");
 
     bool cd = ImGui::Checkbox("Show projection: ", &visible_);
+    ImGui::SameLine();
+    ImGui::PushItemWidth(90);
+    int prev_id = id_;
+    ImGui::InputInt("##PROJECTION_ID", &id_);
+    id_ = std::clamp(id_, 0, K_MAX_ID_);
+    if (prev_id != id_) {
+        setProjectionId();
+    }
+    if (displayed_id_ != id_) {
+        ImGui::SameLine();
+        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 100, 100, 255));
+        ImGui::Text("%i", displayed_id_);
+        ImGui::PopStyleColor();
+    }
+    ImGui::PopItemWidth();
+
+    if (ImGui::Checkbox("Auto Levels", &auto_levels_) && auto_levels_) {
+        update_min_max_vals_ = true;
+    }
 
     bool rerender = false;
+    ImGui::BeginDisabled(auto_levels_);
+    float step_size = (max_val_ - min_val_) / 100.f;
+    if (step_size < 0.01f) step_size = 0.01f; // avoid a tiny step size
+    rerender |= ImGui::DragFloatRange2("Min / Max", &min_val_, &max_val_, step_size,
+                                       std::numeric_limits<float>::lowest(), // min() does not work
+                                       std::numeric_limits<float>::max());
+    ImGui::EndDisabled();
+
     if (visible_) {
         ImGui::SetNextWindowPos(pos_);
         ImGui::SetNextWindowSize(size_);
@@ -63,20 +87,7 @@ void ProjectionItem::renderIm() {
 
         rerender |= buffer_->resize(static_cast<int>(img_size_.x), static_cast<int>(img_size_.y));
 
-        ImGui::Text("Projection ID: %i", displayed_id_);
         ImGui::Image((void*)(intptr_t)buffer_->texture(), img_size_);
-
-        if (ImGui::Checkbox("Auto Levels", &auto_levels_) && auto_levels_) {
-            update_min_max_vals_ = true;
-        }
-
-        ImGui::BeginDisabled(auto_levels_);
-        float step_size = (max_val_ - min_val_) / 100.f;
-        if (step_size < 0.01f) step_size = 0.01f; // avoid a tiny step size
-        rerender |= ImGui::DragFloatRange2("Min / Max", &min_val_, &max_val_, step_size,
-                                           std::numeric_limits<float>::lowest(), // min() does not work
-                                           std::numeric_limits<float>::max());
-        ImGui::EndDisabled();
 
         if (rerender && !data_.empty()) renderBuffer(texture_.x(), texture_.y());
 
@@ -85,16 +96,6 @@ void ProjectionItem::renderIm() {
     }
 
     if (cd) toggleProjectionStream();
-
-    ImGui::SameLine();
-    ImGui::PushItemWidth(100);
-    int prev_id = id_;
-    ImGui::InputInt("##PROJECTION_ID", &id_);
-    id_ = std::clamp(id_, 0, K_MAX_ID_);
-    if (prev_id != id_) {
-        setProjectionId();
-    }
-    ImGui::PopItemWidth();
 
     ImGui::Separator();
 
