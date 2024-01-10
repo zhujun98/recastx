@@ -139,7 +139,10 @@ void Scene::connectServer() {
 }
 
 void Scene::startAcquiring() {
-    if (updateServerParams()) return;
+    if (updateServerParams()) {
+        server_state_ = rpc::ServerState_State_UNKNOWN;
+        return;
+    }
     if (!client_->startAcquiring()) {
         server_state_ = rpc::ServerState_State_ACQUIRING;
         log::info("Started acquiring data");
@@ -150,11 +153,16 @@ void Scene::stopAcquiring() {
     if (!client_->stopAcquiring()) {
         server_state_ = rpc::ServerState_State_READY;
         log::info("Stopped acquiring data");
+    } else {
+        server_state_ = rpc::ServerState_State_UNKNOWN;
     }
 }
 
 void Scene::startProcessing() {
-    if (updateServerParams()) return;
+    if (updateServerParams()) {
+        server_state_ = rpc::ServerState_State_UNKNOWN;
+        return;
+    }
     if (!client_->startProcessing()) {
         server_state_ = rpc::ServerState_State_PROCESSING;
         log::info("Started acquiring & processing data");
@@ -165,6 +173,8 @@ void Scene::stopProcessing() {
     if (!client_->stopProcessing()) {
         server_state_ = rpc::ServerState_State_READY;
         log::info("Stopped acquiring & processing data");
+    } else {
+        server_state_ = rpc::ServerState_State_UNKNOWN;
     }
 }
 
