@@ -48,7 +48,7 @@ void IconItem::onWindowSizeChanged(int /*width*/, int /*height*/) {}
 void IconItem::renderIm() {}
 
 void IconItem::onFramebufferSizeChanged(int width, int height) {
-    auto w = static_cast<int>(Style::ICON_WIDTH * (float)width);
+    auto w = static_cast<int>(Style::LEFT_PANEL_WIDTH * (float)width);
     auto h = static_cast<int>(Style::ICON_HEIGHT* (float)height);
     vp_->update(int(Style::MARGIN * (float)width),
                 height - h - int(Style::MARGIN * (float)height),

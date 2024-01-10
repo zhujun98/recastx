@@ -16,17 +16,13 @@ namespace recastx::gui {
 enum RenderQuality { LOW = 0, MEDIUM = 1, HIGH = 2};
 
 struct Style {
-    static constexpr float MARGIN = 0.01f;
-    static constexpr float ICON_HEIGHT = 0.15f;
-    static constexpr float ICON_WIDTH = 0.22f;
-    static constexpr float LEFT_PANEL_WIDTH = ICON_WIDTH;
+    static constexpr float MARGIN = 0.006f;
+    static constexpr float ICON_HEIGHT = 0.12f;
+    static constexpr float LEFT_PANEL_WIDTH = 0.21f;
     static constexpr float STATUS_BAR_WIDTH = 0.28f;
-    static constexpr float STATUS_BAR_HEIGHT = 0.18f;
-    static constexpr float LOGGING_WIDTH = 0.46f;
-    static constexpr float LOGGING_HEIGHT = 0.18f;
     static constexpr float TOP_PANEL_HEIGHT = 0.15f;
-    static constexpr float PROJECTION_WIDTH = 0.20f;
-    static constexpr float PROJECTION_HEIGHT = 0.30f;
+    static constexpr float BOTTOM_PANEL_HEIGHT = 0.15f;
+    static constexpr float SECOND_SCENE_HEIGHT = 0.30f;
 
     static void init() {
         ImGui::StyleColorsDark();
