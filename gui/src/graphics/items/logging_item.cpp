@@ -28,14 +28,14 @@ LoggingItem::LoggingItem(Scene& scene) :
 LoggingItem::~LoggingItem() = default;
 
 void LoggingItem::onWindowSizeChanged(int width, int height) {
-    size_ = {
-            Style::LOGGING_WIDTH * (float)width,
-            Style::LOGGING_HEIGHT * (float)height
-    };
-
     pos_ = {
             (3 * Style::MARGIN + Style::LEFT_PANEL_WIDTH + Style::STATUS_BAR_WIDTH) * (float)width,
-            (1.f - Style::STATUS_BAR_HEIGHT - Style::MARGIN) * (float)(height)
+            (1.f - Style::BOTTOM_PANEL_HEIGHT - Style::MARGIN) * (float)(height)
+    };
+
+    size_ = {
+            (1.f - Style::MARGIN) * (float)width - pos_[0],
+            Style::BOTTOM_PANEL_HEIGHT * (float)height
     };
 }
 

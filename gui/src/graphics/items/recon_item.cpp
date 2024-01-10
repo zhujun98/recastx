@@ -58,12 +58,12 @@ ReconItem::~ReconItem() {
 
 void ReconItem::onWindowSizeChanged(int width, int height) {
     st_win_size_ = {
-        (1.f - Style::ICON_WIDTH - 4 * Style::MARGIN) * (float)width
+        (1.f - Style::LEFT_PANEL_WIDTH - 4 * Style::MARGIN) * (float)width
             - Style::TOP_PANEL_HEIGHT * (float)height,
         Style::TOP_PANEL_HEIGHT * (float)height
     };
     st_win_pos_ = {
-        (2.f * Style::MARGIN + Style::ICON_WIDTH) * (float)width,
+        (2.f * Style::MARGIN + Style::LEFT_PANEL_WIDTH) * (float)width,
         Style::MARGIN * (float)height
     };
 }

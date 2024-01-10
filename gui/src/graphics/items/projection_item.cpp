@@ -32,17 +32,17 @@ ProjectionItem::ProjectionItem(Scene& scene)
 ProjectionItem::~ProjectionItem() = default;
 
 void ProjectionItem::onWindowSizeChanged(int width, int height) {
-    float s = Style::PROJECTION_SIZE * (float)width;
+    float s = Style::SECOND_SCENE_HEIGHT * (float)height;
     size_ = { s, s };
 
     pos_ = {
             (1.0f - Style::MARGIN) * (float)width - s,
-            (1.0f - Style::STATUS_BAR_HEIGHT - 2.f * Style::MARGIN) * (float)(height) - s
+            (1.0f - Style::BOTTOM_PANEL_HEIGHT - 2.f * Style::MARGIN) * (float)(height) - s
     };
 
     // Caveat: don't use framebuffer size because of high-resolution display like Retinal
     static constexpr int K_PADDING = 5;
-    img_size_ = { s - 2 * K_PADDING, s - 2 * K_PADDING - 3 * Style::LINE_HEIGHT };
+    img_size_ = { s - 2 * K_PADDING, s - 2 * K_PADDING };
 }
 
 void ProjectionItem::renderIm() {
