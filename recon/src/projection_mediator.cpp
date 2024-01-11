@@ -16,8 +16,6 @@ ProjectionMediator::ProjectionMediator(int capacity)
        queue_(capacity) {
 }
 
-ProjectionMediator::~ProjectionMediator() = default;
-
 void ProjectionMediator::push(DataType proj) {
     if (proj.index % monitor_every_ == proj_id_) {
         queue_.push(std::move(proj));

@@ -23,7 +23,6 @@ struct Projection {
     Tensor<T, 2> data;
 
     Projection() = default;
-    ~Projection() = default;
 
     Projection(ProjectionType type, size_t index, size_t col_count, size_t row_count, std::vector<T> data_)
         : type(type), index(index), data(std::array<size_t, 2> {row_count, col_count}, std::move(data_)) {
