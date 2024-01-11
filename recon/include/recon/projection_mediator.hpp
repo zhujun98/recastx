@@ -31,8 +31,6 @@ class ProjectionMediator {
     
     ProjectionMediator(int capacity = 0);
 
-    ~ProjectionMediator();
-
     void push(DataType proj);
 
     bool waitAndPop(DataType& proj, int timeout = -1);
