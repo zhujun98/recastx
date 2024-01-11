@@ -65,7 +65,7 @@ void ProjectionItem::renderIm() {
     }
     ImGui::PopItemWidth();
 
-    if (ImGui::Checkbox("Auto Levels", &auto_levels_) && auto_levels_) {
+    if (ImGui::Checkbox("Auto Levels##PROJECTION", &auto_levels_) && auto_levels_) {
         update_min_max_vals_ = true;
     }
 
@@ -73,7 +73,7 @@ void ProjectionItem::renderIm() {
     ImGui::BeginDisabled(auto_levels_);
     float step_size = (max_val_ - min_val_) / 100.f;
     if (step_size < 0.01f) step_size = 0.01f; // avoid a tiny step size
-    rerender |= ImGui::DragFloatRange2("Min / Max", &min_val_, &max_val_, step_size,
+    rerender |= ImGui::DragFloatRange2("Min / Max##PROJECTION", &min_val_, &max_val_, step_size,
                                        std::numeric_limits<float>::lowest(), // min() does not work
                                        std::numeric_limits<float>::max());
     ImGui::EndDisabled();
