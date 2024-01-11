@@ -121,8 +121,6 @@ int main(int argc, char** argv) {
          "size of the cubic reconstructed volume. Default to 128.")
         ("raw-buffer-size", po::value<size_t>()->default_value(2),
          "maximum number of projection groups to be cached in the memory buffer")
-        ("retrieve-phase", po::bool_switch(&retrieve_phase),
-         "switch to Paganin filter")
     ;
 
     po::options_description paganin_desc("Paganin options");
@@ -139,12 +137,16 @@ int main(int argc, char** argv) {
          "...")
     ;
 
+    bool pipeline_wait_on_slowness = false;
     po::options_description pipeline_desc("Pipeline options");
     pipeline_desc.add_options()
         ("imageproc-threads", po::value<uint32_t>(),
          "number of threads used for image processing")
         ("daq-concurrency", po::value<uint32_t>(),
          "Concurrency for data acquisition")
+        ("wait-on-slowness", po::bool_switch(&pipeline_wait_on_slowness),
+         "false for dropping the unprocessed data when there is a mismatch on performance in"
+         "different parts of the pipeline")
     ;
 
     po::options_description all_desc(
@@ -225,6 +227,7 @@ int main(int argc, char** argv) {
                               num_cols, num_rows, 1.0f, 1.0f, 0.0f, 0.0f, num_angles);
     app.setReconGeometry(slice_size, volume_size, minx, maxx, miny, maxy, minz, maxz);
 
+    app.setPipelinePolicy(pipeline_wait_on_slowness);
     app.spin(parseServerState(auto_acquiring, auto_processing));
 
     return 0;
