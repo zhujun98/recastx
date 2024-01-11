@@ -101,6 +101,10 @@ bool Application::tryComputeReciprocal() {
     return true;
 }
 
+void Application::setPipelinePolicy(bool wait_on_slowness) {
+    pipeline_wait_on_slowness_ = wait_on_slowness;
+}
+
 void Application::startConsuming() {
     for (size_t i = 0; i < 2 * daq_client_->concurrency(); ++i) {
         consumer_threads_.emplace_back(&Application::consume, this);

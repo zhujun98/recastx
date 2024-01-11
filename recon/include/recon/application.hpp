@@ -79,6 +79,7 @@ class Application {
     MemoryBuffer<ProDtype, 3> raw_buffer_;
 
     std::atomic_bool closing_ = false;
+    bool pipeline_wait_on_slowness_ = false;
     std::vector<std::thread> consumer_threads_;
 
     std::unique_ptr<Monitor> monitor_;
@@ -156,11 +157,10 @@ class Application {
     }
 
     void pushProjection(const Projection<>& proj) {
-        if (raw_buffer_.isReady()) {
+        if (pipeline_wait_on_slowness_ && raw_buffer_.isReady()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
-        // TODO: compute the average on the fly instead of storing the data in the buffer
         raw_buffer_.fill<RawDtype>(
                 proj.index, reinterpret_cast<const char*>(proj.data.data()), proj.data.shape());
     }
@@ -207,6 +207,8 @@ class Application {
                           std::optional<float> min_x, std::optional<float> max_x, 
                           std::optional<float> min_y, std::optional<float> max_y, 
                           std::optional<float> min_z, std::optional<float> max_z);
+
+    void setPipelinePolicy(bool wait_on_slowness);
 
     void startConsuming();
 
