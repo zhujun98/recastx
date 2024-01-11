@@ -20,8 +20,6 @@ namespace recastx::recon {
 StdDaqClient::StdDaqClient(const std::string& endpoint, const std::string& socket_type, size_t concurrency)
         : ZmqDaqClient(endpoint, socket_type, concurrency) {}
 
-StdDaqClient::~StdDaqClient() = default; 
-
 std::optional<Projection<>>
 StdDaqClient::parseData(const nlohmann::json& meta, const zmq::message_t& data) {
     size_t frame = meta["frame"];

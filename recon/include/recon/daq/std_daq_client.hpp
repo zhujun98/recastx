@@ -21,8 +21,6 @@ class StdDaqClient : public ZmqDaqClient {
 
     StdDaqClient(const std::string& endpoint, const std::string& socket_type, size_t concurrency = 1);
 
-    ~StdDaqClient() override;
-
     std::optional<Projection<>> parseData(const nlohmann::json& meta, const zmq::message_t& msg) override;
 };
 

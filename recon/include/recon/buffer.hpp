@@ -46,6 +46,12 @@ class BufferInterface {
     BufferInterface() = default;
     virtual ~BufferInterface() = default;
 
+    BufferInterface(const BufferInterface&) = default;
+    BufferInterface& operator=(const BufferInterface&) = default;
+
+    BufferInterface(BufferInterface&&) = default;
+    BufferInterface& operator=(BufferInterface&&) = default;
+
     T& front() { return front_; }
     const T& front() const { return front_; }
 
@@ -66,7 +72,6 @@ protected:
 public:
 
     TripleBuffer() = default;
-    virtual ~TripleBuffer() = default;
 
     TripleBuffer(const TripleBuffer&) = delete;
     TripleBuffer& operator=(const TripleBuffer&) = delete;
@@ -304,8 +309,6 @@ class MemoryBuffer {
   public:
 
     explicit MemoryBuffer(int capacity);
-
-    ~MemoryBuffer() = default;
 
     void resize(const std::array<size_t, N>& shape);
 
