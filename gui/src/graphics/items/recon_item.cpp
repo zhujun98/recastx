@@ -82,16 +82,16 @@ void ReconItem::renderIm() {
         ImGui::EndCombo();
     }
 
-    if (ImGui::Checkbox("Auto levels", &auto_levels_) && auto_levels_) {
+    if (ImGui::Checkbox("Auto levels##RECON", &auto_levels_) && auto_levels_) {
         update_min_max_val_ = true;
     }
     ImGui::SameLine();
-    ImGui::Checkbox("Clamp negatives", &clamp_negatives_);
+    ImGui::Checkbox("Clamp negatives##RECON", &clamp_negatives_);
 
     ImGui::BeginDisabled(auto_levels_);
     float step_size = (max_val_ - min_val_) / 100.f;
     if (step_size < 0.01f) step_size = 0.01f; // avoid a tiny step size
-    ImGui::DragFloatRange2("Min / Max", &min_val_, &max_val_, step_size,
+    ImGui::DragFloatRange2("Min / Max##RECON", &min_val_, &max_val_, step_size,
                            std::numeric_limits<float>::lowest(), // min() does not work
                            std::numeric_limits<float>::max());
     ImGui::EndDisabled();
@@ -100,7 +100,7 @@ void ReconItem::renderIm() {
     renderImSliceControl<1>("Slice 2##RECON");
     renderImSliceControl<2>("Slice 3##RECON");
 
-    if (ImGui::Button("Reset all slices")) {
+    if (ImGui::Button("Reset all slices##RECON")) {
         {
             std::lock_guard lck(slice_mtx_);
             for (auto& slice : slices_) {
