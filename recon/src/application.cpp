@@ -76,7 +76,8 @@ void Application::setReconGeometry(std::optional<size_t> slice_size, std::option
 
 bool Application::tryComputeReciprocal() {
     if (darks_.empty() && flats_.empty()) {
-        spdlog::warn("Send dark and flat images first! Projection ignored.");
+        raw_buffer_.reset();
+        spdlog::warn("Send dark and flat images first! Received projections ignored.");
         return false;
     }
 
@@ -98,6 +99,7 @@ bool Application::tryComputeReciprocal() {
 
     reciprocal_computed_ = true;
     spdlog::info("Reciprocal computed!");
+
     return true;
 }
 
@@ -117,6 +119,13 @@ void Application::startPreprocessing() {
             if (waitForProcessing()) continue;
 
             if (!raw_buffer_.fetch(100)) continue;
+
+            {
+                std::lock_guard lck(reciprocal_mtx_);
+                if (!reciprocal_computed_) {
+                    if (!tryComputeReciprocal()) continue;
+                }
+            }
 
             spdlog::info("Preprocessing - started");
 
@@ -212,14 +221,6 @@ void Application::consume() {
         switch(proj.type) {
             case ProjectionType::PROJECTION: {
                 if (server_state_ == rpc::ServerState_State_PROCESSING) {
-                    {
-                        std::lock_guard lck(reciprocal_mtx_);
-                        if (!reciprocal_computed_) {
-                            if (!tryComputeReciprocal()) break;
-                            monitor_->resetPerf();
-                        }
-                    }
-
                     pushProjection(proj);
                 }
 
@@ -532,5 +533,19 @@ void Application::maybeResetDarkAndFlatAcquisition() {
         spdlog::info("Re-collecting dark and flat images");
     }
 }
+
+void Application::pushProjection(const Projection<>& proj) {
+    if (pipeline_wait_on_slowness_ && raw_buffer_.isReady()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
+    if (raw_buffer_.occupied() == 0) {
+        monitor_->resetPerf();
+    }
+
+    raw_buffer_.fill<RawDtype>(
+        proj.index, reinterpret_cast<const char*>(proj.data.data()), proj.data.shape());
+}
+
 
 } // namespace recastx::recon

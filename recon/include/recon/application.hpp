@@ -156,14 +156,7 @@ class Application {
         }
     }
 
-    void pushProjection(const Projection<>& proj) {
-        if (pipeline_wait_on_slowness_ && raw_buffer_.isReady()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
-
-        raw_buffer_.fill<RawDtype>(
-                proj.index, reinterpret_cast<const char*>(proj.data.data()), proj.data.shape());
-    }
+    void pushProjection(const Projection<>& proj);
 
     void consume();
 

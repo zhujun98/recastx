@@ -12,6 +12,7 @@
 #include <cassert>
 #include <chrono>
 #include <condition_variable>
+#include <iostream>
 #include <map>
 #include <numeric>
 #include <queue>
@@ -395,9 +396,13 @@ void MemoryBuffer<T, N>::reset() {
         unoccupied_.push(i);
     }
 
+    is_ready_ = false;
+
 #if (VERBOSITY >= 2)
     data_received_ = 0;
 #endif
+
+    spdlog::debug("[Memory buffer] Reset");
 }
 
 template<typename T, size_t N>
@@ -503,6 +508,8 @@ void MemoryBuffer<T, N>::registerChunk(size_t idx) {
     chunk_indices_.push(idx);
     map_[idx] = unoccupied_.front();
     unoccupied_.pop();
+
+    spdlog::debug("[Image buffer] Registered chunk: {}", idx);
 }
 
 template<typename T, size_t N>
