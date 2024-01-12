@@ -30,7 +30,7 @@ struct Projection {
 
     Projection(ProjectionType type, size_t index, size_t col_count, size_t row_count, const void* data_, size_t size)
             : type(type), index(index), data(std::array<size_t, 2> {row_count, col_count}) {
-        std::memcpy(data.data(), data_, size);   
+        std::memcpy(data.data(), data_, size);
     }
 };
 

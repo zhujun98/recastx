@@ -7,7 +7,6 @@
  * The full license is in the file LICENSE, distributed with this software.
 */
 #include <chrono>
-#include <complex>
 #include <exception>
 
 #include <spdlog/spdlog.h>
@@ -96,6 +95,8 @@ bool Application::tryComputeReciprocal() {
         spdlog::debug("Downsampling reciprocal ... ");
         downsample(reciprocal, reciprocal_);
     }
+
+    arrayStat(reciprocal_, reciprocal_.shape(), "Reciprocal");
 
     reciprocal_computed_ = true;
     spdlog::info("Reciprocal computed!");

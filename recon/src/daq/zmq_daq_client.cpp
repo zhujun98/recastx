@@ -68,7 +68,9 @@ void ZmqDaqClient::start() {
                 {
                     std::lock_guard lk(mtx_);
                     auto result = socket_.recv(update, zmq::recv_flags::none);
-                    if (!result.has_value()) continue;
+                    if (!result) continue;
+
+                    assert(update.more());
 
                     meta = parseMeta(update);
                     if (!meta) {
@@ -81,6 +83,8 @@ void ZmqDaqClient::start() {
                         if (result.has_value() || !acquiring_) break;
                     }
                 }
+
+                assert(!update.more());
 
                 auto data = parseData(meta.value(), update);
                 if (!data) continue;
