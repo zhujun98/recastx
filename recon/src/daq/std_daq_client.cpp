@@ -7,7 +7,6 @@
  * The full license is in the file LICENSE, distributed with this software.
 */
 #include <cassert>
-#include <chrono>
 #include <iostream>
 
 #include <nlohmann/json.hpp>
@@ -31,7 +30,9 @@ StdDaqClient::parseData(const nlohmann::json& meta, const zmq::message_t& data) 
     }
     size_t num_rows = meta["shape"][0];
     size_t num_cols = meta["shape"][1];
-    if (!isDataShapeValid(num_rows, num_cols)) return std::nullopt;
+    if (!isDataShapeValid(num_rows, num_cols)) {
+        return std::nullopt;
+    }
 
     assert(data.size() == sizeof(RawDtype) * num_rows * num_cols);
     return Projection<>{proj_type, frame, num_cols, num_rows, data.data(), data.size()};
