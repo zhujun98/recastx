@@ -46,7 +46,7 @@ information which could lead to scientific discoveries.
         <div class="content">
             <h3 class="card-title">High-throughput</h3>
             <p class="card-text">
-                Throughput reaches 2 - 3 GB/s of 16-bit raw pixel data (a few tomograms/s) on an ordinary GPU node.
+                Throughput reaches up to 3 GB/s of 16-bit raw pixel data (a few tomograms/s) on an ordinary GPU node.
             </p>
         </div>
     </div>
@@ -61,20 +61,85 @@ information which could lead to scientific discoveries.
 </div>
 
 <div class="container" id="feature-container">
-    <div class="section feature left">
-        <img class="feature-image" src="recastx-docs-supplement/fuelcell_slices.gif"/>
-        <p>On-demand slab/slice reconstruction for dynamic experiment</p>
+    <div class="feature-section left">
+        <div class="slideshow-container">
+            <div class="feature-image-container slide-image slide-a fade">
+                <img src="recastx-docs-supplement/fuelcell_slices.gif"/>
+            </div>
+            <a class="prev" onclick="plusDivsA(-1)">❮</a>
+            <a class="next" onclick="plusDivsA(1)">❯</a>
+        </div>
+        <div>
+            <p>On-demand slab/slice reconstruction for dynamic experiment</p>
+        </div>
     </div>
-    <div class="section feature right">
-        <p>Rich graphical user interface</p>
-        <img class="feature-image" src="recastx-docs-supplement/overview.jpg"/>
+    <div class="feature-section right">
+        <div>
+            <p>Rich graphical user interface</p>
+        </div>
+        <div class="feature-image-container">
+            <img src="recastx-docs-supplement/overview.png"/>
+        </div>
     </div>
-    <div class="section feature left">
-        <img class="feature-image" src="recastx-docs-supplement/beads_volume.gif"/>
-        <p>High-resolution 3D reconstruction for static experiment</p>
+    <div class="feature-section left">
+        <div class="slideshow-container">
+            <div class="feature-image-container slide-image slide-c fade">
+                <img src="recastx-docs-supplement/tomophantom_3d08.gif"/>
+            </div>
+            <div class="feature-image-container slide-image slide-c fade">
+                <img src="recastx-docs-supplement/beads_volume.gif"/>
+            </div>
+            <a class="prev" onclick="plusDivsC(-1)">❮</a>
+            <a class="next" onclick="plusDivsC(1)">❯</a>
+        </div>
+        <div>
+            <p>High-resolution 3D reconstruction for static experiment</p>
+        </div>
     </div>
-    <div class="section feature right">
-        <p>Scalable architecture</p>
-        <img class="feature-image" src="recastx-docs-supplement/recastx_architecture.jpg"/>
+    <div class="feature-section right">
+        <div>
+            <p>Scalable architecture</p>
+        </div>
+        <div class="feature-image-container">
+            <img src="recastx-docs-supplement/recastx_architecture.jpg"/>
+        </div>
     </div>
 </div>
+
+<script>
+let slideIndexA = 1;
+showDivsA(slideIndexA);
+
+function plusDivsA(n) {
+  showDivsA(slideIndexA += n);
+}
+
+function showDivsA(n) {
+  let i;
+  let x = document.getElementsByClassName("slide-a");
+  if (n > x.length) { slideIndexA = 1 }
+  if (n < 1) { slideIndexA = x.length }
+  for (i = 0; i < x.length; i++) {
+    x[i].style.display = "none";  
+  }
+  x[slideIndexA - 1].style.display = "flex";  
+}
+
+let slideIndexC = 1;
+showDivsC(slideIndexC);
+
+function plusDivsC(n) {
+  showDivsC(slideIndexC += n);
+}
+
+function showDivsC(n) {
+  let i;
+  let x = document.getElementsByClassName("slide-c");
+  if (n > x.length) { slideIndexC = 1 }
+  if (n < 1) { slideIndexC = x.length }
+  for (i = 0; i < x.length; i++) {
+    x[i].style.display = "none";  
+  }
+  x[slideIndexC - 1].style.display = "flex";  
+}
+</script>
