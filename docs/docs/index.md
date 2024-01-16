@@ -64,6 +64,9 @@ information which could lead to scientific discoveries.
     <div class="feature-section left">
         <div class="slideshow-container">
             <div class="feature-image-container slide-image slide-a fade">
+                <img src="recastx-docs-supplement/h1.gif"/>
+            </div>
+            <div class="feature-image-container slide-image slide-a fade">
                 <img src="recastx-docs-supplement/fuelcell_slices.gif"/>
             </div>
             <a class="prev" onclick="plusDivsA(-1)">❮</a>

@@ -159,6 +159,8 @@
 
 @media (max-width: 768px) {
     .feature-section {
+        max-height: 540px;
+        height: 540px;
         justify-content: center;
     }
 
