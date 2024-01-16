@@ -99,12 +99,60 @@ information which could lead to scientific discoveries.
             <p>High-resolution 3D reconstruction for static experiment</p>
         </div>
     </div>
-    <div class="feature-section right">
+    <div class="feature-section right last">
         <div>
             <p>Scalable architecture</p>
         </div>
         <div class="feature-image-container">
             <img src="recastx-docs-supplement/recastx_architecture.jpg"/>
+        </div>
+    </div>
+</div>
+
+<div class="container" id="future-container">
+    <div>
+        <h2>And more will come</h2>
+    </div>
+    <div class="container future-section">
+        <div class="col">
+            <h3 class="blue">Real-time 3D slab reconstruction</h3>
+            <p class="card-text">
+                As an enhancement to 2D reconstructed slice, 3D slab will give you localised 3D information in real time.
+            </p>
+        </div>
+        <div class="col middle">
+            <h3 class="fucsia">Segmentation</h3>
+            <p class="card-text">
+                Segmentation is essential to better scene understanding. Machine learning will play a pivotal role here.
+            </p>
+        </div>
+        <div class="col">
+            <h3 class="red">Rendering materials</h3>
+            <p class="card-text">
+                Rendering voxels with real material properties will greatly enhance 3D visualization.
+            </p>
+        </div>
+    </div>
+    <hr>
+    <div class="container future-section">
+        <div class="col">
+            <h3 class="orange">Higher throughput</h3>
+            <p class="card-text">
+                We use heterogeneous computing strategy to achieve the highest possible reconstruction throughput. 
+                Both CPU and GPU algorithms will be further optimised.
+            </p>
+        </div>
+        <div class="col middle">
+            <h3 class="violet">Interactive 2D/3D image analysis</h3>
+            <p class="card-text">
+                We understand the importance of user experience to online analysis softwares.
+            </p>
+        </div>
+        <div class="col">
+            <h3 class="green">Smart data acquisition</h3>
+            <p class="card-text">
+                This will generate huge impact on data reduction. However, we need funding to start this amazing journey.
+            </p>
         </div>
     </div>
 </div>
