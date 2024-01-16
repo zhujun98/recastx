@@ -96,8 +96,6 @@ bool Application::tryComputeReciprocal() {
         downsample(reciprocal, reciprocal_);
     }
 
-    arrayStat(reciprocal_, reciprocal_.shape(), "Reciprocal");
-
     reciprocal_computed_ = true;
     spdlog::info("Reciprocal computed!");
 
