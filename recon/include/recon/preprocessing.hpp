@@ -12,7 +12,10 @@
 #include <cassert>
 #include <memory>
 #include <optional>
+#include <stdexcept>
 #include <vector>
+
+#include <spdlog/spdlog.h>
 
 #include "common/config.hpp"
 #include "common/scoped_timer.hpp"
@@ -25,8 +28,13 @@ inline void downsample(const ProImageData &src, ProImageData &dst) {
     auto &dst_shape = dst.shape();
     size_t ds_row = src_shape[0] / dst_shape[0];
     size_t ds_col = src_shape[1] / dst_shape[1];
-    assert (ds_row >= 1);
-    assert (ds_col >= 1);
+
+    if (ds_row < 1 || ds_col < 1) {
+        spdlog::critical("Shape of the destination is large than shape of the source: {} x {}, dst: {} x {}",
+                         src_shape[0], src_shape[1], dst_shape[0], dst_shape[1]);
+        throw std::runtime_error("Downsampling with illegal shapes");
+    }
+
     for (size_t i = 0; i < dst_shape[0]; ++i) {
         for (size_t j = 0; j < dst_shape[1]; ++j) {
             dst[i * dst_shape[1] + j] = src[i * src_shape[1] * ds_row + ds_col * j];
