@@ -96,8 +96,6 @@ bool Application::tryComputeReciprocal() {
         downsample(reciprocal, reciprocal_);
     }
 
-    arrayStat(reciprocal_, reciprocal_.shape(), "Reciprocal");
-
     reciprocal_computed_ = true;
     spdlog::info("Reciprocal computed!");
 
@@ -433,7 +431,7 @@ std::vector<rpc::ReconData> Application::getOnDemandSliceData(int timeout) {
 }
 
 void Application::init() {
-    spdlog::info("Initial parameters for real-time 3D tomographic reconstruction:");
+    spdlog::info("Initial parameters:");
 
     initParams();
 
@@ -547,6 +545,5 @@ void Application::pushProjection(const Projection<>& proj) {
     raw_buffer_.fill<RawDtype>(
         proj.index, reinterpret_cast<const char*>(proj.data.data()), proj.data.shape());
 }
-
 
 } // namespace recastx::recon
