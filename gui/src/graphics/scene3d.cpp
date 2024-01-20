@@ -11,7 +11,7 @@
 #include <glm/glm.hpp>
 
 #include "graphics/scene3d.hpp"
-#include "graphics/items/axis_item.hpp"
+#include "graphics/items/axiscube_item.hpp"
 #include "graphics/items/icon_item.hpp"
 #include "graphics/items/geometry_item.hpp"
 #include "graphics/items/preproc_item.hpp"
@@ -32,7 +32,7 @@ Scene3d::Scene3d(RpcClient* client)
           recon_item_(new ReconItem(*this)),
           statusbar_item_(new StatusbarItem(*this)),
           logging_item_(new LoggingItem(*this)),
-          axis_item_(new AxisItem(*this)) {
+          axiscube_item_(new AxisCubeItem(*this)) {
 }
 
 Scene3d::~Scene3d() = default;
@@ -43,10 +43,10 @@ void Scene3d::render() {
         item->renderGl();
     }
 
-    ImGui::SetNextWindowPos(pos_);
-    ImGui::SetNextWindowSize(size_);
+    ImGui::SetNextWindowPos(ImVec2(layout_.mw, layout_.mh * 2 + layout_.th));
+    ImGui::SetNextWindowSize(ImVec2(layout_.lw, layout_.h - 2 * layout_.mh - layout_.th));
 
-    ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_MenuBar);
+    ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_MenuBar);
 
     renderMenubar();
 
@@ -132,7 +132,6 @@ void Scene3d::render() {
 
     ImGui::Separator();
 
-    projection_item_->renderGl();
     projection_item_->renderIm();
     camera_->render();
     geometry_item_->renderIm();
@@ -147,20 +146,6 @@ void Scene3d::render() {
 void Scene3d::renderMenubar() {
     if (ImGui::BeginMenuBar()) {
         if (ImGui::BeginMenu("View")) {
-            static bool show_statusbar = statusbar_item_->visible();
-            if (ImGui::Checkbox("Show status bar##VIEW", &show_statusbar)) {
-                statusbar_item_->setVisible(show_statusbar);
-            };
-
-            static bool show_logger = logging_item_->visible();
-            if (ImGui::Checkbox("Show logging##VIEW", &show_logger)) {
-                logging_item_->setVisible(show_logger);
-            }
-
-            static bool show_axis = axis_item_->axisVisible();
-            if (ImGui::Checkbox("Show axis##VIEW", &show_axis)) {
-                axis_item_->setAxisVisible(show_axis);
-            }
 
             static bool show_histogram = recon_item_->histogramVisible();
             if (ImGui::Checkbox("Show histogram##VIEW", &show_histogram)) {

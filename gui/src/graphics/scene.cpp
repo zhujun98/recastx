@@ -19,40 +19,27 @@
 namespace recastx::gui {
 
 Scene::Scene(RpcClient* client)
-    : vp_(new Viewport()),
-      camera_(new Camera()),
+    : camera_(new Camera()),
       client_(client),
       scan_update_interval_(K_MIN_SCAN_UPDATE_INTERVAL) {}
 
 Scene::~Scene() = default;
 
 void Scene::onWindowSizeChanged(int width, int height) {
-    size_ = {
-        Style::LEFT_PANEL_WIDTH * (float)width,
-        (1.f - Style::ICON_HEIGHT - 3.f * Style::MARGIN) * (float)height
-    };
-    pos_ = {
-        Style::MARGIN * (float)width,
-        (Style::ICON_HEIGHT + 2.f * Style::MARGIN) * (float)height
-    };
+    updateLayout(width, height);
 
     for (auto& item : items_) {
         item->onWindowSizeChanged(width, height);
     }
 }
 
-void Scene::useViewport() {
-    vp_->use();
-}
-
-const glm::mat4& Scene::projectionMatrix() const { return vp_->projection(); }
-
 const glm::mat4& Scene::viewMatrix() const { return camera_->matrix(); }
 
 float Scene::cameraDistance() const { return camera_->distance(); }
 
 void Scene::onFramebufferSizeChanged(int width, int height) {
-    vp_->update(0, 0, width, height);
+    layout_.sw = (double)width / layout_.w;
+    layout_.sh = (double)height / layout_.h;
 
     for (auto& item : gl_items_) {
         item->onFramebufferSizeChanged(width, height);
@@ -176,6 +163,17 @@ void Scene::stopProcessing() {
     } else {
         server_state_ = rpc::ServerState_State_UNKNOWN;
     }
+}
+
+void Scene::updateLayout(int width, int height) {
+    layout_.w = width;
+    layout_.h = height;
+    layout_.mw = std::min(Style::MARGIN_MAX, int(Style::MARGIN * (float)width));
+    layout_.mh = std::min(Style::MARGIN_MAX, int(Style::MARGIN * (float)height));
+    layout_.lw = int(Style::LEFT_PANEL_WIDTH * (float)width);
+    layout_.rw = int(Style::RIGHT_PANEL_WIDTH * (float)width);
+    layout_.th = int(Style::TOP_PANEL_HEIGHT * (float)height);
+    layout_.bh = int(Style::BOTTOM_PANEL_HEIGHT * (float)height);
 }
 
 bool Scene::setScanMode() {

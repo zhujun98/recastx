@@ -14,6 +14,7 @@
 
 #include "common/config.hpp"
 #include "graphics/textures.hpp"
+#include "graphics/viewport.hpp"
 #include "graphics/items/graphics_item.hpp"
 #include "utils.hpp"
 

@@ -35,10 +35,8 @@ void ProjectionItem::onWindowSizeChanged(int width, int height) {
     float s = Style::SECOND_SCENE_HEIGHT * (float)height;
     size_ = { s, s };
 
-    pos_ = {
-            (1.0f - Style::MARGIN) * (float)width - s,
-            (1.0f - Style::BOTTOM_PANEL_HEIGHT - 2.f * Style::MARGIN) * (float)(height) - s
-    };
+    const auto& l = scene_.layout();
+    pos_ = { static_cast<float>(width - l.mw - s), static_cast<float>(height - l.bh - 2 * l.mh - s) };
 
     // Caveat: don't use framebuffer size because of high-resolution display like Retinal
     static constexpr int K_PADDING = 5;
@@ -181,8 +179,6 @@ void ProjectionItem::renderBuffer(int width, int height) {
     buffer_->render(width, height, min_val_, max_val_);
     texture_.unbind();
     cm_->unbind();
-
-    scene_.useViewport();
 }
 
 } // namespace recastx::gui

@@ -28,15 +28,14 @@ LoggingItem::LoggingItem(Scene& scene) :
 LoggingItem::~LoggingItem() = default;
 
 void LoggingItem::onWindowSizeChanged(int width, int height) {
+    const auto& l = scene_.layout();
+
     pos_ = {
-            (3 * Style::MARGIN + Style::LEFT_PANEL_WIDTH + Style::STATUS_BAR_WIDTH) * (float)width,
-            (1.f - Style::BOTTOM_PANEL_HEIGHT - Style::MARGIN) * (float)(height)
+            static_cast<float>(3 * l.mw + l.lw + Style::STATUS_BAR_WIDTH * (float)width),
+            static_cast<float>(height - l.bh - l.mh)
     };
 
-    size_ = {
-            (1.f - Style::MARGIN) * (float)width - pos_[0],
-            Style::BOTTOM_PANEL_HEIGHT * (float)height
-    };
+    size_ = { static_cast<float>(width - l.mw - pos_[0]), static_cast<float>(l.bh) };
 }
 
 void LoggingItem::renderIm() {

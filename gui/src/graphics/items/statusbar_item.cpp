@@ -20,16 +20,10 @@ StatusbarItem::StatusbarItem(Scene& scene) : GraphicsItem(scene) {
 
 StatusbarItem::~StatusbarItem() = default;
 
-void StatusbarItem::onWindowSizeChanged(int width, int height) {
-    size_ = {
-        Style::STATUS_BAR_WIDTH * (float)width,
-        Style::BOTTOM_PANEL_HEIGHT * (float)height
-    };
-
-    pos_ = {
-        (2.f * Style::MARGIN + Style::LEFT_PANEL_WIDTH) * (float)width,
-        (1.f - Style::BOTTOM_PANEL_HEIGHT - Style::MARGIN) * (float)(height)
-    };
+void StatusbarItem::onWindowSizeChanged(int width, int /*height*/) {
+    const auto& l = scene_.layout();
+    size_ = { Style::STATUS_BAR_WIDTH * (float)width, float(l.bh) };
+    pos_ = { static_cast<float>(2 * l.mw + l.lw), static_cast<float>(l.h - l.bh - l.mh) };
 }
 
 void StatusbarItem::renderIm() {

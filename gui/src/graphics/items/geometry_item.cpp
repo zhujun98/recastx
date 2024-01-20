@@ -11,6 +11,7 @@
 #include "graphics/items/geometry_item.hpp"
 #include "graphics/scene.hpp"
 #include "graphics/shader_program.hpp"
+#include "graphics/viewport.hpp"
 
 namespace recastx::gui {
 

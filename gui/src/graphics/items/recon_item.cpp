@@ -26,6 +26,7 @@
 #include "graphics/style.hpp"
 #include "graphics/volume.hpp"
 #include "graphics/wireframe.hpp"
+#include "graphics/viewport.hpp"
 #include "logger.hpp"
 
 namespace recastx::gui {
@@ -35,6 +36,7 @@ ReconItem::ReconItem(Scene& scene)
           volume_(new Volume{}),
           wireframe_(new Wireframe{}) {
     scene.addItem(this);
+    vp_ = std::make_unique<Viewport>();
 
     glGenVertexArrays(1, &rotation_axis_vao_);
     glBindVertexArray(rotation_axis_vao_);
@@ -56,16 +58,10 @@ ReconItem::~ReconItem() {
     glDeleteBuffers(1, &rotation_axis_vbo_);
 }
 
-void ReconItem::onWindowSizeChanged(int width, int height) {
-    st_win_size_ = {
-        (1.f - Style::LEFT_PANEL_WIDTH - 4 * Style::MARGIN) * (float)width
-            - Style::TOP_PANEL_HEIGHT * (float)height,
-        Style::TOP_PANEL_HEIGHT * (float)height
-    };
-    st_win_pos_ = {
-        (2.f * Style::MARGIN + Style::LEFT_PANEL_WIDTH) * (float)width,
-        Style::MARGIN * (float)height
-    };
+void ReconItem::onWindowSizeChanged(int width, int /*height*/) {
+    const auto& l = scene_.layout();
+    st_win_size_ = { static_cast<float>(width - 4 * l.mw - l.lw - l.th), static_cast<float>(l.th) };
+    st_win_pos_ = { static_cast<float>(2 * l.mw + l.lw), static_cast<float>(l.mh) };
 }
 
 void ReconItem::renderIm() {
@@ -143,7 +139,13 @@ void ReconItem::renderIm() {
     scene_.setStatus("sliceUpdateFrameRate", slice_counter_.frameRate());
 }
 
-void ReconItem::onFramebufferSizeChanged(int /* width */, int /* height */) {}
+void ReconItem::onFramebufferSizeChanged(int width, int height) {
+    const auto& l = scene_.layout();
+    vp_->update(l.sw * (2 * l.mw + l.lw),
+                l.sh * (2 * l.mh + l.th),
+                width - l.sw * (4 * l.mw + l.lw + l.rw),
+                height - l.sh * (4 * l.mh + l.th + l.bh));
+}
 
 void ReconItem::preRenderGl() {
     for (auto& [_, policy, slice] : slices_) {
@@ -169,9 +171,10 @@ void ReconItem::renderGl() {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    vp_->use();
     cm_.bind();
 
-    const auto& projection = scene_.projectionMatrix();
+    const auto& projection = vp_->projection();
     const auto& view = scene_.viewMatrix();
 
     matrix_ = projection * view;

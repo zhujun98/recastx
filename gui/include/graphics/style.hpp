@@ -1674,11 +1674,12 @@ static const char CousineRegular_compressed_data_base85[47040+1] =
 
 struct Style {
     static constexpr float MARGIN = 0.006f;
-    static constexpr float ICON_HEIGHT = 0.12f;
+    static constexpr int MARGIN_MAX = 5;
     static constexpr float LEFT_PANEL_WIDTH = 0.21f;
-    static constexpr float STATUS_BAR_WIDTH = 0.28f;
+    static constexpr float RIGHT_PANEL_WIDTH = 0.21f;
     static constexpr float TOP_PANEL_HEIGHT = 0.15f;
     static constexpr float BOTTOM_PANEL_HEIGHT = 0.15f;
+    static constexpr float STATUS_BAR_WIDTH = 0.28f;
     static constexpr float SECOND_SCENE_HEIGHT = 0.30f;
 
     static void init() {

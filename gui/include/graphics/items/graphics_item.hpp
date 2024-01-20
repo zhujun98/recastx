@@ -66,11 +66,15 @@ public:
 
 class GraphicsGLItem {
 
-public:
+  public:
 
     using RenderParams = std::unordered_map<std::string, std::any>;
 
-public:
+  protected:
+
+    std::unique_ptr<Viewport> vp_;
+
+  public:
 
     virtual void onFramebufferSizeChanged(int width, int height) = 0;
 
