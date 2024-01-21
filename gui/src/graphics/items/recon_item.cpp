@@ -357,6 +357,17 @@ void ReconItem::setVolumeRenderQuality(RenderQuality level) {
     volume_->setRenderQuality(level);
 }
 
+void ReconItem::moveVolumeFrontForward() {
+    volume_front_ += volume_front_step_;
+    if (volume_front_ > volume_front_max_) volume_front_ = volume_front_max_;
+    volume_->setFront(volume_front_);
+};
+void ReconItem::moveVolumeFrontBackward() {
+    volume_front_ -= volume_front_step_;
+    if (volume_front_ < volume_front_min_) volume_front_ = volume_front_min_;
+    volume_->setFront(volume_front_);
+};
+
 template<size_t index>
 void ReconItem::renderImSliceControl(const char* header) {
 
@@ -436,9 +447,8 @@ void ReconItem::renderImVolumeControl() {
             volume_->setAlpha(volume_alpha);
         }
 
-        static float volume_front = 0.0f;
-        if (ImGui::SliderFloat("Front##RECON_VOL", &volume_front, 0.0f, 1.0)) {
-            volume_->setFront(volume_front);
+        if (ImGui::SliderFloat("Front##RECON_VOL", &volume_front_, volume_front_min_, volume_front_max_)) {
+            volume_->setFront(volume_front_);
         }
     }
 }

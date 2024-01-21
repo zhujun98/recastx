@@ -69,6 +69,24 @@ void Scene3d::render() {
     ImGui::End();
 }
 
+bool Scene3d::handleKey(int key, int action, int mods) {
+    if (Scene::handleKey(key, action, mods)) return true;
+
+    if (action == GLFW_REPEAT || action == GLFW_PRESS) {
+        switch (key) {
+            case GLFW_KEY_PAGE_UP:
+                recon_item_->moveVolumeFrontForward();
+                return true;
+            case GLFW_KEY_PAGE_DOWN:
+                recon_item_->moveVolumeFrontBackward();
+                return true;
+            default:
+                break;
+        }
+    }
+    return false;
+}
+
 void Scene3d::renderMenubar() {
     if (ImGui::BeginMenuBar()) {
         if (ImGui::BeginMenu("View")) {

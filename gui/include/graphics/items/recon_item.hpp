@@ -105,6 +105,10 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
     std::mutex volume_mtx_;
     std::unique_ptr<Volume> volume_;
     int volume_policy_ = PREVIEW_VOL;
+    float volume_front_ = 0.f;
+    float volume_front_step_ = 0.01f;
+    static constexpr float volume_front_min_ = 0.0f;
+    static constexpr float volume_front_max_ = 1.0f;
 
     std::unique_ptr<Wireframe> wireframe_;
     bool show_wireframe_ = true;
@@ -179,6 +183,9 @@ public:
 
     [[nodiscard]] bool histogramVisible() const { return show_statistics_; }
     void setHistogramVisible(bool visible) { show_statistics_ = visible; }
+
+    void moveVolumeFrontForward();
+    void moveVolumeFrontBackward();
 };
 
 } // namespace recastx::gui
