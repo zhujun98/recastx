@@ -105,7 +105,6 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
     std::mutex volume_mtx_;
     std::unique_ptr<Volume> volume_;
     int volume_policy_ = PREVIEW_VOL;
-    float volume_alpha_ = 1.f;
 
     std::unique_ptr<Wireframe> wireframe_;
     bool show_wireframe_ = true;

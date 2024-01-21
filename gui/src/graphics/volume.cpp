@@ -37,6 +37,7 @@ void VolumeSlicer::resize(size_t num_slices) {
 
 void VolumeSlicer::update(const glm::vec3& view_dir) {
     auto [min_dist, max_dist, max_index] = sortVertices(view_dir);
+    float cutoff = min_dist + (max_dist - min_dist) * front_;
 
     glm::vec3 vec_start[12];
     glm::vec3 vec_dir[12];
@@ -68,6 +69,8 @@ void VolumeSlicer::update(const glm::vec3& view_dir) {
 
     int count = 0;
     for (int i = num_slices_ - 1; i >= 0; i--) {
+        if (i * plane_dist_inc + min_dist < cutoff) break;
+
         for (int e = 0; e < 12; e++) dl[e] = lambda[e] + i * lambda_inc[e];
 
         if  (dl[0] >= 0.0 && dl[0] < 1.0)	{
@@ -160,6 +163,11 @@ std::tuple<float, float, int> VolumeSlicer::sortVertices(const glm::vec3& view_d
     return {min_dist, max_dist, max_index};
 }
 
+void VolumeSlicer::setFront(float front) {
+    front_ = front;
+    for(size_t i = 0; i < slices_.size(); ++i) slices_[i] = glm::vec3{};
+}
+
 
 Volume::Volume() : volume_render_quality_(RenderQuality::LOW), slicer_(128) {
     auto vert =
@@ -218,8 +226,7 @@ void Volume::preRender() {
 void Volume::render(const glm::mat4& view,
                     const glm::mat4& projection,
                     float min_v,
-                    float max_v,
-                    float alpha) {
+                    float max_v) {
     if (!texture_.isReady()) return;
 
     shader_->use();
@@ -227,7 +234,7 @@ void Volume::render(const glm::mat4& view,
     shader_->setInt("volumeData", 2);
     shader_->setMat4("view", view);
     shader_->setMat4("projection", projection);
-    shader_->setFloat("alpha", alpha);
+    shader_->setFloat("alpha", alpha_);
     shader_->setFloat("minValue", min_v);
     shader_->setFloat("maxValue", max_v);
 

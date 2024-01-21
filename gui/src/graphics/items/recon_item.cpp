@@ -190,7 +190,7 @@ void ReconItem::renderGl() {
     volume_->unbind();
 
     if (volume_policy_ == SHOW_VOL) {
-        volume_->render(view, projection, min_val, max_val_, volume_alpha_);
+        volume_->render(view, projection, min_val, max_val_);
     }
 
     cm_.unbind();
@@ -431,7 +431,15 @@ void ReconItem::renderImVolumeControl() {
             }
         }
 
-        ImGui::SliderFloat("Alpha##RECON_VOL", &volume_alpha_, 0.0f, 1.0f);
+        static float volume_alpha = 1.0f;
+        if (ImGui::SliderFloat("Alpha##RECON_VOL", &volume_alpha, 0.0f, 1.0f)) {
+            volume_->setAlpha(volume_alpha);
+        }
+
+        static float volume_front = 0.0f;
+        if (ImGui::SliderFloat("Front##RECON_VOL", &volume_front, 0.0f, 1.0)) {
+            volume_->setFront(volume_front);
+        }
     }
 }
 

@@ -28,6 +28,7 @@ class VolumeSlicer {
 
     size_t num_slices_;
     DataType slices_;
+    float front_;
 
     GLuint vao_;
     GLuint vbo_;
@@ -71,6 +72,8 @@ class VolumeSlicer {
     void update(const glm::vec3& view_dir);
 
     void draw();
+
+    void setFront(float front);
 };
 
 class ShaderProgram;
@@ -101,6 +104,7 @@ class Volume {
     VolumeSlicer slicer_;
 
     std::unique_ptr<ShaderProgram> shader_;
+    float alpha_ = 1.0f;
 
     void updateMinMaxVal();
 
@@ -117,8 +121,7 @@ public:
     void render(const glm::mat4& view,
                 const glm::mat4& projection,
                 float min_v,
-                float max_v,
-                float alpha);
+                float max_v);
 
     [[nodiscard]] bool hasTexture() const { return texture_.isReady(); }
 
@@ -135,6 +138,10 @@ public:
     RenderQuality renderQuality() const { return volume_render_quality_; }
 
     void setRenderQuality(RenderQuality level);
+
+    void setAlpha(float alpha) { alpha_ = alpha; }
+
+    void setFront(float front) { slicer_.setFront(front); }
 };
 
 
