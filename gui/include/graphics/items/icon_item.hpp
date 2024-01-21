@@ -18,11 +18,8 @@ namespace recastx::gui {
 
 class GlyphRenderer;
 class Scene;
-class Viewport;
 
 class IconItem : public GraphicsItem, public GraphicsGLItem {
-
-    std::unique_ptr<Viewport> vp_;
 
     static constexpr int font_size_ = 72;
     std::unique_ptr<ShaderProgram> glyph_shader_;

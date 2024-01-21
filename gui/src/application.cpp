@@ -147,7 +147,7 @@ void Application::registerCallbacks() {
 
 void Application::mouseButtonCallback(GLFWwindow* /*window*/, int button, int action, int) {
     ImGui_ImplGlfw_MouseButtonCallback(nullptr, button, action, 0);
-    auto io = ImGui::GetIO();
+    auto& io = ImGui::GetIO();
     if (!io.WantCaptureMouse) {
         instance().scene_->handleMouseButton(button, action);
     }
@@ -155,7 +155,7 @@ void Application::mouseButtonCallback(GLFWwindow* /*window*/, int button, int ac
 
 void Application::scrollCallback(GLFWwindow* /*window*/, double /*xoffset*/, double yoffset) {
     ImGui_ImplGlfw_ScrollCallback(nullptr, 0.0, yoffset);
-    auto io = ImGui::GetIO();
+    auto& io = ImGui::GetIO();
     if (!io.WantCaptureMouse) {
         instance().scene_->handleScroll(static_cast<float>(yoffset));
     }
@@ -163,7 +163,7 @@ void Application::scrollCallback(GLFWwindow* /*window*/, double /*xoffset*/, dou
 
 void Application::cursorPosCallback(GLFWwindow* window, double xpos, double ypos) {
     ImGui_ImplGlfw_CursorPosCallback(nullptr, xpos, ypos);
-    auto io = ImGui::GetIO();
+    auto& io = ImGui::GetIO();
     if (!io.WantCaptureMouse) {
         auto [x, y] = Application::normalizeCursorPos(window, xpos, ypos);
         instance().scene_->handleMouseMoved(x, y);
@@ -172,7 +172,7 @@ void Application::cursorPosCallback(GLFWwindow* window, double xpos, double ypos
 
 void Application::keyCallback(GLFWwindow* /*window*/, int key, int, int action, int mods) {
     ImGui_ImplGlfw_KeyCallback(nullptr, key, 0, action, 0);
-    auto io = ImGui::GetIO();
+    auto& io = ImGui::GetIO();
     if (!io.WantCaptureKeyboard) {
         instance().scene_->handleKey(key, action, mods);
     }
@@ -180,7 +180,7 @@ void Application::keyCallback(GLFWwindow* /*window*/, int key, int, int action, 
 
 void Application::charCallback(GLFWwindow* /*window*/, unsigned int c) {
     ImGui_ImplGlfw_CharCallback(nullptr, c);
-    auto io = ImGui::GetIO();
+    auto& io = ImGui::GetIO();
     if (io.WantCaptureKeyboard) {
         instance().scene_->handleChar(c);
     }

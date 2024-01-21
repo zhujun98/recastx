@@ -21,12 +21,12 @@ namespace recastx::gui {
 
 IconItem::IconItem(Scene &scene)
         : GraphicsItem(scene),
-          vp_(new Viewport(false)),
           color1_(glm::vec3(0.7f, 0.8f, 0.2f)),
           color2_(glm::vec3(0.5f, 0.8f, 0.4f)),
           view_(glm::mat4(1.0f)),
           translate_(glm::translate(glm::vec3(-1.0f, -0.7f, 0.f))) {
     scene.addItem(this);
+    vp_ = std::make_shared<Viewport>(false);
 
     auto glyph_vert =
 #include "../shaders/glyph.vert"
@@ -47,17 +47,17 @@ void IconItem::onWindowSizeChanged(int /*width*/, int /*height*/) {}
 
 void IconItem::renderIm() {}
 
-void IconItem::onFramebufferSizeChanged(int width, int height) {
-    auto w = static_cast<int>(Style::LEFT_PANEL_WIDTH * (float)width);
-    auto h = static_cast<int>(Style::ICON_HEIGHT* (float)height);
-    vp_->update(int(Style::MARGIN * (float)width),
-                height - h - int(Style::MARGIN * (float)height),
-                w,
-                h);
+void IconItem::onFramebufferSizeChanged(int /*width*/, int height) {
+    const auto& l = scene_.layout();
+    vp_->update(l.sw * l.mw,
+                height - l.sh * (l.mh + l.th),
+                l.sw * l.lw,
+                l.sh * l.th);
 }
 
 void IconItem::renderGl() {
     vp_->use();
+
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     float asp = vp_->aspectRatio();
@@ -71,8 +71,6 @@ void IconItem::renderGl() {
     glyph_renderer_->render("@TOMCAT", 0.f, -0.15f, 0.0025f * asp, 0.01f);
 
     glDisable(GL_BLEND);
-
-    scene_.useViewport();
 }
 
 } // namespace recastx::gui

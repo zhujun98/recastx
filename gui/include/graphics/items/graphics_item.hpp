@@ -66,17 +66,25 @@ public:
 
 class GraphicsGLItem {
 
-public:
+  public:
 
     using RenderParams = std::unordered_map<std::string, std::any>;
 
-public:
+  protected:
+
+    std::shared_ptr<Viewport> vp_;
+
+  public:
 
     virtual void onFramebufferSizeChanged(int width, int height) = 0;
 
     virtual void preRenderGl() {};
 
     virtual void renderGl() = 0;
+
+    [[nodiscard]] std::shared_ptr<Viewport> viewport() const { return vp_; }
+
+    void linkViewport(std::shared_ptr<Viewport> vp) { vp_ = std::move(vp); }
 };
 
 } // namespace recastx::gui

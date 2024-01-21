@@ -12,6 +12,7 @@
 
 #include "graphics/scene3d.hpp"
 #include "graphics/items/axis_item.hpp"
+#include "graphics/items/axiscube_item.hpp"
 #include "graphics/items/icon_item.hpp"
 #include "graphics/items/geometry_item.hpp"
 #include "graphics/items/preproc_item.hpp"
@@ -25,14 +26,16 @@ namespace recastx::gui {
 
 Scene3d::Scene3d(RpcClient* client)
         : Scene(client),
+          axis_item_(new AxisItem(*this)),
+          axiscube_item_(new AxisCubeItem(*this)),
           icon_item_(new IconItem(*this)),
           geometry_item_(new GeometryItem(*this)),
           preproc_item_(new PreprocItem(*this)),
           projection_item_(new ProjectionItem(*this)),
           recon_item_(new ReconItem(*this)),
           statusbar_item_(new StatusbarItem(*this)),
-          logging_item_(new LoggingItem(*this)),
-          axis_item_(new AxisItem(*this)) {
+          logging_item_(new LoggingItem(*this)) {
+    axis_item_->linkViewport(recon_item_->viewport());
 }
 
 Scene3d::~Scene3d() = default;
@@ -43,13 +46,66 @@ void Scene3d::render() {
         item->renderGl();
     }
 
-    ImGui::SetNextWindowPos(pos_);
-    ImGui::SetNextWindowSize(size_);
+    ImGui::SetNextWindowPos(ImVec2(layout_.mw, layout_.mh * 2 + layout_.th));
+    ImGui::SetNextWindowSize(ImVec2(layout_.lw, layout_.h - 2 * layout_.mh - layout_.th));
 
-    ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_MenuBar);
+    ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_MenuBar);
 
     renderMenubar();
 
+    renderMainControl();
+    ImGui::Separator();
+    renderScanModeControl();
+    ImGui::Separator();
+    renderCameraControl();
+
+    projection_item_->renderIm();
+    geometry_item_->renderIm();
+    preproc_item_->renderIm();
+    recon_item_->renderIm();
+    statusbar_item_->renderIm();
+    logging_item_->renderIm();
+
+    ImGui::End();
+}
+
+void Scene3d::renderMenubar() {
+    if (ImGui::BeginMenuBar()) {
+        if (ImGui::BeginMenu("View")) {
+
+            static bool show_histogram = recon_item_->histogramVisible();
+            if (ImGui::Checkbox("Show histogram##VIEW", &show_histogram)) {
+                recon_item_->setHistogramVisible(show_histogram);
+            }
+
+            static bool show_wireframe = recon_item_->wireframeVisible();
+            if (ImGui::Checkbox("Show wireframe##VIEW", &show_wireframe)) {
+                recon_item_->setWireframeVisible(show_wireframe);
+            }
+
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Render")) {
+            if (ImGui::BeginMenu("Volume quality")) {
+                static int quality = recon_item_->volumeRenderQuality();
+                bool cd = ImGui::RadioButton("Low##VOLUME_RENDER_QUALITY", &quality, RenderQuality::LOW);
+                ImGui::SameLine();
+                cd |= ImGui::RadioButton("Medium##VOLUME_RENDER_QUALITY", &quality, RenderQuality::MEDIUM);
+                ImGui::SameLine();
+                cd |= ImGui::RadioButton("High##VOLUME_RENDER_QUALITY", &quality, RenderQuality::HIGH);
+                ImGui::EndMenu();
+
+                if (cd) recon_item_->setVolumeRenderQuality(RenderQuality(quality));
+            }
+
+            ImGui::EndMenu();
+        }
+
+        ImGui::EndMenuBar();
+    }
+}
+
+void Scene3d::renderMainControl() {
     // 2/3 of the space for widget and 1/3 for labels
     ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.65f);
 
@@ -92,9 +148,11 @@ void Scene3d::render() {
     ImGui::EndDisabled();
     ImGui::PopStyleColor(3);
 
-    // ---
-    ImGui::Separator();
-    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "SCAN MODE");
+    ImGui::PopItemWidth();
+}
+
+void Scene3d::renderScanModeControl() {
+    ImGui::TextColored(Style::CTRL_SECTION_TITLE_COLOR, "SCAN MODE");
 
     ImGui::BeginDisabled(server_state_ == rpc::ServerState_State_PROCESSING);
 
@@ -129,69 +187,33 @@ void Scene3d::render() {
     ImGui::EndDisabled();
 
     ImGui::EndDisabled();
-
-    ImGui::Separator();
-
-    projection_item_->renderGl();
-    projection_item_->renderIm();
-    camera_->render();
-    geometry_item_->renderIm();
-    preproc_item_->renderIm();
-    recon_item_->renderIm();
-    statusbar_item_->renderIm();
-    logging_item_->renderIm();
-
-    ImGui::End();
 }
 
-void Scene3d::renderMenubar() {
-    if (ImGui::BeginMenuBar()) {
-        if (ImGui::BeginMenu("View")) {
-            static bool show_statusbar = statusbar_item_->visible();
-            if (ImGui::Checkbox("Show status bar##VIEW", &show_statusbar)) {
-                statusbar_item_->setVisible(show_statusbar);
-            };
+void Scene3d::renderCameraControl() {
+    ImGui::TextColored(Style::CTRL_SECTION_TITLE_COLOR, "CAMERA");
 
-            static bool show_logger = logging_item_->visible();
-            if (ImGui::Checkbox("Show logging##VIEW", &show_logger)) {
-                logging_item_->setVisible(show_logger);
-            }
-
-            static bool show_axis = axis_item_->axisVisible();
-            if (ImGui::Checkbox("Show axis##VIEW", &show_axis)) {
-                axis_item_->setAxisVisible(show_axis);
-            }
-
-            static bool show_histogram = recon_item_->histogramVisible();
-            if (ImGui::Checkbox("Show histogram##VIEW", &show_histogram)) {
-                recon_item_->setHistogramVisible(show_histogram);
-            }
-
-            static bool show_wireframe = recon_item_->wireframeVisible();
-            if (ImGui::Checkbox("Show wireframe##VIEW", &show_wireframe)) {
-                recon_item_->setWireframeVisible(show_wireframe);
-            }
-
-            ImGui::EndMenu();
-        }
-        if (ImGui::BeginMenu("Render")) {
-            if (ImGui::BeginMenu("Volume quality")) {
-                static int quality = recon_item_->volumeRenderQuality();
-                bool cd = ImGui::RadioButton("Low##VOLUME_RENDER_QUALITY", &quality, RenderQuality::LOW);
-                ImGui::SameLine();
-                cd |= ImGui::RadioButton("Medium##VOLUME_RENDER_QUALITY", &quality, RenderQuality::MEDIUM);
-                ImGui::SameLine();
-                cd |= ImGui::RadioButton("High##VOLUME_RENDER_QUALITY", &quality, RenderQuality::HIGH);
-                ImGui::EndMenu();
-
-                if (cd) recon_item_->setVolumeRenderQuality(RenderQuality(quality));
-            }
-
-            ImGui::EndMenu();
-        }
-
-        ImGui::EndMenuBar();
+    static bool fixed = false;
+    if (ImGui::Checkbox("Fix camera", &fixed)) {
+        camera_->setFixed(fixed);
     }
+
+    if (ImGui::Button("Y-Z##CAMERA")) {
+        camera_->setFrontView();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("X-Z##CAMERA")) {
+        camera_->setSideView();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("X-Y##CAMERA")) {
+        camera_->setTopView();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Perspective##CAMERA")) {
+        camera_->setPerspectiveView();
+    }
+
+    ImGui::Separator();
 }
 
 } // namespace recastx::gui

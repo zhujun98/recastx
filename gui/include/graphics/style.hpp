@@ -1674,11 +1674,12 @@ static const char CousineRegular_compressed_data_base85[47040+1] =
 
 struct Style {
     static constexpr float MARGIN = 0.006f;
-    static constexpr float ICON_HEIGHT = 0.12f;
+    static constexpr int MARGIN_MAX = 5;
     static constexpr float LEFT_PANEL_WIDTH = 0.21f;
-    static constexpr float STATUS_BAR_WIDTH = 0.28f;
+    static constexpr float RIGHT_PANEL_WIDTH = 0.21f;
     static constexpr float TOP_PANEL_HEIGHT = 0.15f;
     static constexpr float BOTTOM_PANEL_HEIGHT = 0.15f;
+    static constexpr float STATUS_BAR_WIDTH = 0.28f;
     static constexpr float SECOND_SCENE_HEIGHT = 0.30f;
 
     static void init() {
@@ -1711,6 +1712,7 @@ struct Style {
     static constexpr ImVec4 BG_COLOR = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
     static constexpr ImVec4 IMAGE_BUFFER_BG_COLOR = ImVec4(0.60f, 0.60f, 0.60f, 1.00f);
 
+    static constexpr ImVec4 CTRL_SECTION_TITLE_COLOR = ImVec4(1.0f, 1.0f, 0.0f, 1.0f);
     // TODO: improve
     static constexpr float LINE_HEIGHT = 25.f;
 };

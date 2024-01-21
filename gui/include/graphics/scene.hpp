@@ -25,7 +25,6 @@ namespace recastx::gui {
 
 class ShaderProgram;
 class Camera;
-class Viewport;
 
 class Scene : public GraphNode, public InputHandler {
 
@@ -35,7 +34,21 @@ public:
 
 protected:
 
-    std::unique_ptr<Viewport> vp_;
+    struct Layout {
+        int w;
+        int h;
+        double sw;
+        double sh;
+        int mw;
+        int mh;
+        int lw;
+        int rw;
+        int th;
+        int bh;
+    };
+
+    Layout layout_;
+
     std::unique_ptr<Camera> camera_;
     std::unique_ptr<ShaderProgram> program_;
 
@@ -45,15 +58,14 @@ protected:
     std::vector<GraphicsGLItem*> gl_items_;
     std::vector<GraphicsDataItem*> data_items_;
 
-    ImVec2 pos_;
-    ImVec2 size_;
-
     SceneStatus scene_status_;
 
     rpc::ServerState_State server_state_ = rpc::ServerState_State_UNKNOWN;
 
     rpc::ScanMode_Mode  scan_mode_ = rpc::ScanMode_Mode_CONTINUOUS;
     uint32_t scan_update_interval_;
+
+    virtual void updateLayout(int width, int height);
 
     bool setScanMode();
 
@@ -67,9 +79,7 @@ public:
 
     RpcClient* client() { return client_; }
 
-    void useViewport();
-
-    [[nodiscard]] const glm::mat4& projectionMatrix() const;
+    [[nodiscard]] const Layout& layout() const { return layout_; }
 
     [[nodiscard]] const glm::mat4& viewMatrix() const;
 

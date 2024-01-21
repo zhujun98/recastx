@@ -11,6 +11,7 @@
 #include "graphics/items/geometry_item.hpp"
 #include "graphics/scene.hpp"
 #include "graphics/shader_program.hpp"
+#include "graphics/viewport.hpp"
 
 namespace recastx::gui {
 
@@ -23,7 +24,7 @@ GeometryItem::~GeometryItem() = default;
 void GeometryItem::onWindowSizeChanged(int /*width*/, int /*height*/) {}
 
 void GeometryItem::renderIm() {
-//    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "GEOMETRY");
+//    ImGui::TextColored(Style::CTRL_SECTION_TITLE_COLOR, "GEOMETRY");
 //
 //    ImGui::Separator();
 }

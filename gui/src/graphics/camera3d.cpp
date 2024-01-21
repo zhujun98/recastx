@@ -22,28 +22,6 @@ Camera::Camera(const glm::vec3& target) : target_(target) {
 
 Camera::~Camera() = default;
 
-void Camera::render() {
-    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "CAMERA");
-    ImGui::Checkbox("Fix camera", &fixed_);
-    if (ImGui::Button("Y-Z##CAMERA")) {
-        setFrontView();
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("X-Z##CAMERA")) {
-        setSideView();
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("X-Y##CAMERA")) {
-        setTopView();
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("Perspective##CAMERA")) {
-        setPerspectiveView();
-    }
-
-    ImGui::Separator();
-}
-
 const glm::mat4& Camera::matrix() {
     if (!view_) {
         view_ = glm::lookAt(pos0_, target_, up0_) * rotation_;
@@ -58,8 +36,8 @@ float Camera::distance() {
     return distance_.value();
 }
 
-bool Camera::handleMouseButton(int /* button */, int action) {
-    dragging_ = action == GLFW_PRESS;
+bool Camera::handleMouseButton(int button, int action) {
+    dragging_ = action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_MIDDLE;
     return true;
 }
 
