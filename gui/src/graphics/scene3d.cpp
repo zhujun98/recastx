@@ -11,6 +11,7 @@
 #include <glm/glm.hpp>
 
 #include "graphics/scene3d.hpp"
+#include "graphics/items/axis_item.hpp"
 #include "graphics/items/axiscube_item.hpp"
 #include "graphics/items/icon_item.hpp"
 #include "graphics/items/geometry_item.hpp"
@@ -25,14 +26,16 @@ namespace recastx::gui {
 
 Scene3d::Scene3d(RpcClient* client)
         : Scene(client),
+          axis_item_(new AxisItem(*this)),
+          axiscube_item_(new AxisCubeItem(*this)),
           icon_item_(new IconItem(*this)),
           geometry_item_(new GeometryItem(*this)),
           preproc_item_(new PreprocItem(*this)),
           projection_item_(new ProjectionItem(*this)),
           recon_item_(new ReconItem(*this)),
           statusbar_item_(new StatusbarItem(*this)),
-          logging_item_(new LoggingItem(*this)),
-          axiscube_item_(new AxisCubeItem(*this)) {
+          logging_item_(new LoggingItem(*this)) {
+    axis_item_->linkViewport(recon_item_->viewport());
 }
 
 Scene3d::~Scene3d() = default;

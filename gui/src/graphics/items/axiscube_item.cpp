@@ -9,8 +9,10 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+#include <glm/glm.hpp>
+#include <glm/gtx/rotate_vector.hpp>
+
 #include "graphics/items/axiscube_item.hpp"
-#include "graphics/camera3d.hpp"
 #include "graphics/glyph_renderer.hpp"
 #include "graphics/primitives.hpp"
 #include "graphics/scene.hpp"
@@ -24,7 +26,7 @@ AxisCubeItem::AxisCubeItem(Scene &scene)
           top_(glm::translate(glm::vec3(-0.2f, 0.2f, 0.501f))
                * glm::rotate(glm::radians(-90.f), glm::vec3(0.0f, .0f, 1.0f))) {
     scene.addItem(this);
-    vp_ = std::make_unique<Viewport>(false);
+    vp_ = std::make_shared<Viewport>(false);
 
     glGenVertexArrays(1, &vao_);
     glBindVertexArray(vao_);

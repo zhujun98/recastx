@@ -18,6 +18,7 @@
 
 namespace recastx::gui {
 
+class AxisItem;
 class AxisCubeItem;
 class IconItem;
 class GeometryItem;
@@ -29,6 +30,8 @@ class LoggingItem;
 
 class Scene3d : public Scene {
 
+    std::unique_ptr<AxisItem> axis_item_;
+    std::unique_ptr<AxisCubeItem> axiscube_item_;
     std::unique_ptr<IconItem> icon_item_;
     std::unique_ptr<GeometryItem> geometry_item_;
     std::unique_ptr<PreprocItem> preproc_item_;
@@ -36,7 +39,6 @@ class Scene3d : public Scene {
     std::unique_ptr<ReconItem> recon_item_;
     std::unique_ptr<StatusbarItem> statusbar_item_;
     std::unique_ptr<LoggingItem> logging_item_;
-    std::unique_ptr<AxisCubeItem> axiscube_item_;
 
     void renderMenubar();
 

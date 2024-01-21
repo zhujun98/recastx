@@ -36,7 +36,7 @@ ReconItem::ReconItem(Scene& scene)
           volume_(new Volume{}),
           wireframe_(new Wireframe{}) {
     scene.addItem(this);
-    vp_ = std::make_unique<Viewport>();
+    vp_ = std::make_shared<Viewport>();
 
     glGenVertexArrays(1, &rotation_axis_vao_);
     glBindVertexArray(rotation_axis_vao_);

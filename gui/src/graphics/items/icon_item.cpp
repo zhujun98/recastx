@@ -26,7 +26,7 @@ IconItem::IconItem(Scene &scene)
           view_(glm::mat4(1.0f)),
           translate_(glm::translate(glm::vec3(-1.0f, -0.7f, 0.f))) {
     scene.addItem(this);
-    vp_ = std::make_unique<Viewport>(false);
+    vp_ = std::make_shared<Viewport>(false);
 
     auto glyph_vert =
 #include "../shaders/glyph.vert"

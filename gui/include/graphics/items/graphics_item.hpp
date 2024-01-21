@@ -72,7 +72,7 @@ class GraphicsGLItem {
 
   protected:
 
-    std::unique_ptr<Viewport> vp_;
+    std::shared_ptr<Viewport> vp_;
 
   public:
 
@@ -81,6 +81,10 @@ class GraphicsGLItem {
     virtual void preRenderGl() {};
 
     virtual void renderGl() = 0;
+
+    [[nodiscard]] std::shared_ptr<Viewport> viewport() const { return vp_; }
+
+    void linkViewport(std::shared_ptr<Viewport> vp) { vp_ = std::move(vp); }
 };
 
 } // namespace recastx::gui

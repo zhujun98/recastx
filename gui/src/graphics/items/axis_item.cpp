@@ -6,12 +6,20 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
-#include "graphics/axes.hpp"
-#include "graphics/shader_program.hpp"
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
+#include "graphics/items/axis_item.hpp"
+#include "graphics/camera3d.hpp"
+#include "graphics/scene.hpp"
+#include "graphics/viewport.hpp"
 
 namespace recastx::gui {
 
-Axes::Axes() {
+AxisItem::AxisItem(Scene &scene)
+        : GraphicsItem(scene) {
+    scene.addItem(this);
+    vp_ = std::make_shared<Viewport>(false);
 
     static constexpr GLfloat vertices[] = {
             0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
@@ -34,26 +42,33 @@ Axes::Axes() {
     glEnableVertexAttribArray(1);
 
     auto vert =
-#include "shaders/axes.vert"
+#include "../shaders/axes.vert"
     ;
     auto frag =
-#include "shaders/axes.frag"
+#include "../shaders/axes.frag"
     ;
 
     shader_ = std::make_unique<ShaderProgram>(vert, frag);
 }
 
-Axes::~Axes() {
+AxisItem::~AxisItem() {
     glDeleteVertexArrays(1, &vao_);
     glDeleteBuffers(1, &vbo_);
 }
 
-void Axes::render(const glm::mat4& view, const glm::mat4& projection, float scale) {
-    shader_->use();
+void AxisItem::onWindowSizeChanged(int /*width*/, int /*height*/) {}
 
-    shader_->setFloat("scale", scale);
-    shader_->setMat4("view", view);
-    shader_->setMat4("projection", projection);
+void AxisItem::renderIm() {}
+
+void AxisItem::onFramebufferSizeChanged(int /*width*/, int /*height*/) {}
+
+void AxisItem::renderGl() {
+    vp_->use();
+
+    shader_->use();
+    shader_->setFloat("scale", scene_.cameraDistance());
+    shader_->setMat4("view", scene_.viewMatrix());
+    shader_->setMat4("projection", vp_->projection());
 
     glBindVertexArray(vao_);
     glLineWidth(1.0f);
