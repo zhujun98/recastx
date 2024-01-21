@@ -65,7 +65,7 @@ bool Scene::handleMouseButton(int button, int action) {
         if (item->handleMouseButton(button, action)) return true;
     }
 
-    if (!camera_->isFixed() && camera_->handleMouseButton(button, action)) return true;
+    if (!camera_->fixed() && camera_->handleMouseButton(button, action)) return true;
     return false;
 }
 
@@ -74,7 +74,7 @@ bool Scene::handleScroll(float offset) {
         if (item->handleScroll(offset)) return true;
     }
 
-    if (!camera_->isFixed() && camera_->handleScroll(offset)) return true;
+    if (!camera_->fixed() && camera_->handleScroll(offset)) return true;
     return false;
 }
 
@@ -83,7 +83,7 @@ bool Scene::handleMouseMoved(float x, float y) {
         if (item->handleMouseMoved(x, y)) return true;
     }
 
-    if (!camera_->isFixed() && camera_->handleMouseMoved(x, y)) return true;
+    if (!camera_->fixed() && camera_->handleMouseMoved(x, y)) return true;
     return false;
 }
 
@@ -92,7 +92,7 @@ bool Scene::handleKey(int key, int action, int mods) {
         if (item->handleKey(key, action, mods)) return true;
     }
 
-    if (!camera_->isFixed() && camera_->handleKey(key, action, mods)) return true;
+    if (!camera_->fixed() && camera_->handleKey(key, action, mods)) return true;
     return false;
 }
 

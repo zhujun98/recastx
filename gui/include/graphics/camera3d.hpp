@@ -56,13 +56,13 @@ class Camera : public InputHandler {
 
     virtual ~Camera();
 
-    void render();
-
     [[nodiscard]] const glm::mat4& matrix();
 
     [[nodiscard]] float distance();
 
-    [[nodiscard]] bool isFixed() const { return fixed_; }
+    void setFixed(bool fixed) { fixed_ = fixed; }
+
+    [[nodiscard]] bool fixed() const { return fixed_; }
 
     bool handleMouseButton(int button, int action) override;
     bool handleScroll(float offset) override;

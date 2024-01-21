@@ -41,6 +41,9 @@ class Scene3d : public Scene {
     std::unique_ptr<LoggingItem> logging_item_;
 
     void renderMenubar();
+    void renderMainControl();
+    void renderScanModeControl();
+    void renderCameraControl();
 
 public:
 
