@@ -190,7 +190,7 @@ void ReconItem::renderGl() {
     volume_->unbind();
 
     if (volume_policy_ == SHOW_VOL) {
-        volume_->render(view, projection, min_val, max_val_, volume_alpha_);
+        volume_->render(view, projection, min_val, max_val_);
     }
 
     cm_.unbind();
@@ -357,6 +357,17 @@ void ReconItem::setVolumeRenderQuality(RenderQuality level) {
     volume_->setRenderQuality(level);
 }
 
+void ReconItem::moveVolumeFrontForward() {
+    volume_front_ += volume_front_step_;
+    if (volume_front_ > volume_front_max_) volume_front_ = volume_front_max_;
+    volume_->setFront(volume_front_);
+};
+void ReconItem::moveVolumeFrontBackward() {
+    volume_front_ -= volume_front_step_;
+    if (volume_front_ < volume_front_min_) volume_front_ = volume_front_min_;
+    volume_->setFront(volume_front_);
+};
+
 template<size_t index>
 void ReconItem::renderImSliceControl(const char* header) {
 
@@ -431,7 +442,14 @@ void ReconItem::renderImVolumeControl() {
             }
         }
 
-        ImGui::SliderFloat("Alpha##RECON_VOL", &volume_alpha_, 0.0f, 1.0f);
+        static float volume_alpha = 1.0f;
+        if (ImGui::SliderFloat("Alpha##RECON_VOL", &volume_alpha, 0.0f, 1.0f)) {
+            volume_->setAlpha(volume_alpha);
+        }
+
+        if (ImGui::SliderFloat("Front##RECON_VOL", &volume_front_, volume_front_min_, volume_front_max_)) {
+            volume_->setFront(volume_front_);
+        }
     }
 }
 

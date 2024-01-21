@@ -53,6 +53,7 @@ public:
 
     void render() override;
 
+    bool handleKey(int key, int action, int mods) override;
 };
 
 }  // namespace recastx::gui
