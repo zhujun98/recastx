@@ -58,8 +58,8 @@ float Camera::distance() {
     return distance_.value();
 }
 
-bool Camera::handleMouseButton(int /* button */, int action) {
-    dragging_ = action == GLFW_PRESS;
+bool Camera::handleMouseButton(int button, int action) {
+    dragging_ = action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_MIDDLE;
     return true;
 }
 
