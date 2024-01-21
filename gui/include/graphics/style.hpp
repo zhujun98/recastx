@@ -1712,6 +1712,7 @@ struct Style {
     static constexpr ImVec4 BG_COLOR = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
     static constexpr ImVec4 IMAGE_BUFFER_BG_COLOR = ImVec4(0.60f, 0.60f, 0.60f, 1.00f);
 
+    static constexpr ImVec4 CTRL_SECTION_TITLE_COLOR = ImVec4(1.0f, 1.0f, 0.0f, 1.0f);
     // TODO: improve
     static constexpr float LINE_HEIGHT = 25.f;
 };

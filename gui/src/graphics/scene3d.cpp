@@ -152,7 +152,7 @@ void Scene3d::renderMainControl() {
 }
 
 void Scene3d::renderScanModeControl() {
-    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "SCAN MODE");
+    ImGui::TextColored(Style::CTRL_SECTION_TITLE_COLOR, "SCAN MODE");
 
     ImGui::BeginDisabled(server_state_ == rpc::ServerState_State_PROCESSING);
 
@@ -190,7 +190,7 @@ void Scene3d::renderScanModeControl() {
 }
 
 void Scene3d::renderCameraControl() {
-    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "CAMERA");
+    ImGui::TextColored(Style::CTRL_SECTION_TITLE_COLOR, "CAMERA");
 
     static bool fixed = false;
     if (ImGui::Checkbox("Fix camera", &fixed)) {

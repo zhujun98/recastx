@@ -10,6 +10,7 @@
 
 #include "graphics/items/preproc_item.hpp"
 #include "graphics/scene.hpp"
+#include "graphics/style.hpp"
 
 namespace recastx::gui {
 
@@ -23,7 +24,7 @@ PreprocItem::~PreprocItem() = default;
 void PreprocItem::onWindowSizeChanged(int /*width*/, int /*height*/) {}
 
 void PreprocItem::renderIm() {
-    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "PREPROCESSING");
+    ImGui::TextColored(Style::CTRL_SECTION_TITLE_COLOR, "PREPROCESSING");
 
     auto state = scene_.serverState();
     ImGui::BeginDisabled(state & rpc::ServerState_State_PROCESSING);

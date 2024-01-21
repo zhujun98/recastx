@@ -44,7 +44,7 @@ void ProjectionItem::onWindowSizeChanged(int width, int height) {
 }
 
 void ProjectionItem::renderIm() {
-    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "PROJECTION");
+    ImGui::TextColored(Style::CTRL_SECTION_TITLE_COLOR, "PROJECTION");
 
     bool cd = ImGui::Checkbox("Show projection: ", &visible_);
     ImGui::SameLine();
