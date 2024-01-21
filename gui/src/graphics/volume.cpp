@@ -164,8 +164,10 @@ std::tuple<float, float, int> VolumeSlicer::sortVertices(const glm::vec3& view_d
 }
 
 void VolumeSlicer::setFront(float front) {
+    if (front > front_) {
+        for(size_t i = 0; i < slices_.size(); ++i) slices_[i] = glm::vec3{};
+    }
     front_ = front;
-    for(size_t i = 0; i < slices_.size(); ++i) slices_[i] = glm::vec3{};
 }
 
 
