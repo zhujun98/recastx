@@ -40,7 +40,7 @@ class Scene3d : public Scene {
     std::unique_ptr<StatusbarItem> statusbar_item_;
     std::unique_ptr<LoggingItem> logging_item_;
 
-    void renderMenubar();
+    void renderMenubarRight();
     void renderMainControl();
     void renderScanModeControl();
     void renderCameraControl();

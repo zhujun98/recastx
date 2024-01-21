@@ -60,7 +60,7 @@ ReconItem::~ReconItem() {
 
 void ReconItem::onWindowSizeChanged(int width, int /*height*/) {
     const auto& l = scene_.layout();
-    st_win_size_ = { static_cast<float>(width - 4 * l.mw - l.lw - l.th), static_cast<float>(l.th) };
+    st_win_size_ = { static_cast<float>(width - 4 * l.mw - l.lw - l.rw), static_cast<float>(l.th) };
     st_win_pos_ = { static_cast<float>(2 * l.mw + l.lw), static_cast<float>(l.mh) };
 }
 

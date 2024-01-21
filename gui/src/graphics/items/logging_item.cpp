@@ -30,12 +30,8 @@ LoggingItem::~LoggingItem() = default;
 void LoggingItem::onWindowSizeChanged(int width, int height) {
     const auto& l = scene_.layout();
 
-    pos_ = {
-            static_cast<float>(3 * l.mw + l.lw + Style::STATUS_BAR_WIDTH * (float)width),
-            static_cast<float>(height - l.bh - l.mh)
-    };
-
-    size_ = { static_cast<float>(width - l.mw - pos_[0]), static_cast<float>(l.bh) };
+    pos_ = {static_cast<float>(2.f * l.mw + l.lw), static_cast<float>(height - l.bh - l.mh)};
+    size_ = { static_cast<float>(width - 4 * l.mw - l.lw - l.rw), static_cast<float>(l.bh) };
 }
 
 void LoggingItem::renderIm() {

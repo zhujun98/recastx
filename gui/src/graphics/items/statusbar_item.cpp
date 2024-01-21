@@ -20,10 +20,10 @@ StatusbarItem::StatusbarItem(Scene& scene) : GraphicsItem(scene) {
 
 StatusbarItem::~StatusbarItem() = default;
 
-void StatusbarItem::onWindowSizeChanged(int width, int /*height*/) {
+void StatusbarItem::onWindowSizeChanged(int /*width*/, int /*height*/) {
     const auto& l = scene_.layout();
-    size_ = { Style::STATUS_BAR_WIDTH * (float)width, float(l.bh) };
-    pos_ = { static_cast<float>(2 * l.mw + l.lw), static_cast<float>(l.h - l.bh - l.mh) };
+    pos_ = { static_cast<float>(2 * l.mw + l.lw), static_cast<float>(l.th + 2 * l.mh) };
+    size_ = { static_cast<float>(l.lw), static_cast<float>(l.th) };
 }
 
 void StatusbarItem::renderIm() {
@@ -32,10 +32,13 @@ void StatusbarItem::renderIm() {
     ImGui::SetNextWindowPos(pos_);
     ImGui::SetNextWindowSize(size_);
 
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 0.6f));
+
     ImGui::Begin("Status bar", NULL, ImGuiWindowFlags_NoDecoration);
 
     auto& io = ImGui::GetIO();
-    ImGui::Text("GUI FPS: %.1f", io.Framerate);
+    ImGui::Text("FPS: %.1f", io.Framerate);
     ImGui::Text("Volume frame rate: %.1f Hz",
                 std::any_cast<double>(scene_.getStatus("volumeUpdateFrameRate")));
     ImGui::Text("Slice frame rate: %.1f Hz",
@@ -43,6 +46,8 @@ void StatusbarItem::renderIm() {
     ImGui::Text("Projection frame rate: %.1f Hz",
                 std::any_cast<double>(scene_.getStatus("projectionUpdateFrameRate")));
     ImGui::End();
+
+    ImGui::PopStyleColor(2);
 }
 
 } // namespace recastx::gui

@@ -46,27 +46,33 @@ void Scene3d::render() {
         item->renderGl();
     }
 
-    ImGui::SetNextWindowPos(ImVec2(layout_.mw, layout_.mh * 2 + layout_.th));
-    ImGui::SetNextWindowSize(ImVec2(layout_.lw, layout_.h - 2 * layout_.mh - layout_.th));
+    const auto& l = layout_;
 
-    ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_MenuBar);
+    ImGui::SetNextWindowPos(ImVec2(l.mw, l.mh * 2 + l.th));
+    ImGui::SetNextWindowSize(ImVec2(l.lw, l.h - 3 * l.mh - l.th));
 
-    renderMenubar();
-
+    ImGui::Begin("Control Panel Left", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_MenuBar);
     renderMainControl();
     ImGui::Separator();
     renderScanModeControl();
     ImGui::Separator();
     renderCameraControl();
-
     projection_item_->renderIm();
     geometry_item_->renderIm();
     preproc_item_->renderIm();
-    recon_item_->renderIm();
-    statusbar_item_->renderIm();
-    logging_item_->renderIm();
-
     ImGui::End();
+
+    ImGui::SetNextWindowPos(ImVec2(l.w - l.mw - l.rw, l.mh * 2 + l.th));
+    ImGui::SetNextWindowSize(ImVec2(l.rw, l.h - 3 * l.mh - l.th));
+
+    ImGui::Begin("Control Panel Right", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_MenuBar);
+    renderMenubarRight();
+    recon_item_->renderIm();
+    ImGui::End();
+
+    statusbar_item_->renderIm();
+
+    logging_item_->renderIm();
 }
 
 bool Scene3d::handleKey(int key, int action, int mods) {
@@ -87,7 +93,7 @@ bool Scene3d::handleKey(int key, int action, int mods) {
     return false;
 }
 
-void Scene3d::renderMenubar() {
+void Scene3d::renderMenubarRight() {
     if (ImGui::BeginMenuBar()) {
         if (ImGui::BeginMenu("View")) {
 

@@ -32,11 +32,11 @@ ProjectionItem::ProjectionItem(Scene& scene)
 ProjectionItem::~ProjectionItem() = default;
 
 void ProjectionItem::onWindowSizeChanged(int width, int height) {
-    float s = Style::SECOND_SCENE_HEIGHT * (float)height;
+    float s = Style::SATELLITE_WINDOW_HEIGHT * (float)height;
     size_ = { s, s };
 
     const auto& l = scene_.layout();
-    pos_ = { static_cast<float>(width - l.mw - s), static_cast<float>(height - l.bh - 2 * l.mh - s) };
+    pos_ = { static_cast<float>(width - 2 * l.mw - l.rw - s), static_cast<float>(height - l.bh - 2 * l.mh - s) };
 
     // Caveat: don't use framebuffer size because of high-resolution display like Retinal
     static constexpr int K_PADDING = 5;

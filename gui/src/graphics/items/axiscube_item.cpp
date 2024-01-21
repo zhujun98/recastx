@@ -72,9 +72,9 @@ void AxisCubeItem::renderIm() {}
 
 void AxisCubeItem::onFramebufferSizeChanged(int width, int height) {
     const auto& l = scene_.layout();
-    vp_->update(width - l.sw * (l.mw + l.th),
+    vp_->update(width - l.sw * (l.mw + l.rw),
                 height - l.sh * (l.mh + l.th),
-                l.sh * l.th,
+                l.sw * l.rw,
                 l.sh * l.th);
 }
 
