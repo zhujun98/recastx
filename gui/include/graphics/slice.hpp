@@ -22,6 +22,7 @@
 
 namespace recastx::gui {
 
+class Light;
 class ShaderProgram;
 
 class Slice {
@@ -55,6 +56,7 @@ class Slice {
 
     Plane plane_;
     Orient4Type orient_;
+    glm::vec3 normal_;
 
     void updateMinMaxVal();
 
@@ -73,7 +75,9 @@ class Slice {
                 const glm::mat4& projection,
                 float min_v,
                 float max_v,
-                bool fallback_to_preview);
+                bool fallback_to_preview,
+                const glm::vec3& view_pos,
+                const Light& light);
 
     [[nodiscard]] bool hasTexture() const { return texture_.isReady(); }
 
@@ -92,16 +96,17 @@ class Slice {
 
     void reset();
 
-    void setPlane(Plane plane) {
-        plane_ = plane;
-        reset();
-    }
+    void setPlane(Plane plane);
+
+    void translate(const glm::vec3& v);
 
     Plane plane() const { return plane_; }
 
     [[nodiscard]] Orientation orientation3() const;
 
-    Orient4Type& orientation4() { return orient_; }
+    [[nodiscard]] const Orient4Type& orientation4() const { return orient_; }
+
+    [[nodiscard]] const glm::vec3& normal() const { return normal_; }
 
     [[nodiscard]] const DataType& data() const { return data_; }
 

@@ -31,9 +31,18 @@ const glm::mat4& Camera::matrix() {
     return view_.value();
 }
 
+glm::vec3 Camera::viewDir() {
+    const glm::mat4& view = matrix();
+    return {-view[0][2], -view[1][2], -view[2][2]};
+}
+
 float Camera::distance() {
     if (!distance_) distance_ = glm::length(pos0_ - target_);
     return distance_.value();
+}
+
+glm::vec3 Camera::pos() {
+    return target_ - viewDir() * distance();
 }
 
 bool Camera::handleMouseButton(int button, int action) {

@@ -28,6 +28,7 @@
 
 namespace recastx::gui {
 
+class Light;
 class Slice;
 class Volume;
 class Wireframe;
@@ -84,6 +85,8 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
     };
 
     friend class SliceRotator;
+
+    const Light& light_;
 
     std::mutex slice_mtx_;
     std::vector<std::tuple<uint64_t, int, std::unique_ptr<Slice>>> slices_;
@@ -144,7 +147,7 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
 
 public:
 
-    explicit ReconItem(Scene& scene);
+    explicit ReconItem(Scene& scene, const Light& light);
 
     ~ReconItem() override;
 

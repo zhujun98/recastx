@@ -11,6 +11,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 
+#include "graphics/light.hpp"
 #include "graphics/slice.hpp"
 #include "graphics/primitives.hpp"
 #include "graphics/shader_program.hpp"
@@ -74,12 +75,15 @@ void Slice::render(const glm::mat4& view,
                    const glm::mat4& projection,
                    float min_v,
                    float max_v,
-                   bool fallback_to_preview) {
+                   bool fallback_to_preview,
+                   const glm::vec3& view_pos,
+                   const Light& light) {
     shader_->use();
 
     shader_->setMat4("view", view);
     shader_->setMat4("projection", projection);
     shader_->setMat4("orientationMatrix", orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0)));
+    shader_->setVec3("normal", normal_);
     shader_->setBool("highlighted", hovered_ || highlighted_);
     shader_->setBool("empty", !texture_.isReady());
     shader_->setBool("fallback", fallback_to_preview);
@@ -87,6 +91,13 @@ void Slice::render(const glm::mat4& view,
     shader_->setInt("colormap", 0);
     shader_->setInt("sliceData", 1);
     shader_->setInt("volumeData", 2);
+
+    shader_->setVec3("viewPos", view_pos);
+    shader_->setBool("light.isEnabled", light.is_enabled);
+    shader_->setVec3("light.pos", light.pos);
+    shader_->setVec3("light.ambient", light.ambient);
+    shader_->setVec3("light.diffuse", light.diffuse);
+    shader_->setVec3("light.specular", light.specular);
 
     texture_.bind();
     if (!texture_.isReady() && !fallback_to_preview) {
@@ -115,11 +126,12 @@ void Slice::clear() {
 void Slice::setOrientation(const glm::vec3& base, const glm::vec3& x, const glm::vec3& y) {
     clear();
 
-    float orientation[16] = {x.x,  y.x,  base.x, 0.0f,  // 1
-                             x.y,  y.y,  base.y, 0.0f,  // 2
-                             x.z,  y.z,  base.z, 0.0f,  // 3
-                             0.0f, 0.0f, 0.0f,   1.0f}; // 4
-    orient_ = glm::transpose(glm::make_mat4(orientation));
+    float orientation[16] = {   x.x,     x.y,    x.z, 0.f,
+                                y.x,     y.y,    y.z, 0.f,
+                             base.x,  base.y, base.z, 0.f,
+                                0.f,     0.f,    0.f, 1.f};
+    orient_ = glm::make_mat4(orientation);
+    normal_ = glm::normalize(glm::cross(x, y));
 }
 
 void Slice::setOrientation(const Slice::Orient4Type& orient) {
@@ -142,6 +154,15 @@ void Slice::reset() {
                        glm::vec3( 2.0f,  0.0f,  0.0f),
                        glm::vec3( 0.0f,  2.0f,  0.0f));
     }
+}
+
+void Slice::setPlane(Plane plane) {
+    plane_ = plane;
+    reset();
+}
+
+void Slice::translate(const glm::vec3 &v) {
+    orient_[2] += glm::vec4(v, 0.f);
 }
 
 Orientation Slice::orientation3() const {

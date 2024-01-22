@@ -6,11 +6,7 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
-#include <ft2build.h>
-#include FT_FREETYPE_H
-
 #include "graphics/items/axis_item.hpp"
-#include "graphics/camera3d.hpp"
 #include "graphics/scene.hpp"
 #include "graphics/viewport.hpp"
 

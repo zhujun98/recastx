@@ -11,6 +11,7 @@
 
 #include <any>
 #include <memory>
+#include <optional>
 #include <unordered_map>
 #include <vector>
 
@@ -82,6 +83,10 @@ public:
     [[nodiscard]] const Layout& layout() const { return layout_; }
 
     [[nodiscard]] const glm::mat4& viewMatrix() const;
+
+    [[nodiscard]] glm::vec3 viewDir() const;
+
+    [[nodiscard]] glm::vec3 cameraPosition() const;
 
     [[nodiscard]] float cameraDistance() const;
 

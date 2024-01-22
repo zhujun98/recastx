@@ -58,7 +58,11 @@ class Camera : public InputHandler {
 
     [[nodiscard]] const glm::mat4& matrix();
 
+    [[nodiscard]] glm::vec3 viewDir();
+
     [[nodiscard]] float distance();
+
+    [[nodiscard]] glm::vec3 pos();
 
     void setFixed(bool fixed) { fixed_ = fixed; }
 

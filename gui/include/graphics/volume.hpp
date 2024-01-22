@@ -76,6 +76,7 @@ class VolumeSlicer {
     void setFront(float front);
 };
 
+class Light;
 class ShaderProgram;
 
 class Volume {
@@ -121,7 +122,9 @@ public:
     void render(const glm::mat4& view,
                 const glm::mat4& projection,
                 float min_v,
-                float max_v);
+                float max_v,
+                const glm::vec3& view_pos,
+                const Light& light);
 
     [[nodiscard]] bool hasTexture() const { return texture_.isReady(); }
 

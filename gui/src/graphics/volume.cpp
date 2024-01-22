@@ -8,6 +8,7 @@
 */
 #include <cstring>
 
+#include "graphics/light.hpp"
 #include "graphics/volume.hpp"
 #include "graphics/primitives.hpp"
 #include "graphics/shader_program.hpp"
@@ -228,17 +229,27 @@ void Volume::preRender() {
 void Volume::render(const glm::mat4& view,
                     const glm::mat4& projection,
                     float min_v,
-                    float max_v) {
+                    float max_v,
+                    const glm::vec3& view_pos,
+                    const Light& light) {
     if (!texture_.isReady()) return;
 
     shader_->use();
-    shader_->setInt("colormap", 0);
-    shader_->setInt("volumeData", 2);
     shader_->setMat4("view", view);
     shader_->setMat4("projection", projection);
     shader_->setFloat("alpha", alpha_);
     shader_->setFloat("minValue", min_v);
     shader_->setFloat("maxValue", max_v);
+
+    shader_->setInt("colormap", 0);
+    shader_->setInt("volumeData", 2);
+
+    shader_->setVec3("viewPos", view_pos);
+    shader_->setBool("light.isEnabled", light.is_enabled);
+    shader_->setVec3("light.pos", light.pos);
+    shader_->setVec3("light.ambient", light.ambient);
+    shader_->setVec3("light.diffuse", light.diffuse);
+    shader_->setVec3("light.specular", light.specular);
 
     auto view_dir = glm::vec3(-view[0][2], -view[1][2], -view[2][2]);
     slicer_.update(view_dir);

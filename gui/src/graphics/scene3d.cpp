@@ -10,16 +10,18 @@
 
 #include <glm/glm.hpp>
 
+#include "graphics/light.hpp"
 #include "graphics/scene3d.hpp"
 #include "graphics/items/axis_item.hpp"
 #include "graphics/items/axiscube_item.hpp"
 #include "graphics/items/icon_item.hpp"
 #include "graphics/items/geometry_item.hpp"
+#include "graphics/items/light_item.hpp"
+#include "graphics/items/logging_item.hpp"
 #include "graphics/items/preproc_item.hpp"
 #include "graphics/items/projection_item.hpp"
-#include "graphics/items/statusbar_item.hpp"
-#include "graphics/items/logging_item.hpp"
 #include "graphics/items/recon_item.hpp"
+#include "graphics/items/statusbar_item.hpp"
 #include "logger.hpp"
 
 namespace recastx::gui {
@@ -30,11 +32,12 @@ Scene3d::Scene3d(RpcClient* client)
           axiscube_item_(new AxisCubeItem(*this)),
           icon_item_(new IconItem(*this)),
           geometry_item_(new GeometryItem(*this)),
+          light_item_(new LightItem(*this)),
+          logging_item_(new LoggingItem(*this)),
           preproc_item_(new PreprocItem(*this)),
           projection_item_(new ProjectionItem(*this)),
-          recon_item_(new ReconItem(*this)),
-          statusbar_item_(new StatusbarItem(*this)),
-          logging_item_(new LoggingItem(*this)) {
+          recon_item_(new ReconItem(*this, light_item_->light())),
+          statusbar_item_(new StatusbarItem(*this)) {
     axis_item_->linkViewport(recon_item_->viewport());
 }
 
@@ -68,6 +71,8 @@ void Scene3d::render() {
     ImGui::Begin("Control Panel Right", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_MenuBar);
     renderMenubarRight();
     recon_item_->renderIm();
+    ImGui::Separator();
+    light_item_->renderIm();
     ImGui::End();
 
     statusbar_item_->renderIm();

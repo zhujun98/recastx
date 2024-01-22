@@ -21,6 +21,7 @@
 #include "graphics/items/recon_item.hpp"
 #include "graphics/aesthetics.hpp"
 #include "graphics/camera3d.hpp"
+#include "graphics/light.hpp"
 #include "graphics/primitives.hpp"
 #include "graphics/slice.hpp"
 #include "graphics/style.hpp"
@@ -31,8 +32,9 @@
 
 namespace recastx::gui {
 
-ReconItem::ReconItem(Scene& scene)
+ReconItem::ReconItem(Scene& scene, const Light& light)
         : GraphicsItem(scene),
+          light_(light),
           volume_(new Volume{}),
           wireframe_(new Wireframe{}) {
     scene.addItem(this);
@@ -176,6 +178,7 @@ void ReconItem::renderGl() {
 
     const auto& projection = vp_->projection();
     const auto& view = scene_.viewMatrix();
+    const auto& view_pos = scene_.cameraPosition();
 
     matrix_ = projection * view;
 
@@ -185,12 +188,14 @@ void ReconItem::renderGl() {
     volume_->bind();
     for (auto slice : sortedSlices()) {
         slice->render(view, projection, min_val, max_val_,
-                      volume_->hasTexture() && volume_policy_ == PREVIEW_VOL);
+                      volume_->hasTexture() && volume_policy_ == PREVIEW_VOL,
+                      view_pos,
+                      light_);
     }
     volume_->unbind();
 
     if (volume_policy_ == SHOW_VOL) {
-        volume_->render(view, projection, min_val, max_val_);
+        volume_->render(view, projection, min_val, max_val_, view_pos, light_);
     }
 
     cm_.unbind();
@@ -569,11 +574,11 @@ ReconItem::SliceTranslator::~SliceTranslator() = default;
 
 void ReconItem::SliceTranslator::onDrag(const glm::vec2& delta) {
     Slice* slice = comp_.draggedSlice();
-    auto& o = slice->orientation4();
+    const auto& o = slice->orientation4();
 
     auto axis1 = glm::vec3(o[0][0], o[0][1], o[0][2]);
     auto axis2 = glm::vec3(o[1][0], o[1][1], o[1][2]);
-    auto normal = glm::normalize(glm::cross(axis1, axis2));
+    const auto& normal = slice->normal();
 
     // project the normal vector to screen coordinates
     // FIXME maybe need window matrix here too which would be kind of
@@ -592,9 +597,7 @@ void ReconItem::SliceTranslator::onDrag(const glm::vec2& delta) {
     // FIXME check if it is still inside the bounding box of the volume
     // probably by checking all four corners are inside bounding box, should
     // define this box somewhere
-    o[2][0] += dx[0];
-    o[2][1] += dx[1];
-    o[2][2] += dx[2];
+    slice->translate(dx);
 }
 
 // ReconItem::SliceRotator
@@ -608,7 +611,7 @@ ReconItem::SliceRotator::SliceRotator(ReconItem& comp, const glm::vec2& initial)
 
     Slice* slice = comp.hoveredSlice();
     assert(slice != nullptr);
-    auto o = slice->orientation4();
+    const auto& o = slice->orientation4();
 
     auto maybe_point = intersectionPoint(inv_matrix, o, initial_);
     assert(std::get<0>(maybe_point));
@@ -665,7 +668,7 @@ ReconItem::SliceRotator::~SliceRotator() = default;
 
 void ReconItem::SliceRotator::onDrag(const glm::vec2& delta) {
     Slice* slice = comp_.draggedSlice();
-    auto& o = slice->orientation4();
+    const auto& o = slice->orientation4();
 
     auto axis1 = glm::vec3(o[0][0], o[0][1], o[0][2]);
     auto axis2 = glm::vec3(o[1][0], o[1][1], o[1][2]);
