@@ -447,6 +447,12 @@ void ReconItem::renderImVolumeControl() {
                 std::lock_guard lck(volume_mtx_);
                 volume_->clearBuffer();
             }
+
+            if (volume_policy_ == SHOW_VOL) {
+                for (auto& slice : slices_) {
+                    std::get<1>(slice) = DISABLE_SLI;
+                }
+            }
         }
 
         static float volume_alpha = 1.0f;
