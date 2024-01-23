@@ -6,17 +6,18 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
-#include <ostream>
-
 #include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
-#include "imgui.h"
 
 #include "graphics/camera3d.hpp"
 
 namespace recastx::gui {
 
-Camera::Camera(const glm::vec3& target) : target_(target) {
+Camera::Camera()
+        : target_({0.f, 0.f, 0.f}),
+          front_({-1.f, 0.f, 0.f}),
+          up_({0.0f, 0.0f, 1.0f}),
+          right_(glm::normalize(glm::cross(front_, up_))) {
     setPerspectiveView();
 }
 
@@ -24,10 +25,8 @@ Camera::~Camera() = default;
 
 const glm::mat4& Camera::matrix() {
     if (!view_) {
-        view_ = glm::lookAt(pos0_, target_, up0_) * rotation_;
-        assert(glm::length(glm::normalize(target_ - pos0_) - front0_) < 1.e-6);
+        view_ = glm::lookAt(pos_, target_, up_) * rotation_;
     }
-
     return view_.value();
 }
 
@@ -37,12 +36,11 @@ glm::vec3 Camera::viewDir() {
 }
 
 float Camera::distance() {
-    if (!distance_) distance_ = glm::length(pos0_ - target_);
-    return distance_.value();
+    return dist_;
 }
 
 glm::vec3 Camera::pos() {
-    return target_ - viewDir() * distance();
+    return target_ - viewDir() * dist_;
 }
 
 bool Camera::handleMouseButton(int button, int action) {
@@ -51,14 +49,18 @@ bool Camera::handleMouseButton(int button, int action) {
 }
 
 bool Camera::handleScroll(float offset) {
-    pos0_ += offset * mouse_scroll_sensitivity_ * front0_;
+    float delta = offset * mouse_scroll_sensitivity_;
 
-    static const float K_MAX_DIST = 10.f;
-    static const float K_MIN_DIST = 0.5f;
-    pos0_[0] = std::min(K_MAX_DIST, std::max(K_MIN_DIST, pos0_[0]));
+    if (dist_ + delta > K_MAX_DIST_) {
+        dist_ = K_MAX_DIST_;
+    } else if (dist_ + delta < K_MIN_DIST_) {
+        dist_ = K_MIN_DIST_;
+    } else {
+        dist_ += delta;
+    }
 
+    pos_ = target_ - dist_ * front_;
     view_.reset();
-    distance_.reset();
     return true;
 }
 
@@ -75,8 +77,8 @@ bool Camera::handleMouseMoved(float x, float y) {
     prev_y_ = y;
 
     if (dragging_) {
-        adjustYaw(x_offset * mouse_move_sensitivity_);
-        adjustPitch(y_offset * mouse_move_sensitivity_);
+        rotate(x_offset * mouse_move_sensitivity_, up_);
+        rotate(-y_offset * mouse_move_sensitivity_, right_);
         return true;
     }
 
@@ -87,16 +89,16 @@ bool Camera::handleKey(int key, int action, int /* mods */) {
     if (action == GLFW_REPEAT || action == GLFW_PRESS) {
         switch (key) {
             case GLFW_KEY_A:
-                adjustYaw(-key_sensitivity_);
+                rotate(-key_sensitivity_, up_);
                 return true;
             case GLFW_KEY_D:
-                adjustYaw(key_sensitivity_);
+                rotate(key_sensitivity_, up_);
                 return true;
             case GLFW_KEY_W:
-                adjustPitch(key_sensitivity_);
+                rotate(-key_sensitivity_, right_);
                 return true;
             case GLFW_KEY_S:
-                adjustPitch(-key_sensitivity_);
+                rotate(key_sensitivity_, right_);
                 return true;
             default:
                 break;
@@ -116,60 +118,31 @@ void Camera::setFrontView() {
     view_.reset();
 
     rotation_ = glm::mat4(1.0f);
-    pos0_ = target_;
-    pos0_.x += 5.0;
-    up0_ = glm::vec3(0.0f, 0.0f, 1.0f);
-    right0_ = glm::vec3(0.0f, 1.0f, 0.0f);
-    front0_ = glm::cross(up0_, right0_);
+    dist_ = 5.f;
+    pos_ = glm::vec3{dist_, 0.f, 0.f};
 }
 
 void Camera::setTopView() {
     setFrontView();
 
-    adjustYaw(glm::radians(90.f));
-    adjustPitch(glm::radians(-90.f));
-
-// Equivalent to:
-//    view_.reset();
-//
-//    rotation_ = glm::mat4(1.0f);
-//    pos0_ = target_;
-//    pos0_.z += 5.0;
-//    up0_ = glm::vec3(0.0f, 1.0f, 0.0f);
-//    right0_ = glm::vec3(1.0f, 0.0f, 0.0f);
-//    front0_ = glm::cross(up0_, right0_);
+    rotate(glm::radians(90.f), right_);
 }
 
 void Camera::setSideView() {
     setFrontView();
 
-    adjustYaw(glm::radians(90.f));
-
-    // Equivalent to:
-
-//    view_.reset();
-//
-//    rotation_ = glm::mat4(1.0f);
-//    pos0_ = target_;
-//    pos0_.y -= 5.0;
-//    up0_ = glm::vec3(0.0f, 0.0f, 1.0f);
-//    right0_ = glm::vec3(1.0f, 0.0f, 0.0f);
-//    front0_ = glm::cross(up0_, right0_);
+    rotate(glm::radians(90.f), -up_);
 }
 
 void Camera::setPerspectiveView() {
     setFrontView();
-    adjustYaw(glm::radians(-45.f));
-    adjustPitch(glm::radians(-30.f));
+
+    rotate(glm::radians(30.f), -up_);
+    rotate(glm::radians(30.f), right_);
 }
 
-void Camera::adjustPitch(float offset) {
-    rotation_ = glm::rotate(-offset, right0_) * rotation_;
-    view_.reset();
-}
-
-void Camera::adjustYaw(float offset) {
-    rotation_ = glm::rotate(offset, up0_) * rotation_;
+void Camera::rotate(float angle, const glm::vec3& axis) {
+    rotation_ = glm::rotate(angle, axis) * rotation_;
     view_.reset();
 }
 

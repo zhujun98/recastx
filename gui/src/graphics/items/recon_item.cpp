@@ -178,6 +178,7 @@ void ReconItem::renderGl() {
 
     const auto& projection = vp_->projection();
     const auto& view = scene_.viewMatrix();
+    const auto& view_dir = scene_.viewDir();
     const auto& view_pos = scene_.cameraPosition();
 
     matrix_ = projection * view;
@@ -189,6 +190,7 @@ void ReconItem::renderGl() {
     for (auto slice : sortedSlices()) {
         slice->render(view, projection, min_val, max_val_,
                       volume_->hasTexture() && volume_policy_ == PREVIEW_VOL,
+                      view_dir,
                       view_pos,
                       light_);
     }

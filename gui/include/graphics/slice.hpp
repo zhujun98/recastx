@@ -76,6 +76,7 @@ class Slice {
                 float min_v,
                 float max_v,
                 bool fallback_to_preview,
+                const glm::vec3& view_dir,
                 const glm::vec3& view_pos,
                 const Light& light);
 

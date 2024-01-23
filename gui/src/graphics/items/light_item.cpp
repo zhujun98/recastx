@@ -45,7 +45,7 @@ void LightItem::renderIm() {
 void LightItem::onFramebufferSizeChanged(int /*width*/, int /*height*/) {}
 
 void LightItem::renderGl() {
-    light_.pos = scene_.cameraPosition() - 2.f * scene_.viewDir();
+    light_.pos = scene_.cameraPosition() - 5.f * scene_.viewDir();
 }
 
 } // namespace recastx::gui

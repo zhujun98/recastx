@@ -76,6 +76,7 @@ void Slice::render(const glm::mat4& view,
                    float min_v,
                    float max_v,
                    bool fallback_to_preview,
+                   const glm::vec3& view_dir,
                    const glm::vec3& view_pos,
                    const Light& light) {
     shader_->use();
@@ -83,7 +84,7 @@ void Slice::render(const glm::mat4& view,
     shader_->setMat4("view", view);
     shader_->setMat4("projection", projection);
     shader_->setMat4("orientationMatrix", orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0)));
-    shader_->setVec3("normal", normal_);
+    shader_->setVec3("normal", glm::dot(view_dir, normal_) > 0 ? -normal_: normal_);
     shader_->setBool("highlighted", hovered_ || highlighted_);
     shader_->setBool("empty", !texture_.isReady());
     shader_->setBool("fallback", fallback_to_preview);
