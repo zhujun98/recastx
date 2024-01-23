@@ -101,6 +101,11 @@ void Scene3d::renderMenubarRight() {
     if (ImGui::BeginMenuBar()) {
         if (ImGui::BeginMenu("View")) {
 
+            static bool show_status = statusbar_item_->visible();
+            if (ImGui::Checkbox("Show status##VIEW", &show_status)) {
+                statusbar_item_->setVisible(show_status);
+            }
+
             static bool show_histogram = recon_item_->histogramVisible();
             if (ImGui::Checkbox("Show histogram##VIEW", &show_histogram)) {
                 recon_item_->setHistogramVisible(show_histogram);
