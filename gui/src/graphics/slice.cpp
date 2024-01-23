@@ -35,6 +35,20 @@ Slice::Slice(int slice_id, Plane plane) : id_(slice_id), plane_(plane) {
     ;
     shader_ = std::make_unique<ShaderProgram>(vert, frag);
 
+    shader_->use();
+    shader_->setInt("colormap", 0);
+    shader_->setInt("sliceData", 1);
+    shader_->setInt("volumeData", 2);
+    shader_->unuse();
+
+    auto frame_vert =
+#include "shaders/recon_slice_frame.vert"
+    ;
+    auto frame_frag =
+#include "shaders/recon_slice_frame.frag"
+    ;
+    frame_shader_ = std::make_unique<ShaderProgram>(frame_vert, frame_frag);
+
     reset();
 }
 
@@ -79,19 +93,14 @@ void Slice::render(const glm::mat4& view,
                    const glm::vec3& view_dir,
                    const glm::vec3& view_pos,
                    const Light& light) {
+    auto model =  orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0));
     shader_->use();
 
     shader_->setMat4("view", view);
     shader_->setMat4("projection", projection);
-    shader_->setMat4("orientationMatrix", orientation4() * glm::translate(glm::vec3(0.0, 0.0, 1.0)));
+    shader_->setMat4("orientationMatrix", model);
     shader_->setVec3("normal", glm::dot(view_dir, normal_) > 0 ? -normal_: normal_);
-    shader_->setBool("highlighted", hovered_ || highlighted_);
-    shader_->setBool("empty", !texture_.isReady());
-    shader_->setBool("fallback", fallback_to_preview);
-
-    shader_->setInt("colormap", 0);
-    shader_->setInt("sliceData", 1);
-    shader_->setInt("volumeData", 2);
+    shader_->setBool("useVolumeTex", !texture_.isReady() && fallback_to_preview);
 
     shader_->setVec3("viewPos", view_pos);
     shader_->setBool("light.isEnabled", light.is_enabled);
@@ -101,19 +110,32 @@ void Slice::render(const glm::mat4& view,
     shader_->setVec3("light.specular", light.specular);
 
     texture_.bind();
-    if (!texture_.isReady() && !fallback_to_preview) {
-        shader_->setVec4("frameColor", frame_color_);
 
-        glBindVertexArray(vao_);
-        glLineWidth(2.0f);
-        glDrawArrays(GL_LINE_LOOP, 0, 4);
-    } else {
+    bool sample_slice = texture_.isReady() || fallback_to_preview;
+    if (sample_slice) {
         shader_->setFloat("minValue", min_v);
         shader_->setFloat("maxValue", max_v);
 
         glBindVertexArray(vao_);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     }
+
+    if (hovered_ || !sample_slice) {
+        frame_shader_->use();
+        frame_shader_->setMat4("view", view);
+        frame_shader_->setMat4("projection", projection);
+        frame_shader_->setMat4("orientationMatrix", model);
+        if (hovered_ || highlighted_) {
+            frame_shader_->setVec4("frameColor", K_HIGHLIGHTED_FRAME_COLOR_);
+        } else {
+            frame_shader_->setVec4("frameColor", K_EMPTY_FRAME_COLOR_);
+        }
+        glBindVertexArray(vao_);
+        glLineWidth(2.0f);
+        glDrawArrays(GL_LINE_LOOP, 0, 4);
+    }
+
+
     texture_.unbind();
 }
 

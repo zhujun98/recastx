@@ -180,6 +180,11 @@ Volume::Volume() : volume_render_quality_(RenderQuality::LOW), slicer_(128) {
 #include "shaders/recon_volume.frag"
     ;
     shader_ = std::make_unique<ShaderProgram>(vert, frag);
+
+    shader_->use();
+    shader_->setInt("colormap", 0);
+    shader_->setInt("volumeData", 2);
+    shader_->unuse();
 };
 
 bool Volume::init(uint32_t x, uint32_t y, uint32_t z) {
@@ -240,9 +245,6 @@ void Volume::render(const glm::mat4& view,
     shader_->setFloat("alpha", alpha_);
     shader_->setFloat("minValue", min_v);
     shader_->setFloat("maxValue", max_v);
-
-    shader_->setInt("colormap", 0);
-    shader_->setInt("volumeData", 2);
 
     shader_->setVec3("viewPos", view_pos);
     shader_->setBool("light.isEnabled", light.is_enabled);

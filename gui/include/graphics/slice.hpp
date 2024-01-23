@@ -49,10 +49,13 @@ class Slice {
     GLuint vao_;
     GLuint vbo_;
     std::unique_ptr<ShaderProgram> shader_;
+    std::unique_ptr<ShaderProgram> frame_shader_;
 
-    bool hovered_ = false;
     bool highlighted_ = false;
-    static constexpr glm::vec4 frame_color_ {0.6, 0.6, 0.0, 1.};
+    bool hovered_ = false;
+    bool selected_ = false;
+    static constexpr glm::vec4 K_EMPTY_FRAME_COLOR_ { 1.0f, 1.0f, 1.0f, 0.5f };
+    static constexpr glm::vec4 K_HIGHLIGHTED_FRAME_COLOR_ { 0.8f, 0.8f, 0.0f, 1.f };
 
     Plane plane_;
     Orient4Type orient_;
@@ -80,17 +83,18 @@ class Slice {
                 const glm::vec3& view_pos,
                 const Light& light);
 
-    [[nodiscard]] bool hasTexture() const { return texture_.isReady(); }
-
     void clear();
 
+    [[nodiscard]] bool highlighted() const { return highlighted_; }
+    void setHighlighted(bool state) { highlighted_ = state; }
+
     [[nodiscard]] bool hovered() const { return hovered_; }
-
-    [[nodiscard]] bool transparent() const  { return hovered_ || highlighted_ || data_.empty(); }
-
     void setHovered(bool state) { hovered_ = state; }
 
-    void setHighlighted(bool state) { highlighted_ = state; }
+    [[nodiscard]] bool transparent() const  { return hovered_ || selected_ || data_.empty(); }
+
+    [[nodiscard]] bool selected() const { return selected_; }
+    void setSelected(bool state) { selected_ = state; }
 
     void setOrientation(const glm::vec3& base, const glm::vec3& x, const glm::vec3& y);
     void setOrientation(const Slice::Orient4Type& orient);

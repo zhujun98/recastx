@@ -31,11 +31,7 @@ uniform vec3 viewPos;
 uniform Material material;
 uniform Light light;
 
-uniform vec4 frameColor;
-
-uniform int highlighted;
-uniform int empty;
-uniform int fallback;
+uniform bool useVolumeTex;
 uniform float minValue;
 uniform float maxValue;
 
@@ -46,20 +42,11 @@ float remapMinMax(float x, float x0, float x1) {
 }
 
 void main() {
-    if (empty == 1 && fallback == 0) {
-        fColor = frameColor;
-        if (highlighted == 1) {
-            fColor += vec4(0.3f);
-        }
-        return;
-    }
-
     float value;
-    bool use_fallback = empty == 1 && fallback == 1;
     if (minValue == maxValue) {
         value = 1.f;
     } else {
-        if (use_fallback) {
+        if (useVolumeTex) {
             value = remapMinMax(texture(volumeData, volumeCoord).x, minValue, maxValue);
         } else {
             value = remapMinMax(texture(sliceData, sliceCoord).x, minValue, maxValue);
@@ -67,14 +54,6 @@ void main() {
     }
 
     vec4 color = vec4(texture(colormap, value).xyz, 1.0f);
-
-    if (use_fallback) {
-        color.a = 0.75f;
-    }
-
-    if (highlighted == 1) {
-        color += vec4(0.3f);
-    }
 
     if (light.isEnabled) {
         float diffuse = 0.f;
