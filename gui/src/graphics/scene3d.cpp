@@ -10,7 +10,6 @@
 
 #include <glm/glm.hpp>
 
-#include "graphics/light.hpp"
 #include "graphics/scene3d.hpp"
 #include "graphics/items/axis_item.hpp"
 #include "graphics/items/axiscube_item.hpp"
