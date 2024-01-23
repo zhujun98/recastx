@@ -22,6 +22,7 @@ class AxisItem;
 class AxisCubeItem;
 class IconItem;
 class GeometryItem;
+class Light;
 class LightItem;
 class LoggingItem;
 class PreprocItem;
@@ -56,6 +57,8 @@ public:
     void render() override;
 
     bool handleKey(int key, int action, int mods) override;
+
+    const Light& light() const override;
 };
 
 }  // namespace recastx::gui

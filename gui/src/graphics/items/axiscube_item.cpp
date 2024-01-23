@@ -79,7 +79,7 @@ void AxisCubeItem::onFramebufferSizeChanged(int width, int height) {
 }
 
 void AxisCubeItem::renderGl() {
-    const auto& view = scene_.viewMatrix();
+    const auto& view = scene_.cameraMatrix();
 
     vp_->use();
 

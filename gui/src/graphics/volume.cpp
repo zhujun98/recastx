@@ -8,14 +8,19 @@
 */
 #include <cstring>
 
+#include <glm/glm.hpp>
+#include <glm/gtx/rotate_vector.hpp>
+
 #include "graphics/light.hpp"
 #include "graphics/volume.hpp"
 #include "graphics/primitives.hpp"
 #include "graphics/shader_program.hpp"
+#include "graphics/viewport.hpp"
 
 namespace recastx::gui {
 
-VolumeSlicer::VolumeSlicer(size_t num_slices): num_slices_(num_slices), slices_(12 * num_slices) {
+VolumeSlicer::VolumeSlicer(size_t num_slices)
+        : shadow_(800, 800), num_slices_(num_slices), slices_(12 * num_slices) {
     glGenVertexArrays(1, &vao_);
     glGenBuffers(1, &vbo_);
 
@@ -36,7 +41,7 @@ void VolumeSlicer::resize(size_t num_slices) {
 }
 
 
-void VolumeSlicer::update(const glm::vec3& view_dir) {
+void VolumeSlicer::update(const glm::vec3& view_dir, bool inverted) {
     auto [min_dist, max_dist, max_index] = sortVertices(view_dir);
     float cutoff = min_dist + (max_dist - min_dist) * front_;
 
@@ -70,7 +75,8 @@ void VolumeSlicer::update(const glm::vec3& view_dir) {
 
     int count = 0;
     for (int i = num_slices_ - 1; i >= 0; i--) {
-        if (i * plane_dist_inc + min_dist < cutoff) break;
+        if (!inverted && i * plane_dist_inc + min_dist < cutoff) continue;
+        else if (inverted && max_dist - i * plane_dist_inc < cutoff) continue;
 
         for (int e = 0; e < 12; e++) dl[e] = lambda[e] + i * lambda_inc[e];
 
@@ -130,6 +136,57 @@ void VolumeSlicer::draw() {
     glDrawArrays(GL_TRIANGLES, 0, static_cast<int>(slices_.size()));
 }
 
+void VolumeSlicer::drawOnScreen() {
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, shadow_.eye_texture_);
+
+    glBindVertexArray(shadow_.vao_);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    glBindVertexArray(0);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void  VolumeSlicer::drawOnBuffer(ShaderProgram* shadow_shader,
+                                 ShaderProgram* volume_shader,
+                                 bool is_view_inverted) {
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * slices_.size(), slices_.data());
+
+    shadow_.bind();
+
+    glDrawBuffer(GL_COLOR_ATTACHMENT0);
+    glClearColor(1, 1, 1, 1);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glDrawBuffer(GL_COLOR_ATTACHMENT1);
+    glClearColor(0, 0, 0, 0);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glBindVertexArray(vao_);
+    for (size_t i =0; i < slices_.size(); ++i) {
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, shadow_.light_texture_);
+        shadow_shader->use();
+        glDrawBuffer(GL_COLOR_ATTACHMENT1);
+        if(is_view_inverted) {
+            glBlendFunc(GL_ONE_MINUS_DST_ALPHA, GL_ONE);
+        } else {
+            glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+        }
+        glDrawArrays(GL_TRIANGLES, 12 * i, 12);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        volume_shader->use();
+        glDrawBuffer(GL_COLOR_ATTACHMENT0);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glDrawArrays(GL_TRIANGLES, 12 * i, 12);
+    }
+    glBindVertexArray(0);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
 void VolumeSlicer::init() {
     glBindVertexArray(vao_);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_);
@@ -172,7 +229,7 @@ void VolumeSlicer::setFront(float front) {
 }
 
 
-Volume::Volume() : volume_render_quality_(RenderQuality::LOW), slicer_(128) {
+Volume::Volume() : volume_render_quality_(RenderQuality::MEDIUM), slicer_(128) {
     auto vert =
 #include "shaders/recon_volume.vert"
     ;
@@ -185,6 +242,29 @@ Volume::Volume() : volume_render_quality_(RenderQuality::LOW), slicer_(128) {
     shader_->setInt("colormap", 0);
     shader_->setInt("volumeData", 2);
     shader_->unuse();
+
+    auto shadow_vert =
+#include "shaders/shadow.vert"
+    ;
+    auto shadow_frag =
+#include "shaders/shadow.frag"
+    ;
+    shadow_shader_ = std::make_unique<ShaderProgram>(shadow_vert, shadow_frag);
+
+    shadow_shader_->use();
+    shadow_shader_->setInt("volumeData", 2);
+    shadow_shader_->setInt("shadowTexture", 3);
+
+    auto screen_vert =
+#include "shaders/screen.vert"
+    ;
+    auto screen_frag =
+#include "shaders/screen.frag"
+    ;
+    screen_shader_ = std::make_unique<ShaderProgram>(screen_vert, screen_frag);
+
+    screen_shader_->use();
+    screen_shader_->setInt("screenTexture", 3);
 };
 
 bool Volume::init(uint32_t x, uint32_t y, uint32_t z) {
@@ -235,13 +315,13 @@ void Volume::render(const glm::mat4& view,
                     const glm::mat4& projection,
                     float min_v,
                     float max_v,
+                    const glm::vec3& view_dir,
                     const glm::vec3& view_pos,
-                    const Light& light) {
+                    const Light& light,
+                    const std::shared_ptr<Viewport>& vp) {
     if (!texture_.isReady()) return;
 
     shader_->use();
-    shader_->setMat4("view", view);
-    shader_->setMat4("projection", projection);
     shader_->setFloat("alpha", alpha_);
     shader_->setFloat("minValue", min_v);
     shader_->setFloat("maxValue", max_v);
@@ -253,12 +333,52 @@ void Volume::render(const glm::mat4& view,
     shader_->setVec3("light.diffuse", light.diffuse);
     shader_->setVec3("light.specular", light.specular);
 
-    auto view_dir = glm::vec3(-view[0][2], -view[1][2], -view[2][2]);
-    slicer_.update(view_dir);
+    const glm::mat4 light_projection = glm::perspective(45.f, 1.f, 1.f, 200.f);
+    const glm::mat4 bias = glm::scale(glm::translate(glm::mat4(1), glm::vec3(0.5, 0.5, 0.5)),
+                                      glm::vec3(0.5, 0.5, 0.5));
 
-    texture_.bind();
-    slicer_.draw();
-    texture_.unbind();
+    if (global_illumination_) {
+        glm::mat4 light_view = glm::lookAt(light.pos, glm::vec3(0.f), glm::vec3(1.f, 0.f, 0.f));
+        glm::vec3 light_vec = glm::normalize(light.pos);
+
+        bool is_view_inverted = glm::dot(view_dir, light_vec) < 0;
+        const glm::vec3 &half_vec = glm::normalize((is_view_inverted ? -view_dir : view_dir) + light_vec);
+        slicer_.update(half_vec, is_view_inverted);
+
+        shadow_shader_->use();
+        shadow_shader_->setMat4("mvp", projection * view);
+        shadow_shader_->setMat4("mvpShadow", bias * light_projection * light_view);
+        shadow_shader_->setVec3("lightColor", light.color);
+        shadow_shader_->setFloat("threshold", global_illumination_threshold_);
+        shadow_shader_->setFloat("minValue", min_v);
+        shadow_shader_->setFloat("maxValue", max_v);
+
+        shader_->use();
+        shader_->setMat4("view", light_view);
+        shader_->setMat4("projection", light_projection);
+
+        glEnable(GL_BLEND);
+
+        texture_.bind();
+        slicer_.drawOnBuffer(shadow_shader_.get(), shader_.get(), is_view_inverted);
+        texture_.unbind();
+
+        vp->use();
+        screen_shader_->use();
+        slicer_.drawOnScreen();
+
+        glDisable(GL_BLEND);
+    } else {
+        shader_->use();
+        shader_->setMat4("view", view);
+        shader_->setMat4("projection", projection);
+
+        slicer_.update(view_dir, false);
+
+        texture_.bind();
+        slicer_.draw();
+        texture_.unbind();
+    }
 }
 
 void Volume::clear() {
@@ -280,11 +400,11 @@ void Volume::setRenderQuality(RenderQuality level) {
     if (volume_render_quality_ != level) {
         volume_render_quality_ = level;
         if (level == RenderQuality::LOW) {
-            slicer_.resize(128);
+            slicer_.resize(256);
         } else if (level == RenderQuality::MEDIUM) {
-            slicer_.resize(512);
-        } else if (level == RenderQuality::HIGH) {
             slicer_.resize(1024);
+        } else if (level == RenderQuality::HIGH) {
+            slicer_.resize(2048);
         } else {
             throw;
         }

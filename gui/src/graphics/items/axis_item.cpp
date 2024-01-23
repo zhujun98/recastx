@@ -63,7 +63,7 @@ void AxisItem::renderGl() {
 
     shader_->use();
     shader_->setFloat("scale", scene_.cameraDistance());
-    shader_->setMat4("view", scene_.viewMatrix());
+    shader_->setMat4("view", scene_.cameraMatrix());
     shader_->setMat4("projection", vp_->projection());
 
     glBindVertexArray(vao_);

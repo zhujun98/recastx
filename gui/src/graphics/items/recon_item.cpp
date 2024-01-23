@@ -32,9 +32,8 @@
 
 namespace recastx::gui {
 
-ReconItem::ReconItem(Scene& scene, const Light& light)
+ReconItem::ReconItem(Scene& scene)
         : GraphicsItem(scene),
-          light_(light),
           volume_(new Volume{}),
           wireframe_(new Wireframe{}) {
     scene.addItem(this);
@@ -177,11 +176,12 @@ void ReconItem::renderGl() {
     cm_.bind();
 
     const auto& projection = vp_->projection();
-    const auto& view = scene_.viewMatrix();
-    const auto& view_dir = scene_.viewDir();
+    const auto& view = scene_.cameraMatrix();
+    const auto& view_dir = scene_.cameraDir();
     const auto& view_pos = scene_.cameraPosition();
 
     matrix_ = projection * view;
+    const auto& light = scene_.light();
 
     float min_val = min_val_;
     if (clamp_negatives_) min_val = min_val_ > 0 ? min_val_ : 0;
@@ -192,12 +192,12 @@ void ReconItem::renderGl() {
                       volume_->hasTexture() && volume_policy_ == PREVIEW_VOL,
                       view_dir,
                       view_pos,
-                      light_);
+                      light);
     }
     volume_->unbind();
 
     if (volume_policy_ == SHOW_VOL) {
-        volume_->render(view, projection, min_val, max_val_, view_pos, light_);
+        volume_->render(view, projection, min_val, max_val_, view_dir, view_pos, light, vp_);
     }
 
     cm_.unbind();
@@ -463,6 +463,17 @@ void ReconItem::renderImVolumeControl() {
         if (ImGui::SliderFloat("Front##RECON_VOL", &volume_front_, volume_front_min_, volume_front_max_)) {
             volume_->setFront(volume_front_);
         }
+
+        static bool global_illumination = volume_->globalIllumination();
+        if (ImGui::Checkbox("Global illumination##Light", &global_illumination)) {
+            volume_->setGlobalIllumination(global_illumination);
+        }
+
+        static float global_illumination_threshold = volume_->globalIlluminationThreshold();
+        if (ImGui::SliderFloat("Threshold##Light", &global_illumination_threshold, 0.f, 1.f)) {
+            volume_->setGlobalIlluminationThreshold(global_illumination_threshold);
+        }
+
     }
 }
 

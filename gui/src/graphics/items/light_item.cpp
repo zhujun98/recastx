@@ -9,7 +9,6 @@
 #include "graphics/items/light_item.hpp"
 #include "graphics/scene.hpp"
 #include "graphics/style.hpp"
-#include "graphics/viewport.hpp"
 
 namespace recastx::gui {
 
@@ -19,6 +18,7 @@ LightItem::LightItem(Scene &scene)
 
     light_.is_enabled = true;
     light_.pos = {0.f, 0.f, 0.f};
+    light_.color = color_;
     light_.ambient = ambient_ * color_;
     light_.diffuse = diffuse_ * color_;
     light_.specular = specular_ * color_;
@@ -30,6 +30,7 @@ void LightItem::onWindowSizeChanged(int /*width*/, int /*height*/) {}
 
 void LightItem::renderIm() {
     ImGui::TextColored(Style::CTRL_SECTION_TITLE_COLOR, "LIGHTING");
+
     ImGui::Checkbox("On##Light", &light_.is_enabled);
     if (ImGui::SliderFloat("Ambient##Light", &ambient_, 0.f, 1.f)) {
         light_.ambient = ambient_ * color_;
@@ -45,7 +46,7 @@ void LightItem::renderIm() {
 void LightItem::onFramebufferSizeChanged(int /*width*/, int /*height*/) {}
 
 void LightItem::renderGl() {
-    light_.pos = scene_.cameraPosition() - 5.f * scene_.viewDir();
+    light_.pos = scene_.cameraPosition() - 5.f * scene_.cameraDir();
 }
 
 } // namespace recastx::gui

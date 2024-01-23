@@ -56,9 +56,6 @@ void main() {
     vec4 color = vec4(texture(colormap, value).xyz, 1.0f);
 
     if (light.isEnabled) {
-        float diffuse = 0.f;
-        float specular = 0.f;
-
         vec3 lightDir = normalize(light.pos - fPos);
         vec3 viewDir = normalize(viewPos - fPos);
         vec3 halfwayDir = normalize(lightDir + viewDir);
