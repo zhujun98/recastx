@@ -130,6 +130,7 @@ class ApplicationTest : public testing::Test {
 
     size_t buffer_size_ = 100;
     size_t num_angles_ = 16;
+    size_t angle_range_ = 1.f;
     size_t slice_size_ = num_cols_;
     size_t volume_size_ = slice_size_ / 2;
 
@@ -165,7 +166,7 @@ class ApplicationTest : public testing::Test {
     void SetUp() override { 
         app_.setProjectionGeometry(recastx::BeamShape::PARALELL, num_cols_, num_rows_,
                                    pixel_width_, pixel_height_, 
-                                   src2origin, origin2det, num_angles_);
+                                   src2origin, origin2det, num_angles_, angle_range_);
         app_.setReconGeometry(std::nullopt, std::nullopt, 
                               std::nullopt, std::nullopt, 
                               std::nullopt, std::nullopt,
