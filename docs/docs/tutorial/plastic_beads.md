@@ -40,7 +40,7 @@ You can find the shapes of the DARK, FLAT and PROJECTION data from the output of
     reconstructed volume is indeed high. It should be noted that it thus takes
     longer time to perform the reconstruction and send the reconstructed volume
     from the server to the client. Therefore, the default value of `volume-size`
-    is set to 128 and is recommended to use in [dynamic tomography](./fuel_cell.md).
+    is set to 128 and is recommended to use in [dynamic tomography](./foam.md).
 
 ### Starting the GUI client
 
@@ -52,7 +52,7 @@ recastx-gui
 Make sure the `SCAN MODE` is set to `Discrete` and click the `Process` button.
 
 <figure markdown>
-  ![Beads slices](../recastx-docs-supplement/beads_slices.jpg){ width="480" }
+  ![Beads slices](../recastx-docs-supplement/beads_slices.png){ width="480" }
   <figcaption>Three orthogonal high-resolution slices</figcaption>
 </figure>
 

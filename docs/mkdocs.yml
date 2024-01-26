@@ -7,7 +7,7 @@ nav:
       - Starting pipeline: run.md
   - Tutorial:
       - Plastic beads (3D): tutorial/plastic_beads.md
-      - Fuel cell (4D): tutorial/fuel_cell.md
+      - Foam (4D): tutorial/foam.md
   - User guide:
       - GUI: gui.md
       - Data protocol: data_protocol.md
