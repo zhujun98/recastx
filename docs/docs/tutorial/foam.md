@@ -13,7 +13,7 @@ to stream the data from files.
 
 We are going to use the *Foam* dataset offered by
 [TomoBank](https://tomobank.readthedocs.io/en/latest/#). Go to the homepage, and then navigate
-to `Datasets/Dynamic/Fuel cell data` and download the file `fuelcell_i3.h5`. 
+to `Datasets/Dynamic/Foam data` and download the file `dk_MCFG_1_p_s1_.h5`. 
 You can also find the description of the dataset there.
 
 ## Running
@@ -22,14 +22,14 @@ You can also find the description of the dataset there.
 
 Open a terminal and run:
 ```bash
-foamstream-tomo --datafile <Your/folder/fuelcell_i3.h5>
+foamstream-tomo --datafile <Your/folder/dk_MCFG_1_p_s1_.h5>
 ```
 
 ### Starting the reconstruction server
 
 Open another terminal and run:
 ```bash
-recastx-recon --rows 1100 --cols 1400 --angles 301
+recastx-recon --rows 1800 --cols 2016 --angles 300
 ```
 
 You can find the shapes of the DARK, FLAT and PROJECTION data from the output of foamstream.
@@ -44,19 +44,19 @@ recastx-gui
 Make sure the `SCAN MODE` is set to `Discrete` and click the `Process` button.
 
 <figure markdown>
-  ![Fuelcell slices](../recastx-docs-supplement/fuelcell_slices.gif){ width="480" }
+  ![Foam slices](../recastx-docs-supplement/foam.gif){ width="480" }
   <figcaption>Three high-resolution slices</figcaption>
 </figure>
 
 !!! note
-    Since the GPU cluster that we used for recording this tutorial is not performant,
-    the raw data were downsampled by a factor of 2 (one can configure it in the GUI)
-    and thus the quality of the reconstructed slice degrades slightly. We also turned off
-    the volume reconstruction in order to save the network bandwidth for visualization.
-    See [Performance consideration](../performance_consideration.md)
-    for more details. Therefore, there is no preview when moving the slice.
+    We turned off the volume reconstruction in order to save the network bandwidth 
+    for visualization. See [Performance consideration](../performance_consideration.md) for more details. Therefore, 
+    there is no preview while moving the slice.
 
-<figure markdown>
-  ![Fuelcell volume](../recastx-docs-supplement/fuelcell_volume.jpg){ width="480" }
-  <figcaption>"Low-resolution" volume</figcaption>
-</figure>
+[//]: # (<figure markdown>)
+
+[//]: # (  ![Fuelcell volume]&#40;../recastx-docs-supplement/foam_volume.jpg&#41;{ width="480" })
+
+[//]: # (  <figcaption>"Low-resolution" volume</figcaption>)
+
+[//]: # (</figure>)
