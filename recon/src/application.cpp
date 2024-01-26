@@ -53,9 +53,9 @@ Application::~Application() {
 
 void Application::setProjectionGeometry(BeamShape beam_shape, size_t col_count, size_t row_count,
                                         float pixel_width, float pixel_height,
-                                        float src2origin, float origin2det, size_t num_angles) {
+                                        float src2origin, float origin2det, size_t num_angles, float angle_range) {
     proj_geom_ = {beam_shape, col_count, row_count, pixel_width, pixel_height, 
-                  src2origin, origin2det, defaultAngles(num_angles)};
+                  src2origin, origin2det, defaultAngles(num_angles, angle_range)};
 }
 
 void Application::setReconGeometry(std::optional<size_t> slice_size, std::optional<size_t> volume_size,

@@ -37,6 +37,14 @@ std::pair<uint32_t, uint32_t> parseDownsampleFactor(
     return {row, col};
 }
 
+float parseAngleRange(const po::variable_value& value) {
+    float angle_range = value.as<float>() / 180.f;
+    if (angle_range < 0.f || angle_range > 2.f) {
+        throw std::runtime_error("angle-range must be within (0, 360]");
+    }
+    return angle_range;
+}
+
 int main(int argc, char** argv) {
 
     spdlog::set_pattern("[%Y-%m-%d %T.%e] [%^%l%$] %v");
@@ -86,6 +94,8 @@ int main(int argc, char** argv) {
          "downsampling factor along the row")
         ("angles", po::value<size_t>()->default_value(128),
          "number of projections per scan")
+        ("angle-range", po::value<float>()->default_value(180),
+         "range of the scan angle")
         ("minx", po::value<float>(),
          "minimal X-coordinate of the reconstructed volume")
         ("maxx", po::value<float>(),
@@ -180,6 +190,7 @@ int main(int argc, char** argv) {
     auto num_rows = opts["rows"].as<size_t>();
     auto num_cols = opts["cols"].as<size_t>();
     auto num_angles = opts["angles"].as<size_t>();
+    auto angle_range = parseAngleRange(opts["angle-range"]);
     auto minx = opts["minx"].empty() ? std::nullopt : std::optional<float>{opts["minx"].as<float>()}; 
     auto maxx = opts["maxx"].empty() ? std::nullopt : std::optional<float>{opts["maxx"].as<float>()}; 
     auto miny = opts["miny"].empty() ? std::nullopt : std::optional<float>{opts["miny"].as<float>()}; 
@@ -224,7 +235,7 @@ int main(int argc, char** argv) {
 
     if (retrieve_phase) app.setPaganinParams(pixel_size, lambda, delta, beta, distance);
     app.setProjectionGeometry(cone_beam ? recastx::BeamShape::CONE : recastx::BeamShape::PARALELL, 
-                              num_cols, num_rows, 1.0f, 1.0f, 0.0f, 0.0f, num_angles);
+                              num_cols, num_rows, 1.0f, 1.0f, 0.0f, 0.0f, num_angles, angle_range);
     app.setReconGeometry(slice_size, volume_size, minx, maxx, miny, maxy, minz, maxz);
 
     app.setPipelinePolicy(pipeline_wait_on_slowness);
