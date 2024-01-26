@@ -1679,8 +1679,7 @@ struct Style {
     static constexpr float RIGHT_PANEL_WIDTH = 0.21f;
     static constexpr float TOP_PANEL_HEIGHT = 0.15f;
     static constexpr float BOTTOM_PANEL_HEIGHT = 0.15f;
-    static constexpr float STATUS_BAR_WIDTH = 0.28f;
-    static constexpr float SECOND_SCENE_HEIGHT = 0.30f;
+    static constexpr float SATELLITE_WINDOW_HEIGHT = 0.15f;
 
     static void init() {
 

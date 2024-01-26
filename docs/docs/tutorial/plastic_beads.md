@@ -29,7 +29,7 @@ foamstream-tomo --datafile <Your/folder/2_plastic_beeds_RGB.h5> --pdata tomo --p
 
 Open another terminal and run:
 ```bash
-recastx-recon --rows 400 --cols 130 --angles 200 --minx -256 --maxx 256 --miny -256 --maxy 256 --volume-size 512
+recastx-recon --rows 400 --cols 130 --angles 200 --angle-range 360 --minx -256 --maxx 256 --miny -256 --maxy 256 --volume-size 512
 ```
 
 You can find the shapes of the DARK, FLAT and PROJECTION data from the output of foamstream.

@@ -26,11 +26,14 @@ namespace recastx::gui {
 class Camera : public InputHandler {
 
     glm::vec3 target_;
-    glm::vec3 pos0_;
-    glm::vec3 front0_;
-    glm::vec3 up0_;
-    glm::vec3 right0_;
-    std::optional<float> distance_ { std::nullopt };
+    glm::vec3 pos_;
+    float dist_;
+    static constexpr float K_MAX_DIST_ = 10.f;
+    static constexpr float K_MIN_DIST_ = 0.5f;
+
+    const glm::vec3 front_;
+    const glm::vec3 up_;
+    const glm::vec3 right_;
 
     glm::mat4 rotation_;
     std::optional<glm::mat4> view_ { std::nullopt };
@@ -47,18 +50,21 @@ class Camera : public InputHandler {
 
     bool dragging_ = false;
 
-    void adjustPitch(float offset);
-    void adjustYaw(float offset);
+    void rotate(float angle, const glm::vec3& axis);
 
   public:
 
-    explicit Camera(const glm::vec3& target = glm::vec3 {0.f, 0.f, 0.f});
+    Camera();
 
     virtual ~Camera();
 
     [[nodiscard]] const glm::mat4& matrix();
 
+    [[nodiscard]] glm::vec3 viewDir();
+
     [[nodiscard]] float distance();
+
+    [[nodiscard]] glm::vec3 pos();
 
     void setFixed(bool fixed) { fixed_ = fixed; }
 

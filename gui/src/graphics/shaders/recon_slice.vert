@@ -3,6 +3,7 @@ R"glsl(
 
 in vec3 vPos;
 
+out vec3 fPos;
 out vec2 sliceCoord;
 out vec3 volumeCoord;
 
@@ -13,10 +14,10 @@ uniform mat4 orientationMatrix;
 void main() {
     sliceCoord = vec2(vPos.xy);
 
-    vec3 worldPosition = (orientationMatrix * vec4(vPos, 1.0f)).xyz;
+    fPos = (orientationMatrix * vec4(vPos, 1.0f)).xyz;
 
-    volumeCoord = 0.5f * (worldPosition + vec3(1.0f));
+    volumeCoord = 0.5f * (fPos + vec3(1.0f));
 
-    gl_Position = projection * view * vec4(worldPosition, 1.0f);
+    gl_Position = projection * view * vec4(fPos, 1.0f);
 }
 )glsl"

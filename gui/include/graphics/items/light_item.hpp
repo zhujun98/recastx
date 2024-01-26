@@ -6,29 +6,32 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
-#ifndef GUI_AXISITEM_H
-#define GUI_AXISITEM_H
+#ifndef GUI_LIGHTITEM_H
+#define GUI_LIGHTITEM_H
 
 #include <memory>
 
 #include "graphics/items/graphics_item.hpp"
-#include "graphics/shader_program.hpp"
+#include "graphics/light.hpp"
 
 namespace recastx::gui {
 
 class Scene;
 
-class AxisItem : public GraphicsItem, public GraphicsGLItem {
+class LightItem : public GraphicsItem, public GraphicsGLItem {
 
-    GLuint vao_;
-    GLuint vbo_;
-    std::unique_ptr<ShaderProgram> shader_;
+    Light light_;
+
+    glm::vec3 color_;
+    float ambient_;
+    float diffuse_;
+    float specular_;
 
 public:
 
-    explicit AxisItem(Scene& scene);
+    explicit LightItem(Scene& scene);
 
-    ~AxisItem() override;
+    ~LightItem() override;
 
     void onWindowSizeChanged(int width, int height) override;
 
@@ -37,8 +40,10 @@ public:
     void onFramebufferSizeChanged(int width, int height) override;
 
     void renderGl() override;
+
+    [[nodiscard]] const Light& light() const { return light_; }
 };
 
 }  // namespace recastx::gui
 
-#endif // GUI_AXISITEM_H
+#endif // GUI_LIGHTITEM_H

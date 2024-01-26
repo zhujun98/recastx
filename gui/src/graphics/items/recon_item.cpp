@@ -21,6 +21,7 @@
 #include "graphics/items/recon_item.hpp"
 #include "graphics/aesthetics.hpp"
 #include "graphics/camera3d.hpp"
+#include "graphics/light.hpp"
 #include "graphics/primitives.hpp"
 #include "graphics/slice.hpp"
 #include "graphics/style.hpp"
@@ -60,7 +61,7 @@ ReconItem::~ReconItem() {
 
 void ReconItem::onWindowSizeChanged(int width, int /*height*/) {
     const auto& l = scene_.layout();
-    st_win_size_ = { static_cast<float>(width - 4 * l.mw - l.lw - l.th), static_cast<float>(l.th) };
+    st_win_size_ = { static_cast<float>(width - 4 * l.mw - l.lw - l.rw), static_cast<float>(l.th) };
     st_win_pos_ = { static_cast<float>(2 * l.mw + l.lw), static_cast<float>(l.mh) };
 }
 
@@ -175,9 +176,12 @@ void ReconItem::renderGl() {
     cm_.bind();
 
     const auto& projection = vp_->projection();
-    const auto& view = scene_.viewMatrix();
+    const auto& view = scene_.cameraMatrix();
+    const auto& view_dir = scene_.cameraDir();
+    const auto& view_pos = scene_.cameraPosition();
 
     matrix_ = projection * view;
+    const auto& light = scene_.light();
 
     float min_val = min_val_;
     if (clamp_negatives_) min_val = min_val_ > 0 ? min_val_ : 0;
@@ -185,12 +189,15 @@ void ReconItem::renderGl() {
     volume_->bind();
     for (auto slice : sortedSlices()) {
         slice->render(view, projection, min_val, max_val_,
-                      volume_->hasTexture() && volume_policy_ == PREVIEW_VOL);
+                      volume_->hasTexture() && volume_policy_ == PREVIEW_VOL,
+                      view_dir,
+                      view_pos,
+                      light);
     }
     volume_->unbind();
 
     if (volume_policy_ == SHOW_VOL) {
-        volume_->render(view, projection, min_val, max_val_);
+        volume_->render(view, projection, min_val, max_val_, view_dir, view_pos, light, vp_);
     }
 
     cm_.unbind();
@@ -440,6 +447,12 @@ void ReconItem::renderImVolumeControl() {
                 std::lock_guard lck(volume_mtx_);
                 volume_->clearBuffer();
             }
+
+            if (volume_policy_ == SHOW_VOL) {
+                for (auto& slice : slices_) {
+                    std::get<1>(slice) = DISABLE_SLI;
+                }
+            }
         }
 
         static float volume_alpha = 1.0f;
@@ -450,6 +463,17 @@ void ReconItem::renderImVolumeControl() {
         if (ImGui::SliderFloat("Front##RECON_VOL", &volume_front_, volume_front_min_, volume_front_max_)) {
             volume_->setFront(volume_front_);
         }
+
+        static bool global_illumination = volume_->globalIllumination();
+        if (ImGui::Checkbox("Global illumination##Light", &global_illumination)) {
+            volume_->setGlobalIllumination(global_illumination);
+        }
+
+        static float global_illumination_threshold = volume_->globalIlluminationThreshold();
+        if (ImGui::SliderFloat("Threshold##Light", &global_illumination_threshold, 0.f, 1.f)) {
+            volume_->setGlobalIlluminationThreshold(global_illumination_threshold);
+        }
+
     }
 }
 
@@ -569,11 +593,11 @@ ReconItem::SliceTranslator::~SliceTranslator() = default;
 
 void ReconItem::SliceTranslator::onDrag(const glm::vec2& delta) {
     Slice* slice = comp_.draggedSlice();
-    auto& o = slice->orientation4();
+    const auto& o = slice->orientation4();
 
     auto axis1 = glm::vec3(o[0][0], o[0][1], o[0][2]);
     auto axis2 = glm::vec3(o[1][0], o[1][1], o[1][2]);
-    auto normal = glm::normalize(glm::cross(axis1, axis2));
+    const auto& normal = slice->normal();
 
     // project the normal vector to screen coordinates
     // FIXME maybe need window matrix here too which would be kind of
@@ -592,9 +616,7 @@ void ReconItem::SliceTranslator::onDrag(const glm::vec2& delta) {
     // FIXME check if it is still inside the bounding box of the volume
     // probably by checking all four corners are inside bounding box, should
     // define this box somewhere
-    o[2][0] += dx[0];
-    o[2][1] += dx[1];
-    o[2][2] += dx[2];
+    slice->translate(dx);
 }
 
 // ReconItem::SliceRotator
@@ -608,7 +630,7 @@ ReconItem::SliceRotator::SliceRotator(ReconItem& comp, const glm::vec2& initial)
 
     Slice* slice = comp.hoveredSlice();
     assert(slice != nullptr);
-    auto o = slice->orientation4();
+    const auto& o = slice->orientation4();
 
     auto maybe_point = intersectionPoint(inv_matrix, o, initial_);
     assert(std::get<0>(maybe_point));
@@ -665,7 +687,7 @@ ReconItem::SliceRotator::~SliceRotator() = default;
 
 void ReconItem::SliceRotator::onDrag(const glm::vec2& delta) {
     Slice* slice = comp_.draggedSlice();
-    auto& o = slice->orientation4();
+    const auto& o = slice->orientation4();
 
     auto axis1 = glm::vec3(o[0][0], o[0][1], o[0][2]);
     auto axis2 = glm::vec3(o[1][0], o[1][1], o[1][2]);

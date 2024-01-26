@@ -28,6 +28,7 @@
 
 namespace recastx::gui {
 
+class Light;
 class Slice;
 class Volume;
 class Wireframe;

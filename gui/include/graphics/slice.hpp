@@ -22,6 +22,7 @@
 
 namespace recastx::gui {
 
+class Light;
 class ShaderProgram;
 
 class Slice {
@@ -48,13 +49,17 @@ class Slice {
     GLuint vao_;
     GLuint vbo_;
     std::unique_ptr<ShaderProgram> shader_;
+    std::unique_ptr<ShaderProgram> frame_shader_;
 
-    bool hovered_ = false;
     bool highlighted_ = false;
-    static constexpr glm::vec4 frame_color_ {0.6, 0.6, 0.0, 1.};
+    bool hovered_ = false;
+    bool selected_ = false;
+    static constexpr glm::vec4 K_EMPTY_FRAME_COLOR_ { 1.0f, 1.0f, 1.0f, 0.5f };
+    static constexpr glm::vec4 K_HIGHLIGHTED_FRAME_COLOR_ { 0.8f, 0.8f, 0.0f, 1.f };
 
     Plane plane_;
     Orient4Type orient_;
+    glm::vec3 normal_;
 
     void updateMinMaxVal();
 
@@ -73,35 +78,40 @@ class Slice {
                 const glm::mat4& projection,
                 float min_v,
                 float max_v,
-                bool fallback_to_preview);
-
-    [[nodiscard]] bool hasTexture() const { return texture_.isReady(); }
+                bool fallback_to_preview,
+                const glm::vec3& view_dir,
+                const glm::vec3& view_pos,
+                const Light& light);
 
     void clear();
 
+    [[nodiscard]] bool highlighted() const { return highlighted_; }
+    void setHighlighted(bool state) { highlighted_ = state; }
+
     [[nodiscard]] bool hovered() const { return hovered_; }
-
-    [[nodiscard]] bool transparent() const  { return hovered_ || highlighted_ || data_.empty(); }
-
     void setHovered(bool state) { hovered_ = state; }
 
-    void setHighlighted(bool state) { highlighted_ = state; }
+    [[nodiscard]] bool transparent() const  { return hovered_ || selected_ || data_.empty(); }
+
+    [[nodiscard]] bool selected() const { return selected_; }
+    void setSelected(bool state) { selected_ = state; }
 
     void setOrientation(const glm::vec3& base, const glm::vec3& x, const glm::vec3& y);
     void setOrientation(const Slice::Orient4Type& orient);
 
     void reset();
 
-    void setPlane(Plane plane) {
-        plane_ = plane;
-        reset();
-    }
+    void setPlane(Plane plane);
+
+    void translate(const glm::vec3& v);
 
     Plane plane() const { return plane_; }
 
     [[nodiscard]] Orientation orientation3() const;
 
-    Orient4Type& orientation4() { return orient_; }
+    [[nodiscard]] const Orient4Type& orientation4() const { return orient_; }
+
+    [[nodiscard]] const glm::vec3& normal() const { return normal_; }
 
     [[nodiscard]] const DataType& data() const { return data_; }
 

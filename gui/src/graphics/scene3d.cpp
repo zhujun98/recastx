@@ -11,15 +11,17 @@
 #include <glm/glm.hpp>
 
 #include "graphics/scene3d.hpp"
+#include "graphics/light.hpp"
 #include "graphics/items/axis_item.hpp"
 #include "graphics/items/axiscube_item.hpp"
 #include "graphics/items/icon_item.hpp"
 #include "graphics/items/geometry_item.hpp"
+#include "graphics/items/light_item.hpp"
+#include "graphics/items/logging_item.hpp"
 #include "graphics/items/preproc_item.hpp"
 #include "graphics/items/projection_item.hpp"
-#include "graphics/items/statusbar_item.hpp"
-#include "graphics/items/logging_item.hpp"
 #include "graphics/items/recon_item.hpp"
+#include "graphics/items/statusbar_item.hpp"
 #include "logger.hpp"
 
 namespace recastx::gui {
@@ -30,11 +32,12 @@ Scene3d::Scene3d(RpcClient* client)
           axiscube_item_(new AxisCubeItem(*this)),
           icon_item_(new IconItem(*this)),
           geometry_item_(new GeometryItem(*this)),
+          light_item_(new LightItem(*this)),
+          logging_item_(new LoggingItem(*this)),
           preproc_item_(new PreprocItem(*this)),
           projection_item_(new ProjectionItem(*this)),
           recon_item_(new ReconItem(*this)),
-          statusbar_item_(new StatusbarItem(*this)),
-          logging_item_(new LoggingItem(*this)) {
+          statusbar_item_(new StatusbarItem(*this)) {
     axis_item_->linkViewport(recon_item_->viewport());
 }
 
@@ -46,27 +49,35 @@ void Scene3d::render() {
         item->renderGl();
     }
 
-    ImGui::SetNextWindowPos(ImVec2(layout_.mw, layout_.mh * 2 + layout_.th));
-    ImGui::SetNextWindowSize(ImVec2(layout_.lw, layout_.h - 2 * layout_.mh - layout_.th));
+    const auto& l = layout_;
 
-    ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_MenuBar);
+    ImGui::SetNextWindowPos(ImVec2(l.mw, l.mh * 2 + l.th));
+    ImGui::SetNextWindowSize(ImVec2(l.lw, l.h - 3 * l.mh - l.th));
 
-    renderMenubar();
-
+    ImGui::Begin("Control Panel Left", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_MenuBar);
     renderMainControl();
     ImGui::Separator();
     renderScanModeControl();
     ImGui::Separator();
     renderCameraControl();
-
     projection_item_->renderIm();
     geometry_item_->renderIm();
     preproc_item_->renderIm();
-    recon_item_->renderIm();
-    statusbar_item_->renderIm();
-    logging_item_->renderIm();
-
     ImGui::End();
+
+    ImGui::SetNextWindowPos(ImVec2(l.w - l.mw - l.rw, l.mh * 2 + l.th));
+    ImGui::SetNextWindowSize(ImVec2(l.rw, l.h - 3 * l.mh - l.th));
+
+    ImGui::Begin("Control Panel Right", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_MenuBar);
+    renderMenubarRight();
+    recon_item_->renderIm();
+    ImGui::Separator();
+    light_item_->renderIm();
+    ImGui::End();
+
+    statusbar_item_->renderIm();
+
+    logging_item_->renderIm();
 }
 
 bool Scene3d::handleKey(int key, int action, int mods) {
@@ -87,9 +98,14 @@ bool Scene3d::handleKey(int key, int action, int mods) {
     return false;
 }
 
-void Scene3d::renderMenubar() {
+void Scene3d::renderMenubarRight() {
     if (ImGui::BeginMenuBar()) {
         if (ImGui::BeginMenu("View")) {
+
+            static bool show_status = statusbar_item_->visible();
+            if (ImGui::Checkbox("Show status##VIEW", &show_status)) {
+                statusbar_item_->setVisible(show_status);
+            }
 
             static bool show_histogram = recon_item_->histogramVisible();
             if (ImGui::Checkbox("Show histogram##VIEW", &show_histogram)) {
@@ -232,6 +248,10 @@ void Scene3d::renderCameraControl() {
     }
 
     ImGui::Separator();
+}
+
+const Light& Scene3d::light() const {
+    return light_item_->light();
 }
 
 } // namespace recastx::gui

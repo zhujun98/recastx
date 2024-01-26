@@ -6,11 +6,7 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
-#include <ft2build.h>
-#include FT_FREETYPE_H
-
 #include "graphics/items/axis_item.hpp"
-#include "graphics/camera3d.hpp"
 #include "graphics/scene.hpp"
 #include "graphics/viewport.hpp"
 
@@ -67,7 +63,7 @@ void AxisItem::renderGl() {
 
     shader_->use();
     shader_->setFloat("scale", scene_.cameraDistance());
-    shader_->setMat4("view", scene_.viewMatrix());
+    shader_->setMat4("view", scene_.cameraMatrix());
     shader_->setMat4("projection", vp_->projection());
 
     glBindVertexArray(vao_);
