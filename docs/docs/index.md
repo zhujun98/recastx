@@ -87,10 +87,13 @@ information which could lead to scientific discoveries.
     <div class="feature-section left">
         <div class="slideshow-container">
             <div class="feature-image-container slide-image slide-c fade">
-                <img src="recastx-docs-supplement/tomophantom_3d08.gif"/>
+                <img src="recastx-docs-supplement/beads_volume.gif"/>
             </div>
             <div class="feature-image-container slide-image slide-c fade">
-                <img src="recastx-docs-supplement/beads_volume.gif"/>
+                <img src="recastx-docs-supplement/shepp_logan_3d.gif"/>
+            </div>
+            <div class="feature-image-container slide-image slide-c fade">
+                <img src="recastx-docs-supplement/tomophantom_3d08.gif"/>
             </div>
             <a class="prev" onclick="plusDivsC(-1)">❮</a>
             <a class="next" onclick="plusDivsC(1)">❯</a>
