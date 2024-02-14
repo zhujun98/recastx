@@ -11,12 +11,10 @@
 #include <glm/glm.hpp>
 
 #include "graphics/scene3d.hpp"
-#include "graphics/light.hpp"
 #include "graphics/items/axis_item.hpp"
 #include "graphics/items/axiscube_item.hpp"
 #include "graphics/items/icon_item.hpp"
 #include "graphics/items/geometry_item.hpp"
-#include "graphics/items/light_item.hpp"
 #include "graphics/items/logging_item.hpp"
 #include "graphics/items/preproc_item.hpp"
 #include "graphics/items/projection_item.hpp"
@@ -32,7 +30,6 @@ Scene3d::Scene3d(RpcClient* client)
           axiscube_item_(new AxisCubeItem(*this)),
           icon_item_(new IconItem(*this)),
           geometry_item_(new GeometryItem(*this)),
-          light_item_(new LightItem(*this)),
           logging_item_(new LoggingItem(*this)),
           preproc_item_(new PreprocItem(*this)),
           projection_item_(new ProjectionItem(*this)),
@@ -71,8 +68,6 @@ void Scene3d::render() {
     ImGui::Begin("Control Panel Right", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_MenuBar);
     renderMenubarRight();
     recon_item_->renderIm();
-    ImGui::Separator();
-    light_item_->renderIm();
     ImGui::End();
 
     statusbar_item_->renderIm();
@@ -121,15 +116,18 @@ void Scene3d::renderMenubarRight() {
         }
         if (ImGui::BeginMenu("Render")) {
             if (ImGui::BeginMenu("Volume quality")) {
-                static int quality = recon_item_->volumeRenderQuality();
-                bool cd = ImGui::RadioButton("Low##VOLUME_RENDER_QUALITY", &quality, RenderQuality::LOW);
+                static int render_quality = static_cast<int>(recon_item_->renderQuality());
+                bool cd = ImGui::RadioButton("Low##VOLUME_RENDER_QUALITY", &render_quality,
+                                             static_cast<int>(RenderQuality::LOW));
                 ImGui::SameLine();
-                cd |= ImGui::RadioButton("Medium##VOLUME_RENDER_QUALITY", &quality, RenderQuality::MEDIUM);
+                cd |= ImGui::RadioButton("Medium##VOLUME_RENDER_QUALITY", &render_quality,
+                                         static_cast<int>(RenderQuality::MEDIUM));
                 ImGui::SameLine();
-                cd |= ImGui::RadioButton("High##VOLUME_RENDER_QUALITY", &quality, RenderQuality::HIGH);
+                cd |= ImGui::RadioButton("High##VOLUME_RENDER_QUALITY", &render_quality,
+                                         static_cast<int>(RenderQuality::HIGH));
                 ImGui::EndMenu();
 
-                if (cd) recon_item_->setVolumeRenderQuality(RenderQuality(quality));
+                if (cd) recon_item_->setRenderQuality(RenderQuality(render_quality));
             }
 
             ImGui::EndMenu();
@@ -248,10 +246,6 @@ void Scene3d::renderCameraControl() {
     }
 
     ImGui::Separator();
-}
-
-const Light& Scene3d::light() const {
-    return light_item_->light();
 }
 
 } // namespace recastx::gui

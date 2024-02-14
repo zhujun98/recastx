@@ -20,6 +20,7 @@
 
 #include "graphics/items/graphics_item.hpp"
 #include "graphics/aesthetics.hpp"
+#include "graphics/light.hpp"
 #include "graphics/scene.hpp"
 #include "graphics/shader_program.hpp"
 #include "graphics/style.hpp"
@@ -28,10 +29,43 @@
 
 namespace recastx::gui {
 
-class Light;
 class Slice;
 class Volume;
 class Wireframe;
+
+
+class LightComponent {
+
+    Light light_;
+
+    glm::vec3 color_;
+    float ambient_;
+    float diffuse_;
+    float specular_;
+
+  public:
+
+    LightComponent();
+
+    void renderIm();
+
+    void setLightPos(const glm::vec3& pos);
+
+    [[nodiscard]] const Light& light() const { return light_; }
+};
+
+class RenderComponent {
+
+    int render_policy_ = static_cast<int>(RenderPolicy::VOLUME);
+
+    Volume* volume_;
+
+  public:
+
+    RenderComponent(Volume* volume);
+
+    void renderIm();
+};
 
 class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDataItem {
 
@@ -111,6 +145,9 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
     static constexpr float volume_front_min_ = 0.0f;
     static constexpr float volume_front_max_ = 1.0f;
 
+    RenderComponent render_comp_;
+    LightComponent light_comp_;
+
     std::unique_ptr<Wireframe> wireframe_;
     bool show_wireframe_ = true;
 
@@ -176,8 +213,8 @@ public:
 
     [[nodiscard]] Slice* hoveredSlice() { return hovered_slice_; }
 
-    [[nodiscard]] RenderQuality volumeRenderQuality() const;
-    void setVolumeRenderQuality(RenderQuality level);
+    [[nodiscard]] RenderQuality renderQuality() const;
+    void setRenderQuality(RenderQuality level);
 
     [[nodiscard]] bool wireframeVisible() const { return show_wireframe_; }
     void setWireframeVisible(bool visible) { show_wireframe_ = visible; }

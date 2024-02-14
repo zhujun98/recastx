@@ -229,7 +229,7 @@ void VolumeSlicer::setFront(float front) {
 }
 
 
-Volume::Volume() : volume_render_quality_(RenderQuality::MEDIUM), slicer_(128) {
+Volume::Volume() : render_quality_(RenderQuality::MEDIUM), slicer_(128) {
     auto vert =
 #include "shaders/recon_volume.vert"
     ;
@@ -397,8 +397,8 @@ void Volume::clearBuffer() {
 }
 
 void Volume::setRenderQuality(RenderQuality level) {
-    if (volume_render_quality_ != level) {
-        volume_render_quality_ = level;
+    if (render_quality_ != level) {
+        render_quality_ = level;
         if (level == RenderQuality::LOW) {
             slicer_.resize(256);
         } else if (level == RenderQuality::MEDIUM) {
@@ -408,6 +408,12 @@ void Volume::setRenderQuality(RenderQuality level) {
         } else {
             throw;
         }
+    }
+}
+
+void Volume::setRenderPolicy(RenderPolicy policy) {
+    if (render_policy_ != policy) {
+
     }
 }
 

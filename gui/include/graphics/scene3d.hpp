@@ -22,8 +22,6 @@ class AxisItem;
 class AxisCubeItem;
 class IconItem;
 class GeometryItem;
-class Light;
-class LightItem;
 class LoggingItem;
 class PreprocItem;
 class ProjectionItem;
@@ -36,7 +34,6 @@ class Scene3d : public Scene {
     std::unique_ptr<AxisCubeItem> axiscube_item_;
     std::unique_ptr<IconItem> icon_item_;
     std::unique_ptr<GeometryItem> geometry_item_;
-    std::unique_ptr<LightItem> light_item_;
     std::unique_ptr<LoggingItem> logging_item_;
     std::unique_ptr<PreprocItem> preproc_item_;
     std::unique_ptr<ProjectionItem> projection_item_;
@@ -57,8 +54,6 @@ public:
     void render() override;
 
     bool handleKey(int key, int action, int mods) override;
-
-    const Light& light() const override;
 };
 
 }  // namespace recastx::gui

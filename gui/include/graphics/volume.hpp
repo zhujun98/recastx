@@ -187,7 +187,8 @@ class Volume {
 
     std::optional<std::array<float, 2>> min_max_vals_;
 
-    RenderQuality volume_render_quality_;
+    RenderPolicy render_policy_;
+    RenderQuality render_quality_;
     VolumeSlicer slicer_;
     bool global_illumination_ = true;
     float global_illumination_threshold_ = 0.1f;
@@ -230,9 +231,13 @@ public:
 
     [[nodiscard]] const std::optional<std::array<float, 2>>& minMaxVals() const { return min_max_vals_; }
 
-    [[nodiscard]] RenderQuality renderQuality() const { return volume_render_quality_; }
+    [[nodiscard]] RenderQuality renderQuality() const { return render_quality_; }
 
     void setRenderQuality(RenderQuality level);
+
+    [[nodiscard]] RenderPolicy renderPolicy() const { return render_policy_; }
+
+    void setRenderPolicy(RenderPolicy policy);
 
     void setAlpha(float alpha) { alpha_ = alpha; }
 

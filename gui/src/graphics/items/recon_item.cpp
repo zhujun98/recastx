@@ -21,7 +21,6 @@
 #include "graphics/items/recon_item.hpp"
 #include "graphics/aesthetics.hpp"
 #include "graphics/camera3d.hpp"
-#include "graphics/light.hpp"
 #include "graphics/primitives.hpp"
 #include "graphics/slice.hpp"
 #include "graphics/style.hpp"
@@ -32,9 +31,79 @@
 
 namespace recastx::gui {
 
+LightComponent::LightComponent()
+        : color_({1.f, 1.f, 1.f}), ambient_(0.5f), diffuse_(0.7f), specular_(1.f) {
+    light_.is_enabled = true;
+    light_.pos = {0.f, 0.f, 0.f};
+    light_.color = color_;
+    light_.ambient = ambient_ * color_;
+    light_.diffuse = diffuse_ * color_;
+    light_.specular = specular_ * color_;
+}
+
+void LightComponent::renderIm() {
+    ImGui::TextColored(Style::CTRL_SECTION_TITLE_COLOR, "LIGHTING");
+
+    ImGui::Checkbox("On##LIGHT_COMP", &light_.is_enabled);
+    ImGui::BeginDisabled(!light_.is_enabled);
+    if (ImGui::SliderFloat("Ambient##LIGHT_COMP", &ambient_, 0.f, 1.f)) {
+        light_.ambient = ambient_ * color_;
+    }
+    if (ImGui::SliderFloat("Diffuse##LIGHT_COMP", &diffuse_, 0.f, 1.f)) {
+        light_.diffuse = diffuse_ * color_;
+    }
+    if (ImGui::SliderFloat("Specular##LIGHT_COMP", &specular_, 0.f, 1.f)) {
+        light_.specular = specular_ * color_;
+    }
+    ImGui::EndDisabled();
+}
+
+void LightComponent::setLightPos(const glm::vec3 &pos) {
+    light_.pos = pos;
+}
+
+RenderComponent::RenderComponent(Volume* volume) : volume_(volume) {
+}
+
+void RenderComponent::renderIm() {
+    ImGui::TextColored(Style::CTRL_SECTION_TITLE_COLOR, "3D Rendering");
+
+    bool cd = false;
+    static int render_policy = static_cast<int>(volume_->renderPolicy());
+    cd |= ImGui::RadioButton("Volume##RENDER_COMP", &render_policy_,
+                             static_cast<int>(RenderPolicy::VOLUME));
+    ImGui::SameLine();
+    cd |= ImGui::RadioButton("ISO Surface##RENDER_COMP", &render_policy_,
+                             static_cast<int>(RenderPolicy::SURFACE));
+    if (cd) volume_->setRenderPolicy(RenderPolicy(render_policy));
+
+    if (render_policy_ == static_cast<int>(RenderPolicy::VOLUME)) {
+        static float volume_alpha = 1.0f;
+        if (ImGui::SliderFloat("Alpha##RENDER_COMP", &volume_alpha, 0.0f, 1.0f)) {
+            volume_->setAlpha(volume_alpha);
+        }
+
+        static bool global_illumination = volume_->globalIllumination();
+        if (ImGui::Checkbox("Global Illumination##RENDER_COMP", &global_illumination)) {
+            volume_->setGlobalIllumination(global_illumination);
+        }
+
+        static float global_illumination_threshold = volume_->globalIlluminationThreshold();
+        ImGui::BeginDisabled(!global_illumination);
+        if (ImGui::SliderFloat("Threshold##RENDER_COMP", &global_illumination_threshold, 0.f, 1.f)) {
+            volume_->setGlobalIlluminationThreshold(global_illumination_threshold);
+        }
+        ImGui::EndDisabled();
+    } else {
+
+    }
+}
+
+
 ReconItem::ReconItem(Scene& scene)
         : GraphicsItem(scene),
           volume_(new Volume{}),
+          render_comp_(volume_.get()),
           wireframe_(new Wireframe{}) {
     scene.addItem(this);
     vp_ = std::make_shared<Viewport>();
@@ -135,6 +204,10 @@ void ReconItem::renderIm() {
     }
 
     renderImVolumeControl();
+    ImGui::Separator();
+    render_comp_.renderIm();
+    ImGui::Separator();
+    light_comp_.renderIm();
 
     scene_.setStatus("volumeUpdateFrameRate", volume_counter_.frameRate());
     scene_.setStatus("sliceUpdateFrameRate", slice_counter_.frameRate());
@@ -181,7 +254,9 @@ void ReconItem::renderGl() {
     const auto& view_pos = scene_.cameraPosition();
 
     matrix_ = projection * view;
-    const auto& light = scene_.light();
+
+    light_comp_.setLightPos(scene_.cameraPosition() - 5.f * scene_.cameraDir());
+    const auto& light = light_comp_.light();
 
     float min_val = min_val_;
     if (clamp_negatives_) min_val = min_val_ > 0 ? min_val_ : 0;
@@ -356,11 +431,11 @@ bool ReconItem::handleMouseMoved(float x, float y) {
     return false;
 }
 
-RenderQuality ReconItem::volumeRenderQuality() const {
+RenderQuality ReconItem::renderQuality() const {
     return volume_->renderQuality();
 }
 
-void ReconItem::setVolumeRenderQuality(RenderQuality level) {
+void ReconItem::setRenderQuality(RenderQuality level) {
     volume_->setRenderQuality(level);
 }
 
@@ -432,48 +507,34 @@ void ReconItem::renderImVolumeControl() {
     ImGui::PopStyleColor();
 
     if (expand) {
-        bool cd = false;
-        int prev_volume_policy = volume_policy_;
-        cd |= ImGui::RadioButton("Preview##RECON_VOL", &volume_policy_, PREVIEW_VOL);
-        ImGui::SameLine();
-        cd |= ImGui::RadioButton("Show##RECON_VOL", &volume_policy_, SHOW_VOL);
-        ImGui::SameLine();
-        cd |= ImGui::RadioButton("Disable##RECON_VOL", &volume_policy_, DISABLE_VOL);
+        {
+            bool cd = false;
+            int prev_volume_policy = volume_policy_;
+            cd |= ImGui::RadioButton("Preview##RECON_VOL", &volume_policy_, PREVIEW_VOL);
+            ImGui::SameLine();
+            cd |= ImGui::RadioButton("Show##RECON_VOL", &volume_policy_, SHOW_VOL);
+            ImGui::SameLine();
+            cd |= ImGui::RadioButton("Disable##RECON_VOL", &volume_policy_, DISABLE_VOL);
 
-        if (cd) {
-            update_min_max_val_ = true;
-            updateServerVolumeParams();
-            if (prev_volume_policy == DISABLE_VOL && volume_policy_ != DISABLE_VOL) {
-                std::lock_guard lck(volume_mtx_);
-                volume_->clearBuffer();
-            }
+            if (cd) {
+                update_min_max_val_ = true;
+                updateServerVolumeParams();
+                if (prev_volume_policy == DISABLE_VOL && volume_policy_ != DISABLE_VOL) {
+                    std::lock_guard lck(volume_mtx_);
+                    volume_->clearBuffer();
+                }
 
-            if (volume_policy_ == SHOW_VOL) {
-                for (auto& slice : slices_) {
-                    std::get<1>(slice) = DISABLE_SLI;
+                if (volume_policy_ == SHOW_VOL) {
+                    for (auto& slice : slices_) {
+                        std::get<1>(slice) = DISABLE_SLI;
+                    }
                 }
             }
-        }
-
-        static float volume_alpha = 1.0f;
-        if (ImGui::SliderFloat("Alpha##RECON_VOL", &volume_alpha, 0.0f, 1.0f)) {
-            volume_->setAlpha(volume_alpha);
         }
 
         if (ImGui::SliderFloat("Front##RECON_VOL", &volume_front_, volume_front_min_, volume_front_max_)) {
             volume_->setFront(volume_front_);
         }
-
-        static bool global_illumination = volume_->globalIllumination();
-        if (ImGui::Checkbox("Global illumination##Light", &global_illumination)) {
-            volume_->setGlobalIllumination(global_illumination);
-        }
-
-        static float global_illumination_threshold = volume_->globalIlluminationThreshold();
-        if (ImGui::SliderFloat("Threshold##Light", &global_illumination_threshold, 0.f, 1.f)) {
-            volume_->setGlobalIlluminationThreshold(global_illumination_threshold);
-        }
-
     }
 }
 

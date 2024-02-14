@@ -13,7 +13,9 @@
 
 namespace recastx::gui {
 
-enum RenderQuality { LOW = 0, MEDIUM = 1, HIGH = 2};
+enum class RenderQuality { LOW = 0, MEDIUM = 1, HIGH = 2};
+
+enum class RenderPolicy { VOLUME = 0, SURFACE = 1};
 
 static const char KarlaRegular_compressed_data_base85[15900+1] =
     "7])#######5Z9sf'/###I),##bw9hLQXH##j$1S:'>pgLZvaAd668X%QUQl;*31Qg3R9s/N@4',:a`T9n&)Seo$,p8ZW%q/^6se=K9C[HP>JeE';G##Uu/>8i1i86<CDmLg@AS@'Tx-3"
