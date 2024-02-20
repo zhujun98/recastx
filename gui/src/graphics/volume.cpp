@@ -278,6 +278,19 @@ bool Volume::init(uint32_t x, uint32_t y, uint32_t z) {
     return false;
 }
 
+void Volume::setData(const std::string& data, uint32_t x, uint32_t y, uint32_t z) {
+    if (x != x_ || y != y_ || z != z_) {
+        x_ = x;
+        y_ = y;
+        z_ = z;
+        data_.resize(x_ * y_ * z_);
+    }
+    assert(data.size() == x_ * y_ * z_ * sizeof(DataType::value_type));
+    std::memcpy(data_.data(), data.data(), data.size());
+    update_texture_ = true;
+    update_iso_surface_ = true;
+}
+
 bool Volume::setShard(const std::string& shard, uint32_t pos) {
     if (buffer_.empty()) return false;
 

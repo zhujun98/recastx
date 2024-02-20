@@ -18,6 +18,7 @@
 #include <implot.h>
 
 #include "common/utils.hpp"
+#include "models/cube_model.hpp"
 #include "graphics/items/recon_item.hpp"
 #include "graphics/aesthetics.hpp"
 #include "graphics/camera3d.hpp"
@@ -121,6 +122,9 @@ ReconItem::ReconItem(Scene& scene)
     slices_.emplace_back(2, SHOW2D_SLI, std::make_unique<Slice>(2, Slice::Plane::XY));
     assert(slices_.size() == MAX_NUM_SLICES);
     update_min_max_val_ = true;
+
+    CubeModel data;
+    volume_->setData(data.data(), data.x(), data.y(), data.z());
 }
 
 ReconItem::~ReconItem() {

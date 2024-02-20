@@ -206,6 +206,8 @@ public:
 
     bool init(uint32_t x, uint32_t y, uint32_t z);
 
+    void setData(const std::string& data, uint32_t x, uint32_t y, uint32_t z);
+
     bool setShard(const std::string& shard, uint32_t pos);
 
     void preRender();

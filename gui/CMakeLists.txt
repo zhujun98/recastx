@@ -91,6 +91,7 @@ add_executable(${TARGET_NAME} ${GUI_SOURCES})
 target_include_directories(${TARGET_NAME}
         PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include
                 ${CMAKE_CURRENT_LIST_DIR}/../common/include
+                ${CMAKE_CURRENT_LIST_DIR}/../models/include
                 ${FREETYPE_INCLUDE_DIRS}
                 ${IMGUI_DIR}
                 ${IMGUI_DIR}/backends
@@ -108,6 +109,7 @@ target_link_libraries(${TARGET_NAME}
                 Boost::program_options
                 spdlog::spdlog
                 recastx_grpc_proto
+                recastx_models
         )
 
 if (UNIX AND NOT APPLE)
