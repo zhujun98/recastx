@@ -229,7 +229,7 @@ void VolumeSlicer::setFront(float front) {
 }
 
 
-Volume::Volume() : render_quality_(RenderQuality::MEDIUM), slicer_(128) {
+Volume::Volume() : slicer_(128) {
     auto vert =
 #include "shaders/recon_volume.vert"
     ;
@@ -265,6 +265,8 @@ Volume::Volume() : render_quality_(RenderQuality::MEDIUM), slicer_(128) {
 
     screen_shader_->use();
     screen_shader_->setInt("screenTexture", 3);
+
+    setRenderQuality(RenderQuality::MEDIUM);
 };
 
 bool Volume::init(uint32_t x, uint32_t y, uint32_t z) {
@@ -410,17 +412,19 @@ void Volume::clearBuffer() {
 }
 
 void Volume::setRenderQuality(RenderQuality level) {
-    if (render_quality_ != level) {
-        render_quality_ = level;
-        if (level == RenderQuality::LOW) {
-            slicer_.resize(256);
-        } else if (level == RenderQuality::MEDIUM) {
-            slicer_.resize(1024);
-        } else if (level == RenderQuality::HIGH) {
-            slicer_.resize(2048);
-        } else {
-            throw;
-        }
+    render_quality_ = level;
+    if (level == RenderQuality::VERY_LOW) {
+        slicer_.resize(128);
+    } else if (level == RenderQuality::LOW) {
+        slicer_.resize(256);
+    } else if (level == RenderQuality::MEDIUM) {
+        slicer_.resize(512);
+    } else if (level == RenderQuality::HIGH) {
+        slicer_.resize(1024);
+    } else if (level == RenderQuality::VERY_HIGH) {
+        slicer_.resize(2048);
+    } else {
+        throw;
     }
 }
 

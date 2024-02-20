@@ -69,6 +69,11 @@ RenderComponent::RenderComponent(Volume* volume) : volume_(volume) {
 void RenderComponent::renderIm() {
     ImGui::TextColored(Style::CTRL_SECTION_TITLE_COLOR, "3D Rendering");
 
+    static int render_quality = static_cast<int>(volume_->renderQuality());
+    if (ImGui::SliderInt("Quality", &render_quality, 1, 5)) {
+        volume_->setRenderQuality(RenderQuality(render_quality));
+    }
+
     bool cd = false;
     static int render_policy = static_cast<int>(volume_->renderPolicy());
     cd |= ImGui::RadioButton("Volume##RENDER_COMP", &render_policy_,
@@ -433,14 +438,6 @@ bool ReconItem::handleMouseMoved(float x, float y) {
     updateHoveringSlice(x, y);
 
     return false;
-}
-
-RenderQuality ReconItem::renderQuality() const {
-    return volume_->renderQuality();
-}
-
-void ReconItem::setRenderQuality(RenderQuality level) {
-    volume_->setRenderQuality(level);
 }
 
 void ReconItem::moveVolumeFrontForward() {

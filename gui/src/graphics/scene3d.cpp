@@ -114,24 +114,6 @@ void Scene3d::renderMenubarRight() {
 
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("Render")) {
-            if (ImGui::BeginMenu("Volume quality")) {
-                static int render_quality = static_cast<int>(recon_item_->renderQuality());
-                bool cd = ImGui::RadioButton("Low##VOLUME_RENDER_QUALITY", &render_quality,
-                                             static_cast<int>(RenderQuality::LOW));
-                ImGui::SameLine();
-                cd |= ImGui::RadioButton("Medium##VOLUME_RENDER_QUALITY", &render_quality,
-                                         static_cast<int>(RenderQuality::MEDIUM));
-                ImGui::SameLine();
-                cd |= ImGui::RadioButton("High##VOLUME_RENDER_QUALITY", &render_quality,
-                                         static_cast<int>(RenderQuality::HIGH));
-                ImGui::EndMenu();
-
-                if (cd) recon_item_->setRenderQuality(RenderQuality(render_quality));
-            }
-
-            ImGui::EndMenu();
-        }
 
         ImGui::EndMenuBar();
     }

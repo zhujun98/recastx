@@ -13,7 +13,7 @@
 
 namespace recastx::gui {
 
-enum class RenderQuality { LOW = 0, MEDIUM = 1, HIGH = 2};
+enum class RenderQuality { VERY_LOW = 1, LOW = 2, MEDIUM = 3, HIGH = 4, VERY_HIGH = 5};
 
 enum class RenderPolicy { VOLUME = 0, SURFACE = 1};
 

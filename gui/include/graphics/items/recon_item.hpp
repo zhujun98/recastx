@@ -213,9 +213,6 @@ public:
 
     [[nodiscard]] Slice* hoveredSlice() { return hovered_slice_; }
 
-    [[nodiscard]] RenderQuality renderQuality() const;
-    void setRenderQuality(RenderQuality level);
-
     [[nodiscard]] bool wireframeVisible() const { return show_wireframe_; }
     void setWireframeVisible(bool visible) { show_wireframe_ = visible; }
 
