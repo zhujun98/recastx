@@ -162,7 +162,7 @@ class VolumeSlicer {
     void setFront(float front);
 };
 
-class Light;
+struct Light;
 class Viewport;
 
 class Volume {

@@ -22,7 +22,7 @@
 
 namespace recastx::gui {
 
-class Light;
+struct Light;
 class ShaderProgram;
 
 class Slice {
