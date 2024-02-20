@@ -508,27 +508,25 @@ void ReconItem::renderImVolumeControl() {
     ImGui::PopStyleColor();
 
     if (expand) {
-        {
-            bool cd = false;
-            int prev_volume_policy = volume_policy_;
-            cd |= ImGui::RadioButton("Preview##RECON_VOL", &volume_policy_, PREVIEW_VOL);
-            ImGui::SameLine();
-            cd |= ImGui::RadioButton("Show##RECON_VOL", &volume_policy_, SHOW_VOL);
-            ImGui::SameLine();
-            cd |= ImGui::RadioButton("Disable##RECON_VOL", &volume_policy_, DISABLE_VOL);
+        bool cd = false;
+        int prev_volume_policy = volume_policy_;
+        cd |= ImGui::RadioButton("Preview##RECON_VOL", &volume_policy_, PREVIEW_VOL);
+        ImGui::SameLine();
+        cd |= ImGui::RadioButton("Show##RECON_VOL", &volume_policy_, SHOW_VOL);
+        ImGui::SameLine();
+        cd |= ImGui::RadioButton("Disable##RECON_VOL", &volume_policy_, DISABLE_VOL);
 
-            if (cd) {
-                update_min_max_val_ = true;
-                updateServerVolumeParams();
-                if (prev_volume_policy == DISABLE_VOL && volume_policy_ != DISABLE_VOL) {
-                    std::lock_guard lck(volume_mtx_);
-                    volume_->clearBuffer();
-                }
+        if (cd) {
+            update_min_max_val_ = true;
+            updateServerVolumeParams();
+            if (prev_volume_policy == DISABLE_VOL && volume_policy_ != DISABLE_VOL) {
+                std::lock_guard lck(volume_mtx_);
+                volume_->clearBuffer();
+            }
 
-                if (volume_policy_ == SHOW_VOL) {
-                    for (auto& slice : slices_) {
-                        std::get<1>(slice) = DISABLE_SLI;
-                    }
+            if (volume_policy_ == SHOW_VOL) {
+                for (auto& slice : slices_) {
+                    std::get<1>(slice) = DISABLE_SLI;
                 }
             }
         }
