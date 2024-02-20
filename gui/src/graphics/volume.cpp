@@ -20,7 +20,7 @@
 namespace recastx::gui {
 
 VolumeSlicer::VolumeSlicer(size_t num_slices)
-        : shadow_(800, 800), num_slices_(num_slices), slices_(12 * num_slices) {
+        : shadow_(800, 800), num_slices_(num_slices), slices_(12 * num_slices), front_(0.f) {
     glGenVertexArrays(1, &vao_);
     glGenBuffers(1, &vbo_);
 
@@ -223,13 +223,13 @@ std::tuple<float, float, int> VolumeSlicer::sortVertices(const glm::vec3& view_d
 
 void VolumeSlicer::setFront(float front) {
     if (front > front_) {
-        for(size_t i = 0; i < slices_.size(); ++i) slices_[i] = glm::vec3{};
+        for (size_t i = 0; i < slices_.size(); ++i) slices_[i] = glm::vec3{};
     }
     front_ = front;
 }
 
 
-Volume::Volume() : slicer_(128) {
+Volume::Volume() : render_policy_(RenderPolicy::VOLUME), slicer_(128) {
     auto vert =
 #include "shaders/recon_volume.vert"
     ;
@@ -429,9 +429,7 @@ void Volume::setRenderQuality(RenderQuality level) {
 }
 
 void Volume::setRenderPolicy(RenderPolicy policy) {
-    if (render_policy_ != policy) {
-
-    }
+    render_policy_ = policy;
 }
 
 void Volume::updateMinMaxVal() {

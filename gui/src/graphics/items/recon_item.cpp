@@ -76,14 +76,14 @@ void RenderComponent::renderIm() {
 
     bool cd = false;
     static int render_policy = static_cast<int>(volume_->renderPolicy());
-    cd |= ImGui::RadioButton("Volume##RENDER_COMP", &render_policy_,
+    cd |= ImGui::RadioButton("Volume##RENDER_COMP", &render_policy,
                              static_cast<int>(RenderPolicy::VOLUME));
     ImGui::SameLine();
-    cd |= ImGui::RadioButton("ISO Surface##RENDER_COMP", &render_policy_,
+    cd |= ImGui::RadioButton("ISO Surface##RENDER_COMP", &render_policy,
                              static_cast<int>(RenderPolicy::SURFACE));
     if (cd) volume_->setRenderPolicy(RenderPolicy(render_policy));
 
-    if (render_policy_ == static_cast<int>(RenderPolicy::VOLUME)) {
+    if (render_policy == static_cast<int>(RenderPolicy::VOLUME)) {
         static float volume_alpha = 1.0f;
         if (ImGui::SliderFloat("Alpha##RENDER_COMP", &volume_alpha, 0.0f, 1.0f)) {
             volume_->setAlpha(volume_alpha);

@@ -56,8 +56,6 @@ class LightComponent {
 
 class RenderComponent {
 
-    int render_policy_ = static_cast<int>(RenderPolicy::VOLUME);
-
     Volume* volume_;
 
   public:
