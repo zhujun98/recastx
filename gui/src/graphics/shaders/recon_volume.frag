@@ -20,7 +20,7 @@ float remapMinMax(float x, float x0, float x1) {
 
 void main() {
     float value;
-    if (minValue == maxValue) {
+    if (maxValue - minValue < 0.0001f) {
         value = 1.f;
     } else {
         value = remapMinMax(texture(volumeData, volumeCoord).x, minValue, maxValue);
