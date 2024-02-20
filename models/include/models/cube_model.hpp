@@ -25,6 +25,10 @@ class CubeModel {
     uint32_t z_;
     DataType data_;
 
+    void genSubData(uint32_t x0, uint32_t y0, uint32_t z0, size_t step_size);
+
+    void genData();
+
   public:
 
     CubeModel();

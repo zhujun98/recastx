@@ -6,6 +6,6 @@
 #
 # The full license is in the file LICENSE, distributed with this software.
 # -----------------------------------------------------------------------------
-add_library(recastx_models cube_model.cpp)
+add_library(recastx_models src/cube_model.cpp)
 
 target_include_directories(recastx_models PRIVATE ./include)
