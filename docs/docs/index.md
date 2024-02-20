@@ -154,7 +154,8 @@ information which could lead to scientific discoveries.
         <div class="col">
             <h3 class="green">Smart data acquisition</h3>
             <p class="card-text">
-                This will generate huge impact on data reduction. However, we need funding to start this amazing journey.
+                This will generate huge impact on data reduction. Funded by SDSC data science projects 
+                for large-scale infrastructures.
             </p>
         </div>
     </div>
