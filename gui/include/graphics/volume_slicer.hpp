@@ -10,6 +10,7 @@
 #define GUI_VOLUMESLICER_H
 
 #include <iostream>
+#include <tuple>
 #include <vector>
 
 #include <GL/gl3w.h>

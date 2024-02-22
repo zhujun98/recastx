@@ -6,6 +6,8 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
+#include <array>
+
 #include <glm/glm.hpp>
 
 #include "graphics/marchers.hpp"
