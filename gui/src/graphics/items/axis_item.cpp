@@ -59,16 +59,16 @@ void AxisItem::renderIm() {}
 void AxisItem::onFramebufferSizeChanged(int /*width*/, int /*height*/) {}
 
 void AxisItem::renderGl() {
-    vp_->use();
-
-    shader_->use();
-    shader_->setFloat("scale", scene_.cameraDistance());
-    shader_->setMat4("view", scene_.cameraMatrix());
-    shader_->setMat4("projection", vp_->projection());
-
-    glBindVertexArray(vao_);
-    glLineWidth(1.0f);
-    glDrawArrays(GL_LINES, 0, 6);
+//    vp_->use();
+//
+//    shader_->use();
+//    shader_->setFloat("scale", scene_.cameraDistance());
+//    shader_->setMat4("view", scene_.cameraMatrix());
+//    shader_->setMat4("projection", vp_->projection());
+//
+//    glBindVertexArray(vao_);
+//    glLineWidth(1.0f);
+//    glDrawArrays(GL_LINES, 0, 6);
 }
 
 } // namespace recastx::gui
