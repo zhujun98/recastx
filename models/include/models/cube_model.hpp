@@ -31,7 +31,7 @@ class CubeModel {
 
   public:
 
-    CubeModel();
+    CubeModel(uint32_t x, uint32_t y, uint32_t z);
 
     [[nodiscard]] std::string data() const;
 

@@ -10,8 +10,8 @@
 
 #include "models/cube_model.hpp"
 
-CubeModel::CubeModel()
-        : x_(512), y_(512), z_(512), data_(x_ * y_ * z_, 0.f) {
+CubeModel::CubeModel(uint32_t x, uint32_t y, uint32_t z)
+        : x_(x), y_(y), z_(z), data_(x_ * y_ * z_, 0.f) {
     genData();
 }
 
@@ -33,10 +33,10 @@ void CubeModel::genSubData(uint32_t x0, uint32_t y0, uint32_t z0, size_t step_si
 }
 
 void CubeModel::genData() {
-    const size_t step_size = 64;
-    for (size_t i = 32; i < x_ - step_size; i += 2 * step_size) {
-        for (size_t j = 32; j < y_ - step_size; j += 2 * step_size) {
-            for (size_t k = 32; k < z_ - step_size; k += 2 * step_size) {
+    const size_t step_size = 32;
+    for (size_t i = 16; i < x_ - step_size; i += 2 * step_size) {
+        for (size_t j = 16; j < y_ - step_size; j += 2 * step_size) {
+            for (size_t k = 16; k < z_ - step_size; k += 2 * step_size) {
                 genSubData(i, j, k, step_size);
             }
         }
