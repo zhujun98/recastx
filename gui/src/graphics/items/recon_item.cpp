@@ -299,7 +299,9 @@ void ReconItem::renderGl() {
                 "view", view * glm::translate(rotator.rot_base) * glm::scale(rotator.rot_end - rotator.rot_base));
         wireframe_->shader()->setVec4("color", glm::vec4(1.f, 1.f, 1.f, 1.f));
         glBindVertexArray(rotation_axis_vao_);
-        glLineWidth(10.f);
+#ifndef __APPLE__
+        glLineWidth(2.f);
+#endif
         glDrawArrays(GL_LINES, 0, 2);
     }
 

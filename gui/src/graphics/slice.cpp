@@ -131,7 +131,9 @@ void Slice::render(const glm::mat4& view,
             frame_shader_->setVec4("frameColor", K_EMPTY_FRAME_COLOR_);
         }
         glBindVertexArray(vao_);
-        glLineWidth(2.0f);
+#ifndef __APPLE__
+        glLineWidth(2.f);
+#endif
         glDrawArrays(GL_LINE_LOOP, 0, 4);
     }
 
