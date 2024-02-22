@@ -24,8 +24,8 @@ SurfaceVertices Marcher::march(int dx, int dy, int dz) {
     glm::vec3 edge_normals[12];
 
     SurfaceVertices vertices_;
-    for (int z = 0; z < z_;z += dz) {
-        for (int y = 0; y < y_;y += dy) {
+    for (int z = 0; z < z_; z += dz) {
+        for (int y = 0; y < y_; y += dy) {
             for (int x = 0; x < x_; x += dx) {
                 for (size_t i = 0; i < 8; ++i) {
                     corner_values[i] = sampleVolume(x + vertex_offset[i][0] * dx,
@@ -70,6 +70,7 @@ SurfaceVertices Marcher::march(int dx, int dy, int dz) {
                 }
             }
         }
+
     }
 
     return vertices_;

@@ -348,6 +348,9 @@ class Marcher {
 
     // inline member function
     DataType::value_type sampleVolume(int x, int y, int z) {
+        if (x >= x_) x = x_ - 1;
+        if (y >= y_) y = y_ - 1;
+        if (z >= z_) z = z_ - 1;
         int index = (z * y_ + y) * x_ + x;
         return data_[index];
     }
