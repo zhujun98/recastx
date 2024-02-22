@@ -107,11 +107,6 @@ void Scene3d::renderMenubarRight() {
                 recon_item_->setHistogramVisible(show_histogram);
             }
 
-            static bool show_wireframe = recon_item_->wireframeVisible();
-            if (ImGui::Checkbox("Show wireframe##VIEW", &show_wireframe)) {
-                recon_item_->setWireframeVisible(show_wireframe);
-            }
-
             ImGui::EndMenu();
         }
 

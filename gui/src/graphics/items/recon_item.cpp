@@ -171,6 +171,8 @@ void ReconItem::renderIm() {
                            std::numeric_limits<float>::max());
     ImGui::EndDisabled();
 
+    ImGui::Checkbox("Show wireframe##VIEW", &show_wireframe_);
+
     renderImSliceControl<0>("Slice 1##RECON");
     renderImSliceControl<1>("Slice 2##RECON");
     renderImSliceControl<2>("Slice 3##RECON");
