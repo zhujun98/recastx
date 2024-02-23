@@ -39,6 +39,9 @@ class LightComponent {
 
     Light light_;
 
+    bool auto_pos_;
+    float pos_[3];
+
     glm::vec3 color_;
     float ambient_;
     float diffuse_;
@@ -50,7 +53,7 @@ class LightComponent {
 
     void renderIm();
 
-    void setLightPos(const glm::vec3& pos);
+    void updatePos(const glm::vec3& pos);
 
     [[nodiscard]] const Light& light() const { return light_; }
 };
@@ -161,9 +164,9 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
     static constexpr float volume_front_min_ = 0.0f;
     static constexpr float volume_front_max_ = 1.0f;
 
-    RenderComponent render_comp_;
     LightComponent light_comp_;
     MaterialComponent material_comp_;
+    RenderComponent render_comp_;
 
     std::unique_ptr<Wireframe> wireframe_;
     bool show_wireframe_ = true;
