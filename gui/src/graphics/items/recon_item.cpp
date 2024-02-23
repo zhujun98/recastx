@@ -33,9 +33,14 @@
 namespace recastx::gui {
 
 LightComponent::LightComponent()
-        : color_({1.f, 1.f, 1.f}), ambient_(0.5f), diffuse_(0.7f), specular_(1.f) {
+        : auto_pos_(true),
+          pos_{0.f, 0.f, 0.f},
+          color_({1.f, 1.f, 1.f}),
+          ambient_(0.5f),
+          diffuse_(0.7f),
+          specular_(1.f) {
     light_.is_enabled = true;
-    light_.pos = {0.f, 0.f, 0.f};
+    light_.pos = glm::vec3(pos_[0], pos_[1], pos_[2]);
     light_.color = color_;
     light_.ambient = ambient_ * color_;
     light_.diffuse = diffuse_ * color_;
@@ -46,7 +51,19 @@ void LightComponent::renderIm() {
     ImGui::TextColored(Style::CTRL_SECTION_TITLE_COLOR, "LIGHTING");
 
     ImGui::Checkbox("On##LIGHT_COMP", &light_.is_enabled);
+    ImGui::SameLine();
+
     ImGui::BeginDisabled(!light_.is_enabled);
+
+    static bool auto_pos;
+    ImGui::Checkbox("Auto Positioning##LIGHT_COMP", &auto_pos_);
+
+    ImGui::BeginDisabled(auto_pos_);
+    if (ImGui::DragFloat3("Position##LIGHT_COMP", pos_, 0.1f, -20.f, 20.f, "%.1f")) {
+        light_.pos = glm::vec3(pos_[0], pos_[1], pos_[2]);
+    }
+    ImGui::EndDisabled();
+
     if (ImGui::SliderFloat("Ambient##LIGHT_COMP", &ambient_, 0.f, 1.f)) {
         light_.ambient = ambient_ * color_;
     }
@@ -56,17 +73,22 @@ void LightComponent::renderIm() {
     if (ImGui::SliderFloat("Specular##LIGHT_COMP", &specular_, 0.f, 1.f)) {
         light_.specular = specular_ * color_;
     }
+
     ImGui::EndDisabled();
 }
 
-void LightComponent::setLightPos(const glm::vec3 &pos) {
+void LightComponent::updatePos(const glm::vec3 &pos) {
+    if (!auto_pos_) return;
+    pos_[0] = pos[0];
+    pos_[1] = pos[1];
+    pos_[2] = pos[2];
     light_.pos = pos;
 }
 
 
 MaterialComponent::MaterialComponent(Volume* volume) : volume_(volume), color_{0.f, 0.f, 1.f} {
     material_.color = glm::vec3(color_[0], color_[1], color_[2]);
-    material_.shininess = 64.f;
+    material_.shininess = 32.f;
     material_.iso_value = 0.f;
 }
 
@@ -298,7 +320,7 @@ void ReconItem::renderGl() {
 
     matrix_ = projection * view;
 
-    light_comp_.setLightPos(scene_.cameraPosition() - 5.f * scene_.cameraDir());
+    light_comp_.updatePos(scene_.cameraPosition() - 5.f * scene_.cameraDir());
     const auto& light = light_comp_.light();
     const auto& material = material_comp_.material();
 
