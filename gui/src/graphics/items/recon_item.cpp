@@ -36,9 +36,9 @@ LightComponent::LightComponent()
         : auto_pos_(true),
           pos_{0.f, 0.f, 0.f},
           color_({1.f, 1.f, 1.f}),
-          ambient_(0.5f),
-          diffuse_(0.7f),
-          specular_(1.f) {
+          ambient_(0.3f),
+          diffuse_(0.5f),
+          specular_(0.5f) {
     light_.is_enabled = true;
     light_.pos = glm::vec3(pos_[0], pos_[1], pos_[2]);
     light_.color = color_;
@@ -180,8 +180,8 @@ ReconItem::ReconItem(Scene& scene)
     assert(slices_.size() == MAX_NUM_SLICES);
     update_min_max_val_ = true;
 
-    CubeModel data(256, 256, 256);
-    volume_->setData(data.data(), data.x(), data.y(), data.z());
+    CubeModel data(256);
+    volume_->setData(data.data(), data.x(), data.x(), data.x());
 }
 
 ReconItem::~ReconItem() {
@@ -320,7 +320,7 @@ void ReconItem::renderGl() {
 
     matrix_ = projection * view;
 
-    light_comp_.updatePos(scene_.cameraPosition() - 5.f * scene_.cameraDir());
+    light_comp_.updatePos(scene_.cameraPosition() - scene_.cameraDir());
     const auto& light = light_comp_.light();
     const auto& material = material_comp_.material();
 
