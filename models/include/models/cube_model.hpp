@@ -21,25 +21,21 @@ class CubeModel {
   private:
 
     uint32_t x_;
-    uint32_t y_;
-    uint32_t z_;
     DataType data_;
 
-    void genSubData(uint32_t x0, uint32_t y0, uint32_t z0, size_t step_size);
+    void genCylinder(uint32_t xc, uint32_t yc, uint32_t z0, uint32_t z1, uint32_t r, DataType::value_type v);
+
+    void genDonut(uint32_t xc, uint32_t yc, uint32_t zc, uint32_t r1, uint32_t r2, DataType::value_type v);
 
     void genData();
 
   public:
 
-    CubeModel(uint32_t x, uint32_t y, uint32_t z);
+    CubeModel(uint32_t x);
 
     [[nodiscard]] std::string data() const;
 
     [[nodiscard]] uint32_t x() const { return x_; }
-
-    [[nodiscard]] uint32_t y() const { return y_; }
-
-    [[nodiscard]] uint32_t z() const { return z_; }
 };
 
 #endif //MODEL_CUBEMODEL_H
