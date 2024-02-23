@@ -63,6 +63,36 @@ void LightComponent::setLightPos(const glm::vec3 &pos) {
     light_.pos = pos;
 }
 
+
+MaterialComponent::MaterialComponent(Volume* volume) : volume_(volume), color_{0.f, 0.f, 1.f} {
+    material_.color = glm::vec3(color_[0], color_[1], color_[2]);
+    material_.shininess = 64.f;
+    material_.iso_value = 0.f;
+}
+
+void MaterialComponent::renderIm() {
+    ImGui::TextColored(Style::CTRL_SECTION_TITLE_COLOR, "MATERIAL");
+
+    if (ImGui::ColorEdit3("Color##MATERIAL_COMP", color_)) {
+        material_.color = glm::vec3(color_[0], color_[1], color_[2]);
+    }
+    ImGui::SliderFloat("Shininess##MATERIAL_COMP", &material_.shininess, 0.f, 100.f);
+
+    {
+        float min_v = 0.f;
+        float max_v = 1.f;
+        const auto& min_max_v = volume_->minMaxVals();
+        if (min_max_v) {
+            min_v = min_max_v.value()[0] - 0.0001f;
+            max_v = min_max_v.value()[1] + 0.0001f;
+        }
+        if (ImGui::SliderFloat("ISO Value##MATERIAL_COMP", &material_.iso_value, min_v, max_v)) {
+            volume_->setIsoValueUpdated();
+        }
+    }
+}
+
+
 RenderComponent::RenderComponent(Volume* volume) : volume_(volume) {
 }
 
@@ -101,7 +131,6 @@ void RenderComponent::renderIm() {
         }
         ImGui::EndDisabled();
     } else {
-
     }
 }
 
@@ -109,6 +138,7 @@ void RenderComponent::renderIm() {
 ReconItem::ReconItem(Scene& scene)
         : GraphicsItem(scene),
           volume_(new Volume{}),
+          material_comp_(volume_.get()),
           render_comp_(volume_.get()),
           wireframe_(new Wireframe{}) {
     scene.addItem(this);
@@ -219,6 +249,8 @@ void ReconItem::renderIm() {
     render_comp_.renderIm();
     ImGui::Separator();
     light_comp_.renderIm();
+    ImGui::Separator();
+    material_comp_.renderIm();
 
     scene_.setStatus("volumeUpdateFrameRate", volume_counter_.frameRate());
     scene_.setStatus("sliceUpdateFrameRate", slice_counter_.frameRate());
@@ -268,6 +300,7 @@ void ReconItem::renderGl() {
 
     light_comp_.setLightPos(scene_.cameraPosition() - 5.f * scene_.cameraDir());
     const auto& light = light_comp_.light();
+    const auto& material = material_comp_.material();
 
     float min_val = min_val_;
     if (clamp_negatives_) min_val = min_val_ > 0 ? min_val_ : 0;
@@ -283,7 +316,7 @@ void ReconItem::renderGl() {
     volume_->unbind();
 
     if (volume_policy_ == SHOW_VOL) {
-        volume_->render(view, projection, min_val, max_val_, view_dir, view_pos, light, vp_);
+        volume_->render(view, projection, min_val, max_val_, view_dir, view_pos, light, material, vp_);
     }
 
     cm_.unbind();

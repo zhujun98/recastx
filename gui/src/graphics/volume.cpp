@@ -13,6 +13,7 @@
 
 #include "graphics/iso_surface.hpp"
 #include "graphics/light.hpp"
+#include "graphics/material.hpp"
 #include "graphics/volume.hpp"
 #include "graphics/volume_slicer.hpp"
 #include "graphics/primitives.hpp"
@@ -140,6 +141,7 @@ void Volume::render(const glm::mat4& view,
                     const glm::vec3& view_dir,
                     const glm::vec3& view_pos,
                     const Light& light,
+                    const Material& material,
                     const std::shared_ptr<Viewport>& vp) {
     if (!texture_.isReady()) return;
 
@@ -197,14 +199,11 @@ void Volume::render(const glm::mat4& view,
         }
     } else if (render_policy_ == RenderPolicy::SURFACE) {
         if (update_iso_surface_) {
-            iso_surface_->polygonize(data_, x_, y_, z_, 0.f);
+            iso_surface_->polygonize(data_, x_, y_, z_, material.iso_value);
             update_iso_surface_ = false;
         }
 
         iso_shader_->use();
-
-        iso_shader_->setFloat("minValue", min_v);
-        iso_shader_->setFloat("maxValue", max_v);
 
         iso_shader_->setMat4("mvp", projection * view);
 
@@ -214,6 +213,9 @@ void Volume::render(const glm::mat4& view,
         iso_shader_->setVec3("light.ambient", light.ambient);
         iso_shader_->setVec3("light.diffuse", light.diffuse);
         iso_shader_->setVec3("light.specular", light.specular);
+
+        iso_shader_->setVec3("material.color", material.color);
+        iso_shader_->setFloat("material.shininess", material.shininess);
 
         texture_.bind();
         iso_surface_->draw();

@@ -21,6 +21,7 @@
 #include "graphics/items/graphics_item.hpp"
 #include "graphics/aesthetics.hpp"
 #include "graphics/light.hpp"
+#include "graphics/material.hpp"
 #include "graphics/scene.hpp"
 #include "graphics/shader_program.hpp"
 #include "graphics/style.hpp"
@@ -54,13 +55,30 @@ class LightComponent {
     [[nodiscard]] const Light& light() const { return light_; }
 };
 
+class MaterialComponent {
+
+    Volume* volume_;
+
+    Material material_;
+
+    float color_[3];
+
+public:
+
+    explicit MaterialComponent(Volume* volume);
+
+    void renderIm();
+
+    [[nodiscard]] const Material& material() const { return material_; }
+};
+
 class RenderComponent {
 
     Volume* volume_;
 
   public:
 
-    RenderComponent(Volume* volume);
+    explicit RenderComponent(Volume* volume);
 
     void renderIm();
 };
@@ -145,6 +163,7 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
 
     RenderComponent render_comp_;
     LightComponent light_comp_;
+    MaterialComponent material_comp_;
 
     std::unique_ptr<Wireframe> wireframe_;
     bool show_wireframe_ = true;

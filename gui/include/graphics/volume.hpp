@@ -25,6 +25,7 @@ namespace recastx::gui {
 
 class IsoSurface;
 struct Light;
+struct Material;
 class ShaderProgram;
 class Viewport;
 class VolumeSlicer;
@@ -88,6 +89,7 @@ public:
                 const glm::vec3& view_dir,
                 const glm::vec3& view_pos,
                 const Light& light,
+                const Material& material,
                 const std::shared_ptr<Viewport>& vp);
 
     [[nodiscard]] bool hasTexture() const { return texture_.isReady(); }
@@ -121,6 +123,8 @@ public:
     [[nodiscard]] float globalIlluminationThreshold() const { return global_illumination_threshold_; }
 
     void setGlobalIlluminationThreshold(float value) { global_illumination_threshold_ = value; }
+
+    void setIsoValueUpdated() { update_iso_surface_ = true; }
 };
 
 } // namespace recastx::gui
