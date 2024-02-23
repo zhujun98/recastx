@@ -60,23 +60,25 @@ set(GUI_SOURCES
         "src/utils.cpp"
         "src/graphics/aesthetics.cpp"
         "src/graphics/camera3d.cpp"
+        "src/graphics/iso_surface.cpp"
         "src/graphics/scene.cpp"
         "src/graphics/scene3d.cpp"
         "src/graphics/glyph_renderer.cpp"
         "src/graphics/graph_node.cpp"
         "src/graphics/image_buffer.cpp"
+        "src/graphics/marchers.cpp"
         "src/graphics/shader_program.cpp"
         "src/graphics/slice.cpp"
         "src/graphics/texture.cpp"
         "src/graphics/viewport.cpp"
         "src/graphics/volume.cpp"
+        "src/graphics/volume_slicer.cpp"
         "src/graphics/wireframe.cpp"
         "src/graphics/items/geometry_item.cpp"
         "src/graphics/items/axis_item.cpp"
         "src/graphics/items/axiscube_item.cpp"
         "src/graphics/items/graphics_item.cpp"
         "src/graphics/items/icon_item.cpp"
-        "src/graphics/items/light_item.cpp"
         "src/graphics/items/logging_item.cpp"
         "src/graphics/items/preproc_item.cpp"
         "src/graphics/items/projection_item.cpp"
@@ -92,6 +94,7 @@ add_executable(${TARGET_NAME} ${GUI_SOURCES})
 target_include_directories(${TARGET_NAME}
         PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include
                 ${CMAKE_CURRENT_LIST_DIR}/../common/include
+                ${CMAKE_CURRENT_LIST_DIR}/../models/include
                 ${FREETYPE_INCLUDE_DIRS}
                 ${IMGUI_DIR}
                 ${IMGUI_DIR}/backends
@@ -109,6 +112,7 @@ target_link_libraries(${TARGET_NAME}
                 Boost::program_options
                 spdlog::spdlog
                 recastx_grpc_proto
+                recastx_models
         )
 
 if (UNIX AND NOT APPLE)

@@ -18,10 +18,10 @@
 #include <implot.h>
 
 #include "common/utils.hpp"
+#include "models/cube_model.hpp"
 #include "graphics/items/recon_item.hpp"
 #include "graphics/aesthetics.hpp"
 #include "graphics/camera3d.hpp"
-#include "graphics/light.hpp"
 #include "graphics/primitives.hpp"
 #include "graphics/slice.hpp"
 #include "graphics/style.hpp"
@@ -32,9 +32,114 @@
 
 namespace recastx::gui {
 
+LightComponent::LightComponent()
+        : color_({1.f, 1.f, 1.f}), ambient_(0.5f), diffuse_(0.7f), specular_(1.f) {
+    light_.is_enabled = true;
+    light_.pos = {0.f, 0.f, 0.f};
+    light_.color = color_;
+    light_.ambient = ambient_ * color_;
+    light_.diffuse = diffuse_ * color_;
+    light_.specular = specular_ * color_;
+}
+
+void LightComponent::renderIm() {
+    ImGui::TextColored(Style::CTRL_SECTION_TITLE_COLOR, "LIGHTING");
+
+    ImGui::Checkbox("On##LIGHT_COMP", &light_.is_enabled);
+    ImGui::BeginDisabled(!light_.is_enabled);
+    if (ImGui::SliderFloat("Ambient##LIGHT_COMP", &ambient_, 0.f, 1.f)) {
+        light_.ambient = ambient_ * color_;
+    }
+    if (ImGui::SliderFloat("Diffuse##LIGHT_COMP", &diffuse_, 0.f, 1.f)) {
+        light_.diffuse = diffuse_ * color_;
+    }
+    if (ImGui::SliderFloat("Specular##LIGHT_COMP", &specular_, 0.f, 1.f)) {
+        light_.specular = specular_ * color_;
+    }
+    ImGui::EndDisabled();
+}
+
+void LightComponent::setLightPos(const glm::vec3 &pos) {
+    light_.pos = pos;
+}
+
+
+MaterialComponent::MaterialComponent(Volume* volume) : volume_(volume), color_{0.f, 0.f, 1.f} {
+    material_.color = glm::vec3(color_[0], color_[1], color_[2]);
+    material_.shininess = 64.f;
+    material_.iso_value = 0.f;
+}
+
+void MaterialComponent::renderIm() {
+    ImGui::TextColored(Style::CTRL_SECTION_TITLE_COLOR, "MATERIAL");
+
+    if (ImGui::ColorEdit3("Color##MATERIAL_COMP", color_)) {
+        material_.color = glm::vec3(color_[0], color_[1], color_[2]);
+    }
+    ImGui::SliderFloat("Shininess##MATERIAL_COMP", &material_.shininess, 0.f, 100.f);
+
+    {
+        float min_v = 0.f;
+        float max_v = 1.f;
+        const auto& min_max_v = volume_->minMaxVals();
+        if (min_max_v) {
+            min_v = min_max_v.value()[0] - 0.0001f;
+            max_v = min_max_v.value()[1] + 0.0001f;
+        }
+        if (ImGui::SliderFloat("ISO Value##MATERIAL_COMP", &material_.iso_value, min_v, max_v)) {
+            volume_->setIsoValueUpdated();
+        }
+    }
+}
+
+
+RenderComponent::RenderComponent(Volume* volume) : volume_(volume) {
+}
+
+void RenderComponent::renderIm() {
+    ImGui::TextColored(Style::CTRL_SECTION_TITLE_COLOR, "3D Rendering");
+
+    static int render_quality = static_cast<int>(volume_->renderQuality());
+    if (ImGui::SliderInt("Quality", &render_quality, 1, 5)) {
+        volume_->setRenderQuality(RenderQuality(render_quality));
+    }
+
+    bool cd = false;
+    static int render_policy = static_cast<int>(volume_->renderPolicy());
+    cd |= ImGui::RadioButton("Volume##RENDER_COMP", &render_policy,
+                             static_cast<int>(RenderPolicy::VOLUME));
+    ImGui::SameLine();
+    cd |= ImGui::RadioButton("ISO Surface##RENDER_COMP", &render_policy,
+                             static_cast<int>(RenderPolicy::SURFACE));
+    if (cd) volume_->setRenderPolicy(RenderPolicy(render_policy));
+
+    if (render_policy == static_cast<int>(RenderPolicy::VOLUME)) {
+        static float volume_alpha = 1.0f;
+        if (ImGui::SliderFloat("Alpha##RENDER_COMP", &volume_alpha, 0.0f, 1.0f)) {
+            volume_->setAlpha(volume_alpha);
+        }
+
+        static bool global_illumination = volume_->globalIllumination();
+        if (ImGui::Checkbox("Global Illumination##RENDER_COMP", &global_illumination)) {
+            volume_->setGlobalIllumination(global_illumination);
+        }
+
+        static float global_illumination_threshold = volume_->globalIlluminationThreshold();
+        ImGui::BeginDisabled(!global_illumination);
+        if (ImGui::SliderFloat("Threshold##RENDER_COMP", &global_illumination_threshold, 0.f, 1.f)) {
+            volume_->setGlobalIlluminationThreshold(global_illumination_threshold);
+        }
+        ImGui::EndDisabled();
+    } else {
+    }
+}
+
+
 ReconItem::ReconItem(Scene& scene)
         : GraphicsItem(scene),
           volume_(new Volume{}),
+          material_comp_(volume_.get()),
+          render_comp_(volume_.get()),
           wireframe_(new Wireframe{}) {
     scene.addItem(this);
     vp_ = std::make_shared<Viewport>();
@@ -52,6 +157,9 @@ ReconItem::ReconItem(Scene& scene)
     slices_.emplace_back(2, SHOW2D_SLI, std::make_unique<Slice>(2, Slice::Plane::XY));
     assert(slices_.size() == MAX_NUM_SLICES);
     update_min_max_val_ = true;
+
+    CubeModel data(256, 256, 256);
+    volume_->setData(data.data(), data.x(), data.y(), data.z());
 }
 
 ReconItem::~ReconItem() {
@@ -92,6 +200,8 @@ void ReconItem::renderIm() {
                            std::numeric_limits<float>::lowest(), // min() does not work
                            std::numeric_limits<float>::max());
     ImGui::EndDisabled();
+
+    ImGui::Checkbox("Show wireframe##VIEW", &show_wireframe_);
 
     renderImSliceControl<0>("Slice 1##RECON");
     renderImSliceControl<1>("Slice 2##RECON");
@@ -135,6 +245,12 @@ void ReconItem::renderIm() {
     }
 
     renderImVolumeControl();
+    ImGui::Separator();
+    render_comp_.renderIm();
+    ImGui::Separator();
+    light_comp_.renderIm();
+    ImGui::Separator();
+    material_comp_.renderIm();
 
     scene_.setStatus("volumeUpdateFrameRate", volume_counter_.frameRate());
     scene_.setStatus("sliceUpdateFrameRate", slice_counter_.frameRate());
@@ -181,7 +297,10 @@ void ReconItem::renderGl() {
     const auto& view_pos = scene_.cameraPosition();
 
     matrix_ = projection * view;
-    const auto& light = scene_.light();
+
+    light_comp_.setLightPos(scene_.cameraPosition() - 5.f * scene_.cameraDir());
+    const auto& light = light_comp_.light();
+    const auto& material = material_comp_.material();
 
     float min_val = min_val_;
     if (clamp_negatives_) min_val = min_val_ > 0 ? min_val_ : 0;
@@ -197,7 +316,7 @@ void ReconItem::renderGl() {
     volume_->unbind();
 
     if (volume_policy_ == SHOW_VOL) {
-        volume_->render(view, projection, min_val, max_val_, view_dir, view_pos, light, vp_);
+        volume_->render(view, projection, min_val, max_val_, view_dir, view_pos, light, material, vp_);
     }
 
     cm_.unbind();
@@ -215,7 +334,9 @@ void ReconItem::renderGl() {
                 "view", view * glm::translate(rotator.rot_base) * glm::scale(rotator.rot_end - rotator.rot_base));
         wireframe_->shader()->setVec4("color", glm::vec4(1.f, 1.f, 1.f, 1.f));
         glBindVertexArray(rotation_axis_vao_);
-        glLineWidth(10.f);
+#ifndef __APPLE__
+        glLineWidth(2.f);
+#endif
         glDrawArrays(GL_LINES, 0, 2);
     }
 
@@ -356,14 +477,6 @@ bool ReconItem::handleMouseMoved(float x, float y) {
     return false;
 }
 
-RenderQuality ReconItem::volumeRenderQuality() const {
-    return volume_->renderQuality();
-}
-
-void ReconItem::setVolumeRenderQuality(RenderQuality level) {
-    volume_->setRenderQuality(level);
-}
-
 void ReconItem::moveVolumeFrontForward() {
     volume_front_ += volume_front_step_;
     if (volume_front_ > volume_front_max_) volume_front_ = volume_front_max_;
@@ -455,25 +568,9 @@ void ReconItem::renderImVolumeControl() {
             }
         }
 
-        static float volume_alpha = 1.0f;
-        if (ImGui::SliderFloat("Alpha##RECON_VOL", &volume_alpha, 0.0f, 1.0f)) {
-            volume_->setAlpha(volume_alpha);
-        }
-
         if (ImGui::SliderFloat("Front##RECON_VOL", &volume_front_, volume_front_min_, volume_front_max_)) {
             volume_->setFront(volume_front_);
         }
-
-        static bool global_illumination = volume_->globalIllumination();
-        if (ImGui::Checkbox("Global illumination##Light", &global_illumination)) {
-            volume_->setGlobalIllumination(global_illumination);
-        }
-
-        static float global_illumination_threshold = volume_->globalIlluminationThreshold();
-        if (ImGui::SliderFloat("Threshold##Light", &global_illumination_threshold, 0.f, 1.f)) {
-            volume_->setGlobalIlluminationThreshold(global_illumination_threshold);
-        }
-
     }
 }
 

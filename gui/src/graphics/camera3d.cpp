@@ -118,7 +118,7 @@ void Camera::setFrontView() {
     view_.reset();
 
     rotation_ = glm::mat4(1.0f);
-    dist_ = 5.f;
+    dist_ = 4.5f;
     pos_ = glm::vec3{dist_, 0.f, 0.f};
 }
 

@@ -52,6 +52,7 @@ find_package(gRPC CONFIG 1.51.1 REQUIRED)
 message(STATUS "Found gRPC ${gRPC_VERSION}")
 
 add_subdirectory(protos)
+add_subdirectory(models)
 
 if (BUILD_TEST)
     include(FetchContent)

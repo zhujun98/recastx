@@ -25,7 +25,6 @@ namespace recastx::gui {
 
 class ShaderProgram;
 class Camera;
-class Light;
 
 class Scene : public GraphNode, public InputHandler {
 
@@ -89,8 +88,6 @@ public:
     [[nodiscard]] glm::vec3 cameraPosition() const;
 
     [[nodiscard]] float cameraDistance() const;
-
-    [[nodiscard]] virtual const Light& light() const = 0;
 
     void onFramebufferSizeChanged(int width, int height);
 

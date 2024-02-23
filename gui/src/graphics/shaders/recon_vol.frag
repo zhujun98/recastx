@@ -1,7 +1,7 @@
 R"glsl(
 #version 330
 
-in vec3 volumeCoord;
+in vec3 texCoord;
 
 out vec4 fColor;
 
@@ -20,10 +20,10 @@ float remapMinMax(float x, float x0, float x1) {
 
 void main() {
     float value;
-    if (minValue == maxValue) {
+    if (maxValue - minValue < 0.0001f) {
         value = 1.f;
     } else {
-        value = remapMinMax(texture(volumeData, volumeCoord).x, minValue, maxValue);
+        value = remapMinMax(texture(volumeData, texCoord).x, minValue, maxValue);
     }
 
     fColor = vec4(texture(colormap, value).xyz, alpha * value);

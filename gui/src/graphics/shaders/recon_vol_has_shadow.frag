@@ -23,10 +23,17 @@ float remapMinMax(float x, float x0, float x1) {
 void main() {
     vec3 lightIntensity =  textureProj(shadowTexture, shadowCoords.xyw).xyz;
 
-	float density = remapMinMax(texture(volumeData, texCoords).r, minValue, maxValue);
+    float density;
+    if (maxValue - minValue < 0.0001f) {
+        density = 1.f;
+    } else {
+        density = remapMinMax(texture(volumeData, texCoords).r, minValue, maxValue);
+    }
 
 	if(density > threshold) {
 		fColor = vec4(lightColor * lightIntensity * density, density);
+	} else {
+	    fColor = vec4(0.f);
 	}
 }
 

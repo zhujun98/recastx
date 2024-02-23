@@ -28,10 +28,10 @@ Slice::Slice(int slice_id, Plane plane) : id_(slice_id), plane_(plane) {
     glEnableVertexAttribArray(0);
 
     auto vert =
-#include "shaders/recon_slice.vert"
+#include "shaders/recon_sli.vert"
     ;
     auto frag =
-#include "shaders/recon_slice.frag"
+#include "shaders/recon_sli.frag"
     ;
     shader_ = std::make_unique<ShaderProgram>(vert, frag);
 
@@ -42,10 +42,10 @@ Slice::Slice(int slice_id, Plane plane) : id_(slice_id), plane_(plane) {
     shader_->unuse();
 
     auto frame_vert =
-#include "shaders/recon_slice_frame.vert"
+#include "shaders/recon_sli_frame.vert"
     ;
     auto frame_frag =
-#include "shaders/recon_slice_frame.frag"
+#include "shaders/recon_sli_frame.frag"
     ;
     frame_shader_ = std::make_unique<ShaderProgram>(frame_vert, frame_frag);
 
@@ -131,7 +131,9 @@ void Slice::render(const glm::mat4& view,
             frame_shader_->setVec4("frameColor", K_EMPTY_FRAME_COLOR_);
         }
         glBindVertexArray(vao_);
-        glLineWidth(2.0f);
+#ifndef __APPLE__
+        glLineWidth(2.f);
+#endif
         glDrawArrays(GL_LINE_LOOP, 0, 4);
     }
 

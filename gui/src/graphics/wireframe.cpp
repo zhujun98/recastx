@@ -49,7 +49,9 @@ void Wireframe::render(const glm::mat4& view, const glm::mat4& projection) {
     shader_->setVec4("color", color_);
 
     glBindVertexArray(vao_);
-    glLineWidth(1.f);
+#ifndef __APPLE__
+    glLineWidth(0.5f);
+#endif
     glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, nullptr);
 }
 
