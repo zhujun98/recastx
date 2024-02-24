@@ -23,29 +23,49 @@ ControlService::ControlService(Application* app) : app_(app) {}
 grpc::Status ControlService::StartAcquiring(grpc::ServerContext* /*context*/,
                                             const google::protobuf::Empty* /*req*/,
                                             google::protobuf::Empty* /*rep*/) {
-    app_->startAcquiring();
-    return grpc::Status::OK;
+    try {
+        app_->startAcquiring();
+        return grpc::Status::OK;
+    } catch (const std::exception& e) {
+        spdlog::error("Failed to start acquiring!");
+        return {grpc::StatusCode::RESOURCE_EXHAUSTED, e.what()};
+    }
 }
 
 grpc::Status ControlService::StopAcquiring(grpc::ServerContext* /*context*/,
                                            const google::protobuf::Empty*  /*req*/,
                                            google::protobuf::Empty* /*rep*/) {
-    app_->stopAcquiring();
-    return grpc::Status::OK;
+    try {
+        app_->stopAcquiring();
+        return grpc::Status::OK;
+    } catch (const std::exception& e) {
+        spdlog::error("Failed to stop acquiring!");
+        return {grpc::StatusCode::RESOURCE_EXHAUSTED, e.what()};
+    }
 }
 
 grpc::Status ControlService::StartProcessing(grpc::ServerContext* /*context*/,
                                              const google::protobuf::Empty*  /*req*/,
                                              google::protobuf::Empty* /*rep*/) {
-    app_->startProcessing();
-    return grpc::Status::OK;
+    try {
+        app_->startProcessing();
+        return grpc::Status::OK;
+    } catch (const std::exception& e) {
+        spdlog::error("Failed to start processing!");
+        return {grpc::StatusCode::RESOURCE_EXHAUSTED, e.what()};
+    }
 }
 
 grpc::Status ControlService::StopProcessing(grpc::ServerContext* /*context*/,
                                             const google::protobuf::Empty*  /*req*/,
                                             google::protobuf::Empty* /*rep*/) {
-    app_->stopProcessing();
-    return grpc::Status::OK;
+    try {
+        app_->stopProcessing();
+        return grpc::Status::OK;
+    } catch (const std::exception& e) {
+        spdlog::error("Failed to stop processing!");
+        return {grpc::StatusCode::RESOURCE_EXHAUSTED, e.what()};
+    }
 }
 
 grpc::Status ControlService::GetServerState(grpc::ServerContext* /*context*/,

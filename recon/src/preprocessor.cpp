@@ -25,8 +25,8 @@ void Preprocessor::init(RawBufferType& buffer, size_t col_count, size_t row_coun
     initPaganin(paganin_cfg, buffer, col_count, row_count);
     disable_negative_log_ = imgproc_params.disable_negative_log;
 
-    spdlog::info("- Ramp filter: {}", imgproc_params.ramp_filter.name);
-    spdlog::info("- Number of image-processing threads: {}", num_threads_);
+    spdlog::info("[Init] - Ramp filter: {}", imgproc_params.ramp_filter.name);
+    spdlog::info("[Init] - Number of image-processing threads: {}", num_threads_);
 }
 
 void Preprocessor::process(RawBufferType& raw_buffer,

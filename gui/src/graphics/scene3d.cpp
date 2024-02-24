@@ -166,9 +166,11 @@ void Scene3d::renderScanModeControl() {
     ImGui::BeginDisabled(server_state_ == rpc::ServerState_State_PROCESSING);
 
     static int scan_mode = static_cast<int>(scan_mode_);
-    ImGui::RadioButton("Continuous", &scan_mode, static_cast<int>(rpc::ScanMode_Mode_CONTINUOUS));
+    ImGui::RadioButton("Static", &scan_mode, static_cast<int>(rpc::ScanMode_Mode_STATIC));
     ImGui::SameLine();
-    ImGui::RadioButton("Discrete", &scan_mode, static_cast<int>(rpc::ScanMode_Mode_DISCRETE));
+    ImGui::RadioButton("Dynamic", &scan_mode, static_cast<int>(rpc::ScanMode_Mode_DYNAMIC));
+    ImGui::SameLine();
+    ImGui::RadioButton("Continuous", &scan_mode, static_cast<int>(rpc::ScanMode_Mode_CONTINUOUS));
     scan_mode_ = rpc::ScanMode_Mode(scan_mode);
 
     ImGui::AlignTextToFramePadding();

@@ -156,7 +156,7 @@ class ApplicationTest : public testing::Test {
             ramp_filter_factory_(new MockRampFilterFactory()),
             recon_factory_(new MockReconFactory()),
             app_ {buffer_size_, imgproc_params, daq_client_.get(), ramp_filter_factory_.get(), recon_factory_.get(), rpc_cfg} {
-        app_.setScanMode(rpc::ScanMode_Mode_DISCRETE, num_angles_);
+        app_.setScanMode(rpc::ScanMode_Mode_DYNAMIC, num_angles_);
     }
 
     ~ApplicationTest() override {

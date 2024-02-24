@@ -88,12 +88,12 @@ AstraReconstructor::AstraReconstructor(const ProjectionGeometry& p_geom,
     s_geom_ = makeVolumeGeometry(s_geom);
     s_mem_ = makeVolumeGeometryMemHandle(s_geom);
     s_data_ = std::make_unique<astra::CFloat32VolumeData3DGPU>(s_geom_.get(), s_mem_);
-    spdlog::info("- Slice geometry: {}", details::astraInfo(*s_geom_));
-    
+    spdlog::info("[Init] - Slice geometry: {}", details::astraInfo(*s_geom_));
+
     v_geom_ = makeVolumeGeometry(v_geom);
     v_mem_ = makeVolumeGeometryMemHandle(v_geom);
     v_data_ = std::make_unique<astra::CFloat32VolumeData3DGPU>(v_geom_.get(), v_mem_);
-    spdlog::info("- Volume geometry: {}", details::astraInfo(*v_geom_));
+    spdlog::info("[Init] - Volume geometry: {}", details::astraInfo(*v_geom_));
 
     for (int i = 0; i < (double_buffering ? 2 : 1); ++i) {
         uploader_.emplace_back(p_geom.angles.size());
@@ -101,7 +101,7 @@ AstraReconstructor::AstraReconstructor(const ProjectionGeometry& p_geom,
 }
 
 AstraReconstructor::~AstraReconstructor() {
-    spdlog::info("Deconstructing Reconstructor and freeing GPU memory ...");
+    spdlog::debug("Deconstructing Reconstructor and freeing GPU memory ...");
 
     astraCUDA3d::freeGPUMemory(s_mem_);
     astraCUDA3d::freeGPUMemory(v_mem_);
@@ -155,8 +155,8 @@ ParallelBeamReconstructor::ParallelBeamReconstructor(size_t col_count,
             angle_count, row_count, col_count, par_projs.data());
     }
 
-    spdlog::info("- Slice projection geometry: {}", details::astraInfo(*s_p_geom_));
-    spdlog::info("- Volume projection geometry: {}", details::astraInfo(*v_p_geom_));
+    spdlog::info("[Init] - Slice projection geometry: {}", details::astraInfo(*s_p_geom_));
+    spdlog::info("[Init] - Volume projection geometry: {}", details::astraInfo(*v_p_geom_));
 
     vectors_ = std::vector<astra::SPar3DProjection>(
         s_p_geom_->getProjectionVectors(), s_p_geom_->getProjectionVectors() + angle_count);
@@ -176,6 +176,9 @@ ParallelBeamReconstructor::ParallelBeamReconstructor(size_t col_count,
             projector_.get(), p_data_[i].get(), s_data_.get()));
         v_algo_.push_back(std::make_unique<astra::CCudaBackProjectionAlgorithm3D>(
             projector_.get(), p_data_[i].get(), v_data_.get()));
+
+        spdlog::info("[Init] - Allocated GPU memory for sinogram buffer {}: {:.1f} MB",
+                     i + 1, buf.size() * sizeof(float) / static_cast<double>(1024 * 1024));
     }
 }
 
@@ -277,8 +280,8 @@ ConeBeamReconstructor::ConeBeamReconstructor(size_t col_count,
             angle_count, row_count, col_count, cone_projs.data());
     }
     
-    spdlog::info("- Slice projection geometry: {}", details::astraInfo(*s_p_geom_));
-    spdlog::info("- Volume projection geometry: {}", details::astraInfo(*v_p_geom_));
+    spdlog::info("[Init] - Slice projection geometry: {}", details::astraInfo(*s_p_geom_));
+    spdlog::info("[Init] - Volume projection geometry: {}", details::astraInfo(*v_p_geom_));
 
     vectors_ = std::vector<astra::SConeProjection>(
         s_p_geom_->getProjectionVectors(), s_p_geom_->getProjectionVectors() + angle_count);

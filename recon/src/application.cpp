@@ -40,7 +40,7 @@ Application::Application(size_t raw_buffer_size,
        imgproc_params_(imageproc_params),
        preproc_(new Preprocessor(ramp_filter_factory, imageproc_params.num_threads)),
        recon_factory_(recon_factory),
-       scan_mode_(rpc::ScanMode_Mode_DISCRETE),
+       scan_mode_(rpc::ScanMode_Mode_STATIC),
        scan_update_interval_(K_MIN_SCAN_UPDATE_INTERVAL),
        daq_client_(daq_client),
        rpc_server_(new RpcServer(rpc_config.port, this)) {
@@ -151,7 +151,7 @@ void Application::startUploading() {
             spdlog::info("Uploading sinograms to GPU - started");
             size_t chunk_size = sino_buffer_.front().shape()[0];
             {
-                if (scan_mode_ == rpc::ScanMode_Mode_DISCRETE) {
+                if (scan_mode_ == rpc::ScanMode_Mode_DYNAMIC) {
                     recon_->uploadSinograms(1 - gpu_buffer_index_, sino_buffer_.front().data(), chunk_size);
 
                     std::lock_guard<std::mutex> lck(gpu_mtx_);
@@ -305,8 +305,8 @@ void Application::setVolumeReq(bool required) {
 void Application::setScanMode(rpc::ScanMode_Mode mode, uint32_t update_interval) {
     scan_mode_ = mode;
     scan_update_interval_ = update_interval;
-    
-    if (mode == rpc::ScanMode_Mode_DISCRETE) {
+
+    if (mode != rpc::ScanMode_Mode_CONTINUOUS) {
         spdlog::debug("Set scan mode: {}", static_cast<int>(mode));
     } else {
         spdlog::debug("Set scan mode: {}, update interval {}", 
@@ -363,8 +363,10 @@ void Application::startProcessing() {
     if (scan_mode_ == rpc::ScanMode_Mode_CONTINUOUS) {
         spdlog::info("- Scan mode: continuous");
         spdlog::info("- Update interval: {}", scan_update_interval_);
-    } else if (scan_mode_ == rpc::ScanMode_Mode_DISCRETE) {
-        spdlog::info("- Scan mode: discrete");
+    } else if (scan_mode_ == rpc::ScanMode_Mode_DYNAMIC) {
+        spdlog::info("- Scan mode: dynamic");
+    } else if (scan_mode_ == rpc::ScanMode_Mode_STATIC) {
+        spdlog::info("- Scan mode: static");
     }
 
     monitor_.reset(new Monitor(proj_geom_.row_count * proj_geom_.col_count * sizeof(RawDtype), group_size_));
@@ -431,7 +433,7 @@ std::vector<rpc::ReconData> Application::getOnDemandSliceData(int timeout) {
 }
 
 void Application::init() {
-    spdlog::info("Initial parameters:");
+    spdlog::info("[Init] ------------------------------------------------------------");
 
     initParams();
 
@@ -440,17 +442,19 @@ void Application::init() {
     size_t col_count = proj_geom_.col_count / downsampling_col;
     size_t row_count = proj_geom_.row_count / downsampling_row;
 
-    maybeInitFlatFieldBuffer(row_count, col_count);
+    spdlog::info("[Init] - Projection image size: {} ({}) x {} ({})",
+                 col_count, downsampling_col, row_count, downsampling_row);
+    spdlog::info("[Init] - Number of projection images per scan: {}", proj_geom_.angles.size());
 
-    preproc_->init(raw_buffer_, col_count, row_count, imgproc_params_, paganin_cfg_);
+    maybeInitFlatFieldBuffer(row_count, col_count);
 
     maybeInitReconBuffer(col_count, row_count);
 
+    preproc_->init(raw_buffer_, col_count, row_count, imgproc_params_, paganin_cfg_);
+
     initReconstructor(col_count, row_count);
 
-    spdlog::info("- Number of projection images per tomogram: {}", proj_geom_.angles.size());
-    spdlog::info("- Projection image size: {} ({}) x {} ({})", 
-                 col_count, downsampling_col, row_count, downsampling_row);
+    spdlog::info("[Init] ------------------------------------------------------------");
 }
 
 void Application::initParams() {
@@ -478,7 +482,8 @@ void Application::initReconstructor(size_t col_count, size_t row_count) {
     volume_buffer_.resize({volume_geom_.col_count, volume_geom_.row_count, volume_geom_.slice_count});
     slice_mediator_->resize({slice_geom_.col_count, slice_geom_.row_count});
 
-    bool double_buffering = scan_mode_ == rpc::ScanMode_Mode_DISCRETE;
+    bool double_buffering = scan_mode_ == rpc::ScanMode_Mode_DYNAMIC;
+    recon_.reset();
     recon_ = recon_factory_->create(
         col_count, row_count, proj_geom_, slice_geom_, volume_geom_, double_buffering);
 }
@@ -514,6 +519,9 @@ void Application::maybeInitFlatFieldBuffer(size_t row_count, size_t col_count) {
 }
 
 void Application::maybeInitReconBuffer(size_t col_count, size_t row_count) {
+    double sino_size = col_count * row_count * proj_geom_.angles.size() * sizeof(ProDtype) / static_cast<double>(1024 * 1024);
+    spdlog::info("[Init] - sinogram size: {:.1f} MB", sino_size);
+
     auto shape = raw_buffer_.shape();
     if (shape[0] != group_size_ || shape[1] != row_count || shape[2] != col_count) {
         raw_buffer_.resize({group_size_, row_count, col_count});

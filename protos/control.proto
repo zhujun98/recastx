@@ -42,8 +42,9 @@ message ServerState {
 
 message ScanMode {
   enum Mode {
-    CONTINUOUS = 0;
-    DISCRETE = 1;
+    STATIC = 0;
+    DYNAMIC = 1;
+    CONTINUOUS = 2;
   }
 
   Mode mode = 1;

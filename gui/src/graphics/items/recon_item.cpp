@@ -55,7 +55,6 @@ void LightComponent::renderIm() {
 
     ImGui::BeginDisabled(!light_.is_enabled);
 
-    static bool auto_pos;
     ImGui::Checkbox("Auto Positioning##LIGHT_COMP", &auto_pos_);
 
     ImGui::BeginDisabled(auto_pos_);
