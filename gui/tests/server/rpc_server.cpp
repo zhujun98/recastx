@@ -62,8 +62,10 @@ grpc::Status ControlService::SetScanMode(grpc::ServerContext* context,
     std::string mode_str;
     if (mode->mode() == rpc::ScanMode_Mode_CONTINUOUS) {
         mode_str = "continuous";
-    } else if (mode->mode() == rpc::ScanMode_Mode_DISCRETE) {
-        mode_str = "discrete";
+    } else if (mode->mode() == rpc::ScanMode_Mode_DYNAMIC) {
+        mode_str = "dynamic";
+    } else if (mode->mode() == rpc::ScanMode_Mode_STATIC) {
+        mode_str = "static";
     }
     spdlog::info("Set scan mode: {} / {}", mode_str, mode->update_interval());
 
