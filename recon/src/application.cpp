@@ -433,7 +433,7 @@ std::vector<rpc::ReconData> Application::getOnDemandSliceData(int timeout) {
 }
 
 void Application::init() {
-    spdlog::info("Initial parameters:");
+    spdlog::info("[Init] ------------------------------------------------------------");
 
     initParams();
 
@@ -442,17 +442,19 @@ void Application::init() {
     size_t col_count = proj_geom_.col_count / downsampling_col;
     size_t row_count = proj_geom_.row_count / downsampling_row;
 
-    maybeInitFlatFieldBuffer(row_count, col_count);
+    spdlog::info("[Init] - Projection image size: {} ({}) x {} ({})",
+                 col_count, downsampling_col, row_count, downsampling_row);
+    spdlog::info("[Init] - Number of projection images per scan: {}", proj_geom_.angles.size());
 
-    preproc_->init(raw_buffer_, col_count, row_count, imgproc_params_, paganin_cfg_);
+    maybeInitFlatFieldBuffer(row_count, col_count);
 
     maybeInitReconBuffer(col_count, row_count);
 
+    preproc_->init(raw_buffer_, col_count, row_count, imgproc_params_, paganin_cfg_);
+
     initReconstructor(col_count, row_count);
 
-    spdlog::info("- Number of projection images per tomogram: {}", proj_geom_.angles.size());
-    spdlog::info("- Projection image size: {} ({}) x {} ({})", 
-                 col_count, downsampling_col, row_count, downsampling_row);
+    spdlog::info("[Init] ------------------------------------------------------------");
 }
 
 void Application::initParams() {
@@ -516,6 +518,9 @@ void Application::maybeInitFlatFieldBuffer(size_t row_count, size_t col_count) {
 }
 
 void Application::maybeInitReconBuffer(size_t col_count, size_t row_count) {
+    double sino_size = col_count * row_count * proj_geom_.angles.size() * sizeof(ProDtype) / static_cast<double>(1024 * 1024);
+    spdlog::info("[Init] - sinogram size: {:.1f} MB", sino_size);
+
     auto shape = raw_buffer_.shape();
     if (shape[0] != group_size_ || shape[1] != row_count || shape[2] != col_count) {
         raw_buffer_.resize({group_size_, row_count, col_count});
