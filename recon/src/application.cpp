@@ -483,6 +483,7 @@ void Application::initReconstructor(size_t col_count, size_t row_count) {
     slice_mediator_->resize({slice_geom_.col_count, slice_geom_.row_count});
 
     bool double_buffering = scan_mode_ == rpc::ScanMode_Mode_DYNAMIC;
+    recon_.reset();
     recon_ = recon_factory_->create(
         col_count, row_count, proj_geom_, slice_geom_, volume_geom_, double_buffering);
 }

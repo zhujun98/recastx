@@ -101,7 +101,7 @@ AstraReconstructor::AstraReconstructor(const ProjectionGeometry& p_geom,
 }
 
 AstraReconstructor::~AstraReconstructor() {
-    spdlog::info("Deconstructing Reconstructor and freeing GPU memory ...");
+    spdlog::debug("Deconstructing Reconstructor and freeing GPU memory ...");
 
     astraCUDA3d::freeGPUMemory(s_mem_);
     astraCUDA3d::freeGPUMemory(v_mem_);
@@ -176,6 +176,9 @@ ParallelBeamReconstructor::ParallelBeamReconstructor(size_t col_count,
             projector_.get(), p_data_[i].get(), s_data_.get()));
         v_algo_.push_back(std::make_unique<astra::CCudaBackProjectionAlgorithm3D>(
             projector_.get(), p_data_[i].get(), v_data_.get()));
+
+        spdlog::info("[Init] - Allocated GPU memory for sinogram buffer {}: {:.1f} MB",
+                     i + 1, buf.size() * sizeof(float) / static_cast<double>(1024 * 1024));
     }
 }
 
