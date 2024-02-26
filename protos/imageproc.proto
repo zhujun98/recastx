@@ -14,12 +14,19 @@ import "google/protobuf/empty.proto";
 service Imageproc {
   rpc SetDownsampling (DownsamplingParams) returns (google.protobuf.Empty) {}
 
+  rpc SetCorrection (CorrectionParams) returns (google.protobuf.Empty) {}
+
   rpc SetRampFilter (RampFilterParams) returns (google.protobuf.Empty) {}
 }
 
 message DownsamplingParams {
   uint32 col = 1;
   uint32 row = 2;
+}
+
+message CorrectionParams {
+  int32 col_offset = 1;
+  int32 row_offset = 2;
 }
 
 message RampFilterParams {

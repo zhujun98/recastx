@@ -108,6 +108,8 @@ class RpcClient {
 
     bool setDownsampling(uint32_t col, uint32_t row);
 
+    bool setCorrection(int32_t col_off, int32_t row_off);
+
     bool setRampFilter(const std::string& filter_name);
 
     bool setProjection(uint32_t id);

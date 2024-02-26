@@ -18,12 +18,13 @@ class PreprocItem : public GraphicsItem {
     int downsampling_col_ = 1;
     int downsampling_row_ = 1;
 
-//    float x_offset_ = 0.f;
-//    float y_offset_ = 0.f;
+    int32_t offsets_[2] = {0, 0};
 
     std::string ramp_filter_name_;
 
     bool setDownsampling();
+
+    bool setOffset();
 
     bool setRampFilter();
 
