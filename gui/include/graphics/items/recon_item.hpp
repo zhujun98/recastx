@@ -161,8 +161,6 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
     int volume_policy_ = PREVIEW_VOL;
     float volume_front_ = 0.f;
     float volume_front_step_ = 0.01f;
-    static constexpr float volume_front_min_ = 0.0f;
-    static constexpr float volume_front_max_ = 1.0f;
 
     LightComponent light_comp_;
     MaterialComponent material_comp_;

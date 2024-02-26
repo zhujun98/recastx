@@ -69,7 +69,7 @@ void ProjectionItem::renderIm() {
 
     bool rerender = false;
     ImGui::BeginDisabled(auto_levels_);
-    float step_size = (max_val_ - min_val_) / 100.f;
+    float step_size = (max_val_ - min_val_) / 200.f;
     if (step_size < 0.01f) step_size = 0.01f; // avoid a tiny step size
     rerender |= ImGui::DragFloatRange2("Min / Max##PROJECTION", &min_val_, &max_val_, step_size,
                                        std::numeric_limits<float>::lowest(), // min() does not work
