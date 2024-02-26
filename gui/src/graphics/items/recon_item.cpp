@@ -58,18 +58,18 @@ void LightComponent::renderIm() {
     ImGui::Checkbox("Auto Positioning##LIGHT_COMP", &auto_pos_);
 
     ImGui::BeginDisabled(auto_pos_);
-    if (ImGui::DragFloat3("Position##LIGHT_COMP", pos_, 0.1f, -20.f, 20.f, "%.1f")) {
+    if (ImGui::DragFloat3("Position##LIGHT_COMP", pos_, 0.05f, -20.f, 20.f, "%.2f", ImGuiSliderFlags_ClampOnInput)) {
         light_.pos = glm::vec3(pos_[0], pos_[1], pos_[2]);
     }
     ImGui::EndDisabled();
 
-    if (ImGui::SliderFloat("Ambient##LIGHT_COMP", &ambient_, 0.f, 1.f)) {
+    if (ImGui::DragFloat("Ambient##LIGHT_COMP", &ambient_, 0.005f, 0.f, 1.f, "%.3f", ImGuiSliderFlags_ClampOnInput)) {
         light_.ambient = ambient_ * color_;
     }
-    if (ImGui::SliderFloat("Diffuse##LIGHT_COMP", &diffuse_, 0.f, 1.f)) {
+    if (ImGui::DragFloat("Diffuse##LIGHT_COMP", &diffuse_, 0.005f, 0.f, 1.f, "%.3f", ImGuiSliderFlags_ClampOnInput)) {
         light_.diffuse = diffuse_ * color_;
     }
-    if (ImGui::SliderFloat("Specular##LIGHT_COMP", &specular_, 0.f, 1.f)) {
+    if (ImGui::DragFloat("Specular##LIGHT_COMP", &specular_, 0.005f, 0.f, 1.f, "%.3f", ImGuiSliderFlags_ClampOnInput)) {
         light_.specular = specular_ * color_;
     }
 
@@ -97,7 +97,7 @@ void MaterialComponent::renderIm() {
     if (ImGui::ColorEdit3("Color##MATERIAL_COMP", color_)) {
         material_.color = glm::vec3(color_[0], color_[1], color_[2]);
     }
-    ImGui::SliderFloat("Shininess##MATERIAL_COMP", &material_.shininess, 0.f, 100.f);
+    ImGui::DragFloat("Shininess##MATERIAL_COMP", &material_.shininess, 1.f, 0.f, 100.f, "%.1f", ImGuiSliderFlags_ClampOnInput);
 
     {
         float min_v = 0.f;
@@ -107,7 +107,9 @@ void MaterialComponent::renderIm() {
             min_v = min_max_v.value()[0] - 0.0001f;
             max_v = min_max_v.value()[1] + 0.0001f;
         }
-        if (ImGui::SliderFloat("ISO Value##MATERIAL_COMP", &material_.iso_value, min_v, max_v)) {
+        float step_size = (max_v - min_v) / 200.f;
+        if (step_size < 0.01f) step_size = 0.01f; // avoid a tiny step size
+        if (ImGui::DragFloat("ISO Value##MATERIAL_COMP", &material_.iso_value, step_size, min_v, max_v, "%.2f", ImGuiSliderFlags_ClampOnInput)) {
             volume_->setIsoValueUpdated();
         }
     }
@@ -136,7 +138,7 @@ void RenderComponent::renderIm() {
 
     if (render_policy == static_cast<int>(RenderPolicy::VOLUME)) {
         static float volume_alpha = 1.0f;
-        if (ImGui::SliderFloat("Alpha##RENDER_COMP", &volume_alpha, 0.0f, 1.0f)) {
+        if (ImGui::DragFloat("Alpha##RENDER_COMP", &volume_alpha, 0.005f, 0.0f, 1.0f, "%.3f", ImGuiSliderFlags_ClampOnInput)) {
             volume_->setAlpha(volume_alpha);
         }
 
@@ -147,7 +149,7 @@ void RenderComponent::renderIm() {
 
         static float global_illumination_threshold = volume_->globalIlluminationThreshold();
         ImGui::BeginDisabled(!global_illumination);
-        if (ImGui::SliderFloat("Threshold##RENDER_COMP", &global_illumination_threshold, 0.f, 1.f)) {
+        if (ImGui::DragFloat("Threshold##RENDER_COMP", &global_illumination_threshold, 0.005f, 0.f, 1.f, "%.3f", ImGuiSliderFlags_ClampOnInput)) {
             volume_->setGlobalIlluminationThreshold(global_illumination_threshold);
         }
         ImGui::EndDisabled();
@@ -215,7 +217,7 @@ void ReconItem::renderIm() {
     ImGui::Checkbox("Clamp negatives##RECON", &clamp_negatives_);
 
     ImGui::BeginDisabled(auto_levels_);
-    float step_size = (max_val_ - min_val_) / 100.f;
+    float step_size = (max_val_ - min_val_) / 200.f;
     if (step_size < 0.01f) step_size = 0.01f; // avoid a tiny step size
     ImGui::DragFloatRange2("Min / Max##RECON", &min_val_, &max_val_, step_size,
                            std::numeric_limits<float>::lowest(), // min() does not work
@@ -500,12 +502,12 @@ bool ReconItem::handleMouseMoved(float x, float y) {
 
 void ReconItem::moveVolumeFrontForward() {
     volume_front_ += volume_front_step_;
-    if (volume_front_ > volume_front_max_) volume_front_ = volume_front_max_;
+    if (volume_front_ > 1.f) volume_front_ = 1.f;
     volume_->setFront(volume_front_);
 };
 void ReconItem::moveVolumeFrontBackward() {
     volume_front_ -= volume_front_step_;
-    if (volume_front_ < volume_front_min_) volume_front_ = volume_front_min_;
+    if (volume_front_ < 0.f) volume_front_ = 0.f;
     volume_->setFront(volume_front_);
 };
 
@@ -588,7 +590,7 @@ void ReconItem::renderImVolumeControl() {
             }
         }
 
-        if (ImGui::SliderFloat("Front##RECON_VOL", &volume_front_, volume_front_min_, volume_front_max_)) {
+        if (ImGui::DragFloat("Front##RECON_VOL", &volume_front_, 0.005, 0.f, 1.f, "%.3f", ImGuiSliderFlags_ClampOnInput)) {
             volume_->setFront(volume_front_);
         }
     }
