@@ -74,32 +74,32 @@ grpc::Status ControlService::SetScanMode(grpc::ServerContext* context,
 
 ImageprocService::ImageprocService(Application* app) : app_(app) {}
 
-grpc::Status ImageprocService::SetDownsampling(grpc::ServerContext* context,
+grpc::Status ImageprocService::SetDownsampling(grpc::ServerContext* /*context*/,
                                                const rpc::DownsamplingParams* params,
-                                               google::protobuf::Empty* ack) {
+                                               google::protobuf::Empty* /*ack*/) {
     spdlog::info("Set projection downsampling: {} / {}", params->col(), params->row());
     return grpc::Status::OK;
 }
 
-grpc::Status ImageprocService::SetCorrection(grpc::ServerContext* context,
+grpc::Status ImageprocService::SetCorrection(grpc::ServerContext* /*context*/,
                                              const rpc::CorrectionParams* params,
-                                             google::protobuf::Empty* ack) {
-    spdlog::info("Set projection corrections (H/V): {} / {}", params->offset_col(), params->offset_row());
+                                             google::protobuf::Empty* /*ack*/) {
+    spdlog::info("Set projection center corrections: {}", params->offset());
     return grpc::Status::OK;
 }
 
-grpc::Status ImageprocService::SetRampFilter(grpc::ServerContext* contest,
+grpc::Status ImageprocService::SetRampFilter(grpc::ServerContext* /*contest*/,
                                              const rpc::RampFilterParams* params,
-                                             google::protobuf::Empty* ack) {
+                                             google::protobuf::Empty* /*ack*/) {
     spdlog::info("Set projection filter: {}", params->name());
     return grpc::Status::OK;
 }
 
 ProjectionTransferService::ProjectionTransferService(Application* app) : app_(app) {}
 
-grpc::Status ProjectionTransferService::SetProjection(grpc::ServerContext* context,
+grpc::Status ProjectionTransferService::SetProjection(grpc::ServerContext* /*context*/,
                                                       const rpc::Projection* request,
-                                                      google::protobuf::Empty* ack) {
+                                                      google::protobuf::Empty* /*ack*/) {
     proj_id_ = request->id();
     spdlog::info("Set projection id: {}", proj_id_);
     return grpc::Status::OK;

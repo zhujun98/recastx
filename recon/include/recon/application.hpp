@@ -215,7 +215,7 @@ class Application {
 
     void setDownsampling(uint32_t col, uint32_t row);
 
-    void setCorrection(int col, int row);
+    void setCorrection(int offset);
 
     void setRampFilter(std::string filter_name);
 

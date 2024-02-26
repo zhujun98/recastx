@@ -64,8 +64,7 @@ public:
                  SinoBufferType &sino_buffer,
                  const ProImageData &dark_avg,
                  const ProImageData &reciprocal,
-                 int32_t offset_row,
-                 int32_t offset_col);
+                 int32_t offset);
 
 };
 

@@ -67,7 +67,7 @@ void PreprocItem::renderIm() {
     ImGui::SameLine();
     ImGui::Text("%d", downsampling_row_);
 
-    ImGui::DragInt2("H/V offset", offsets_, 1, -50, 50);
+    ImGui::DragInt("Offset", &offset_, 1, -100, 100);
 
     static const std::map<std::string, std::string> filter_options {
             {"shepp", "Shepp-Logan"},
@@ -96,7 +96,7 @@ bool PreprocItem::setDownsampling() {
 }
 
 bool PreprocItem::setOffset() {
-    return scene_.client()->setCorrection(offsets_[0], offsets_[1]);
+    return scene_.client()->setCorrection(offset_);
 }
 
 bool PreprocItem::setRampFilter() {

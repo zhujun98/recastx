@@ -110,62 +110,29 @@ inline void copyToSinogram(T1& dst,
                            size_t chunk_size,
                            size_t row_count,
                            size_t col_count,
-                           int32_t offset_row,
-                           int32_t offset_col) {
+                           int32_t offset) {
     // (chunk_idx, rows, cols) -> (rows, chunk_idx, cols).
-    if (offset_row >= 0 && offset_col >= 0) {
+    if (offset >= 0) {
 
-        for (size_t j = row_count - offset_row; j < row_count; ++j) {
-            for (size_t k = col_count - offset_col; k < col_count; ++k) {
+        for (size_t j = 0; j < row_count; ++j) {
+            for (size_t k = col_count - offset; k < col_count; ++k) {
                 dst[(row_count - 1 - j) * chunk_size * col_count + chunk_idx * col_count + k] = 0;
             }
-        }
-        for (size_t j = 0; j < row_count - offset_row; ++j) {
-            for (size_t k = 0; k < col_count - offset_col; ++k) {
+            for (size_t k = 0; k < col_count - offset; ++k) {
                 dst[(row_count - 1 - j) * chunk_size * col_count + chunk_idx * col_count + k] =
-                        src[chunk_idx * col_count * row_count + (j - offset_row) * col_count + k - offset_col];
-            }
-        }
-
-    } else if (offset_row >= 0 && offset_col < 0) {
-
-        for (size_t j = row_count - offset_row; j < row_count; ++j) {
-            for (size_t k = 0; k < -offset_col; ++k) {
-                dst[(row_count - 1 - j) * chunk_size * col_count + chunk_idx * col_count + k] = 0;
-            }
-        }
-        for (size_t j = 0; j < row_count - offset_row; ++j) {
-            for (size_t k = -offset_col; k < col_count; ++k) {
-                dst[(row_count - 1 - j) * chunk_size * col_count + chunk_idx * col_count + k] =
-                        src[chunk_idx * col_count * row_count + (j - offset_row) * col_count + k + offset_col];
-            }
-        }
-
-    } else if (offset_row < 0 && offset_col >= 0) {
-
-        for (size_t j = 0; j < -offset_row; ++j) {
-            for (size_t k = col_count - offset_col; k < col_count; ++k) {
-                dst[(row_count - 1 - j) * chunk_size * col_count + chunk_idx * col_count + k] = 0;
-            }
-        }
-        for (size_t j = -offset_row; j < row_count; ++j) {
-            for (size_t k = 0; k < col_count - offset_col; ++k) {
-                dst[(row_count - 1 - j) * chunk_size * col_count + chunk_idx * col_count + k] =
-                        src[chunk_idx * col_count * row_count + (j + offset_row) * col_count + k - offset_col];
+                        src[chunk_idx * col_count * row_count + j * col_count + k - offset];
             }
         }
 
     } else {
 
-        for (size_t j = 0; j < -offset_row; ++j) {
-            for (size_t k = 0; k < -offset_col; ++k) {
+        for (size_t j = 0; j < row_count; ++j) {
+            for (size_t k = 0; k < static_cast<size_t>(-offset); ++k) {
                 dst[(row_count - 1 - j) * chunk_size * col_count + chunk_idx * col_count + k] = 0;
             }
-        }
-        for (size_t j = -offset_row; j < row_count; ++j) {
-            for (size_t k = -offset_col; k < col_count; ++k) {
+            for (size_t k = -offset; k < col_count; ++k) {
                 dst[(row_count - 1 - j) * chunk_size * col_count + chunk_idx * col_count + k] =
-                        src[chunk_idx * col_count * row_count + (j + offset_row) * col_count + k + offset_col];
+                        src[chunk_idx * col_count * row_count + j * col_count + k + offset];
             }
         }
 

@@ -228,7 +228,7 @@ int main(int argc, char** argv) {
     recastx::recon::AstraReconstructorFactory recon_factory;
     recastx::RpcServerConfig rpc_server_cfg {rpc_port};
     recastx::ImageprocParams imageproc_params {
-        imageproc_threads, downsampling_col, downsampling_row, 0, 0, disable_negative_log, { ramp_filter }
+        imageproc_threads, downsampling_col, downsampling_row, 0, disable_negative_log, { ramp_filter }
     };
     recastx::recon::Application app(raw_buffer_size, imageproc_params, 
                                     daq_client.get(), &ramp_filter_factory, &recon_factory, rpc_server_cfg);
