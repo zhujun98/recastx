@@ -88,9 +88,14 @@ ImageprocService::ImageprocService(Application* app) : app_(app) {}
 grpc::Status ImageprocService::SetDownsampling(grpc::ServerContext* /*context*/,
                                                const rpc::DownsamplingParams* params,
                                                google::protobuf::Empty* /*rep*/) {
-    auto col = params->col();
-    auto row = params->row();
-    app_->setDownsampling(col, row);
+    app_->setDownsampling(params->col(), params->row());
+    return grpc::Status::OK;
+}
+
+grpc::Status ImageprocService::SetCorrection(grpc::ServerContext* /*context*/,
+                                             const rpc::CorrectionParams* params,
+                                             google::protobuf::Empty* /*rep*/) {
+    app_->setCorrection(params->offset_col(), params->offset_row());
     return grpc::Status::OK;
 }
 

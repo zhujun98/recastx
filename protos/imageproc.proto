@@ -25,8 +25,8 @@ message DownsamplingParams {
 }
 
 message CorrectionParams {
-  int32 col_offset = 1;
-  int32 row_offset = 2;
+  int32 offset_col = 1;
+  int32 offset_row = 2;
 }
 
 message RampFilterParams {

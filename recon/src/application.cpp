@@ -128,7 +128,8 @@ void Application::startPreprocessing() {
 
             spdlog::info("Preprocessing - started");
 
-            preproc_->process(raw_buffer_, sino_buffer_, dark_avg_, reciprocal_);
+            preproc_->process(raw_buffer_, sino_buffer_, dark_avg_, reciprocal_,
+                              imgproc_params_.offset_row, imgproc_params_.offset_col);
 
             while (!sino_buffer_.tryPrepare(100)) {
                 if (closing_) return;
@@ -282,6 +283,13 @@ void Application::setDownsampling(uint32_t col, uint32_t row) {
     imgproc_params_.downsampling_row = row;
 
     spdlog::debug("Set projection downsampling: {} / {}", col, row);
+}
+
+void Application::setCorrection(int col, int row) {
+    imgproc_params_.offset_col = col;
+    imgproc_params_.offset_row = row;
+
+    spdlog::debug("Set projection correction (H/V): {} / {}", col, row);
 }
 
 void Application::setRampFilter(std::string filter_name) {

@@ -84,7 +84,7 @@ grpc::Status ImageprocService::SetDownsampling(grpc::ServerContext* context,
 grpc::Status ImageprocService::SetCorrection(grpc::ServerContext* context,
                                              const rpc::CorrectionParams* params,
                                              google::protobuf::Empty* ack) {
-    spdlog::info("Set projection corrections (H/V): {} / {}", params->col_offset(), params->row_offset());
+    spdlog::info("Set projection corrections (H/V): {} / {}", params->offset_col(), params->offset_row());
     return grpc::Status::OK;
 }
 

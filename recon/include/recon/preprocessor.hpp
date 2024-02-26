@@ -63,7 +63,9 @@ public:
     void process(RawBufferType &raw_buffer,
                  SinoBufferType &sino_buffer,
                  const ProImageData &dark_avg,
-                 const ProImageData &reciprocal);
+                 const ProImageData &reciprocal,
+                 int32_t offset_row,
+                 int32_t offset_col);
 
 };
 
