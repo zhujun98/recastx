@@ -67,13 +67,7 @@ void PreprocItem::renderIm() {
     ImGui::SameLine();
     ImGui::Text("%d", downsampling_row_);
 
-    ImGui::EndDisabled();
-
-    ImGui::BeginDisabled(state == rpc::ServerState_State_PROCESSING);
-
-    // TODO: implement reconstruction with offsets
-//    ImGui::DragFloat("X offset", &x_offset_, 1, -50, 50, "%.1f");
-//    ImGui::DragFloat("Y offset", &y_offset_, 1, -50, 50, "%.1f");
+    ImGui::DragInt("Offset", &offset_, 1, -100, 100);
 
     static const std::map<std::string, std::string> filter_options {
             {"shepp", "Shepp-Logan"},
@@ -94,11 +88,15 @@ void PreprocItem::renderIm() {
 }
 
 bool PreprocItem::updateServerParams() {
-    return setDownsampling() || setRampFilter();
+    return setDownsampling() || setOffset() || setRampFilter();
 }
 
 bool PreprocItem::setDownsampling() {
     return scene_.client()->setDownsampling(downsampling_col_, downsampling_row_);
+}
+
+bool PreprocItem::setOffset() {
+    return scene_.client()->setCorrection(offset_);
 }
 
 bool PreprocItem::setRampFilter() {

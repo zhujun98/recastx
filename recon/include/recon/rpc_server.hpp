@@ -74,6 +74,10 @@ class ImageprocService final : public rpc::Imageproc::Service {
                                  const rpc::DownsamplingParams* params,
                                  google::protobuf::Empty* rep) override;
 
+    grpc::Status SetCorrection(grpc::ServerContext* context,
+                               const rpc::CorrectionParams* params,
+                               google::protobuf::Empty* ack) override;
+
     grpc::Status SetRampFilter(grpc::ServerContext* contest,
                                const rpc::RampFilterParams* params,
                                google::protobuf::Empty* rep) override;

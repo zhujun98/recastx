@@ -32,7 +32,8 @@ void Preprocessor::init(RawBufferType& buffer, size_t col_count, size_t row_coun
 void Preprocessor::process(RawBufferType& raw_buffer,
                            SinoBufferType& sino_buffer,
                            const ProImageData& dark_avg,
-                           const ProImageData& reciprocal) {
+                           const ProImageData& reciprocal,
+                           int32_t offset) {
     auto& shape = raw_buffer.shape();
     auto [chunk_size, row_count, col_count] = shape;
     size_t num_pixels = row_count * col_count;
@@ -63,7 +64,7 @@ void Preprocessor::process(RawBufferType& raw_buffer,
 
                                   // TODO: Add FDK scaler for cone beam
 
-                                  copyToSinogram(sinos, projs, i, chunk_size, row_count, col_count);
+                                  copyToSinogram(sinos, projs, i, chunk_size, row_count, col_count, offset);
                               }
         });
     });

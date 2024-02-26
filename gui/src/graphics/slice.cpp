@@ -138,7 +138,6 @@ void Slice::render(const glm::mat4& view,
         glDrawArrays(GL_LINE_LOOP, 0, 4);
     }
 
-
     texture_.unbind();
 }
 

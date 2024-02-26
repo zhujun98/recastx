@@ -110,6 +110,18 @@ bool RpcClient::setDownsampling(uint32_t col, uint32_t row) {
     return checkStatus(status);
 }
 
+bool RpcClient::setCorrection(int32_t offset) {
+    rpc::CorrectionParams request;
+    request.set_offset(offset);
+
+    google::protobuf::Empty reply;
+
+    grpc::ClientContext context;
+
+    grpc::Status status = imageproc_stub_->SetCorrection(&context, request, &reply);
+    return checkStatus(status);
+}
+
 bool RpcClient::setRampFilter(const std::string& filter_name) {
     rpc::RampFilterParams request;
     request.set_name(filter_name);

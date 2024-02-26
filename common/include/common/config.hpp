@@ -52,6 +52,7 @@ namespace recastx {
         uint32_t num_threads;
         uint32_t downsampling_col;
         uint32_t downsampling_row;
+        int32_t offset;
         bool disable_negative_log;
         RampFilter ramp_filter;
     };
