@@ -120,12 +120,13 @@ void Slice::render(const glm::mat4& view,
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     }
 
-    if (hovered_ || !sample_slice) {
+    bool highlighted = hovered_ || highlighted_;
+    if (highlighted || !sample_slice) {
         frame_shader_->use();
         frame_shader_->setMat4("view", view);
         frame_shader_->setMat4("projection", projection);
         frame_shader_->setMat4("orientationMatrix", model);
-        if (hovered_ || highlighted_) {
+        if (highlighted) {
             frame_shader_->setVec4("frameColor", K_HIGHLIGHTED_FRAME_COLOR_);
         } else {
             frame_shader_->setVec4("frameColor", K_EMPTY_FRAME_COLOR_);

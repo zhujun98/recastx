@@ -515,7 +515,7 @@ void ReconItem::renderImSliceControl(const char* header) {
     static const char* BTN_2D[] = {"2D##RECON_SLI_0", "2D##RECON_SLI_1", "2D##RECON_SLI_2"};
     static const char* BTN_3D[] = {"3D##RECON_SLI_0", "3D##RECON_SLI_1", "3D##RECON_SLI_2"};
     static const char* BTN_DISABLE[] = {"Disable##RECON_SLI_0", "Disable##RECON_SLI_1", "Disable##RECON_SLI_2"};
-    static const char* COMBO[] = {"Orientation##RECON_PLANE_0", "Orientation##RECON_PLANE_1", "Orientation##RECON_PLANE_2"};
+    static const char* COMBO[] = {"##RECON_PLANE_0", "##RECON_PLANE_1", "##RECON_PLANE_2"};
     static const ImVec4 K_HEADER_COLOR = (ImVec4)ImColor(65, 145, 151);
 
     auto& [timestamp, _, slice] = slices_[index];
@@ -526,16 +526,6 @@ void ReconItem::renderImSliceControl(const char* header) {
 
     ImGui::PopStyleColor();
     if (expand) {
-        bool cd = false;
-
-        cd |= ImGui::RadioButton(BTN_2D[index], &std::get<1>(slices_[index]), SHOW2D_SLI);
-        ImGui::SameLine();
-        cd |= ImGui::RadioButton(BTN_3D[index], &std::get<1>(slices_[index]), SHOW3D_SLI);
-        ImGui::SameLine();
-        cd |= ImGui::RadioButton(BTN_DISABLE[index], &std::get<1>(slices_[index]), DISABLE_SLI);
-
-        if (cd) update_min_max_val_ = true;
-
         static const std::map<Slice::Plane, std::string> plane_options {
                 {Slice::Plane::XY, "X-Y"},
                 {Slice::Plane::YZ, "Y-Z"},
@@ -556,6 +546,15 @@ void ReconItem::renderImSliceControl(const char* header) {
             ImGui::EndCombo();
         }
         ImGui::PopItemWidth();
+
+        ImGui::SameLine();
+        bool cd = false;
+        cd |= ImGui::RadioButton(BTN_2D[index], &std::get<1>(slices_[index]), SHOW2D_SLI);
+        ImGui::SameLine();
+        cd |= ImGui::RadioButton(BTN_3D[index], &std::get<1>(slices_[index]), SHOW3D_SLI);
+        ImGui::SameLine();
+        cd |= ImGui::RadioButton(BTN_DISABLE[index], &std::get<1>(slices_[index]), DISABLE_SLI);
+        if (cd) update_min_max_val_ = true;
     }
 }
 
