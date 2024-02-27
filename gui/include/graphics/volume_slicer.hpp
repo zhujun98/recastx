@@ -140,7 +140,7 @@ class VolumeSlicer {
 
     std::tuple<float, float, int> sortVertices(const glm::vec3& view_dir);
 
-    void init();
+    void initBufferData();
 
   public:
 
@@ -148,7 +148,7 @@ class VolumeSlicer {
 
     ~VolumeSlicer();
 
-    void resize(size_t num_slices);
+    void resize(size_t num_slices) { num_slices_ = num_slices; }
 
     void update(const glm::vec3& view_dir, bool inverted);
 
