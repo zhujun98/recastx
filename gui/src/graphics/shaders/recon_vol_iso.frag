@@ -15,7 +15,9 @@ struct Light {
 };
 
 struct Material {
-    vec3 color;
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
     float shininess;
 };
 
@@ -36,7 +38,8 @@ void main() {
     vec3 halfwayDir = normalize(lightDir + viewDir);
     float spec = pow(max(dot(outNorm, halfwayDir), 0.0), material.shininess);
 
-    vec3 lighting = light.ambient + diff * light.diffuse + spec * light.specular;
-    fColor = vec4(material.color * lighting, 1.f);
+    fColor = vec4(light.ambient * material.ambient
+                  + diff * light.diffuse * material.diffuse
+                  + spec * light.specular * material.specular, 1.f);
 }
 )glsl"
