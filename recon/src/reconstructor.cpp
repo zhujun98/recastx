@@ -128,13 +128,13 @@ AstraReconstructor::makeVolumeGeometryMemHandle(const VolumeGeometry& geom) {
 
 // class ParallelBeamReconstructor
 
-ParallelBeamReconstructor::ParallelBeamReconstructor(size_t col_count, 
-                                                     size_t row_count,
-                                                     const ProjectionGeometry& p_geom, 
+ParallelBeamReconstructor::ParallelBeamReconstructor(const ProjectionGeometry& p_geom,
                                                      const VolumeGeometry& s_geom,
                                                      const VolumeGeometry& v_geom,
                                                      bool double_buffering)
         : AstraReconstructor(p_geom, s_geom, v_geom, double_buffering) {
+    uint32_t col_count = p_geom.col_count;
+    uint32_t row_count = p_geom.row_count;
     auto& angles = p_geom.angles;
     size_t angle_count = angles.size();
 
@@ -250,14 +250,14 @@ void ParallelBeamReconstructor::reconstructVolume(int buffer_idx, Tensor<float, 
 
 // class ConeBeamReconstructor
 
-ConeBeamReconstructor::ConeBeamReconstructor(size_t col_count, 
-                                             size_t row_count,
-                                             const ProjectionGeometry& p_geom, 
+ConeBeamReconstructor::ConeBeamReconstructor(const ProjectionGeometry& p_geom,
                                              const VolumeGeometry& s_geom,
                                              const VolumeGeometry& v_geom,
                                              bool double_buffering)
         : AstraReconstructor(p_geom, s_geom, v_geom, double_buffering) {
 
+    uint32_t col_count = p_geom.col_count;
+    uint32_t row_count = p_geom.row_count;
     auto& angles = p_geom.angles;
     size_t angle_count = angles.size();
 
@@ -388,18 +388,14 @@ std::vector<float> ConeBeamReconstructor::fdk_weights() {
 
 
 std::unique_ptr<Reconstructor> 
-AstraReconstructorFactory::create(size_t col_count, 
-                                  size_t row_count, 
-                                  ProjectionGeometry proj_geom, 
+AstraReconstructorFactory::create(ProjectionGeometry proj_geom,
                                   VolumeGeometry slice_geom, 
                                   VolumeGeometry volume_geom,
                                   bool double_buffering) {
     if (proj_geom.beam_shape == BeamShape::CONE) {
-        return std::make_unique<ConeBeamReconstructor>(
-            col_count, row_count, proj_geom, slice_geom, volume_geom, double_buffering);
+        return std::make_unique<ConeBeamReconstructor>(proj_geom, slice_geom, volume_geom, double_buffering);
     }
-    return std::make_unique<ParallelBeamReconstructor>(
-        col_count, row_count, proj_geom, slice_geom, volume_geom, double_buffering);
+    return std::make_unique<ParallelBeamReconstructor>(proj_geom, slice_geom, volume_geom, double_buffering);
 }
 
 } // namespace recastx::recon

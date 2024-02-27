@@ -94,7 +94,7 @@ inline void negativeLog(float *data, size_t size) {
     }
 }
 
-inline std::vector<float> defaultAngles(int n, float angle_range) {
+inline std::vector<float> defaultAngles(uint32_t n, float angle_range) {
     auto angles = std::vector<float>(n, 0.0f);
     std::iota(angles.begin(), angles.end(), 0.0f);
     std::transform(angles.begin(), angles.end(), angles.begin(),

@@ -112,7 +112,6 @@ void Application::initImgui() {
 
     Style::init();
 
-    // TODO: why false?
     ImGui_ImplGlfw_InitForOpenGL(glfw_window_, false);
     ImGui_ImplOpenGL3_Init();
 

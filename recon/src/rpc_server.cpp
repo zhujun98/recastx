@@ -28,6 +28,7 @@ grpc::Status ControlService::StartAcquiring(grpc::ServerContext* /*context*/,
         return grpc::Status::OK;
     } catch (const std::exception& e) {
         spdlog::error("Failed to start acquiring!");
+        // FIXME
         return {grpc::StatusCode::RESOURCE_EXHAUSTED, e.what()};
     }
 }
@@ -40,6 +41,7 @@ grpc::Status ControlService::StopAcquiring(grpc::ServerContext* /*context*/,
         return grpc::Status::OK;
     } catch (const std::exception& e) {
         spdlog::error("Failed to stop acquiring!");
+        // FIXME
         return {grpc::StatusCode::RESOURCE_EXHAUSTED, e.what()};
     }
 }
@@ -52,6 +54,7 @@ grpc::Status ControlService::StartProcessing(grpc::ServerContext* /*context*/,
         return grpc::Status::OK;
     } catch (const std::exception& e) {
         spdlog::error("Failed to start processing!");
+        // FIXME
         return {grpc::StatusCode::RESOURCE_EXHAUSTED, e.what()};
     }
 }
@@ -64,6 +67,7 @@ grpc::Status ControlService::StopProcessing(grpc::ServerContext* /*context*/,
         return grpc::Status::OK;
     } catch (const std::exception& e) {
         spdlog::error("Failed to stop processing!");
+        // FIXME
         return {grpc::StatusCode::RESOURCE_EXHAUSTED, e.what()};
     }
 }
@@ -109,6 +113,33 @@ grpc::Status ImageprocService::SetRampFilter(grpc::ServerContext* /*context*/,
 
 ProjectionTransferService::ProjectionTransferService(Application* app) : app_(app) {}
 
+grpc::Status ProjectionTransferService::SetProjectionGeometry(grpc::ServerContext* /*context*/,
+                                                              const rpc::ProjectionGeometry* geometry,
+                                                              google::protobuf::Empty* /*ack*/) {
+    BeamShape beam_shape;
+    if (geometry->beam_shape() == static_cast<int>(BeamShape::PARALELL)) beam_shape = BeamShape::PARALELL;
+    else if (geometry->beam_shape() == static_cast<int>(BeamShape::CONE)) beam_shape = BeamShape::CONE;
+    else {
+      spdlog::error("Unknown beam shape: {}", geometry->beam_shape());
+      return {grpc::StatusCode::INVALID_ARGUMENT, "Unknown beam shape"};
+    }
+
+    AngleRange angle_range;
+    if (geometry->angle_range() == static_cast<int>(AngleRange::HALF)) angle_range = AngleRange::HALF;
+    else if (geometry->beam_shape() == static_cast<int>(AngleRange::FULL)) angle_range = AngleRange::FULL;
+    else {
+        spdlog::error("Unknown angle range: {}", geometry->angle_range());
+        return {grpc::StatusCode::INVALID_ARGUMENT, "Unknown angle range"};
+    }
+
+    app_->setProjectionGeometry(beam_shape,
+                              geometry->col_count(), geometry->row_count(),
+                              geometry->pixel_width(), geometry->pixel_height(),
+                              geometry->src2origin(), geometry->origin2det(),
+                              geometry->angle_count(), angle_range);
+    return grpc::Status::OK;
+}
+
 grpc::Status ProjectionTransferService::SetProjection(grpc::ServerContext* /*context*/,
                                                       const rpc::Projection* request,
                                                       google::protobuf::Empty* /*rep*/) {
@@ -131,6 +162,35 @@ grpc::Status ProjectionTransferService::GetProjectionData(
 
 
 ReconstructionService::ReconstructionService(Application* app) : app_(app) {}
+
+grpc::Status ReconstructionService::SetReconGeometry(grpc::ServerContext* /*context*/,
+                                                     const rpc::ReconGeometry* geometry,
+                                                     google::protobuf::Empty* /*ack*/) {
+    std::optional<uint32_t> slice_size;
+    if (geometry->slice_size()[0] != 0) slice_size = geometry->slice_size()[0];
+
+    std::optional<uint32_t> volume_size;
+    if (geometry->volume_size()[0] != 0) volume_size = geometry->volume_size()[0];
+
+    auto parseRange = [](auto vrange)
+            -> std::pair<std::optional<float>, std::optional<float>> {
+        std::optional<float> v_min;
+        std::optional<float> v_max;
+        if (vrange[0] < vrange[1]) {
+            v_min = static_cast<float>(vrange[0]);
+            v_max = static_cast<float>(vrange[1]);
+        }
+
+        return {v_min, v_max};
+    };
+
+    auto [x_min, x_max] = parseRange(geometry->x_range());
+    auto [y_min, y_max] = parseRange(geometry->y_range());
+    auto [z_min, z_max] = parseRange(geometry->z_range());
+
+    app_->setReconGeometry(slice_size, volume_size, x_min, x_max, y_min, y_max, z_min, z_max);
+    return grpc::Status::OK;
+}
 
 grpc::Status ReconstructionService::SetSlice(grpc::ServerContext* /*context*/,
                                              const rpc::Slice* slice,
