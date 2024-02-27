@@ -36,6 +36,7 @@ void main() {
 
     vec3 viewDir = normalize(viewPos - fPos);
     vec3 reflectDir = reflect(-lightDir, outNorm);
+
     vec3 halfwayDir = normalize(lightDir + viewDir);
     float spec = pow(max(dot(outNorm, halfwayDir), 0.0), material.shininess);
 

@@ -16,7 +16,6 @@ namespace recastx::gui {
 IsoSurface::IsoSurface() : dx_(1), dy_(1), dz_(1), value_(0.f) {
     glGenVertexArrays(1, &VAO_);
     glGenBuffers(1, &VBO_);
-    vertices_.empty();
 }
 
 IsoSurface::~IsoSurface() {
@@ -28,6 +27,7 @@ void IsoSurface::setVoxelSize(int dx, int dy, int dz) {
     dx_ = dx;
     dy_ = dy;
     dz_ = dz;
+    reset();
 }
 
 void IsoSurface::reset() {
