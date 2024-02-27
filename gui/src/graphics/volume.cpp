@@ -243,14 +243,19 @@ void Volume::setRenderQuality(RenderQuality level) {
     render_quality_ = level;
     if (level == RenderQuality::VERY_LOW) {
         slicer_->resize(128);
+        iso_surface_->setVoxelSize(16, 16, 16);
     } else if (level == RenderQuality::LOW) {
         slicer_->resize(256);
+        iso_surface_->setVoxelSize(8, 8, 8);
     } else if (level == RenderQuality::MEDIUM) {
         slicer_->resize(512);
+        iso_surface_->setVoxelSize(4, 4, 4);
     } else if (level == RenderQuality::HIGH) {
         slicer_->resize(1024);
+        iso_surface_->setVoxelSize(2, 2, 2);
     } else if (level == RenderQuality::VERY_HIGH) {
         slicer_->resize(2048);
+        iso_surface_->setVoxelSize(1, 1, 1);
     } else {
         throw;
     }

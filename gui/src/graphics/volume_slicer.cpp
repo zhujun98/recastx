@@ -16,11 +16,9 @@
 namespace recastx::gui {
 
 VolumeSlicer::VolumeSlicer(size_t num_slices)
-        : shadow_(800, 800), num_slices_(num_slices), slices_(12 * num_slices), front_(0.f) {
+        : shadow_(800, 800), num_slices_(num_slices), front_(0.f) {
     glGenVertexArrays(1, &vao_);
     glGenBuffers(1, &vbo_);
-
-    init();
 }
 
 VolumeSlicer::~VolumeSlicer() {
@@ -28,16 +26,12 @@ VolumeSlicer::~VolumeSlicer() {
     glDeleteBuffers(1, &vbo_);
 }
 
-void VolumeSlicer::resize(size_t num_slices) {
-    if (num_slices != num_slices_) {
-        num_slices_ = num_slices;
-        slices_.resize(12 * num_slices);
-        init();
-    }
-}
-
-
 void VolumeSlicer::update(const glm::vec3& view_dir, bool inverted) {
+    if (slices_.size() != num_slices_ * 12) {
+        slices_.resize(num_slices_ * 12);
+        initBufferData();
+    }
+
     auto [min_dist, max_dist, max_index] = sortVertices(view_dir);
     float cutoff = min_dist + (max_dist - min_dist) * front_;
 
@@ -183,7 +177,7 @@ void VolumeSlicer::drawOnBuffer(ShaderProgram* shadow_shader,
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void VolumeSlicer::init() {
+void VolumeSlicer::initBufferData() {
     glBindVertexArray(vao_);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_);
 
