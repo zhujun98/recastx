@@ -18,6 +18,7 @@ struct Material {
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
+    float alpha;
     float shininess;
 };
 
@@ -40,6 +41,6 @@ void main() {
 
     fColor = vec4(light.ambient * material.ambient
                   + diff * light.diffuse * material.diffuse
-                  + spec * light.specular * material.specular, 1.f);
+                  + spec * light.specular * material.specular, material.alpha);
 }
 )glsl"

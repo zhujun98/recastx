@@ -214,6 +214,7 @@ void Volume::render(const glm::mat4& view,
         iso_shader_->setVec3("material.ambient", material.ambient);
         iso_shader_->setVec3("material.diffuse", material.diffuse);
         iso_shader_->setVec3("material.specular", material.specular);
+        iso_shader_->setFloat("material.alpha", material.alpha);
         iso_shader_->setFloat("material.shininess", material.shininess);
 
         texture_.bind();
