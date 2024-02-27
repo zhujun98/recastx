@@ -36,9 +36,9 @@ LightComponent::LightComponent()
         : auto_pos_(true),
           pos_{0.f, 0.f, 0.f},
           color_({1.f, 1.f, 1.f}),
-          ambient_(0.3f),
-          diffuse_(0.5f),
-          specular_(0.5f) {
+          ambient_(0.5f),
+          diffuse_(0.7f),
+          specular_(1.0f) {
     light_.is_enabled = true;
     light_.pos = glm::vec3(pos_[0], pos_[1], pos_[2]);
     light_.color = color_;
@@ -85,34 +85,32 @@ void LightComponent::updatePos(const glm::vec3 &pos) {
 }
 
 
-MaterialComponent::MaterialComponent(Volume* volume) : volume_(volume), color_{0.f, 0.f, 1.f} {
-    material_.color = glm::vec3(color_[0], color_[1], color_[2]);
-    material_.shininess = 32.f;
-    material_.iso_value = 0.f;
+MaterialComponent::MaterialComponent()
+        : ambient_{0.24725f, 0.1995f, 0.0745f},
+          diffuse_{0.75164f, 0.60648f, 0.22648f},
+          specular_{0.628281f, 0.555802f, 0.366065f} {
+    material_.ambient = glm::vec3(ambient_[0], ambient_[1], ambient_[2]);
+    material_.diffuse = glm::vec3(diffuse_[0], diffuse_[1], diffuse_[2]);
+    material_.specular = glm::vec3(specular_[0], specular_[1], specular_[2]);
+    material_.alpha = 1.f;
+    material_.shininess = 51.2f;
 }
 
 void MaterialComponent::renderIm() {
     ImGui::TextColored(Style::CTRL_SECTION_TITLE_COLOR, "MATERIAL");
 
-    if (ImGui::ColorEdit3("Color##MATERIAL_COMP", color_)) {
-        material_.color = glm::vec3(color_[0], color_[1], color_[2]);
+    if (ImGui::ColorEdit3("Ambient##MATERIAL_COMP", ambient_)) {
+        material_.ambient = glm::vec3(ambient_[0], ambient_[1], ambient_[2]);
     }
-    ImGui::DragFloat("Shininess##MATERIAL_COMP", &material_.shininess, 1.f, 0.f, 100.f, "%.1f", ImGuiSliderFlags_ClampOnInput);
+    if (ImGui::ColorEdit3("Diffuse##MATERIAL_COMP", diffuse_)) {
+        material_.diffuse = glm::vec3(diffuse_[0], diffuse_[1], diffuse_[2]);
+    }
+    if (ImGui::ColorEdit3("Specular##MATERIAL_COMP", specular_)) {
+        material_.specular = glm::vec3(specular_[0], specular_[1], specular_[2]);
+    }
 
-    {
-        float min_v = 0.f;
-        float max_v = 1.f;
-        const auto& min_max_v = volume_->minMaxVals();
-        if (min_max_v) {
-            min_v = min_max_v.value()[0] - 0.0001f;
-            max_v = min_max_v.value()[1] + 0.0001f;
-        }
-        float step_size = (max_v - min_v) / 200.f;
-        if (step_size < 0.01f) step_size = 0.01f; // avoid a tiny step size
-        if (ImGui::DragFloat("ISO Value##MATERIAL_COMP", &material_.iso_value, step_size, min_v, max_v, "%.2f", ImGuiSliderFlags_ClampOnInput)) {
-            volume_->setIsoValueUpdated();
-        }
-    }
+    ImGui::DragFloat("Alpha##MATERIAL_COMP", &material_.alpha, 0.005f, 0.0f, 1.0f, "%.3f", ImGuiSliderFlags_ClampOnInput);
+    ImGui::DragFloat("Shininess##MATERIAL_COMP", &material_.shininess, 1.f, 0.f, 100.f, "%.1f", ImGuiSliderFlags_ClampOnInput);
 }
 
 
@@ -137,11 +135,6 @@ void RenderComponent::renderIm() {
     if (cd) volume_->setRenderPolicy(RenderPolicy(render_policy));
 
     if (render_policy == static_cast<int>(RenderPolicy::VOLUME)) {
-        static float volume_alpha = 1.0f;
-        if (ImGui::DragFloat("Alpha##RENDER_COMP", &volume_alpha, 0.005f, 0.0f, 1.0f, "%.3f", ImGuiSliderFlags_ClampOnInput)) {
-            volume_->setAlpha(volume_alpha);
-        }
-
         static bool global_illumination = volume_->globalIllumination();
         if (ImGui::Checkbox("Global Illumination##RENDER_COMP", &global_illumination)) {
             volume_->setGlobalIllumination(global_illumination);
@@ -154,6 +147,11 @@ void RenderComponent::renderIm() {
         }
         ImGui::EndDisabled();
     } else {
+        static float iso_value = 0.f;
+
+        if (ImGui::InputFloat("ISO Value##RENDER_COMP", &iso_value)) {
+            volume_->setIsoValue(iso_value);
+        }
     }
 }
 
@@ -161,7 +159,6 @@ void RenderComponent::renderIm() {
 ReconItem::ReconItem(Scene& scene)
         : GraphicsItem(scene),
           volume_(new Volume{}),
-          material_comp_(volume_.get()),
           render_comp_(volume_.get()),
           wireframe_(new Wireframe{}) {
     scene.addItem(this);

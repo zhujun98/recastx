@@ -6,7 +6,6 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
-#include <array>
 #include <algorithm>
 
 #include "graphics/iso_surface.hpp"
@@ -14,9 +13,10 @@
 
 namespace recastx::gui {
 
-IsoSurface::IsoSurface() : dx_(1), dy_(1), dz_(1) {
+IsoSurface::IsoSurface() : dx_(1), dy_(1), dz_(1), value_(0.f) {
     glGenVertexArrays(1, &VAO_);
     glGenBuffers(1, &VBO_);
+    vertices_.empty();
 }
 
 IsoSurface::~IsoSurface() {
@@ -30,10 +30,23 @@ void IsoSurface::setVoxelSize(int dx, int dy, int dz) {
     dz_ = dz;
 }
 
-void IsoSurface::polygonize(const DataType& data, uint32_t x, uint32_t y, uint32_t z, float iso_value) {
-    Marcher marcher(data, x, y, z, iso_value);
-    vertices_ = marcher.march(dx_, dy_, dz_);
-    initBufferData();
+void IsoSurface::reset() {
+    vertices_.clear();
+    initialized_ = false;
+}
+
+void IsoSurface::setValue(float v) {
+    value_ = v;
+    reset();
+}
+
+void IsoSurface::polygonize(const DataType& data, uint32_t x, uint32_t y, uint32_t z) {
+    if (!initialized_) {
+        Marcher marcher(data, x, y, z, value_);
+        vertices_ = marcher.march(dx_, dy_, dz_);
+        initBufferData();
+        initialized_ = true;
+    }
 }
 
 void IsoSurface::draw() {

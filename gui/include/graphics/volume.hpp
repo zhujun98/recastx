@@ -56,7 +56,6 @@ class Volume {
     RenderQuality render_quality_;
 
     std::unique_ptr<VolumeSlicer> slicer_;
-    float alpha_ = 1.0f;
     bool global_illumination_ = false;
     float global_illumination_threshold_ = 0.1f;
 
@@ -64,7 +63,6 @@ class Volume {
     std::unique_ptr<ShaderProgram> shadow_shader_;
     std::unique_ptr<ShaderProgram> screen_shader_;
 
-    bool update_iso_surface_ = false;
     std::unique_ptr<IsoSurface> iso_surface_;
     std::unique_ptr<ShaderProgram> iso_shader_;
 
@@ -112,8 +110,6 @@ public:
 
     void setRenderPolicy(RenderPolicy policy);
 
-    void setAlpha(float alpha) { alpha_ = alpha; }
-
     void setFront(float front);
 
     [[nodiscard]] bool globalIllumination() const { return global_illumination_; }
@@ -124,7 +120,7 @@ public:
 
     void setGlobalIlluminationThreshold(float value) { global_illumination_threshold_ = value; }
 
-    void setIsoValueUpdated() { update_iso_surface_ = true; }
+    void setIsoValue(float value);
 };
 
 } // namespace recastx::gui

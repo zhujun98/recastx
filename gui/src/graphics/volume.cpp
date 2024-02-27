@@ -97,7 +97,7 @@ void Volume::setData(const std::string& data, uint32_t x, uint32_t y, uint32_t z
     assert(data.size() == x_ * y_ * z_ * sizeof(DataType::value_type));
     std::memcpy(data_.data(), data.data(), data.size());
     update_texture_ = true;
-    update_iso_surface_ = true;
+    iso_surface_->reset();
 }
 
 bool Volume::setShard(const std::string& shard, uint32_t pos) {
@@ -117,7 +117,7 @@ bool Volume::setShard(const std::string& shard, uint32_t pos) {
             buffer_.resize(x_ * y_ * z_);
         }
         update_texture_ = true;
-        update_iso_surface_ = true;
+        iso_surface_->reset();
     }
     return ok;
 }
@@ -147,7 +147,7 @@ void Volume::render(const glm::mat4& view,
 
     if (render_policy_ == RenderPolicy::VOLUME) {
         shader_->use();
-        shader_->setFloat("alpha", alpha_);
+        shader_->setFloat("alpha", material.alpha);
         shader_->setFloat("minValue", min_v);
         shader_->setFloat("maxValue", max_v);
 
@@ -198,10 +198,7 @@ void Volume::render(const glm::mat4& view,
             texture_.unbind();
         }
     } else if (render_policy_ == RenderPolicy::SURFACE) {
-        if (update_iso_surface_) {
-            iso_surface_->polygonize(data_, x_, y_, z_, material.iso_value);
-            update_iso_surface_ = false;
-        }
+        iso_surface_->polygonize(data_, x_, y_, z_);
 
         iso_shader_->use();
 
@@ -214,7 +211,9 @@ void Volume::render(const glm::mat4& view,
         iso_shader_->setVec3("light.diffuse", light.diffuse);
         iso_shader_->setVec3("light.specular", light.specular);
 
-        iso_shader_->setVec3("material.color", material.color);
+        iso_shader_->setVec3("material.ambient", material.ambient);
+        iso_shader_->setVec3("material.diffuse", material.diffuse);
+        iso_shader_->setVec3("material.specular", material.specular);
         iso_shader_->setFloat("material.shininess", material.shininess);
 
         texture_.bind();
@@ -261,6 +260,8 @@ void Volume::setRenderPolicy(RenderPolicy policy) {
 }
 
 void Volume::setFront(float front) { slicer_->setFront(front); }
+
+void Volume::setIsoValue(float value) { iso_surface_->setValue(value); }
 
 void Volume::updateMinMaxVal() {
     if (data_.empty()) {

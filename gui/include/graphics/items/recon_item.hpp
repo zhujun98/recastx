@@ -60,15 +60,15 @@ class LightComponent {
 
 class MaterialComponent {
 
-    Volume* volume_;
-
     Material material_;
 
-    float color_[3];
+    float ambient_[3];
+    float diffuse_[3];
+    float specular_[3];
 
 public:
 
-    explicit MaterialComponent(Volume* volume);
+    MaterialComponent();
 
     void renderIm();
 

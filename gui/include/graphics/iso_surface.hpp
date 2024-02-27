@@ -35,6 +35,8 @@ class IsoSurface {
     int dy_;
     int dz_;
 
+    float value_;
+    bool initialized_ = false;
     SurfaceVertices vertices_;
 
     void initBufferData();
@@ -47,7 +49,11 @@ class IsoSurface {
 
     void setVoxelSize(int dx, int dy, int dz);
 
-    void polygonize(const DataType& data, uint32_t x, uint32_t y, uint32_t z, float iso_value);
+    void reset();
+
+    void setValue(float v);
+
+    void polygonize(const DataType& data, uint32_t x, uint32_t y, uint32_t z);
 
     void draw();
 };
