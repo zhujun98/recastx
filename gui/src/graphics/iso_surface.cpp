@@ -50,7 +50,6 @@ void IsoSurface::polygonize(const DataType& data, uint32_t x, uint32_t y, uint32
 }
 
 void IsoSurface::draw() {
-    glEnable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
 
@@ -59,7 +58,6 @@ void IsoSurface::draw() {
 
     glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
-    glDisable(GL_BLEND);
 }
 
 void IsoSurface::initBufferData() {
