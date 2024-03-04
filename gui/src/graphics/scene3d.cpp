@@ -15,7 +15,9 @@
 #include "graphics/items/axiscube_item.hpp"
 #include "graphics/items/icon_item.hpp"
 #include "graphics/items/geometry_item.hpp"
+#include "graphics/items/lamp_item.hpp"
 #include "graphics/items/logging_item.hpp"
+#include "graphics/items/material_item.hpp"
 #include "graphics/items/preproc_item.hpp"
 #include "graphics/items/projection_item.hpp"
 #include "graphics/items/recon_item.hpp"
@@ -30,12 +32,15 @@ Scene3d::Scene3d(RpcClient* client)
           axiscube_item_(new AxisCubeItem(*this)),
           icon_item_(new IconItem(*this)),
           geometry_item_(new GeometryItem(*this)),
+          lamp_item_(new LampItem(*this)),
           logging_item_(new LoggingItem(*this)),
+          material_item_(new MaterialItem(*this)),
           preproc_item_(new PreprocItem(*this)),
           projection_item_(new ProjectionItem(*this)),
           recon_item_(new ReconItem(*this)),
           statusbar_item_(new StatusbarItem(*this)) {
     axis_item_->linkViewport(recon_item_->viewport());
+    lamp_item_->linkViewport(recon_item_->viewport());
 }
 
 Scene3d::~Scene3d() = default;
@@ -68,11 +73,22 @@ void Scene3d::render() {
     ImGui::Begin("Control Panel Right", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_MenuBar);
     renderMenubarRight();
     recon_item_->renderIm();
+    lamp_item_->renderIm();
+    material_item_->renderIm();
+
     ImGui::End();
 
     statusbar_item_->renderIm();
 
     logging_item_->renderIm();
+}
+
+const Light& Scene3d::light() const {
+    return lamp_item_->light();
+}
+
+const Material& Scene3d::material() const {
+    return material_item_->material();
 }
 
 bool Scene3d::handleKey(int key, int action, int mods) {

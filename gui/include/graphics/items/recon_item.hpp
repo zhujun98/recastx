@@ -34,47 +34,6 @@ class Slice;
 class Volume;
 class Wireframe;
 
-
-class LightComponent {
-
-    Light light_;
-
-    bool auto_pos_;
-    float pos_[3];
-
-    glm::vec3 color_;
-    float ambient_;
-    float diffuse_;
-    float specular_;
-
-  public:
-
-    LightComponent();
-
-    void renderIm();
-
-    void updatePos(const glm::vec3& pos);
-
-    [[nodiscard]] const Light& light() const { return light_; }
-};
-
-class MaterialComponent {
-
-    Material material_;
-
-    float ambient_[3];
-    float diffuse_[3];
-    float specular_[3];
-
-public:
-
-    MaterialComponent();
-
-    void renderIm();
-
-    [[nodiscard]] const Material& material() const { return material_; }
-};
-
 class RenderComponent {
 
     Volume* volume_;
@@ -162,8 +121,6 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
     float volume_front_ = 0.f;
     float volume_front_step_ = 0.01f;
 
-    LightComponent light_comp_;
-    MaterialComponent material_comp_;
     RenderComponent render_comp_;
 
     std::unique_ptr<Wireframe> wireframe_;

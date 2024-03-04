@@ -32,88 +32,6 @@
 
 namespace recastx::gui {
 
-LightComponent::LightComponent()
-        : auto_pos_(true),
-          pos_{0.f, 0.f, 0.f},
-          color_({1.f, 1.f, 1.f}),
-          ambient_(0.5f),
-          diffuse_(0.7f),
-          specular_(1.0f) {
-    light_.is_enabled = true;
-    light_.pos = glm::vec3(pos_[0], pos_[1], pos_[2]);
-    light_.color = color_;
-    light_.ambient = ambient_ * color_;
-    light_.diffuse = diffuse_ * color_;
-    light_.specular = specular_ * color_;
-}
-
-void LightComponent::renderIm() {
-    ImGui::TextColored(Style::CTRL_SECTION_TITLE_COLOR, "LIGHTING");
-
-    ImGui::Checkbox("On##LIGHT_COMP", &light_.is_enabled);
-    ImGui::SameLine();
-
-    ImGui::BeginDisabled(!light_.is_enabled);
-
-    ImGui::Checkbox("Auto Positioning##LIGHT_COMP", &auto_pos_);
-
-    ImGui::BeginDisabled(auto_pos_);
-    if (ImGui::DragFloat3("Position##LIGHT_COMP", pos_, 0.05f, -20.f, 20.f, "%.2f", ImGuiSliderFlags_ClampOnInput)) {
-        light_.pos = glm::vec3(pos_[0], pos_[1], pos_[2]);
-    }
-    ImGui::EndDisabled();
-
-    if (ImGui::DragFloat("Ambient##LIGHT_COMP", &ambient_, 0.005f, 0.f, 1.f, "%.3f", ImGuiSliderFlags_ClampOnInput)) {
-        light_.ambient = ambient_ * color_;
-    }
-    if (ImGui::DragFloat("Diffuse##LIGHT_COMP", &diffuse_, 0.005f, 0.f, 1.f, "%.3f", ImGuiSliderFlags_ClampOnInput)) {
-        light_.diffuse = diffuse_ * color_;
-    }
-    if (ImGui::DragFloat("Specular##LIGHT_COMP", &specular_, 0.005f, 0.f, 1.f, "%.3f", ImGuiSliderFlags_ClampOnInput)) {
-        light_.specular = specular_ * color_;
-    }
-
-    ImGui::EndDisabled();
-}
-
-void LightComponent::updatePos(const glm::vec3 &pos) {
-    if (!auto_pos_) return;
-    pos_[0] = pos[0];
-    pos_[1] = pos[1];
-    pos_[2] = pos[2];
-    light_.pos = pos;
-}
-
-
-MaterialComponent::MaterialComponent()
-        : ambient_{0.24725f, 0.1995f, 0.0745f},
-          diffuse_{0.75164f, 0.60648f, 0.22648f},
-          specular_{0.628281f, 0.555802f, 0.366065f} {
-    material_.ambient = glm::vec3(ambient_[0], ambient_[1], ambient_[2]);
-    material_.diffuse = glm::vec3(diffuse_[0], diffuse_[1], diffuse_[2]);
-    material_.specular = glm::vec3(specular_[0], specular_[1], specular_[2]);
-    material_.alpha = 1.f;
-    material_.shininess = 51.2f;
-}
-
-void MaterialComponent::renderIm() {
-    ImGui::TextColored(Style::CTRL_SECTION_TITLE_COLOR, "MATERIAL");
-
-    if (ImGui::ColorEdit3("Ambient##MATERIAL_COMP", ambient_)) {
-        material_.ambient = glm::vec3(ambient_[0], ambient_[1], ambient_[2]);
-    }
-    if (ImGui::ColorEdit3("Diffuse##MATERIAL_COMP", diffuse_)) {
-        material_.diffuse = glm::vec3(diffuse_[0], diffuse_[1], diffuse_[2]);
-    }
-    if (ImGui::ColorEdit3("Specular##MATERIAL_COMP", specular_)) {
-        material_.specular = glm::vec3(specular_[0], specular_[1], specular_[2]);
-    }
-
-    ImGui::DragFloat("Alpha##MATERIAL_COMP", &material_.alpha, 0.005f, 0.0f, 1.0f, "%.3f", ImGuiSliderFlags_ClampOnInput);
-    ImGui::DragFloat("Shininess##MATERIAL_COMP", &material_.shininess, 1.f, 0.f, 100.f, "%.1f", ImGuiSliderFlags_ClampOnInput);
-}
-
-
 RenderComponent::RenderComponent(Volume* volume) : volume_(volume) {
 }
 
@@ -267,10 +185,6 @@ void ReconItem::renderIm() {
     renderImVolumeControl();
     ImGui::Separator();
     render_comp_.renderIm();
-    ImGui::Separator();
-    light_comp_.renderIm();
-    ImGui::Separator();
-    material_comp_.renderIm();
 
     scene_.setStatus("volumeUpdateFrameRate", volume_counter_.frameRate());
     scene_.setStatus("sliceUpdateFrameRate", slice_counter_.frameRate());
@@ -318,9 +232,8 @@ void ReconItem::renderGl() {
 
     matrix_ = projection * view;
 
-    light_comp_.updatePos(scene_.cameraPosition() - scene_.cameraDir());
-    const auto& light = light_comp_.light();
-    const auto& material = material_comp_.material();
+    const auto& light = scene_.light();
+    const auto& material = scene_.material();
 
     float min_val = min_val_;
     if (clamp_negatives_) min_val = min_val_ > 0 ? min_val_ : 0;

@@ -22,7 +22,9 @@ class AxisItem;
 class AxisCubeItem;
 class IconItem;
 class GeometryItem;
+class LampItem;
 class LoggingItem;
+class MaterialItem;
 class PreprocItem;
 class ProjectionItem;
 class ReconItem;
@@ -34,7 +36,9 @@ class Scene3d : public Scene {
     std::unique_ptr<AxisCubeItem> axiscube_item_;
     std::unique_ptr<IconItem> icon_item_;
     std::unique_ptr<GeometryItem> geometry_item_;
+    std::unique_ptr<LampItem> lamp_item_;
     std::unique_ptr<LoggingItem> logging_item_;
+    std::unique_ptr<MaterialItem> material_item_;
     std::unique_ptr<PreprocItem> preproc_item_;
     std::unique_ptr<ProjectionItem> projection_item_;
     std::unique_ptr<ReconItem> recon_item_;
@@ -50,6 +54,10 @@ public:
     explicit Scene3d(RpcClient* client);
 
     ~Scene3d() override;
+
+    [[nodiscard]] virtual const Light& light() const override;
+
+    [[nodiscard]] virtual const Material& material() const override;
 
     void render() override;
 
