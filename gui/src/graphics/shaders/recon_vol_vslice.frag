@@ -6,9 +6,11 @@ layout(location = 0) out vec4 fColor;
 smooth in vec3 texCoords;
 smooth in vec4 shadowCoords;
 
+uniform sampler1D colormap;
 uniform sampler3D volumeData;
 uniform sampler2D shadowTexture;
-uniform vec3 lightColor;
+uniform vec3 ambient;
+uniform vec3 diffuse;
 uniform float threshold;
 
 uniform float minValue;
@@ -23,15 +25,19 @@ float remapMinMax(float x, float x0, float x1) {
 void main() {
     vec3 lightIntensity =  textureProj(shadowTexture, shadowCoords.xyw).xyz;
 
-    float density;
+    float value;
     if (maxValue - minValue < 0.0001f) {
-        density = 1.f;
+        value = 1.f;
     } else {
-        density = remapMinMax(texture(volumeData, texCoords).r, minValue, maxValue);
+        value = remapMinMax(texture(volumeData, texCoords).r, minValue, maxValue);
     }
 
-	if(density > threshold) {
-		fColor = vec4(lightColor * lightIntensity * density, density);
+	if (value > threshold) {
+	    float alpha = clamp(value, 0.f, 1.f);
+
+	    vec3 color = texture(colormap, value).xyz;
+
+		fColor = vec4(alpha * color * (ambient + lightIntensity * diffuse), alpha);
 	} else {
 	    fColor = vec4(0.f);
 	}

@@ -56,11 +56,12 @@ class Volume {
     RenderQuality render_quality_;
 
     std::unique_ptr<VolumeSlicer> slicer_;
-    bool global_illumination_ = false;
-    float global_illumination_threshold_ = 0.1f;
+    float threshold_ = 0.1f;
+    bool volume_shadow_enabled_ = false;
 
     std::unique_ptr<ShaderProgram> shader_;
-    std::unique_ptr<ShaderProgram> shadow_shader_;
+    std::unique_ptr<ShaderProgram> vslice_shader_;
+    std::unique_ptr<ShaderProgram> vlight_shader_;
     std::unique_ptr<ShaderProgram> screen_shader_;
 
     std::unique_ptr<IsoSurface> iso_surface_;
@@ -112,13 +113,13 @@ public:
 
     void setFront(float front);
 
-    [[nodiscard]] bool globalIllumination() const { return global_illumination_; }
+    [[nodiscard]] bool volumeShadowEnabled() const { return volume_shadow_enabled_; }
 
-    void setGlobalIllumination(bool state) { global_illumination_ = state; }
+    void setVolumeShadowEnabled(bool state) { volume_shadow_enabled_ = state; }
 
-    [[nodiscard]] float globalIlluminationThreshold() const { return global_illumination_threshold_; }
+    [[nodiscard]] float threshold() const { return threshold_; }
 
-    void setGlobalIlluminationThreshold(float value) { global_illumination_threshold_ = value; }
+    void setThreshold(float value) { threshold_ = value; }
 
     void setIsoValue(float value);
 };

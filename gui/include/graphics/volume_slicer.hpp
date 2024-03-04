@@ -16,6 +16,8 @@
 #include <GL/gl3w.h>
 #include <glm/glm.hpp>
 
+#include "graphics/style.hpp"
+
 namespace recastx::gui {
 
 class ShaderProgram;
@@ -138,6 +140,8 @@ class VolumeSlicer {
             { 9,8,5,4,   6,1,2,0,   10,7,11,3}, { 10,9,6,5,  7,2,3,1,   11,4,8,0 }
     };
 
+    static constexpr ImVec4 bg_color_ { Style::BG_COLOR };
+
     std::tuple<float, float, int> sortVertices(const glm::vec3& view_dir);
 
     void initBufferData();
@@ -156,7 +160,9 @@ class VolumeSlicer {
 
     void drawOnScreen();
 
-    void drawOnBuffer(ShaderProgram* shadow_shader, ShaderProgram* volume_shader, bool is_view_inverted);
+    void drawOnBuffer(ShaderProgram* vslice_shader,
+                      ShaderProgram* vlight_shader,
+                      bool is_view_inverted);
 
     void setFront(float front);
 };

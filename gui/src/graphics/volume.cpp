@@ -38,23 +38,36 @@ Volume::Volume()
     shader_->setInt("colormap", 0);
     shader_->setInt("volumeData", 2);
 
-    auto shadow_vert =
-#include "shaders/recon_vol_has_shadow.vert"
+    auto vlight_vert =
+#include "shaders/recon_vol_vlight.vert"
     ;
-    auto shadow_frag =
-#include "shaders/recon_vol_has_shadow.frag"
+    auto vlight_frag =
+#include "shaders/recon_vol_vlight.frag"
     ;
-    shadow_shader_ = std::make_unique<ShaderProgram>(shadow_vert, shadow_frag);
+    vlight_shader_ = std::make_unique<ShaderProgram>(vlight_vert, vlight_frag);
 
-    shadow_shader_->use();
-    shadow_shader_->setInt("volumeData", 2);
-    shadow_shader_->setInt("shadowTexture", 3);
+    vlight_shader_->use();
+    vlight_shader_->setInt("colormap", 0);
+    vlight_shader_->setInt("volumeData", 2);
+
+    auto vslice_vert =
+#include "shaders/recon_vol_vslice.vert"
+    ;
+    auto vslice_frag =
+#include "shaders/recon_vol_vslice.frag"
+    ;
+    vslice_shader_ = std::make_unique<ShaderProgram>(vslice_vert, vslice_frag);
+
+    vslice_shader_->use();
+    vlight_shader_->setInt("colormap", 0);
+    vslice_shader_->setInt("volumeData", 2);
+    vslice_shader_->setInt("shadowTexture", 3);
 
     auto screen_vert =
-#include "shaders/screen.vert"
+#include "shaders/recon_vol_screen.vert"
     ;
     auto screen_frag =
-#include "shaders/screen.frag"
+#include "shaders/recon_vol_screen.frag"
     ;
     screen_shader_ = std::make_unique<ShaderProgram>(screen_vert, screen_frag);
 
@@ -146,18 +159,11 @@ void Volume::render(const glm::mat4& view,
     if (!texture_.isReady()) return;
 
     if (render_policy_ == RenderPolicy::VOLUME) {
-        shader_->use();
-        shader_->setFloat("alpha", material.alpha);
-        shader_->setFloat("minValue", min_v);
-        shader_->setFloat("maxValue", max_v);
-
-        shader_->setVec3("viewPos", view_pos);
-
-        const glm::mat4 light_projection = glm::perspective(45.f, 1.f, 1.f, 200.f);
+        const glm::mat4 light_projection = glm::perspective(45.f, 1.f, 0.1f, 100.f);
         const glm::mat4 bias = glm::scale(glm::translate(glm::mat4(1), glm::vec3(0.5, 0.5, 0.5)),
                                           glm::vec3(0.5, 0.5, 0.5));
 
-        if (global_illumination_) {
+        if (volume_shadow_enabled_) {
             glm::mat4 light_view = glm::lookAt(light.pos, glm::vec3(0.f), glm::vec3(1.f, 0.f, 0.f));
             glm::vec3 light_vec = glm::normalize(light.pos);
 
@@ -165,21 +171,26 @@ void Volume::render(const glm::mat4& view,
             const glm::vec3 &half_vec = glm::normalize((is_view_inverted ? -view_dir : view_dir) + light_vec);
             slicer_->update(half_vec, is_view_inverted);
 
-            shadow_shader_->use();
-            shadow_shader_->setMat4("mvp", projection * view);
-            shadow_shader_->setMat4("mvpShadow", bias * light_projection * light_view);
-            shadow_shader_->setVec3("lightColor", light.color);
-            shadow_shader_->setFloat("threshold", global_illumination_threshold_);
-            shadow_shader_->setFloat("minValue", min_v);
-            shadow_shader_->setFloat("maxValue", max_v);
+            vslice_shader_->use();
+            vslice_shader_->setMat4("mvp", projection * view);
+            vslice_shader_->setMat4("mvpShadow", bias * light_projection * light_view);
+            vslice_shader_->setVec3("ambient", light.ambient);
+            vslice_shader_->setVec3("diffuse", light.diffuse);
+            vslice_shader_->setFloat("threshold", threshold_);
+            vslice_shader_->setFloat("minValue", min_v);
+            vslice_shader_->setFloat("maxValue", max_v);
 
-            shader_->use();
-            shader_->setMat4("mvp", light_projection * light_view);
+            vlight_shader_->use();
+            vlight_shader_->setMat4("mvp", light_projection * light_view);
+            vlight_shader_->setFloat("alpha", material.alpha);
+            vlight_shader_->setFloat("threshold", threshold_);
+            vlight_shader_->setFloat("minValue", min_v);
+            vlight_shader_->setFloat("maxValue", max_v);
 
             glEnable(GL_BLEND);
 
             texture_.bind();
-            slicer_->drawOnBuffer(shadow_shader_.get(), shader_.get(), is_view_inverted);
+            slicer_->drawOnBuffer(vslice_shader_.get(), vlight_shader_.get(), is_view_inverted);
             texture_.unbind();
 
             vp->use();
@@ -190,6 +201,10 @@ void Volume::render(const glm::mat4& view,
         } else {
             shader_->use();
             shader_->setMat4("mvp", projection * view);
+            shader_->setFloat("threshold", threshold_);
+            shader_->setFloat("alpha", material.alpha);
+            shader_->setFloat("minValue", min_v);
+            shader_->setFloat("maxValue", max_v);
 
             slicer_->update(view_dir, false);
 

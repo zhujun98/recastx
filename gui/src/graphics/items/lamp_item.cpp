@@ -71,7 +71,7 @@ void LampItem::renderIm() {
         }
     }
 
-    ImGui::DragFloat3("Position##LAMP", &pos_.x, 0.05f, -20.f, 20.f, "%.2f", ImGuiSliderFlags_ClampOnInput);
+    ImGui::DragFloat3("Position##LAMP", &pos_.x, 0.02f, -10.f, 10.f, "%.2f", ImGuiSliderFlags_ClampOnInput);
 
     if (ImGui::ColorEdit3("Color##LAMP", &light_.color.x)) {
         light_.ambient = ambient_ * light_.color;
@@ -88,7 +88,7 @@ void LampItem::renderIm() {
     if (ImGui::DragFloat("Specular##LAMP", &specular_, 0.005f, 0.f, 1.f, "%.3f", ImGuiSliderFlags_ClampOnInput)) {
         light_.specular = specular_ * light_.color;
     }
-
+//
     ImGui::EndDisabled();
 }
 

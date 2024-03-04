@@ -25,20 +25,20 @@ std::string CubeModel::data() const {
 }
 
 void CubeModel::genData() {
-    genDonut(x_ / 2, x_ / 2, x_ / 2, 3 * x_ / 8, x_/ 16, 10.f);
-    genDonut(x_ / 2, x_ / 2, x_ / 2, 3 * x_ / 8, x_/ 32, 1.f);
+    genDonut(x_ / 2, x_ / 2, x_ / 2, 3 * x_ / 8, x_/ 16, 0.2f);
+    genDonut(x_ / 2, x_ / 2, x_ / 2, 3 * x_ / 8, x_/ 32, 0.5f);
 
-    genCylinder(5 * x_ / 8, 5 * x_ / 8, x_ / 16, 11 * x_ / 16, x_ / 16, 20.f);
-    genCylinder(5 * x_ / 8, 5 * x_ / 8, x_ / 16, 11 * x_ / 16, x_ / 32, 2.f);
+    genCylinder(5 * x_ / 8, 5 * x_ / 8, x_ / 16, 11 * x_ / 16, x_ / 16, 0.1f);
+    genCylinder(5 * x_ / 8, 5 * x_ / 8, x_ / 16, 11 * x_ / 16, x_ / 32, 1.f);
 
-    genCylinder(3 * x_ / 8, 5 * x_ / 8, x_ / 8, 3 * x_ / 4, x_ / 16, 30.f);
-    genCylinder(3 * x_ / 8, 5 * x_ / 8, x_ / 8, 3 * x_ / 4, x_ / 32, 3.f);
+    genCylinder(3 * x_ / 8, 5 * x_ / 8, x_ / 8, 3 * x_ / 4, x_ / 16, 0.3f);
+    genCylinder(3 * x_ / 8, 5 * x_ / 8, x_ / 8, 3 * x_ / 4, x_ / 32, 1.f);
 
-    genCylinder(5 * x_ / 8, 3 * x_ / 8, 3 * x_ / 16, 13 * x_ / 16, x_ / 16, 30.f);
-    genCylinder(5 * x_ / 8, 3 * x_ / 8, 3 * x_ / 16, 13 * x_ / 16, x_ / 32, 3.f);
+    genCylinder(5 * x_ / 8, 3 * x_ / 8, 3 * x_ / 16, 13 * x_ / 16, x_ / 16, 0.3f);
+    genCylinder(5 * x_ / 8, 3 * x_ / 8, 3 * x_ / 16, 13 * x_ / 16, x_ / 32, 1.f);
 
-    genCylinder(3 * x_ / 8, 3 * x_ / 8, x_ / 4, 7 * x_ / 8, x_ / 16, 20.f);
-    genCylinder(3 * x_ / 8, 3 * x_ / 8, x_ / 4, 7 * x_ / 8, x_ / 32, 2.f);
+    genCylinder(3 * x_ / 8, 3 * x_ / 8, x_ / 4, 7 * x_ / 8, x_ / 16, 0.1f);
+    genCylinder(3 * x_ / 8, 3 * x_ / 8, x_ / 4, 7 * x_ / 8, x_ / 32, 1.f);
 }
 
 void CubeModel::genDonut(uint32_t xc, uint32_t yc, uint32_t zc, uint32_t r1, uint32_t r2, DataType::value_type v) {

@@ -53,17 +53,15 @@ void RenderComponent::renderIm() {
     if (cd) volume_->setRenderPolicy(RenderPolicy(render_policy));
 
     if (render_policy == static_cast<int>(RenderPolicy::VOLUME)) {
-        static bool global_illumination = volume_->globalIllumination();
-        if (ImGui::Checkbox("Global Illumination##RENDER_COMP", &global_illumination)) {
-            volume_->setGlobalIllumination(global_illumination);
+        static float threshold = volume_->threshold();
+        if (ImGui::DragFloat("Threshold##RENDER_COMP", &threshold, 0.005f, 0.f, 1.f, "%.3f", ImGuiSliderFlags_ClampOnInput)) {
+            volume_->setThreshold(threshold);
         }
 
-        static float global_illumination_threshold = volume_->globalIlluminationThreshold();
-        ImGui::BeginDisabled(!global_illumination);
-        if (ImGui::DragFloat("Threshold##RENDER_COMP", &global_illumination_threshold, 0.005f, 0.f, 1.f, "%.3f", ImGuiSliderFlags_ClampOnInput)) {
-            volume_->setGlobalIlluminationThreshold(global_illumination_threshold);
+        static bool volume_shadow_enabled = volume_->volumeShadowEnabled();
+        if (ImGui::Checkbox("Volume Shadow##RENDER_COMP", &volume_shadow_enabled)) {
+            volume_->setVolumeShadowEnabled(volume_shadow_enabled);
         }
-        ImGui::EndDisabled();
     } else {
         static float iso_value = 0.f;
 

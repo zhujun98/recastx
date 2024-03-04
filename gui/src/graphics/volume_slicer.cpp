@@ -64,7 +64,7 @@ void VolumeSlicer::update(const glm::vec3& view_dir, bool inverted) {
     float dl[12];
 
     int count = 0;
-    for (int i = num_slices_ - 1; i >= 0; i--) {
+    for (int i = num_slices_ - 1; i >= 0; --i) {
         if (!inverted && i * plane_dist_inc + min_dist < cutoff) continue;
         else if (inverted && max_dist - i * plane_dist_inc < cutoff) continue;
 
@@ -119,14 +119,21 @@ void VolumeSlicer::update(const glm::vec3& view_dir, bool inverted) {
 }
 
 void VolumeSlicer::draw() {
+    glEnable(GL_BLEND);
+
     glBindBuffer(GL_ARRAY_BUFFER, vbo_);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * slices_.size(), slices_.data());
 
     glBindVertexArray(vao_);
     glDrawArrays(GL_TRIANGLES, 0, static_cast<int>(slices_.size()));
+
+    glDisable(GL_BLEND);
 }
 
 void VolumeSlicer::drawOnScreen() {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
     glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, shadow_.eye_texture_);
 
@@ -135,10 +142,12 @@ void VolumeSlicer::drawOnScreen() {
     glBindVertexArray(0);
 
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    glDisable(GL_BLEND);
 }
 
-void VolumeSlicer::drawOnBuffer(ShaderProgram* shadow_shader,
-                                ShaderProgram* volume_shader,
+void VolumeSlicer::drawOnBuffer(ShaderProgram* vslice_shader,
+                                ShaderProgram* vlight_shader,
                                 bool is_view_inverted) {
     glBindBuffer(GL_ARRAY_BUFFER, vbo_);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * slices_.size(), slices_.data());
@@ -153,26 +162,28 @@ void VolumeSlicer::drawOnBuffer(ShaderProgram* shadow_shader,
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT);
 
+    glEnable(GL_BLEND);
+
     glBindVertexArray(vao_);
-    for (size_t i =0; i < slices_.size(); ++i) {
+    for (int i = num_slices_; i >= 0; --i) {
         glActiveTexture(GL_TEXTURE3);
         glBindTexture(GL_TEXTURE_2D, shadow_.light_texture_);
-        shadow_shader->use();
+        vslice_shader->use();
         glDrawBuffer(GL_COLOR_ATTACHMENT1);
         if(is_view_inverted) {
-            glBlendFunc(GL_ONE_MINUS_DST_ALPHA, GL_ONE);
-        } else {
             glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+        } else {
+            glBlendFunc(GL_ONE_MINUS_DST_ALPHA, GL_ONE);
         }
         glDrawArrays(GL_TRIANGLES, 12 * i, 12);
-        glBindTexture(GL_TEXTURE_2D, 0);
 
-        volume_shader->use();
         glDrawBuffer(GL_COLOR_ATTACHMENT0);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        vlight_shader->use();
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
         glDrawArrays(GL_TRIANGLES, 12 * i, 12);
     }
-    glBindVertexArray(0);
+
+    glDisable(GL_BLEND);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
