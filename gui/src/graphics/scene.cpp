@@ -41,6 +41,8 @@ glm::vec3 Scene::cameraDir() const { return camera_->viewDir(); }
 
 glm::vec3 Scene::cameraPosition() const { return camera_->pos(); }
 
+
+
 void Scene::onFramebufferSizeChanged(int width, int height) {
     layout_.sw = (double)width / layout_.w;
     layout_.sh = (double)height / layout_.h;
