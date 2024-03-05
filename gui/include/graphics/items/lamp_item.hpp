@@ -24,9 +24,8 @@ class LampItem : public GraphicsItem, public GraphicsGLItem {
 
     bool show_;
     bool rel_pos_;
-    float pos_[3];
+    glm::vec3 pos_;
 
-    glm::vec3 color_;
     float ambient_;
     float diffuse_;
     float specular_;
