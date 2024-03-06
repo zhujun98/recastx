@@ -217,8 +217,6 @@ void ReconItem::preRenderGl() {
 
 void ReconItem::renderGl() {
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     vp_->use();
     cm_.bind();
@@ -270,8 +268,6 @@ void ReconItem::renderGl() {
 #endif
         glDrawArrays(GL_LINES, 0, 2);
     }
-
-    glDisable(GL_BLEND);
 }
 
 bool ReconItem::updateServerParams() {
@@ -464,7 +460,13 @@ void ReconItem::renderImSliceControl(const char* header) {
         cd |= ImGui::RadioButton(BTN_3D[index], &std::get<1>(slices_[index]), SHOW3D_SLI);
         ImGui::SameLine();
         cd |= ImGui::RadioButton(BTN_DISABLE[index], &std::get<1>(slices_[index]), DISABLE_SLI);
-        if (cd) update_min_max_val_ = true;
+        if (cd) {
+            update_min_max_val_ = true;
+
+            if (std::get<1>(slices_[index]) != DISABLE_SLI && volume_policy_ == SHOW_VOL) {
+                volume_policy_ = PREVIEW_VOL;
+            }
+        }
     }
 }
 

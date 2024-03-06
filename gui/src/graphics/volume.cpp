@@ -182,7 +182,6 @@ void Volume::render(const glm::mat4& view,
 
             vlight_shader_->use();
             vlight_shader_->setMat4("mvp", light_projection * light_view);
-            vlight_shader_->setFloat("alpha", material.alpha);
             vlight_shader_->setFloat("threshold", threshold_);
             vlight_shader_->setFloat("minValue", min_v);
             vlight_shader_->setFloat("maxValue", max_v);
