@@ -151,6 +151,7 @@ void Volume::render(const glm::mat4& view,
                     const glm::mat4& projection,
                     float min_v,
                     float max_v,
+                    float alpha_scale,
                     const glm::vec3& view_dir,
                     const glm::vec3& view_pos,
                     const Light& light,
@@ -179,6 +180,7 @@ void Volume::render(const glm::mat4& view,
             vslice_shader_->setFloat("threshold", threshold_);
             vslice_shader_->setFloat("minValue", min_v);
             vslice_shader_->setFloat("maxValue", max_v);
+            vslice_shader_->setFloat("alphaScale", alpha_scale);
 
             vlight_shader_->use();
             vlight_shader_->setMat4("mvp", light_projection * light_view);
@@ -201,9 +203,9 @@ void Volume::render(const glm::mat4& view,
             shader_->use();
             shader_->setMat4("mvp", projection * view);
             shader_->setFloat("threshold", threshold_);
-            shader_->setFloat("alpha", material.alpha);
             shader_->setFloat("minValue", min_v);
             shader_->setFloat("maxValue", max_v);
+            shader_->setFloat("alphaScale", alpha_scale);
 
             slicer_->update(view_dir, false);
 

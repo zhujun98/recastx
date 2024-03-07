@@ -27,8 +27,7 @@ void main() {
     }
 
     if (value > threshold) {
-        float alpha = value;
-        fColor = vec4(0, 0, 0, alpha);
+        fColor = vec4(0, 0, 0, value);
     } else {
         fColor = vec4(0.f);
     }

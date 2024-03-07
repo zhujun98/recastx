@@ -15,6 +15,7 @@ uniform float threshold;
 
 uniform float minValue;
 uniform float maxValue;
+uniform float alphaScale;
 
 float remapMinMax(float x, float x0, float x1) {
     if (x > x1) return 1.f;
@@ -33,11 +34,9 @@ void main() {
     }
 
 	if (value > threshold) {
-	    float alpha = clamp(value, 0.f, 1.f);
+	    vec3 color = texture(colormap, value).rgb;
 
-	    vec3 color = texture(colormap, value).xyz;
-
-		fColor = vec4(alpha * color * (ambient + lightIntensity * diffuse), alpha);
+		fColor = vec4(value * color * (ambient + lightIntensity * diffuse), value * alphaScale);
 	} else {
 	    fColor = vec4(0.f);
 	}

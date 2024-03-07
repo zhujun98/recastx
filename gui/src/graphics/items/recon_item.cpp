@@ -137,6 +137,10 @@ void ReconItem::renderIm() {
                            std::numeric_limits<float>::max());
     ImGui::EndDisabled();
 
+    ImGui::BeginDisabled(volume_policy_ != SHOW_VOL);
+    ImGui::SliderFloat("alphaScale", &alpha_scale_, 0.f, 1.f);
+    ImGui::EndDisabled();
+
     ImGui::Checkbox("Show wireframe##VIEW", &show_wireframe_);
 
     renderImSliceControl<0>("Slice 1##RECON");
@@ -245,7 +249,7 @@ void ReconItem::renderGl() {
     volume_->unbind();
 
     if (volume_policy_ == SHOW_VOL) {
-        volume_->render(view, projection, min_val, max_val_, view_dir, view_pos, light, material, vp_);
+        volume_->render(view, projection, min_val, max_val_, alpha_scale_, view_dir, view_pos, light, material, vp_);
     }
 
     cm_.unbind();
