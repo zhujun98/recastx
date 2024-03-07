@@ -11,7 +11,6 @@ uniform sampler3D volumeData;
 uniform float threshold;
 uniform float minValue;
 uniform float maxValue;
-uniform float alphaScale;
 
 float remapMinMax(float x, float x0, float x1) {
     if (x > x1) return 1.f;
@@ -27,8 +26,8 @@ void main() {
         value = remapMinMax(texture(volumeData, texCoord).x, minValue, maxValue);
     }
 
-	if (value > threshold) {
-        fColor = vec4(texture(colormap, value).rgb, value * alphaScale);
+    if (value > threshold) {
+        fColor = vec4(0, 0, 0, value);
     } else {
         fColor = vec4(0.f);
     }

@@ -114,6 +114,7 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
     bool update_min_max_val_ = false;
     float min_val_;
     float max_val_;
+    float alpha_scale_ = 1.0;
 
     std::mutex volume_mtx_;
     std::unique_ptr<Volume> volume_;

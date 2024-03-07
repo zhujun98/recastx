@@ -18,7 +18,6 @@ LampItem::LampItem(Scene& scene)
           show_(false),
           rel_pos_(true),
           pos_{0.f, 0.f, 0.f},
-          color_({1.f, 1.f, 1.f}),
           ambient_(0.5f),
           diffuse_(0.7f),
           specular_(1.0f) {
@@ -26,10 +25,12 @@ LampItem::LampItem(Scene& scene)
     vp_ = std::make_shared<Viewport>();
 
     light_.is_enabled = true;
-    light_.color = color_;
-    light_.ambient = ambient_ * color_;
-    light_.diffuse = diffuse_ * color_;
-    light_.specular = specular_ * color_;
+
+    glm::vec3 color = {1.f, 1.f, 1.f};
+    light_.color = color;
+    light_.ambient = ambient_ * color;
+    light_.diffuse = diffuse_ * color;
+    light_.specular = specular_ * color;
 
     auto vert =
 #include "../shaders/lamp.vert"
@@ -64,35 +65,37 @@ void LampItem::renderIm() {
     if (ImGui::Checkbox("Rel. Positioning##LAMP", &rel_pos_)) {
         const auto& cam_pos = scene_.cameraPosition();
         if (rel_pos_) {
-            pos_[0] -= cam_pos[0];
-            pos_[1] -= cam_pos[1];
-            pos_[2] -= cam_pos[2];
+            pos_ -= cam_pos;
         } else {
-            pos_[0] += cam_pos[0];
-            pos_[1] += cam_pos[1];
-            pos_[2] += cam_pos[2];
+            pos_ += cam_pos;
         }
     }
 
-    ImGui::DragFloat3("Position##LAMP", pos_, 0.05f, -20.f, 20.f, "%.2f", ImGuiSliderFlags_ClampOnInput);
+    ImGui::DragFloat3("Position##LAMP", &pos_.x, 0.02f, -10.f, 10.f, "%.2f", ImGuiSliderFlags_ClampOnInput);
+
+    if (ImGui::ColorEdit3("Color##LAMP", &light_.color.x)) {
+        light_.ambient = ambient_ * light_.color;
+        light_.diffuse = diffuse_ * light_.color;
+        light_.specular = specular_ * light_.color;
+    }
 
     if (ImGui::DragFloat("Ambient##LAMP", &ambient_, 0.005f, 0.f, 1.f, "%.3f", ImGuiSliderFlags_ClampOnInput)) {
-        light_.ambient = ambient_ * color_;
+        light_.ambient = ambient_ * light_.color;
     }
     if (ImGui::DragFloat("Diffuse##LAMP", &diffuse_, 0.005f, 0.f, 1.f, "%.3f", ImGuiSliderFlags_ClampOnInput)) {
-        light_.diffuse = diffuse_ * color_;
+        light_.diffuse = diffuse_ * light_.color;
     }
     if (ImGui::DragFloat("Specular##LAMP", &specular_, 0.005f, 0.f, 1.f, "%.3f", ImGuiSliderFlags_ClampOnInput)) {
-        light_.specular = specular_ * color_;
+        light_.specular = specular_ * light_.color;
     }
-
+//
     ImGui::EndDisabled();
 }
 
 void LampItem::onFramebufferSizeChanged(int /*width*/, int /*height*/) {}
 
 void LampItem::preRenderGl() {
-    light_.pos = glm::vec3(pos_[0], pos_[1], pos_[2]);
+    light_.pos = pos_;
     if (rel_pos_) {
         light_.pos += scene_.cameraPosition();
     }
@@ -108,6 +111,7 @@ void LampItem::renderGl() {
     shader_->use();
     shader_->setVec4("center", mvp * glm::vec4(light_.pos, 1.f));
     shader_->setFloat("xScale", 1.f / vp_->aspectRatio());
+    shader_->setVec3("color", light_.color);
 
     glEnable(GL_DEPTH_TEST);
 

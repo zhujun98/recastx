@@ -38,7 +38,7 @@ class Application {
     int height_ = 1080;
     const std::string title_ = "RECASTX - REConstruction of Arbitrary Slabs in Tomography X";
 
-    ImVec4 bg_color_ { Style::BG_COLOR };
+    static constexpr ImVec4 bg_color_ { Style::BG_COLOR };
 
     GLFWwindow* glfw_window_ = nullptr;
 

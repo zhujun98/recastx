@@ -30,7 +30,7 @@ void PreprocItem::renderIm() {
     ImGui::BeginDisabled(state & rpc::ServerState_State_PROCESSING);
 
     ImGui::AlignTextToFramePadding();
-    ImGui::Text("Downsampling:");
+    ImGui::Text("Downsample:");
     ImGui::SameLine();
 
     float spacing = ImGui::GetStyle().ItemInnerSpacing.x;

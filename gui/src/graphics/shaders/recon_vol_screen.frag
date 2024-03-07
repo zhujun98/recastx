@@ -8,7 +8,7 @@ in vec2 texCoords;
 uniform sampler2D screenTexture;
 
 void main() {
-	fColor = texture(screenTexture, texCoords);
-}
+	vec4 sample = texture(screenTexture, texCoords);
+    fColor = vec4(sample.rgb * sample.a, sample.a);}
 
 )glsl"

@@ -3,8 +3,10 @@ R"glsl(
 
 layout(location = 0) out vec4 fColor;
 
+uniform vec3 color;
+
 void main() {
-	fColor = vec4(1.f, 1.f, 0.f, 1.f);
+	fColor = vec4(color, 1.f);
 }
 
 )glsl"

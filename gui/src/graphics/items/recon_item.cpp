@@ -53,17 +53,15 @@ void RenderComponent::renderIm() {
     if (cd) volume_->setRenderPolicy(RenderPolicy(render_policy));
 
     if (render_policy == static_cast<int>(RenderPolicy::VOLUME)) {
-        static bool global_illumination = volume_->globalIllumination();
-        if (ImGui::Checkbox("Global Illumination##RENDER_COMP", &global_illumination)) {
-            volume_->setGlobalIllumination(global_illumination);
+        static float threshold = volume_->threshold();
+        if (ImGui::DragFloat("Threshold##RENDER_COMP", &threshold, 0.005f, 0.f, 1.f, "%.3f", ImGuiSliderFlags_ClampOnInput)) {
+            volume_->setThreshold(threshold);
         }
 
-        static float global_illumination_threshold = volume_->globalIlluminationThreshold();
-        ImGui::BeginDisabled(!global_illumination);
-        if (ImGui::DragFloat("Threshold##RENDER_COMP", &global_illumination_threshold, 0.005f, 0.f, 1.f, "%.3f", ImGuiSliderFlags_ClampOnInput)) {
-            volume_->setGlobalIlluminationThreshold(global_illumination_threshold);
+        static bool volume_shadow_enabled = volume_->volumeShadowEnabled();
+        if (ImGui::Checkbox("Volume Shadow##RENDER_COMP", &volume_shadow_enabled)) {
+            volume_->setVolumeShadowEnabled(volume_shadow_enabled);
         }
-        ImGui::EndDisabled();
     } else {
         static float iso_value = 0.f;
 
@@ -137,6 +135,10 @@ void ReconItem::renderIm() {
     ImGui::DragFloatRange2("Min / Max##RECON", &min_val_, &max_val_, step_size,
                            std::numeric_limits<float>::lowest(), // min() does not work
                            std::numeric_limits<float>::max());
+    ImGui::EndDisabled();
+
+    ImGui::BeginDisabled(volume_policy_ != SHOW_VOL);
+    ImGui::SliderFloat("alphaScale", &alpha_scale_, 0.f, 1.f);
     ImGui::EndDisabled();
 
     ImGui::Checkbox("Show wireframe##VIEW", &show_wireframe_);
@@ -219,8 +221,6 @@ void ReconItem::preRenderGl() {
 
 void ReconItem::renderGl() {
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     vp_->use();
     cm_.bind();
@@ -249,7 +249,7 @@ void ReconItem::renderGl() {
     volume_->unbind();
 
     if (volume_policy_ == SHOW_VOL) {
-        volume_->render(view, projection, min_val, max_val_, view_dir, view_pos, light, material, vp_);
+        volume_->render(view, projection, min_val, max_val_, alpha_scale_, view_dir, view_pos, light, material, vp_);
     }
 
     cm_.unbind();
@@ -272,8 +272,6 @@ void ReconItem::renderGl() {
 #endif
         glDrawArrays(GL_LINES, 0, 2);
     }
-
-    glDisable(GL_BLEND);
 }
 
 bool ReconItem::updateServerParams() {
@@ -466,7 +464,13 @@ void ReconItem::renderImSliceControl(const char* header) {
         cd |= ImGui::RadioButton(BTN_3D[index], &std::get<1>(slices_[index]), SHOW3D_SLI);
         ImGui::SameLine();
         cd |= ImGui::RadioButton(BTN_DISABLE[index], &std::get<1>(slices_[index]), DISABLE_SLI);
-        if (cd) update_min_max_val_ = true;
+        if (cd) {
+            update_min_max_val_ = true;
+
+            if (std::get<1>(slices_[index]) != DISABLE_SLI && volume_policy_ == SHOW_VOL) {
+                volume_policy_ = PREVIEW_VOL;
+            }
+        }
     }
 }
 
