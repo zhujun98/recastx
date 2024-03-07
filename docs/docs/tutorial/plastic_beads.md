@@ -52,11 +52,11 @@ recastx-gui
 Make sure the `SCAN MODE` is set to `Discrete` and click the `Process` button.
 
 <figure markdown>
-  ![Beads slices](../recastx-docs-supplement/beads_slices.png){ width="480" }
+  ![Beads slices](../recastx-docs-supplement/kblt_beads_slices.png){ width="480" }
   <figcaption>Three orthogonal high-resolution slices</figcaption>
 </figure>
 
 <figure markdown>
-  ![Beads volume](../recastx-docs-supplement/beads_volume.gif){ width="480" }
+  ![Beads volume](../recastx-docs-supplement/kblt_beads_volume.gif){ width="480" }
   <figcaption>"Low-resolution" volume</figcaption>
 </figure>
