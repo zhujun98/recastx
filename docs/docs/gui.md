@@ -40,15 +40,17 @@
 
 ## Manipulating 3D model with mouse and keyboard
 
-- *Hold down the left mouse button and move*:
-    - When a high-resolution slice is selected (the selected slice will be highlighted), the slice will move
-      along its normal direction.
-- *Hold down the right mouse button and move*:
-    - When a high-resolution slice is selected (the selected slice will be highlighted), the slice will rotate
-      around a highlighted axis.
-- *Hold down the middle mouse button and move*:
-    - Rotate the model along an axis which is perpendicular to the moving direction.
-- *Scroll the mouse*: Zoom in/out of the model.
+### Reconstructed slices
+
+- Select a slice on *mouse hover* (the selected slice will be highlighted).
+- Move the selected slice along its normal direction by *dragging the left mouse button*.
+- Rotate the selected slice around a highlighted axis by *dragging the right mouse button*.
+
+### Camera
+
+- Rotate the model along an axis which is perpendicular to the moving direction by *dragging
+  the middle mouse button* or *dragging the left mouse button while holding the left* <kbd>Alt</kbd>.
+- Zoom in/out of the model by *scrolling the mouse*.
 - <kbd>w</kbd>/<kbd>s</kbd>: Rotate around the x-axis.
 - <kbd>a</kbd>/<kbd>d</kbd>: Rotate around the y-axis.
 - <kbd>space</kbd>: Reset to perspective view.
