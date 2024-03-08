@@ -50,6 +50,8 @@ class Camera : public InputHandler {
 
     bool dragging_ = false;
 
+    bool alt_pressed_ = false;
+
     void rotate(float angle, const glm::vec3& axis);
 
   public:

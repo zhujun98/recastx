@@ -44,7 +44,10 @@ glm::vec3 Camera::pos() {
 }
 
 bool Camera::handleMouseButton(int button, int action) {
-    dragging_ = action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_MIDDLE;
+    dragging_ = action == GLFW_PRESS && (
+            (alt_pressed_ && button == GLFW_MOUSE_BUTTON_LEFT)
+            || button == GLFW_MOUSE_BUTTON_MIDDLE
+    );
     return true;
 }
 
@@ -88,6 +91,9 @@ bool Camera::handleMouseMoved(float x, float y) {
 bool Camera::handleKey(int key, int action, int /* mods */) {
     if (action == GLFW_REPEAT || action == GLFW_PRESS) {
         switch (key) {
+            case GLFW_KEY_LEFT_ALT:
+                alt_pressed_ = true;
+                return true;
             case GLFW_KEY_A:
                 rotate(-key_sensitivity_, up_);
                 return true;
@@ -109,6 +115,14 @@ bool Camera::handleKey(int key, int action, int /* mods */) {
                 setPerspectiveView();
                 return true;
             }
+        }
+    } else if (action == GLFW_RELEASE) {
+        switch (key) {
+            case GLFW_KEY_LEFT_ALT:
+                alt_pressed_ = false;
+                return true;
+            default:
+                break;
         }
     }
     return false;
