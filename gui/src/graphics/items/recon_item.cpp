@@ -53,15 +53,27 @@ void RenderComponent::renderIm() {
     if (cd) volume_->setRenderPolicy(RenderPolicy(render_policy));
 
     if (render_policy == static_cast<int>(RenderPolicy::VOLUME)) {
+        static bool volume_shadow_enabled = volume_->volumeShadowEnabled();
+
+        ImGui::BeginDisabled(volume_shadow_enabled);
+        if (ImGui::DragFloat("Front##RECON_VOL", &volume_front_, volume_front_step_, 0.f, 1.f, "%.3f", ImGuiSliderFlags_ClampOnInput)) {
+            volume_->setFront(volume_front_);
+        }
+        ImGui::EndDisabled();
+
         static float threshold = volume_->threshold();
-        if (ImGui::DragFloat("Threshold##RENDER_COMP", &threshold, 0.005f, 0.f, 1.f, "%.3f", ImGuiSliderFlags_ClampOnInput)) {
+        if (ImGui::DragFloat("Threshold##RENDER_COMP", &threshold, volume_front_step_, 0.f, 1.f, "%.3f", ImGuiSliderFlags_ClampOnInput)) {
             volume_->setThreshold(threshold);
         }
 
-        static bool volume_shadow_enabled = volume_->volumeShadowEnabled();
         if (ImGui::Checkbox("Volume Shadow##RENDER_COMP", &volume_shadow_enabled)) {
             volume_->setVolumeShadowEnabled(volume_shadow_enabled);
+            if (volume_shadow_enabled) {
+                volume_front_ = 0.f;
+                volume_->setFront(0.f);
+            }
         }
+
     } else {
         static float iso_value = 0.f;
 
@@ -408,17 +420,6 @@ bool ReconItem::handleMouseMoved(float x, float y) {
     return false;
 }
 
-void ReconItem::moveVolumeFrontForward() {
-    volume_front_ += volume_front_step_;
-    if (volume_front_ > 1.f) volume_front_ = 1.f;
-    volume_->setFront(volume_front_);
-};
-void ReconItem::moveVolumeFrontBackward() {
-    volume_front_ -= volume_front_step_;
-    if (volume_front_ < 0.f) volume_front_ = 0.f;
-    volume_->setFront(volume_front_);
-};
-
 template<size_t index>
 void ReconItem::renderImSliceControl(const char* header) {
 
@@ -502,10 +503,6 @@ void ReconItem::renderImVolumeControl() {
                     std::get<1>(slice) = DISABLE_SLI;
                 }
             }
-        }
-
-        if (ImGui::DragFloat("Front##RECON_VOL", &volume_front_, 0.005, 0.f, 1.f, "%.3f", ImGuiSliderFlags_ClampOnInput)) {
-            volume_->setFront(volume_front_);
         }
     }
 }
