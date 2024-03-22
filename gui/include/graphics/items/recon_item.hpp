@@ -38,6 +38,9 @@ class RenderComponent {
 
     Volume* volume_;
 
+    float volume_front_ = 0.f;
+    const float volume_front_step_ = 0.005f;
+
   public:
 
     explicit RenderComponent(Volume* volume);
@@ -119,8 +122,6 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
     std::mutex volume_mtx_;
     std::unique_ptr<Volume> volume_;
     int volume_policy_ = PREVIEW_VOL;
-    float volume_front_ = 0.f;
-    float volume_front_step_ = 0.01f;
 
     RenderComponent render_comp_;
 
@@ -191,9 +192,6 @@ public:
 
     [[nodiscard]] bool histogramVisible() const { return show_statistics_; }
     void setHistogramVisible(bool visible) { show_statistics_ = visible; }
-
-    void moveVolumeFrontForward();
-    void moveVolumeFrontBackward();
 };
 
 } // namespace recastx::gui
