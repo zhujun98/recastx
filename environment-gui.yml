@@ -5,6 +5,8 @@ channels:
 dependencies:
   - cmake>=3.25.3
   - boost=1.82.0
+  - glfw=3.4.0
+  - glm=0.9.9.8
   - spdlog=1.10.0
   - fmt=9.1.0
   - eigen=3.4.0

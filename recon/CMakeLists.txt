@@ -6,7 +6,16 @@
 #
 # The full license is in the file LICENSE, distributed with this software.
 # -----------------------------------------------------------------------------
-project(recastx-recon LANGUAGES CXX)
+project(recastx-recon LANGUAGES CXX CUDA)
+
+if (CMAKE_CUDA_COMPILER)
+    message(STATUS "CUDA compiler: ${CMAKE_CUDA_COMPILER}")
+
+    find_package(CUDAToolkit REQUIRED)
+    enable_language(CUDA)
+else()
+    message(FATAL_ERROR "NO CUDA support")
+endif()
 
 find_package(cppzmq 4.7.1 REQUIRED)
 message(STATUS "Found cppzmq ${cppzmq_VERSION} at ${cppzmq_INCLUDE_DIR}")
@@ -15,16 +24,10 @@ message(STATUS "Found cppzmq ${cppzmq_VERSION} at ${cppzmq_INCLUDE_DIR}")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 find_package(FFTW REQUIRED COMPONENTS FLOAT_LIB)
 
-find_package(Eigen3 3.4 REQUIRED NO_MODULE)
-message(STATUS "Found Eigen3 ${Eigen3_VERSION}")
-
 find_package(nlohmann_json REQUIRED)
 
 find_package(TBB 2021.9 REQUIRED)
 message(STATUS "Found TBB ${TBB_VERSION}")
-
-include(CheckLanguage)
-check_language(CUDA)
 
 add_library(astra-toolbox SHARED IMPORTED)
 if (APPLE)

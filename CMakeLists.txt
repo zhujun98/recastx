@@ -6,9 +6,18 @@
 #
 # The full license is in the file LICENSE, distributed with this software.
 # -----------------------------------------------------------------------------
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.25)
 
 project(recastx LANGUAGES C CXX)
+
+include(CheckLanguage)
+check_language(CUDA)
+
+cmake_policy(SET CMP0104 NEW)
+if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+    set(CMAKE_CUDA_ARCHITECTURES "70;75;80;86;89" CACHE STRING "CUDA architectures" FORCE)
+endif()
+message(STATUS "CUDA architectures: ${CMAKE_CUDA_ARCHITECTURES}")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -50,6 +59,9 @@ find_package(Protobuf REQUIRED)
 
 find_package(gRPC CONFIG 1.51.1 REQUIRED)
 message(STATUS "Found gRPC ${gRPC_VERSION}")
+
+find_package(Eigen3 3.4 REQUIRED NO_MODULE)
+message(STATUS "Found Eigen3 ${Eigen3_VERSION}")
 
 add_subdirectory(protos)
 add_subdirectory(models)
