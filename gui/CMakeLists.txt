@@ -8,6 +8,13 @@
 # -----------------------------------------------------------------------------
 project(recastx-gui LANGUAGES C CXX)
 
+if (CMAKE_CUDA_COMPILER)
+    enable_language(CUDA)
+    message(STATUS "CUDA compiler: ${CMAKE_CUDA_COMPILER}")
+else()
+    message(STATUS "NO CUDA support")
+endif()
+
 include(FindOpenGL)
 message(STATUS "Found OpenGL at ${OPENGL_LIBRARIES}, ${OPENGL_INCLUDE_DIR}")
 
