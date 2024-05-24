@@ -60,6 +60,9 @@ find_package(Protobuf REQUIRED)
 find_package(gRPC CONFIG 1.51.1 REQUIRED)
 message(STATUS "Found gRPC ${gRPC_VERSION}")
 
+find_package(Eigen3 3.4 REQUIRED NO_MODULE)
+message(STATUS "Found Eigen3 ${Eigen3_VERSION}")
+
 add_subdirectory(protos)
 add_subdirectory(models)
 

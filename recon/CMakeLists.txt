@@ -24,9 +24,6 @@ message(STATUS "Found cppzmq ${cppzmq_VERSION} at ${cppzmq_INCLUDE_DIR}")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 find_package(FFTW REQUIRED COMPONENTS FLOAT_LIB)
 
-find_package(Eigen3 3.4 REQUIRED NO_MODULE)
-message(STATUS "Found Eigen3 ${Eigen3_VERSION}")
-
 find_package(nlohmann_json REQUIRED)
 
 find_package(TBB 2021.9 REQUIRED)

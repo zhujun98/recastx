@@ -18,14 +18,11 @@ endif()
 include(FindOpenGL)
 message(STATUS "Found OpenGL at ${OPENGL_LIBRARIES}, ${OPENGL_INCLUDE_DIR}")
 
-find_package(Eigen3 3.4 REQUIRED NO_MODULE)
-message(STATUS "Found Eigen3 ${Eigen3_VERSION}")
+find_package(glm 0.9.9.8 REQUIRED)
+message(STATUS "Found glm ${glm_VERSION}")
 
-# glm
-add_subdirectory(${PROJECT_SOURCE_DIR}/../ext/glm glm)
-
-# glfw
-add_subdirectory(${PROJECT_SOURCE_DIR}/../ext/glfw glfw)
+find_package(glfw3 3.4 REQUIRED)
+message(STATUS "Found glfw ${glfw3_VERSION}")
 
 # gl3w
 set(GL3W_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/gl3w)
@@ -114,7 +111,7 @@ target_link_libraries(${TARGET_NAME}
         PRIVATE dl
                 glfw
                 OpenGL::GL
-                glm
+                glm::glm
                 ${FREETYPE_LIBRARIES}
                 pthread
                 Eigen3::Eigen
