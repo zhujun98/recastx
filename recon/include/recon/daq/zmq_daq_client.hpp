@@ -25,10 +25,6 @@ namespace recastx::recon {
 
 class ZmqDaqClient : public DaqClientInterface {
 
-    bool initialized_ = false;
-    size_t num_rows_;
-    size_t num_cols_;
-
     [[nodiscard]] zmq::socket_type parseSocketType(const std::string& socket_type) const;
 
   protected:
@@ -47,8 +43,6 @@ class ZmqDaqClient : public DaqClientInterface {
 
     virtual std::optional<Projection<>> parseData(const nlohmann::json& meta, const zmq::message_t& msg) = 0;
 
-    bool isDataShapeValid(size_t num_rows, size_t num_cols);
-  
   public:
 
     ZmqDaqClient(const std::string& endpoint, const std::string& socket_type, size_t concurrency);
