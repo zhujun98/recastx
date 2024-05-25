@@ -22,11 +22,11 @@ service Reconstruction {
 }
 
 message ReconGeometry {
-  repeated uint32 slice_size = 3;
-  repeated uint32 volume_size = 4;
-  repeated int32 x_range = 5;
-  repeated int32 y_range = 6;
-  repeated int32 z_range = 7;
+  repeated uint32 slice_size = 1;
+  repeated uint32 volume_size = 2;
+  repeated int32 x_range = 3;
+  repeated int32 y_range = 4;
+  repeated int32 z_range = 5;
 }
 
 message ReconSlice {

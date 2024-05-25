@@ -120,8 +120,8 @@ grpc::Status ProjectionTransferService::SetProjectionGeometry(grpc::ServerContex
     if (geometry->beam_shape() == static_cast<int>(BeamShape::PARALELL)) beam_shape = BeamShape::PARALELL;
     else if (geometry->beam_shape() == static_cast<int>(BeamShape::CONE)) beam_shape = BeamShape::CONE;
     else {
-      spdlog::error("Unknown beam shape: {}", geometry->beam_shape());
-      return {grpc::StatusCode::INVALID_ARGUMENT, "Unknown beam shape"};
+        spdlog::error("Unknown beam shape: {}", geometry->beam_shape());
+        return {grpc::StatusCode::INVALID_ARGUMENT, "Unknown beam shape"};
     }
 
     AngleRange angle_range;
@@ -133,10 +133,10 @@ grpc::Status ProjectionTransferService::SetProjectionGeometry(grpc::ServerContex
     }
 
     app_->setProjectionGeometry(beam_shape,
-                              geometry->col_count(), geometry->row_count(),
-                              geometry->pixel_width(), geometry->pixel_height(),
-                              geometry->src2origin(), geometry->origin2det(),
-                              geometry->angle_count(), angle_range);
+                                geometry->col_count(), geometry->row_count(),
+                                geometry->pixel_width(), geometry->pixel_height(),
+                                geometry->src2origin(), geometry->origin2det(),
+                                geometry->angle_count(), angle_range);
     return grpc::Status::OK;
 }
 

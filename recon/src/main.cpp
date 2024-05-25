@@ -8,7 +8,6 @@
 */
 #include <functional>
 #include <memory>
-#include <numeric>
 #include <string>
 
 #include <spdlog/spdlog.h>
@@ -18,7 +17,6 @@
 #include "recon/ramp_filter.hpp"
 #include "recon/reconstructor.hpp"
 #include "recon/daq/daq_factory.hpp"
-#include "common/config.hpp"
 
 namespace po = boost::program_options;
 
@@ -41,7 +39,7 @@ recastx::AngleRange parseAngleRange(const po::variable_value& value) {
     int angle_range = value.as<int>();
     if (angle_range == 180) return recastx::AngleRange::HALF;
     if (angle_range == 360) return recastx::AngleRange::FULL;
-    throw std::runtime_error("angle-range must be either 180 or 360");
+    throw std::runtime_error("Angle range must be either 180 or 360");
 }
 
 int main(int argc, char** argv) {
