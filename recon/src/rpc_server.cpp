@@ -254,24 +254,24 @@ RpcServer::RpcServer(int port, Application* app)
     recon_service_(app)  {
 }
 
-void RpcServer::start() {
-
+void RpcServer::spin() {
     spdlog::info("Starting RPC services at {}", address_);
-    thread_ = std::thread([&] {
-        grpc::ServerBuilder builder;
-        builder.AddListeningPort(address_, grpc::InsecureServerCredentials());
-        builder.RegisterService(&control_service_);
-        builder.RegisterService(&imageproc_service_);
-        builder.RegisterService(&proj_trans_service_);
-        builder.RegisterService(&recon_service_);
- 
-        builder.SetMaxSendMessageSize(K_MAX_RPC_SERVER_SEND_MESSAGE_SIZE);
 
-        server_ = builder.BuildAndStart();
-        server_->Wait();
-    });
+    grpc::ServerBuilder builder;
+    builder.AddListeningPort(address_, grpc::InsecureServerCredentials());
+    builder.RegisterService(&control_service_);
+    builder.RegisterService(&imageproc_service_);
+    builder.RegisterService(&proj_trans_service_);
+    builder.RegisterService(&recon_service_);
 
-    thread_.detach();
+    builder.SetMaxSendMessageSize(K_MAX_RPC_SERVER_SEND_MESSAGE_SIZE);
+
+    server_ = builder.BuildAndStart();
+    server_->Wait();
+}
+
+void RpcServer::shutdown() {
+  server_->Shutdown();
 }
 
 } // namespace recastx::recon

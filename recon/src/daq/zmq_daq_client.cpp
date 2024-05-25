@@ -38,15 +38,11 @@ ZmqDaqClient::~ZmqDaqClient() {
     socket_.set(zmq::sockopt::linger, 200);
 }
 
-void ZmqDaqClient::startAcquiring() {
-    acquiring_ = true;
+void ZmqDaqClient::setAcquiring(bool state) {
+    acquiring_ = state;
 }
 
-void ZmqDaqClient::stopAcquiring() {
-    acquiring_ = false;
-}
-
-void ZmqDaqClient::start() {
+void ZmqDaqClient::spin() {
     if (running_) {
         spdlog::warn("[DAQ client] DAQ client is already running!");
         return;

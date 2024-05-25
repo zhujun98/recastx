@@ -26,6 +26,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(BUILD_GUI "Build OpenGL GUI only" OFF)
 option(BUILD_TEST "Build unit test" OFF)
 option(VERBOSITY "Build with verbose performance monitoring and debug messages" 1)
+option(BENCHMARK "Build with benchmarking configurations" OFF)
 
 # VERBOSITY values:
 # - 0: no verbosity
@@ -62,6 +63,10 @@ message(STATUS "Found gRPC ${gRPC_VERSION}")
 
 find_package(Eigen3 3.4 REQUIRED NO_MODULE)
 message(STATUS "Found Eigen3 ${Eigen3_VERSION}")
+
+if (BENCHMARK)
+    add_subdirectory(ext/NVTX/c)
+endif()
 
 add_subdirectory(protos)
 add_subdirectory(models)

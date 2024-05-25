@@ -20,12 +20,6 @@
 
 namespace po = boost::program_options;
 
-recastx::rpc::ServerState_State parseServerState(bool auto_acquiring, bool auto_processing) {
-    if (auto_processing) return recastx::rpc::ServerState_State_PROCESSING;
-    if (auto_acquiring) return recastx::rpc::ServerState_State_ACQUIRING;
-    return recastx::rpc::ServerState_State_READY;
-}
-
 std::pair<uint32_t, uint32_t> parseDownsampleFactor(
         const po::variable_value& downsample_row, 
         const po::variable_value& downsample_col, 
@@ -226,7 +220,7 @@ int main(int argc, char** argv) {
     recastx::ImageprocParams imageproc_params {
         imageproc_threads, downsampling_col, downsampling_row, 0, !disable_minus_log, { ramp_filter }
     };
-    recastx::recon::Application app(raw_buffer_size, imageproc_params, 
+    recastx::recon::Application app(raw_buffer_size, imageproc_params,
                                     daq_client.get(), &ramp_filter_factory, &recon_factory, rpc_server_cfg);
 
     if (retrieve_phase) app.setPaganinParams(pixel_size, lambda, delta, beta, distance);
@@ -236,7 +230,11 @@ int main(int argc, char** argv) {
     app.setReconGeometry(slice_size, volume_size, minx, maxx, miny, maxy, minz, maxz);
 
     app.setPipelinePolicy(pipeline_wait_on_slowness);
-    app.spin(parseServerState(auto_acquiring, auto_processing));
+
+    if (auto_processing) app.startProcessing();
+    else if (auto_acquiring) app.startAcquiring();
+
+    app.spin();
 
     return 0;
 }

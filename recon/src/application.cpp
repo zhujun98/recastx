@@ -9,6 +9,10 @@
 #include <chrono>
 #include <exception>
 
+#if defined(BENCHMARK)
+#include "nvtx3/nvtx3.hpp"
+#endif
+
 #include <spdlog/spdlog.h>
 
 #include "common/scoped_timer.hpp"
@@ -41,7 +45,7 @@ Application::Application(size_t raw_buffer_size,
        preproc_(new Preprocessor(ramp_filter_factory, imageproc_params.num_threads)),
        recon_factory_(recon_factory),
        scan_mode_(rpc::ScanMode_Mode_STATIC),
-       scan_update_interval_(K_MIN_SCAN_UPDATE_INTERVAL),
+       scan_update_interval_(K_MAX_SCAN_UPDATE_INTERVAL),
        daq_client_(daq_client),
        rpc_server_(new RpcServer(rpc_config.port, this)) {
 }
@@ -134,15 +138,24 @@ void Application::startPreprocessing() {
                 }
             }
 
-            spdlog::info("Preprocessing - started");
+            spdlog::debug("Preprocessing - started");
 
-            preproc_->process(raw_buffer_, sino_buffer_, dark_avg_, reciprocal_, imgproc_params_.offset);
+            {
+#if defined(BENCHMARK)
+                nvtx3::scoped_range sr("Preprocessing projections");
+#endif
+                preproc_->process(raw_buffer_, sino_buffer_, dark_avg_, reciprocal_, imgproc_params_.offset);
+            }
 
+
+#if defined(BENCHMARK)
+            nvtx3::scoped_range sr("Waiting for sinogram buffer ready");
+#endif
             while (!sino_buffer_.tryPrepare(100)) {
                 if (closing_) return;
             }
 
-            spdlog::info("Preprocessing - finished");
+            spdlog::debug("Preprocessing - finished");
         }
     });
 
@@ -150,13 +163,19 @@ void Application::startPreprocessing() {
 }
 
 void Application::startUploading() {
+
     auto t = std::thread([&] {
         while (!closing_) {
             if(waitForProcessing()) continue;
 
             if (!sino_buffer_.fetch(100)) continue;
 
-            spdlog::info("Uploading sinograms to GPU - started");
+            spdlog::debug("Uploading sinograms to GPU - started");
+
+#if defined(BENCHMARK)
+            nvtx3::scoped_range sr("Uploading sinograms to GPU");
+#endif
+
             size_t chunk_size = sino_buffer_.front().shape()[0];
             {
                 if (scan_mode_ == rpc::ScanMode_Mode_DYNAMIC) {
@@ -172,7 +191,8 @@ void Application::startUploading() {
                 }
 
                 sino_initialized_ = true;
-                spdlog::info("Uploading sinograms to GPU - finished");
+
+                spdlog::debug("Uploading sinograms to GPU - finished");
             }
 
             gpu_cv_.notify_one();
@@ -190,24 +210,36 @@ void Application::startReconstructing() {
                 std::unique_lock<std::mutex> lck(gpu_mtx_);
                 if (gpu_cv_.wait_for(lck, 10ms, [&] { return sino_uploaded_; })) {
                     if (volume_required_) {
-                        spdlog::info("Reconstruction (volume and slices) - started");
+                        spdlog::debug("Reconstruction (volume and slices) - started");
+
+#if defined(BENCHMARK)
+                        nvtx3::scoped_range sr("Reconstructing volume");
+#endif
                         recon_->reconstructVolume(gpu_buffer_index_, volume_buffer_.back());
                     } else {
-                        spdlog::info("Reconstruction (slices) - started");
+                        spdlog::debug("Reconstruction (slices) - started");
                     }
 
                 } else {
                     if (waitForSinoInitialization()) continue;
+
+#if defined(BENCHMARK)
+                    nvtx3::scoped_range sr("Reconstructing on-demand slices");
+#endif
                     slice_mediator_->reconOnDemand(recon_.get(), gpu_buffer_index_);
                     continue;
                 }
 
+#if defined(BENCHMARK)
+                nvtx3::scoped_range sr("Reconstructing all slices");
+#endif
                 slice_mediator_->reconAll(recon_.get(), gpu_buffer_index_);
 
                 sino_uploaded_ = false;
             }
             
-            spdlog::info("Reconstruction - finished");
+            spdlog::debug("Reconstruction - finished");
+            
             monitor_->countTomogram();
 
             if (volume_buffer_.prepare()) {
@@ -259,30 +291,18 @@ void Application::consume() {
     }
 }
 
-void Application::spin(rpc::ServerState_State state) {
+void Application::spin() {
     startReconstructing();
     startUploading();
     startPreprocessing();
     startConsuming();
 
-    daq_client_->start();
-
-    if (state == rpc::ServerState_State_ACQUIRING) {
-        startAcquiring();
-    } else if (state == rpc::ServerState_State_PROCESSING) {
-        startProcessing();
-    } else if (state == rpc::ServerState_State_READY) {
+    if (server_state_ == rpc::ServerState_State_UNKNOWN) {
         server_state_ = rpc::ServerState_State_READY;
-    } else {
-        throw std::runtime_error(fmt::format(
-                "Cannot start reconstruction server from state: {}", server_state_));
     }
 
-    rpc_server_->start();
-
-    while (!closing_) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-    }
+    daq_client_->spin();
+    rpc_server_->spin();
 }
 
 void Application::setDownsampling(uint32_t col, uint32_t row) {
@@ -342,12 +362,12 @@ void Application::startAcquiring() {
 
     initParams();
 
-    daq_client_->startAcquiring();
-
     server_state_ = rpc::ServerState_State_ACQUIRING;
-    spdlog::info("Start acquiring data");
+    spdlog::info("Preparing for acquiring data");
 
     monitor_.reset(new Monitor(orig_col_count_ * orig_row_count_ * sizeof(RawDtype), group_size_));
+
+    daq_client_->setAcquiring(true);
 }
 
 void Application::stopAcquiring() {
@@ -356,9 +376,10 @@ void Application::stopAcquiring() {
         return;
     }
 
-    daq_client_->stopAcquiring();
+    daq_client_->setAcquiring(false);
+
     server_state_ = rpc::ServerState_State_READY;
-    spdlog::info("Stop acquiring data");
+    spdlog::info("Stopping acquiring data");
 
     proj_mediator_->reset();
     monitor_->summarize();
@@ -372,9 +393,8 @@ void Application::startProcessing() {
 
     init();
 
-    daq_client_->startAcquiring();
     server_state_ = rpc::ServerState_State_PROCESSING;
-    spdlog::info("Start acquiring and processing data:");
+    spdlog::info("Preparing for acquiring and processing data:");
 
     if (scan_mode_ == rpc::ScanMode_Mode_CONTINUOUS) {
         spdlog::info("- Scan mode: continuous");
@@ -386,6 +406,8 @@ void Application::startProcessing() {
     }
 
     monitor_.reset(new Monitor(orig_col_count_ * orig_row_count_ * sizeof(RawDtype), group_size_));
+
+    daq_client_->setAcquiring(true);
 }
 
 void Application::stopProcessing() {
@@ -394,9 +416,10 @@ void Application::stopProcessing() {
         return;
     }
 
-    daq_client_->stopAcquiring();
+    daq_client_->setAcquiring(false);
+
     server_state_ = rpc::ServerState_State_READY;
-    spdlog::info("Stop acquiring and processing data");
+    spdlog::info("Stopping acquiring and processing data");
 
     proj_mediator_->reset();
     monitor_->summarize();
@@ -482,7 +505,8 @@ void Application::checkParams() {
 }
 
 void Application::initParams() {
-    group_size_ = (scan_mode_ == rpc::ScanMode_Mode_CONTINUOUS ? scan_update_interval_ : angle_count_);
+    group_size_ = (scan_mode_ == rpc::ScanMode_Mode_CONTINUOUS || angle_count_ == 0)
+            ? scan_update_interval_ : angle_count_;
     proj_mediator_->setFilter(group_size_);
 
     sino_initialized_ = false;
