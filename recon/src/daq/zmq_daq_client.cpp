@@ -113,24 +113,6 @@ std::optional<nlohmann::json> ZmqDaqClient::parseMeta(const zmq::message_t& msg)
     }
 }
 
-bool ZmqDaqClient::isDataShapeValid(size_t num_rows, size_t num_cols) {
-    if (initialized_) {
-        if (num_rows != num_rows_ || num_cols != num_cols_) {
-            // monitor only
-            spdlog::warn("[DAQ client] Received image data with a different shape. Current: {} x {}, "
-                         "before: {} x {}", num_rows, num_cols, num_rows_, num_cols_);
-            return false;
-        }
-
-        return true;
-    }
-
-    num_rows_ = num_rows;
-    num_cols_ = num_cols;
-    initialized_ = true;
-    return true;
-}
-
 zmq::socket_type ZmqDaqClient::parseSocketType(const std::string& socket_type) const {
     if (socket_type == "pull") return zmq::socket_type::pull;
     if (socket_type == "sub") return zmq::socket_type::sub;

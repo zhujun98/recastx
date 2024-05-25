@@ -91,6 +91,10 @@ class ProjectionTransferService final : public rpc::ProjectionTransfer::Service 
 
     explicit ProjectionTransferService(Application* app);
 
+    grpc::Status SetProjectionGeometry(grpc::ServerContext* context,
+                                       const rpc::ProjectionGeometry* geometry,
+                                       google::protobuf::Empty* ack) override;
+
     grpc::Status SetProjection(grpc::ServerContext* context,
                                const rpc::Projection* request,
                                google::protobuf::Empty* rep) override;
@@ -110,6 +114,10 @@ class ReconstructionService final : public rpc::Reconstruction::Service {
   public:
 
     explicit ReconstructionService(Application* app);
+
+    grpc::Status SetReconGeometry(grpc::ServerContext* context,
+                                  const rpc::ReconGeometry* geometry,
+                                  google::protobuf::Empty* ack) override;
 
     grpc::Status SetSlice(grpc::ServerContext* context,
                           const rpc::Slice* slice,

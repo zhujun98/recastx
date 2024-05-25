@@ -9,6 +9,7 @@
 #ifndef GUI_GEOMETRYITEM_H
 #define GUI_GEOMETRYITEM_H
 
+#include <common/config.hpp>
 #include <memory>
 
 #include "graphics/items/graphics_item.hpp"
@@ -18,6 +19,21 @@ namespace recastx::gui {
 class Scene;
 
 class GeometryItem : public GraphicsItem, public GraphicsGLItem {
+
+    int beam_shape_;
+
+    int col_count_;
+    int row_count_;
+
+    int angle_count_;
+    int angle_range_;
+
+    int slice_size_;
+    int volume_size_;
+
+    int x_[2];
+    int y_[2];
+    int z_[2];
 
 public:
 
@@ -32,6 +48,8 @@ public:
     void onFramebufferSizeChanged(int width, int height) override;
 
     void renderGl() override;
+
+    bool updateServerParams() override;
 };
 
 }  // namespace recastx::gui

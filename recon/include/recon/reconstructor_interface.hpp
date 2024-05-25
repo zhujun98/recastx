@@ -35,9 +35,7 @@ class ReconstructorFactory {
 
     virtual ~ReconstructorFactory() = default;
 
-    virtual std::unique_ptr<Reconstructor> create(size_t col_count, 
-                                                  size_t row_count, 
-                                                  ProjectionGeometry proj_geom, 
+    virtual std::unique_ptr<Reconstructor> create(ProjectionGeometry proj_geom,
                                                   VolumeGeometry slice_geom, 
                                                   VolumeGeometry volume_geom,
                                                   bool double_buffering) = 0;

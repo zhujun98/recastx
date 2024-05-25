@@ -51,14 +51,22 @@ Application::~Application() {
     for (auto& t : consumer_threads_) t.join();
 }
 
-void Application::setProjectionGeometry(BeamShape beam_shape, size_t col_count, size_t row_count,
+void Application::setProjectionGeometry(BeamShape beam_shape, uint32_t col_count, uint32_t row_count,
                                         float pixel_width, float pixel_height,
-                                        float src2origin, float origin2det, size_t num_angles, float angle_range) {
-    proj_geom_ = {beam_shape, col_count, row_count, pixel_width, pixel_height, 
-                  src2origin, origin2det, defaultAngles(num_angles, angle_range)};
+                                        float src2origin, float origin2det,
+                                        uint32_t angle_count, AngleRange angle_range) {
+    beam_shape_ = beam_shape;
+    orig_col_count_ = col_count == 0 ? orig_row_count_ : col_count;
+    orig_row_count_ = row_count == 0 ? orig_row_count_ : row_count;
+    pixel_width_ = pixel_width;
+    pixel_height_ = pixel_height;
+    source2origin_ = src2origin;
+    origin2detector_ = origin2det;
+    angle_count_ = angle_count == 0 ? angle_count_ : angle_count;
+    angle_range_ = angle_range;
 }
 
-void Application::setReconGeometry(std::optional<size_t> slice_size, std::optional<size_t> volume_size,
+void Application::setReconGeometry(std::optional<uint32_t> slice_size, std::optional<uint32_t> volume_size,
                                    std::optional<float> minx, std::optional<float> maxx, 
                                    std::optional<float> miny, std::optional<float> maxy, 
                                    std::optional<float> minz, std::optional<float> maxz) {
@@ -284,10 +292,12 @@ void Application::setDownsampling(uint32_t col, uint32_t row) {
     spdlog::debug("Set projection downsampling: {} / {}", col, row);
 }
 
-void Application::setCorrection(int offset) {
+void Application::setCorrection(int offset, bool minus_log) {
     imgproc_params_.offset = offset;
+    imgproc_params_.minus_log = minus_log;
 
     spdlog::debug("Set projection center correction: {}", offset);
+    spdlog::debug("Set minus log: {}", minus_log ? "enabled" : "disabled");
 }
 
 void Application::setRampFilter(std::string filter_name) {
@@ -337,7 +347,7 @@ void Application::startAcquiring() {
     server_state_ = rpc::ServerState_State_ACQUIRING;
     spdlog::info("Start acquiring data");
 
-    monitor_.reset(new Monitor(proj_geom_.row_count * proj_geom_.col_count * sizeof(RawDtype), group_size_));
+    monitor_.reset(new Monitor(orig_col_count_ * orig_row_count_ * sizeof(RawDtype), group_size_));
 }
 
 void Application::stopAcquiring() {
@@ -375,7 +385,7 @@ void Application::startProcessing() {
         spdlog::info("- Scan mode: static");
     }
 
-    monitor_.reset(new Monitor(proj_geom_.row_count * proj_geom_.col_count * sizeof(RawDtype), group_size_));
+    monitor_.reset(new Monitor(orig_col_count_ * orig_row_count_ * sizeof(RawDtype), group_size_));
 }
 
 void Application::stopProcessing() {
@@ -396,7 +406,7 @@ std::optional<rpc::ProjectionData> Application::getProjectionData(int timeout) {
     ProjectionMediator::DataType proj;
     if (proj_mediator_->waitAndPop(proj, timeout)) {
         auto [y, x] = proj.data.shape();
-        return createProjectionDataPacket(proj.index % proj_geom_.angles.size(), x, y, proj.data);
+        return createProjectionDataPacket(proj.index % angle_count_, x, y, proj.data);
     }
     return std::nullopt;
 }
@@ -441,16 +451,18 @@ std::vector<rpc::ReconData> Application::getOnDemandSliceData(int timeout) {
 void Application::init() {
     spdlog::info("[Init] ------------------------------------------------------------");
 
+    checkParams();
+
     initParams();
 
     uint32_t downsampling_col = imgproc_params_.downsampling_col;
     uint32_t downsampling_row = imgproc_params_.downsampling_row;
-    size_t col_count = proj_geom_.col_count / downsampling_col;
-    size_t row_count = proj_geom_.row_count / downsampling_row;
+    size_t col_count = orig_col_count_ / downsampling_col;
+    size_t row_count = orig_row_count_ / downsampling_row;
 
     spdlog::info("[Init] - Projection image size: {} ({}) x {} ({})",
                  col_count, downsampling_col, row_count, downsampling_row);
-    spdlog::info("[Init] - Number of projection images per scan: {}", proj_geom_.angles.size());
+    spdlog::info("[Init] - Number of projection images per scan: {}", angle_count_);
 
     maybeInitFlatFieldBuffer(row_count, col_count);
 
@@ -463,44 +475,53 @@ void Application::init() {
     spdlog::info("[Init] ------------------------------------------------------------");
 }
 
+void Application::checkParams() {
+    if (orig_col_count_ <= 0 || orig_row_count_ <= 0 || angle_count_ <= 0) {
+        throw std::invalid_argument("Col count / Row count / Angle count must be positive!");
+    }
+}
+
 void Application::initParams() {
-    group_size_ = (scan_mode_ == rpc::ScanMode_Mode_CONTINUOUS 
-                   ? scan_update_interval_ : proj_geom_.angles.size());
+    group_size_ = (scan_mode_ == rpc::ScanMode_Mode_CONTINUOUS ? scan_update_interval_ : angle_count_);
     proj_mediator_->setFilter(group_size_);
 
     sino_initialized_ = false;
     gpu_buffer_index_ = 0;
 }
 
-void Application::initReconstructor(size_t col_count, size_t row_count) {
+void Application::initReconstructor(uint32_t col_count, uint32_t row_count) {
     auto [min_x, max_x] = details::parseReconstructedVolumeBoundary(min_x_, max_x_, col_count);
     auto [min_y, max_y] = details::parseReconstructedVolumeBoundary(min_y_, max_y_, col_count);
     auto [min_z, max_z] = details::parseReconstructedVolumeBoundary(min_z_, max_z_, row_count);
-    
-    size_t s_size = slice_size_.value_or(expandDataSizeForGpu(col_count, 64));
-    size_t p_size = volume_size_.value_or(128);
+
+    uint32_t s_size = slice_size_.value_or(expandDataSizeForGpu(col_count, 64));
+    uint32_t p_size = volume_size_.value_or(128);
     float half_slice_height = 0.5f * (max_z - min_z) / p_size;
     float z0 = 0.5f * (max_z + min_z);
 
-    slice_geom_ = {s_size, s_size, 1, min_x, max_x, min_y, max_y, z0 - half_slice_height, z0 + half_slice_height};
-    volume_geom_ = {p_size, p_size, p_size, min_x, max_x, min_y, max_y, min_y, max_y};
+    ProjectionGeometry proj_geom {
+        beam_shape_, col_count, row_count, pixel_width_, pixel_height_, source2origin_, origin2detector_,
+        defaultAngles(angle_count_, angle_range_ == AngleRange::HALF ? 1.f : 2.f)
+    };
+    VolumeGeometry slice_geom {
+        s_size, s_size, 1, min_x, max_x, min_y, max_y, z0 - half_slice_height, z0 + half_slice_height
+    };
+    VolumeGeometry volume_geom {
+        p_size, p_size, p_size, min_x, max_x, min_y, max_y, min_y, max_y
+    };
 
-    volume_buffer_.resize({volume_geom_.col_count, volume_geom_.row_count, volume_geom_.slice_count});
-    slice_mediator_->resize({slice_geom_.col_count, slice_geom_.row_count});
+    volume_buffer_.resize({volume_geom.col_count, volume_geom.row_count, volume_geom.slice_count});
+    slice_mediator_->resize({slice_geom.col_count, slice_geom.row_count});
 
     bool double_buffering = scan_mode_ == rpc::ScanMode_Mode_DYNAMIC;
     recon_.reset();
-    recon_ = recon_factory_->create(
-        col_count, row_count, proj_geom_, slice_geom_, volume_geom_, double_buffering);
+    recon_ = recon_factory_->create(proj_geom, slice_geom, volume_geom, double_buffering);
 }
 
-void Application::maybeInitFlatFieldBuffer(size_t row_count, size_t col_count) {
-    size_t row_count_orig = proj_geom_.row_count;
-    size_t col_count_orig = proj_geom_.col_count;
-
+void Application::maybeInitFlatFieldBuffer(uint32_t row_count, uint32_t col_count) {
     if (!darks_.empty()) {
         auto& shape = darks_[0].shape();
-        if (shape[0] != row_count_orig || shape[1] != col_count_orig) {
+        if (shape[0] != orig_row_count_ || shape[1] != orig_col_count_) {
             darks_.clear();
             spdlog::debug("Dark image buffer reset");
         }
@@ -508,7 +529,7 @@ void Application::maybeInitFlatFieldBuffer(size_t row_count, size_t col_count) {
 
     if (!flats_.empty()) {
         auto& shape = flats_[0].shape();
-        if (shape[0] != row_count_orig || shape[1] != col_count_orig) {
+        if (shape[0] != orig_row_count_ || shape[1] != orig_col_count_) {
             flats_.clear();
             spdlog::debug("Flat image buffer reset");
         }
@@ -524,8 +545,8 @@ void Application::maybeInitFlatFieldBuffer(size_t row_count, size_t col_count) {
     reciprocal_computed_ = false;
 }
 
-void Application::maybeInitReconBuffer(size_t col_count, size_t row_count) {
-    double sino_size = col_count * row_count * proj_geom_.angles.size() * sizeof(ProDtype) / static_cast<double>(1024 * 1024);
+void Application::maybeInitReconBuffer(uint32_t col_count, uint32_t row_count) {
+    double sino_size = col_count * row_count * angle_count_ * sizeof(ProDtype) / static_cast<double>(1024 * 1024);
     spdlog::info("[Init] - sinogram size: {:.1f} MB", sino_size);
 
     auto shape = raw_buffer_.shape();

@@ -108,11 +108,19 @@ class RpcClient {
 
     bool setDownsampling(uint32_t col, uint32_t row);
 
-    bool setCorrection(int32_t offset);
+    bool setCorrection(int32_t offset, bool minus_log);
 
     bool setRampFilter(const std::string& filter_name);
 
+    bool setProjectionGeometry(uint32_t beam_shape,
+                               uint32_t col_count, uint32_t row_count, float pixel_width, float pixel_height,
+                               float src2origin, float origin2det,
+                               uint32_t angle_count, int angle_range);
+
     bool setProjection(uint32_t id);
+
+    bool setReconGeometry(uint32_t slice_size, uint32_t volume_size,
+                          std::array<int32_t, 2> x, std::array<int32_t, 2> y, std::array<int32_t, 2> z);
 
     bool setSlice(uint64_t timestamp, const Orientation& orientation);
 

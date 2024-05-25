@@ -12,9 +12,23 @@ package recastx.rpc;
 import "google/protobuf/empty.proto";
 
 service ProjectionTransfer {
+  rpc SetProjectionGeometry (ProjectionGeometry) returns (google.protobuf.Empty) {}
+
   rpc SetProjection (Projection) returns (google.protobuf.Empty) {}
 
   rpc GetProjectionData (google.protobuf.Empty) returns (stream ProjectionData) {}
+}
+
+message ProjectionGeometry {
+  int32 beam_shape = 1;
+  uint32 col_count = 2;
+  uint32 row_count = 3;
+  float pixel_width = 4;
+  float pixel_height = 5;
+  float src2origin = 6;
+  float origin2det = 7;
+  uint32 angle_count = 8;
+  int32 angle_range = 9;
 }
 
 message ProjectionData {

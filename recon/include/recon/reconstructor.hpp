@@ -93,9 +93,7 @@ class ParallelBeamReconstructor : public AstraReconstructor {
 
 public:
 
-    ParallelBeamReconstructor(size_t col_count, 
-                              size_t row_count, 
-                              const ProjectionGeometry& p_geom, 
+    ParallelBeamReconstructor(const ProjectionGeometry& p_geom,
                               const VolumeGeometry& s_geom, 
                               const VolumeGeometry& v_geom, 
                               bool double_buffer);
@@ -116,9 +114,7 @@ class ConeBeamReconstructor : public AstraReconstructor {
 
 public:
 
-    ConeBeamReconstructor(size_t col_count, 
-                          size_t row_count, 
-                          const ProjectionGeometry& p_geom, 
+    ConeBeamReconstructor(const ProjectionGeometry& p_geom,
                           const VolumeGeometry& s_geom, 
                           const VolumeGeometry& v_geom, 
                           bool double_buffer);
@@ -135,9 +131,7 @@ class AstraReconstructorFactory : public ReconstructorFactory {
 
 public:
 
-    std::unique_ptr<Reconstructor> create(size_t col_count, 
-                                          size_t row_count, 
-                                          ProjectionGeometry proj_geom, 
+    std::unique_ptr<Reconstructor> create(ProjectionGeometry proj_geom,
                                           VolumeGeometry slice_geom, 
                                           VolumeGeometry volume_geom,
                                           bool double_buffering) override;

@@ -78,9 +78,7 @@ class MockReconstructor: public Reconstructor {
 
   public:
 
-    MockReconstructor(size_t col_count, 
-                      size_t row_count, 
-                      ProjectionGeometry proj_geom, 
+    MockReconstructor(ProjectionGeometry proj_geom,
                       VolumeGeometry slice_geom, 
                       VolumeGeometry volume_geom,
                       bool double_buffering)
@@ -102,14 +100,11 @@ class MockReconFactory: public ReconstructorFactory {
 
   public:
 
-    std::unique_ptr<Reconstructor> create(size_t col_count, 
-                                          size_t row_count, 
-                                          ProjectionGeometry proj_geom, 
+    std::unique_ptr<Reconstructor> create(ProjectionGeometry proj_geom,
                                           VolumeGeometry slice_geom, 
                                           VolumeGeometry volume_geom,
                                           bool double_buffering) {
-    return std::make_unique<MockReconstructor>(
-        col_count, row_count, proj_geom, slice_geom, volume_geom, double_buffering);
+    return std::make_unique<MockReconstructor>(proj_geom, slice_geom, volume_geom, double_buffering);
     }
 };
 
@@ -130,7 +125,7 @@ class ApplicationTest : public testing::Test {
 
     size_t buffer_size_ = 100;
     size_t num_angles_ = 16;
-    size_t angle_range_ = 1.f;
+    AngleRange angle_range_ = AngleRange::HALF;
     size_t slice_size_ = num_cols_;
     size_t volume_size_ = slice_size_ / 2;
 

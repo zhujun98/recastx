@@ -8,7 +8,6 @@
 */
 #include <functional>
 #include <memory>
-#include <numeric>
 #include <string>
 
 #include <spdlog/spdlog.h>
@@ -18,7 +17,6 @@
 #include "recon/ramp_filter.hpp"
 #include "recon/reconstructor.hpp"
 #include "recon/daq/daq_factory.hpp"
-#include "common/config.hpp"
 
 namespace po = boost::program_options;
 
@@ -37,12 +35,11 @@ std::pair<uint32_t, uint32_t> parseDownsampleFactor(
     return {row, col};
 }
 
-float parseAngleRange(const po::variable_value& value) {
-    float angle_range = value.as<float>() / 180.f;
-    if (angle_range < 0.f || angle_range > 2.f) {
-        throw std::runtime_error("angle-range must be within (0, 360]");
-    }
-    return angle_range;
+recastx::AngleRange parseAngleRange(const po::variable_value& value) {
+    int angle_range = value.as<int>();
+    if (angle_range == 180) return recastx::AngleRange::HALF;
+    if (angle_range == 360) return recastx::AngleRange::FULL;
+    throw std::runtime_error("Angle range must be either 180 or 360");
 }
 
 int main(int argc, char** argv) {
@@ -79,11 +76,10 @@ int main(int argc, char** argv) {
     ;
 
     po::options_description geometry_desc("Geometry options");
-    bool cone_beam = false;
     geometry_desc.add_options()
-        ("cols", po::value<size_t>()->default_value(2016),
+        ("cols", po::value<size_t>()->default_value(0),
          "detector width in pixels")
-        ("rows", po::value<size_t>()->default_value(1200),
+        ("rows", po::value<size_t>()->default_value(0),
          "detector height in pixels")
         ("downsample", po::value<uint32_t>()->default_value(1),
          "downsampling factor along both the row and the column. It will be "
@@ -92,10 +88,10 @@ int main(int argc, char** argv) {
          "downsampling factor along the column")
         ("downsample-row", po::value<uint32_t>(),
          "downsampling factor along the row")
-        ("angles", po::value<size_t>()->default_value(128),
+        ("angles", po::value<size_t>()->default_value(0),
          "number of projections per scan")
-        ("angle-range", po::value<float>()->default_value(180),
-         "range of the scan angle")
+        ("angle-range", po::value<int>()->default_value(180),
+         "range of the scan angle (can only be 180 or 360)")
         ("minx", po::value<float>(),
          "minimal X-coordinate of the reconstructed volume")
         ("maxx", po::value<float>(),
@@ -111,23 +107,23 @@ int main(int argc, char** argv) {
     ;
 
     bool retrieve_phase = false;
-    bool disable_negative_log = false;
+    bool disable_minus_log = false;
     po::options_description preprocessing_desc("Preprocessing options");
     preprocessing_desc.add_options()
         ("retrieve-phase", po::bool_switch(&retrieve_phase),
          "switch to Paganin filter")
         ("ramp-filter", po::value<std::string>()->default_value("shepp"),
          "supported filters are: shepp (Shepp-Logan), ramlak (Ram-Lak)")
-        ("disable-negative-log", po::bool_switch(&disable_negative_log),
-         "Negative logarithm will not be applied to sinogram, "
+        ("disable-negative-log", po::bool_switch(&disable_minus_log),
+         "Minus logarithm will not be applied to sinogram, "
          "e.g. when the raw data were generated from a phantom")
     ;
 
     po::options_description reconstruction_desc("Reconstruction options");
     reconstruction_desc.add_options()
-        ("slice-size", po::value<size_t>(),
+        ("slice-size", po::value<uint32_t>(),
          "size of the square reconstructed slice in pixels. Default to detector columns.")
-        ("volume-size", po::value<size_t>(),
+        ("volume-size", po::value<uint32_t>(),
          "size of the cubic reconstructed volume. Default to 128.")
         ("raw-buffer-size", po::value<size_t>()->default_value(2),
          "maximum number of projection groups to be cached in the memory buffer")
@@ -199,9 +195,9 @@ int main(int argc, char** argv) {
     auto maxz = opts["maxz"].empty() ? std::nullopt : std::optional<float>{opts["maxz"].as<float>()}; 
 
     auto slice_size = opts["slice-size"].empty()
-        ? std::nullopt : std::optional<size_t>(opts["slice-size"].as<size_t>());
+        ? std::nullopt : std::optional<uint32_t>(opts["slice-size"].as<uint32_t>());
     auto volume_size = opts["volume-size"].empty()
-        ? std::nullopt : std::optional<size_t>(opts["volume-size"].as<size_t>());
+        ? std::nullopt : std::optional<uint32_t>(opts["volume-size"].as<uint32_t>());
     auto raw_buffer_size = opts["raw-buffer-size"].as<size_t>();
 
     auto ramp_filter = opts["ramp-filter"].as<std::string>();
@@ -228,14 +224,15 @@ int main(int argc, char** argv) {
     recastx::recon::AstraReconstructorFactory recon_factory;
     recastx::RpcServerConfig rpc_server_cfg {rpc_port};
     recastx::ImageprocParams imageproc_params {
-        imageproc_threads, downsampling_col, downsampling_row, 0, disable_negative_log, { ramp_filter }
+        imageproc_threads, downsampling_col, downsampling_row, 0, !disable_minus_log, { ramp_filter }
     };
     recastx::recon::Application app(raw_buffer_size, imageproc_params, 
                                     daq_client.get(), &ramp_filter_factory, &recon_factory, rpc_server_cfg);
 
     if (retrieve_phase) app.setPaganinParams(pixel_size, lambda, delta, beta, distance);
-    app.setProjectionGeometry(cone_beam ? recastx::BeamShape::CONE : recastx::BeamShape::PARALELL, 
-                              num_cols, num_rows, 1.0f, 1.0f, 0.0f, 0.0f, num_angles, angle_range);
+    app.setProjectionGeometry(recastx::BeamShape::PARALELL,
+                              num_cols, num_rows, 1.0f, 1.0f, 1.0f, 1.0f,
+                              num_angles, angle_range);
     app.setReconGeometry(slice_size, volume_size, minx, maxx, miny, maxy, minz, maxz);
 
     app.setPipelinePolicy(pipeline_wait_on_slowness);

@@ -102,17 +102,26 @@ class Application {
     std::optional<PaganinParams> paganin_cfg_;
     std::unique_ptr<Preprocessor> preproc_;
 
-    std::optional<size_t> slice_size_;
-    std::optional<size_t> volume_size_;
+    // ProjectionGeometry
+    BeamShape beam_shape_;
+    uint32_t orig_col_count_;
+    uint32_t orig_row_count_;
+    float pixel_width_;
+    float pixel_height_;
+    float source2origin_;
+    float origin2detector_;
+    uint32_t angle_count_;
+    AngleRange angle_range_;
+
+    // ReconGeometry
+    std::optional<uint32_t> slice_size_;
+    std::optional<uint32_t> volume_size_;
     std::optional<float> min_x_;
     std::optional<float> max_x_;
     std::optional<float> min_y_;
     std::optional<float> max_y_;
     std::optional<float> min_z_;
     std::optional<float> max_z_;
-    ProjectionGeometry proj_geom_;
-    VolumeGeometry slice_geom_;
-    VolumeGeometry volume_geom_;
     bool volume_required_ = true;
     ReconstructorFactory* recon_factory_;
     std::unique_ptr<Reconstructor> recon_;
@@ -132,13 +141,15 @@ class Application {
 
     void init();
 
+    void checkParams();
+
     void initParams();
 
-    void initReconstructor(size_t col_count, size_t row_count);
+    void initReconstructor(uint32_t col_count, uint32_t row_count);
 
-    void maybeInitFlatFieldBuffer(size_t row_count, size_t col_count);
+    void maybeInitFlatFieldBuffer(uint32_t row_count, uint32_t col_count);
 
-    void maybeInitReconBuffer(size_t col_count, size_t row_count);
+    void maybeInitReconBuffer(uint32_t col_count, uint32_t row_count);
 
     void maybeResetDarkAndFlatAcquisition();
 
@@ -192,11 +203,12 @@ class Application {
     template<typename ...Ts>
     void setPaganinParams(Ts... args) { paganin_cfg_ = {std::forward<Ts>(args)...}; }
 
-    void setProjectionGeometry(BeamShape beam_shape, size_t col_count, size_t row_count,
+    void setProjectionGeometry(BeamShape beam_shape, uint32_t col_count, uint32_t row_count,
                                float pixel_width, float pixel_height, 
-                               float src2origin, float origin2det, size_t num_angles, float angle_range);
+                               float src2origin, float origin2det,
+                               uint32_t num_angles, AngleRange angle_range);
 
-    void setReconGeometry(std::optional<size_t> slice_size, std::optional<size_t> volume_size,
+    void setReconGeometry(std::optional<uint32_t> slice_size, std::optional<uint32_t> volume_size,
                           std::optional<float> min_x, std::optional<float> max_x, 
                           std::optional<float> min_y, std::optional<float> max_y, 
                           std::optional<float> min_z, std::optional<float> max_z);
@@ -215,7 +227,7 @@ class Application {
 
     void setDownsampling(uint32_t col, uint32_t row);
 
-    void setCorrection(int offset);
+    void setCorrection(int offset, bool minus_log);
 
     void setRampFilter(std::string filter_name);
 
@@ -246,8 +258,6 @@ class Application {
     std::vector<rpc::ReconData> getSliceData(int timeout);
 
     std::vector<rpc::ReconData> getOnDemandSliceData(int timeout);
-
-    size_t numAngles() const { return proj_geom_.angles.size(); };
 
     // for unittest
 

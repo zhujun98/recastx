@@ -32,7 +32,8 @@ namespace recastx {
     using Orientation = std::array<float, 9>;
 
     enum class ProjectionType : int { DARK = 0, FLAT = 1, PROJECTION = 2, UNKNOWN = 99 };
-    enum class BeamShape { PARALELL, CONE };
+    enum class BeamShape { PARALELL = 0, CONE = 1 };
+    enum class AngleRange { HALF = 0, FULL = 1 };
 
     using RawDtype = uint16_t;
     using ProDtype = float;
@@ -53,7 +54,7 @@ namespace recastx {
         uint32_t downsampling_col;
         uint32_t downsampling_row;
         int32_t offset;
-        bool disable_negative_log;
+        bool minus_log;
         RampFilter ramp_filter;
     };
 
@@ -67,8 +68,8 @@ namespace recastx {
 
     struct ProjectionGeometry {
         BeamShape beam_shape;
-        size_t col_count; // number of detector columns
-        size_t row_count; // number of detector rows
+        uint32_t col_count; // number of detector columns
+        uint32_t row_count; // number of detector rows
         float pixel_width; // width of each detector
         float pixel_height; // height of each detector
         float source2origin = 0.f;
@@ -77,9 +78,9 @@ namespace recastx {
     };
 
     struct VolumeGeometry {
-        size_t col_count; // number of columns
-        size_t row_count; // number of rows
-        size_t slice_count; // number of slices
+        uint32_t col_count; // number of columns
+        uint32_t row_count; // number of rows
+        uint32_t slice_count; // number of slices
         float min_x; // minimum x coordinates
         float max_x; // maximum x coordinates
         float min_y; // minimum y coordinates

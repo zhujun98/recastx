@@ -110,9 +110,10 @@ bool RpcClient::setDownsampling(uint32_t col, uint32_t row) {
     return checkStatus(status);
 }
 
-bool RpcClient::setCorrection(int32_t offset) {
+bool RpcClient::setCorrection(int32_t offset, bool minus_log) {
     rpc::CorrectionParams request;
     request.set_offset(offset);
+    request.set_minus_log(minus_log);
 
     google::protobuf::Empty reply;
 
@@ -134,6 +135,30 @@ bool RpcClient::setRampFilter(const std::string& filter_name) {
     return checkStatus(status);
 }
 
+bool RpcClient::setProjectionGeometry(uint32_t beam_shape, uint32_t col_count, uint32_t row_count,
+                                      float pixel_width, float pixel_height,
+                                      float src2origin, float origin2det,
+                                      uint32_t angle_count, int angle_range) {
+    rpc::ProjectionGeometry request;
+    request.set_beam_shape(beam_shape);
+    request.set_col_count(col_count);
+    request.set_row_count(row_count);
+    request.set_pixel_width(pixel_width);
+    request.set_pixel_height(pixel_height);
+    request.set_src2origin(src2origin);
+    request.set_origin2det(origin2det);
+    request.set_angle_count(angle_count);
+    request.set_angle_range(angle_range);
+
+    google::protobuf::Empty reply;
+
+    grpc::ClientContext context;
+
+    grpc::Status status = proj_trans_stub_->SetProjectionGeometry(&context, request, &reply);
+    return checkStatus(status);
+}
+
+
 bool RpcClient::setProjection(uint32_t id) {
     rpc::Projection request;
     request.set_id(id);
@@ -143,6 +168,26 @@ bool RpcClient::setProjection(uint32_t id) {
     grpc::ClientContext context;
 
     grpc::Status status = proj_trans_stub_->SetProjection(&context, request, &reply);
+    return checkStatus(status);
+}
+
+bool RpcClient::setReconGeometry(uint32_t slice_size, uint32_t volume_size,
+                                 std::array<int32_t, 2> x, std::array<int32_t, 2> y, std::array<int32_t, 2> z) {
+    rpc::ReconGeometry request;
+    request.add_slice_size(slice_size);
+    request.add_volume_size(volume_size);
+    request.add_x_range(x[0]);
+    request.add_x_range(x[1]);
+    request.add_y_range(y[0]);
+    request.add_y_range(y[1]);
+    request.add_z_range(z[0]);
+    request.add_z_range(z[1]);
+
+    google::protobuf::Empty reply;
+
+    grpc::ClientContext context;
+
+    grpc::Status status = recon_stub_->SetReconGeometry(&context, request, &reply);
     return checkStatus(status);
 }
 

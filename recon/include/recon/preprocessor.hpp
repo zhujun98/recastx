@@ -41,7 +41,7 @@ private:
     FilterFactory *ramp_filter_factory_;
     std::unique_ptr<Filter> ramp_filter_;
 
-    bool disable_negative_log_ = false;
+    bool minus_log_ = true;
 
     void initPaganin(const std::optional<PaganinParams> &params,
                      RawBufferType &buffer, size_t col_count,

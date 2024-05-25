@@ -85,6 +85,7 @@ grpc::Status ImageprocService::SetCorrection(grpc::ServerContext* /*context*/,
                                              const rpc::CorrectionParams* params,
                                              google::protobuf::Empty* /*ack*/) {
     spdlog::info("Set projection center corrections: {}", params->offset());
+    spdlog::info("Set minus log: {}", params->minus_log() ? "enabled" : "disabled");
     return grpc::Status::OK;
 }
 
@@ -96,6 +97,18 @@ grpc::Status ImageprocService::SetRampFilter(grpc::ServerContext* /*contest*/,
 }
 
 ProjectionTransferService::ProjectionTransferService(Application* app) : app_(app) {}
+
+grpc::Status ProjectionTransferService::SetProjectionGeometry(grpc::ServerContext* /*context*/,
+                                                              const rpc::ProjectionGeometry* geometry,
+                                                              google::protobuf::Empty* /*ack*/) {
+  spdlog::info("Set projection geometry");
+  spdlog::info(" - Beam shape: {}", geometry->beam_shape() == 0 ? "PARALLEL" : "CONE");
+  spdlog::info(" - Col count / Row count: {} / {}", geometry->col_count(), geometry->row_count());
+  spdlog::info(" - Pixel width / Pixel height: {} / {}", geometry->pixel_width(), geometry->pixel_height());
+  spdlog::info(" - Source to origin / Origin to detector: {} / {}", geometry->src2origin(), geometry->origin2det());
+  spdlog::info(" - Angle count / Angle range: {} / {}", geometry->angle_count(), geometry->angle_range() == 0 ? "HALF" : "FULL");
+  return grpc::Status::OK;
+}
 
 grpc::Status ProjectionTransferService::SetProjection(grpc::ServerContext* /*context*/,
                                                       const rpc::Projection* request,
@@ -131,7 +144,20 @@ void ProjectionTransferService::setProjectionData(rpc::ProjectionData *data) {
     data->set_data(vec.data(), vec.size() * sizeof(decltype(vec)::value_type));
 }
 
+
 ReconstructionService::ReconstructionService(Application* app) : app_(app), timestamps_ {0, 1, 2} {}
+
+grpc::Status ReconstructionService::SetReconGeometry(grpc::ServerContext* context,
+                                                     const rpc::ReconGeometry* geometry,
+                                                     google::protobuf::Empty* ack) {
+    spdlog::info("Set reconstruction geometry");
+    spdlog::info(" - Slice size: {}", geometry->slice_size()[0]);
+    spdlog::info(" - Volume size: {}", geometry->volume_size()[0]);
+    spdlog::info(" - X range: {} - {}", geometry->x_range()[0], geometry->x_range()[1]);
+    spdlog::info(" - Y range: {} - {}", geometry->y_range()[0], geometry->y_range()[1]);
+    spdlog::info(" - Z range: {} - {}", geometry->z_range()[0], geometry->z_range()[1]);
+    return grpc::Status::OK;
+}
 
 grpc::Status ReconstructionService::SetSlice(grpc::ServerContext* context,
                                              const rpc::Slice* slice,

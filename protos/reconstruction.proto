@@ -12,11 +12,21 @@ package recastx.rpc;
 import "google/protobuf/empty.proto";
 
 service Reconstruction {
+  rpc SetReconGeometry (ReconGeometry) returns (google.protobuf.Empty) {}
+
   rpc SetSlice (Slice) returns (google.protobuf.Empty) {}
 
   rpc SetVolume (Volume) returns (google.protobuf.Empty) {}
 
   rpc GetReconData (google.protobuf.Empty) returns (stream ReconData) {}
+}
+
+message ReconGeometry {
+  repeated uint32 slice_size = 1;
+  repeated uint32 volume_size = 2;
+  repeated int32 x_range = 3;
+  repeated int32 y_range = 4;
+  repeated int32 z_range = 5;
 }
 
 message ReconSlice {
