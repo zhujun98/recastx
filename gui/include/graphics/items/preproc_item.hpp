@@ -18,6 +18,7 @@ class PreprocItem : public GraphicsItem {
     int downsampling_col_ = 1;
     int downsampling_row_ = 1;
 
+    bool minus_log_ = true;
     int32_t offset_ = 0;
 
     std::string ramp_filter_name_;

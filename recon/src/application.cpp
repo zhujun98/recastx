@@ -292,10 +292,12 @@ void Application::setDownsampling(uint32_t col, uint32_t row) {
     spdlog::debug("Set projection downsampling: {} / {}", col, row);
 }
 
-void Application::setCorrection(int offset) {
+void Application::setCorrection(int offset, bool minus_log) {
     imgproc_params_.offset = offset;
+    imgproc_params_.minus_log = minus_log;
 
     spdlog::debug("Set projection center correction: {}", offset);
+    spdlog::debug("Set minus log: {}", minus_log ? "enabled" : "disabled");
 }
 
 void Application::setRampFilter(std::string filter_name) {

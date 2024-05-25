@@ -99,7 +99,7 @@ grpc::Status ImageprocService::SetDownsampling(grpc::ServerContext* /*context*/,
 grpc::Status ImageprocService::SetCorrection(grpc::ServerContext* /*context*/,
                                              const rpc::CorrectionParams* params,
                                              google::protobuf::Empty* /*rep*/) {
-    app_->setCorrection(params->offset());
+    app_->setCorrection(params->offset(), params->minus_log());
     return grpc::Status::OK;
 }
 

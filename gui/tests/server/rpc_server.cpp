@@ -85,6 +85,7 @@ grpc::Status ImageprocService::SetCorrection(grpc::ServerContext* /*context*/,
                                              const rpc::CorrectionParams* params,
                                              google::protobuf::Empty* /*ack*/) {
     spdlog::info("Set projection center corrections: {}", params->offset());
+    spdlog::info("Set minus log: {}", params->minus_log() ? "enabled" : "disabled");
     return grpc::Status::OK;
 }
 

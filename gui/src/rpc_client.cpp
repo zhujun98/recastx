@@ -110,9 +110,10 @@ bool RpcClient::setDownsampling(uint32_t col, uint32_t row) {
     return checkStatus(status);
 }
 
-bool RpcClient::setCorrection(int32_t offset) {
+bool RpcClient::setCorrection(int32_t offset, bool minus_log) {
     rpc::CorrectionParams request;
     request.set_offset(offset);
+    request.set_minus_log(minus_log);
 
     google::protobuf::Empty reply;
 

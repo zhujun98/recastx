@@ -23,7 +23,7 @@ void Preprocessor::init(RawBufferType& buffer, size_t col_count, size_t row_coun
           const std::optional<PaganinParams>& paganin_cfg) {
     initFilter(imgproc_params, buffer, col_count, row_count);
     initPaganin(paganin_cfg, buffer, col_count, row_count);
-    disable_negative_log_ = imgproc_params.disable_negative_log;
+    minus_log_ = imgproc_params.minus_log;
 
     spdlog::info("[Init] - Ramp filter: {}", imgproc_params.ramp_filter.name);
     spdlog::info("[Init] - Number of image-processing threads: {}", num_threads_);
@@ -56,7 +56,7 @@ void Preprocessor::process(RawBufferType& raw_buffer,
 
                                   if (paganin_) {
                                       paganin_->apply(p, i % num_threads_);
-                                  } else if (!disable_negative_log_) {
+                                  } else if (minus_log_) {
                                       negativeLog(p, num_pixels);
                                   }
 

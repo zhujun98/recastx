@@ -26,6 +26,7 @@ message DownsamplingParams {
 
 message CorrectionParams {
   int32 offset = 1;
+  bool minus_log = 2;
 }
 
 message RampFilterParams {
