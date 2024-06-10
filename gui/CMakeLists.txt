@@ -107,8 +107,23 @@ target_include_directories(${TARGET_NAME}
                 ${IMPLOT_DIR}
                 ${GL3W_BUILD_DIR}/include
 )
-target_link_libraries(${TARGET_NAME}
-        PRIVATE dl
+
+if (WIN32)
+        target_link_libraries(${TARGET_NAME} PRIVATE
+                glfw
+                OpenGL::GL
+                glm
+                ${FREETYPE_LIBRARIES}
+                Eigen3::Eigen
+                Boost::program_options
+                spdlog::spdlog
+                recastx_grpc_proto
+        )
+
+        target_compile_options(${TARGET_NAME} PRIVATE)
+else()
+        target_link_libraries(${TARGET_NAME} PRIVATE 
+                dl
                 glfw
                 OpenGL::GL
                 glm::glm
@@ -122,11 +137,14 @@ target_link_libraries(${TARGET_NAME}
         )
 
 if (UNIX AND NOT APPLE)
-    # required by glfw
-    target_link_libraries(${TARGET_NAME} PRIVATE X11)
+    if (NOT APPLE)
+        # required by glfw
+        target_link_libraries(${TARGET_NAME} PRIVATE X11)
+    endif()
+
+    target_compile_options(${TARGET_NAME} PRIVATE -Wall -Wextra -Wfatal-errors
 endif()
 
-target_compile_options(${TARGET_NAME} PRIVATE -Wall -Wextra -Wfatal-errors)
 # This is to work around GLM issue#754 <https://github.com/g-truc/glm/issues/754>
 target_compile_definitions(${TARGET_NAME}
         PUBLIC -DVERBOSITY=${VERBOSITY}

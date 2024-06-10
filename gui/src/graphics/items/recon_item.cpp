@@ -30,6 +30,11 @@
 #include "graphics/viewport.hpp"
 #include "logger.hpp"
 
+#ifdef _WIN32
+#undef min
+#undef max
+#endif
+
 namespace recastx::gui {
 
 RenderComponent::RenderComponent(Volume* volume) : volume_(volume) {

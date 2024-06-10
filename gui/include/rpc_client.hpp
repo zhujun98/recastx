@@ -30,6 +30,11 @@
 #include "common/config.hpp"
 #include "common/queue.hpp"
 
+#ifdef _WIN32
+#undef min
+#undef max
+#endif
+
 namespace recastx::gui {
 
 using namespace std::string_literals;

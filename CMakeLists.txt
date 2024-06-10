@@ -42,10 +42,12 @@ endif()
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
-
-set(CMAKE_CXX_FLAGS "-Wno-unused-result")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
-set(CMAKE_CXX_FLAGS_DEBUG "-g")
+    
+if(NOT WIN32)
+    set(CMAKE_CXX_FLAGS "-Wno-unused-result")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g")
+endif()
 
 set(CMAKE_INSTALL_PREFIX ${CMAKE_PREFIX_PATH})
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
