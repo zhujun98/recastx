@@ -83,6 +83,11 @@ target_link_libraries(${RECON_LIB}
                 recastx_grpc_proto
         )
 
+if (BENCHMARK)
+    target_link_libraries(${RECON_LIB} PRIVATE nvtx3-cpp)
+    target_compile_definitions(${RECON_LIB} PRIVATE BENCHMARK)
+endif()
+
 target_compile_options(${RECON_LIB}
         PUBLIC -Wall -Wextra -Wfatal-errors -fPIC -static)
 
@@ -95,5 +100,4 @@ endif()
 set(EXEC_NAME "recastx-recon")
 add_executable(${EXEC_NAME} "src/main.cpp")
 target_link_libraries(${EXEC_NAME} PUBLIC ${RECON_LIB} Boost::program_options)
-
 install(TARGETS ${EXEC_NAME} RUNTIME DESTINATION bin)

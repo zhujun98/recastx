@@ -12,5 +12,5 @@ dependencies:
   - fftw=3.3.10
   - tbb-devel=2021.9
   - nlohmann_json=3.11.2
-  - libastra=2.1.0
+  - libastra=2.1.2
   - grpc-cpp=1.51.1

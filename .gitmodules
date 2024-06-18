@@ -11,3 +11,6 @@
 [submodule "docs/docs/recastx-docs-supplement"]
 	path = docs/docs/recastx-docs-supplement
 	url = https://github.com/zhujun98/recastx-docs-supplement.git
+[submodule "ext/NVTX"]
+	path = ext/NVTX
+	url = https://github.com/NVIDIA/NVTX.git

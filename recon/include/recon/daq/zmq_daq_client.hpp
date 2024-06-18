@@ -49,10 +49,9 @@ class ZmqDaqClient : public DaqClientInterface {
 
     ~ZmqDaqClient() override;
 
-    void stopAcquiring() override;
-    void startAcquiring() override;
+    void setAcquiring(bool state) override;
 
-    void start() override;
+    void spin() override;
 
     [[nodiscard]] bool next(Projection<>& proj) override;
 };

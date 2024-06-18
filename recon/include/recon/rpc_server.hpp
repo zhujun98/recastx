@@ -142,15 +142,14 @@ class RpcServer {
     ProjectionTransferService proj_trans_service_;
     ReconstructionService recon_service_;
 
-    std::thread thread_;
-
 public:
 
     RpcServer(int port, Application* app);
 
-    void start();
-};
+    void spin();
 
+    void shutdown();
+};
 
 } // namespace recastx::recon
 

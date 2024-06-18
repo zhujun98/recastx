@@ -36,10 +36,9 @@ class DaqClientInterface {
 
     virtual ~DaqClientInterface() = default;
 
-    virtual void start() = 0;
+    virtual void spin() = 0;
 
-    virtual void startAcquiring() = 0;
-    virtual void stopAcquiring() = 0;
+    virtual void setAcquiring(bool state) = 0;
 
     [[nodiscard]] virtual bool next(Projection<>& proj) = 0;
 

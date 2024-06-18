@@ -74,7 +74,7 @@ class Application {
 
   private:
 
-    size_t group_size_;
+    size_t group_size_ = 0;
     // Why did I choose ProDtype over RawDtype?
     MemoryBuffer<ProDtype, 3> raw_buffer_;
 
@@ -104,13 +104,13 @@ class Application {
 
     // ProjectionGeometry
     BeamShape beam_shape_;
-    uint32_t orig_col_count_;
-    uint32_t orig_row_count_;
-    float pixel_width_;
-    float pixel_height_;
-    float source2origin_;
-    float origin2detector_;
-    uint32_t angle_count_;
+    uint32_t orig_col_count_ = 0;
+    uint32_t orig_row_count_ = 0;
+    float pixel_width_ = 1.f;
+    float pixel_height_ = 1.f;
+    float source2origin_ = 1.f;
+    float origin2detector_ = 1.f;
+    uint32_t angle_count_ = 0;
     AngleRange angle_range_;
 
     // ReconGeometry
@@ -223,7 +223,7 @@ class Application {
 
     void startReconstructing();
 
-    void spin(rpc::ServerState_State state);
+    void spin();
 
     void setDownsampling(uint32_t col, uint32_t row);
 

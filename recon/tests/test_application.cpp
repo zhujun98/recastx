@@ -31,10 +31,9 @@ class MockDaqClient : public DaqClientInterface {
 
     MockDaqClient() : DaqClientInterface(1) {}
 
-    void start() override {}
+    void spin() override {}
 
-    void startAcquiring() override {}
-    void stopAcquiring() override {}
+    void setAcquiring(bool state) override {}
 
     [[nodiscard]] virtual bool next(Projection<>& proj) override {
         return buffer_.waitAndPop(proj, 100);
@@ -141,7 +140,7 @@ class ApplicationTest : public testing::Test {
 
     const RpcServerConfig rpc_cfg {12347};
     const ImageprocParams imgproc_params {
-        threads_, downsampling_col_, downsampling_row_, 0, false, {filter_name_}
+        threads_, downsampling_col_, downsampling_row_, 0, true, {filter_name_}
     };
 
     Application app_;
