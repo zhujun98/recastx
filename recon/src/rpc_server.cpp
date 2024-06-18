@@ -27,9 +27,8 @@ grpc::Status ControlService::StartAcquiring(grpc::ServerContext* /*context*/,
         app_->startAcquiring();
         return grpc::Status::OK;
     } catch (const std::exception& e) {
-        spdlog::error("Failed to start acquiring!");
-        // FIXME
-        return {grpc::StatusCode::RESOURCE_EXHAUSTED, e.what()};
+        spdlog::error("Failed to start acquiring: {}", e.what());
+        return {grpc::StatusCode::UNKNOWN, e.what()};
     }
 }
 
@@ -40,9 +39,8 @@ grpc::Status ControlService::StopAcquiring(grpc::ServerContext* /*context*/,
         app_->stopAcquiring();
         return grpc::Status::OK;
     } catch (const std::exception& e) {
-        spdlog::error("Failed to stop acquiring!");
-        // FIXME
-        return {grpc::StatusCode::RESOURCE_EXHAUSTED, e.what()};
+        spdlog::error("Failed to stop acquiring: {}", e.what());
+        return {grpc::StatusCode::UNKNOWN, e.what()};
     }
 }
 
@@ -52,10 +50,12 @@ grpc::Status ControlService::StartProcessing(grpc::ServerContext* /*context*/,
     try {
         app_->startProcessing();
         return grpc::Status::OK;
+    } catch (const std::invalid_argument& e) {
+        spdlog::error("Failed to start processing: {}", e.what());
+        return {grpc::StatusCode::INVALID_ARGUMENT, e.what()};
     } catch (const std::exception& e) {
-        spdlog::error("Failed to start processing!");
-        // FIXME
-        return {grpc::StatusCode::RESOURCE_EXHAUSTED, e.what()};
+        spdlog::error("Unknown exception: {}", e.what());
+        return {grpc::StatusCode::UNKNOWN, e.what()};
     }
 }
 
@@ -66,9 +66,8 @@ grpc::Status ControlService::StopProcessing(grpc::ServerContext* /*context*/,
         app_->stopProcessing();
         return grpc::Status::OK;
     } catch (const std::exception& e) {
-        spdlog::error("Failed to stop processing!");
-        // FIXME
-        return {grpc::StatusCode::RESOURCE_EXHAUSTED, e.what()};
+        spdlog::error("Failed to stop processing: {}", e.what());
+        return {grpc::StatusCode::UNKNOWN, e.what()};
     }
 }
 

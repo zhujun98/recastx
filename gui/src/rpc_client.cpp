@@ -290,10 +290,14 @@ bool RpcClient::checkStatus(const grpc::Status& status, bool warn_on_unavailable
     const std::string& msg = status.error_message();
     if (code == grpc::StatusCode::UNAVAILABLE) {
         if (warn_on_unavailable_server) {
-            log::warn("Reconstruction server is not available!");
+            log::warn("Reconstruction server not available!");
         }
+    } else if (code == grpc::StatusCode::INVALID_ARGUMENT){
+        log::error("Reconstruction server invalid argument: {}", msg);
     } else if (code == grpc::StatusCode::RESOURCE_EXHAUSTED){
         log::error("Reconstruction server resource exhausted: {}", msg);
+    } else if (code == grpc::StatusCode::UNKNOWN) {
+        log::error("Reconstruction server unknown error: {}", msg);
     } else {
         log::error("Unexpected RPC error {}: {}", code, msg);
         std::exit(EXIT_FAILURE);
