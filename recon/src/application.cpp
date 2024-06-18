@@ -500,7 +500,7 @@ void Application::init() {
 
 void Application::checkParams() {
     if (orig_col_count_ <= 0 || orig_row_count_ <= 0 || angle_count_ <= 0) {
-        throw std::invalid_argument("Col count / Row count / Angle count must be positive!");
+        throw std::invalid_argument("Col count / Row count / Angle count must all be positive!");
     }
 }
 

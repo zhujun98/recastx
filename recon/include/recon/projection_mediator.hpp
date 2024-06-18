@@ -29,7 +29,7 @@ class ProjectionMediator {
 
   public:
     
-    ProjectionMediator(int capacity = 0);
+    explicit ProjectionMediator(int capacity = 0);
 
     void push(DataType proj);
 
