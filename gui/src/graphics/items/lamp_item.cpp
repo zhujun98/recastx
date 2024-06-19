@@ -17,7 +17,7 @@ LampItem::LampItem(Scene& scene)
         : GraphicsItem(scene),
           show_(false),
           rel_pos_(true),
-          pos_{0.f, 0.f, 0.f},
+          pos_{-3.f, 1.f, -3.f},
           ambient_(0.5f),
           diffuse_(0.7f),
           specular_(1.0f) {
