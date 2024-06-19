@@ -56,7 +56,7 @@ class Volume {
     RenderQuality render_quality_;
 
     std::unique_ptr<VolumeSlicer> slicer_;
-    float threshold_ = 0.1f;
+    float threshold_ = 0.0f;
     bool volume_shadow_enabled_ = false;
 
     std::unique_ptr<ShaderProgram> shader_;

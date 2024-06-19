@@ -106,7 +106,8 @@ ReconItem::ReconItem(Scene& scene)
     assert(slices_.size() == MAX_NUM_SLICES);
     update_min_max_val_ = true;
 
-    CubeModel data(256);
+    CubeModel data(512);
+    data.genSpheres(40);
     volume_->setData(data.data(), data.x(), data.x(), data.x());
 }
 

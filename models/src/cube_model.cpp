@@ -9,12 +9,16 @@
 #include <cassert>
 #include <cmath>
 #include <cstring>
+#include <random>
 
 #include "models/cube_model.hpp"
 
 CubeModel::CubeModel(uint32_t x)
-        : x_(x), data_(x_ * x_ * x_, 0.f) {
-    genData();
+        : x_(x), y_(x), z_(x), data_(x_ * y_ * z_, 0.f) {
+}
+
+CubeModel::CubeModel(uint32_t x, uint32_t y, uint32_t z)
+        : x_(x), y_(y), z_(z), data_(x_ * y_ * z_, 0.f){
 }
 
 std::string CubeModel::data() const {
@@ -24,21 +28,22 @@ std::string CubeModel::data() const {
     return data;
 }
 
-void CubeModel::genData() {
-    genDonut(x_ / 2, x_ / 2, x_ / 2, 3 * x_ / 8, x_/ 16, 0.2f);
-    genDonut(x_ / 2, x_ / 2, x_ / 2, 3 * x_ / 8, x_/ 32, 0.5f);
+void CubeModel::genSpheres(size_t n) {
+    uint32_t width = std::min(std::min(x_, y_), z_);
+    uint32_t r_min = 2 * width / n;
+    uint32_t r_max = 2 * r_min;
 
-    genCylinder(5 * x_ / 8, 5 * x_ / 8, x_ / 16, 11 * x_ / 16, x_ / 16, 0.1f);
-    genCylinder(5 * x_ / 8, 5 * x_ / 8, x_ / 16, 11 * x_ / 16, x_ / 32, 1.f);
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_int_distribution<uint32_t> dist_x(r_max, x_ - r_max - 1);
+    std::uniform_int_distribution<uint32_t> dist_y(r_max, y_ - r_max - 1);
+    std::uniform_int_distribution<uint32_t> dist_z(r_max, z_ - r_max - 1);
+    std::uniform_int_distribution<uint32_t> dist_r(r_min, r_max);
+    std::uniform_real_distribution<float> dist_density(0.1f, 1.f);
 
-    genCylinder(3 * x_ / 8, 5 * x_ / 8, x_ / 8, 3 * x_ / 4, x_ / 16, 0.3f);
-    genCylinder(3 * x_ / 8, 5 * x_ / 8, x_ / 8, 3 * x_ / 4, x_ / 32, 1.f);
-
-    genCylinder(5 * x_ / 8, 3 * x_ / 8, 3 * x_ / 16, 13 * x_ / 16, x_ / 16, 0.3f);
-    genCylinder(5 * x_ / 8, 3 * x_ / 8, 3 * x_ / 16, 13 * x_ / 16, x_ / 32, 1.f);
-
-    genCylinder(3 * x_ / 8, 3 * x_ / 8, x_ / 4, 7 * x_ / 8, x_ / 16, 0.1f);
-    genCylinder(3 * x_ / 8, 3 * x_ / 8, x_ / 4, 7 * x_ / 8, x_ / 32, 1.f);
+    for (size_t i = 0; i < n; ++i) {
+        genSphere(dist_x(mt), dist_y(mt), dist_z(mt), dist_r(mt), dist_density(mt));
+    }
 }
 
 void CubeModel::genDonut(uint32_t xc, uint32_t yc, uint32_t zc, uint32_t r1, uint32_t r2, DataType::value_type v) {
@@ -64,6 +69,19 @@ void CubeModel::genCylinder(uint32_t xc, uint32_t yc, uint32_t z0, uint32_t z1, 
         for (size_t j = yc - r; j <= yc + r; ++j) {
             for (size_t k = z0; k <= z1; ++k) {
                 if ((i - xc) * (i - xc) + (j - yc) * (j - yc) <= r2) data_[i * x2 + j * x_ + k] = v;
+            }
+        }
+    }
+}
+
+void CubeModel::genSphere(uint32_t xc, uint32_t yc, uint32_t zc, uint32_t r, DataType::value_type  v) {
+    size_t r2 = r * r;
+    for (size_t i = xc - r; i <= xc + r; ++i) {
+        for (size_t j = yc - r; j <= yc + r; ++j) {
+            for (size_t k = zc - r; k <= zc + r; ++k) {
+                if ((i - xc) * (i - xc) + (j - yc) * (j - yc) + (k - zc) * (k - zc) <= r2) {
+                    data_[i * y_ * z_ + j * z_ + k] += v;
+                }
             }
         }
     }
