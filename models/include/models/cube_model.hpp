@@ -21,17 +21,23 @@ class CubeModel {
   private:
 
     uint32_t x_;
+    uint32_t y_;
+    uint32_t z_;
     DataType data_;
 
     void genCylinder(uint32_t xc, uint32_t yc, uint32_t z0, uint32_t z1, uint32_t r, DataType::value_type v);
 
     void genDonut(uint32_t xc, uint32_t yc, uint32_t zc, uint32_t r1, uint32_t r2, DataType::value_type v);
 
-    void genData();
+    void genSphere(uint32_t xc, uint32_t yc, uint32_t zc, uint32_t r, DataType::value_type  v);
 
   public:
 
-    CubeModel(uint32_t x);
+    explicit CubeModel(uint32_t x);
+
+    CubeModel(uint32_t x, uint32_t y, uint32_t z);
+
+    void genSpheres(size_t n);
 
     [[nodiscard]] std::string data() const;
 
