@@ -27,10 +27,11 @@ class Monitor {
 
     std::atomic<size_t> num_projections_= 0;
     const size_t report_projections_every_;
-    size_t tomo_byte_size_;
 
     size_t num_tomograms_ = 0;
+    size_t tomo_byte_size_;
     const size_t report_tomo_throughput_every_ = 10;
+    std::chrono::time_point<std::chrono::steady_clock> perf_start_;
     std::queue<std::chrono::time_point<std::chrono::steady_clock>> perf_tomo_;
 
   public:
