@@ -10,6 +10,7 @@
 #define RECON_MONITOR_H
 
 #include <atomic>
+#include <queue>
 #include <chrono>
 
 namespace recastx::recon {
@@ -26,17 +27,15 @@ class Monitor {
 
     std::atomic<size_t> num_projections_= 0;
     const size_t report_projections_every_;
-    size_t image_byte_size_;
-    std::chrono::time_point<std::chrono::steady_clock> perf_start_;
-    std::chrono::time_point<std::chrono::steady_clock> perf_end_;
+    size_t tomo_byte_size_;
 
     size_t num_tomograms_ = 0;
     const size_t report_tomo_throughput_every_ = 10;
-    std::vector<std::chrono::time_point<std::chrono::steady_clock>> perf_tomo_;
+    std::queue<std::chrono::time_point<std::chrono::steady_clock>> perf_tomo_;
 
   public:
 
-    explicit Monitor(size_t image_byte_size = 0, size_t report_projections_every_ = 100);
+    explicit Monitor(size_t tomo_byte_size = 0, size_t report_projections_every_ = 100);
 
     void reset();
 

@@ -264,6 +264,7 @@ void Application::consume() {
                 }
 
                 proj_mediator_->push(std::move(proj));
+                if (monitor_->numProjections() == 0) monitor_->resetPerf();
                 monitor_->countProjection();
                 break;
             }
@@ -273,6 +274,7 @@ void Application::consume() {
                     maybeResetDarkAndFlatAcquisition();
                     pushDark(std::move(proj));
                 }
+                if (monitor_->numProjections() != 0) monitor_->reset();
                 monitor_->countDark();
                 break;
             }
@@ -282,6 +284,7 @@ void Application::consume() {
                     maybeResetDarkAndFlatAcquisition();
                     pushFlat(std::move(proj));
                 }
+                if (monitor_->numProjections() != 0) monitor_->reset();
                 monitor_->countFlat();
                 break;
             }
@@ -365,7 +368,7 @@ void Application::startAcquiring() {
     server_state_ = rpc::ServerState_State_ACQUIRING;
     spdlog::info("Preparing for acquiring data");
 
-    monitor_.reset(new Monitor(orig_col_count_ * orig_row_count_ * sizeof(RawDtype), group_size_));
+    monitor_.reset(new Monitor(orig_col_count_ * orig_row_count_ * sizeof(RawDtype) * angle_count_, group_size_));
 
     daq_client_->setAcquiring(true);
 }
@@ -405,7 +408,7 @@ void Application::startProcessing() {
         spdlog::info("- Scan mode: static");
     }
 
-    monitor_.reset(new Monitor(orig_col_count_ * orig_row_count_ * sizeof(RawDtype), group_size_));
+    monitor_.reset(new Monitor(orig_col_count_ * orig_row_count_ * sizeof(RawDtype) * angle_count_, group_size_));
 
     daq_client_->setAcquiring(true);
 }
@@ -595,10 +598,6 @@ void Application::maybeResetDarkAndFlatAcquisition() {
 void Application::pushProjection(const Projection<>& proj) {
     if (pipeline_wait_on_slowness_ && raw_buffer_.isReady()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
-
-    if (raw_buffer_.occupied() == 0) {
-        monitor_->resetPerf();
     }
 
     raw_buffer_.fill<RawDtype>(

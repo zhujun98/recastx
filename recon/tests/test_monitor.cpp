@@ -36,11 +36,7 @@ TEST(MonitorTest, TestGeneral) {
     // avoid NUMERICAL error
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-    mon.countTomogram();
-
     mon.summarize();
-
-    mon.reset();
 }
 
 TEST(MonitorTest, TestReset) {
@@ -48,20 +44,18 @@ TEST(MonitorTest, TestReset) {
 
     mon.countProjection();
     mon.countTomogram();
+    mon.countFlat();
+    mon.countDark();
     ASSERT_EQ(mon.numProjections(), 1);
     ASSERT_EQ(mon.numTomograms(), 1);
-    mon.countFlat();
-    ASSERT_EQ(mon.numProjections(), 0);
-    ASSERT_EQ(mon.numTomograms(), 0);
     ASSERT_EQ(mon.numFlats(), 1);
-
-    mon.countProjection();
-    mon.countTomogram();
-    mon.countDark();
-    ASSERT_EQ(mon.numProjections(), 0);
-    ASSERT_EQ(mon.numTomograms(), 0);
-    ASSERT_EQ(mon.numFlats(), 0);
     ASSERT_EQ(mon.numDarks(), 1);
+
+    mon.reset();
+    ASSERT_EQ(mon.numProjections(), 0);
+    ASSERT_EQ(mon.numFlats(), 0);
+    ASSERT_EQ(mon.numDarks(), 0);
+    ASSERT_EQ(mon.numTomograms(), 0);
 }
 
 } // namespace recastx::recon::test
