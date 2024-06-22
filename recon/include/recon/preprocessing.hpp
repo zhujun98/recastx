@@ -29,7 +29,7 @@ inline void downsample(const ProImageData &src, ProImageData &dst) {
     size_t ds_row = src_shape[0] / dst_shape[0];
     size_t ds_col = src_shape[1] / dst_shape[1];
 
-    if (ds_row < 1 || ds_col < 1) {
+    if (ds_row == 0 || ds_col == 0) {
         spdlog::critical("Shape of the destination is large than shape of the source: {} x {}, dst: {} x {}",
                          src_shape[0], src_shape[1], dst_shape[0], dst_shape[1]);
         throw std::runtime_error("Downsampling with illegal shapes");

@@ -15,11 +15,13 @@ namespace recastx::recon {
 Monitor::Monitor(size_t tomo_byte_size, size_t report_projections_every) :
         start_(std::chrono::steady_clock::now()),
         report_projections_every_(report_projections_every),
-        tomo_byte_size_(tomo_byte_size) {
+        tomo_byte_size_(tomo_byte_size),
+        perf_start_(start_) {
     perf_tomo_.push(start_);
 }
 
 void Monitor::reset() {
+    start_ = std::chrono::steady_clock::now();
     num_darks_ = 0;
     num_flats_ = 0;
     num_projections_ = 0;
@@ -30,9 +32,9 @@ void Monitor::reset() {
 void Monitor::resetPerf() {
     num_tomograms_ = 0;
 
-    start_ = std::chrono::steady_clock::now();
+    perf_start_ = std::chrono::steady_clock::now();
     std::queue<std::chrono::time_point<std::chrono::steady_clock>>().swap(perf_tomo_);
-    perf_tomo_.push(start_);
+    perf_tomo_.push(perf_start_);
 }
 
 void Monitor::countDark() {
@@ -70,15 +72,17 @@ void Monitor::countTomogram() {
 }
 
 void Monitor::summarize() const {
-    size_t dt = std::chrono::duration_cast<std::chrono::milliseconds>(
-            perf_tomo_.back() -  start_).count();
+    size_t duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now() -  start_).count();
 
+    size_t dt = std::chrono::duration_cast<std::chrono::milliseconds>(
+            perf_tomo_.back() -  perf_start_).count();
     double throughput_per_tomo = dt == 0 ? 0. : 1000. * static_cast<double>(num_tomograms_) / dt;
     double throughput = dt == 0 ? 0. : 0.001 * static_cast<double>(tomo_byte_size_) * num_tomograms_ / dt;
 
     spdlog::info("[Monitor] ------------------------------------------------------------");
     spdlog::info("[Monitor] Summarise of run:");
-    spdlog::info("[Monitor] - Duration: {:.1f} s", static_cast<double>(dt) * 0.001);
+    spdlog::info("[Monitor] - Duration: {:.1f} s", static_cast<double>(duration) * 0.001);
     spdlog::info("[Monitor] - Number of darks processed: {}", num_darks_);
     spdlog::info("[Monitor] - Number of flats processed: {}", num_flats_);
     spdlog::info("[Monitor] - Number of projections processed: {}", num_projections_);
