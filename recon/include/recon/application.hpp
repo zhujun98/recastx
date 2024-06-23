@@ -237,7 +237,7 @@ class Application {
 
     void setVolumeReq(bool required);
 
-    void setScanMode(rpc::ScanMode_Mode mode, uint32_t update_inverval);
+    void setScanMode(rpc::ScanMode_Mode mode, uint32_t update_interval = K_MAX_SCAN_UPDATE_INTERVAL);
 
     void startAcquiring();
 

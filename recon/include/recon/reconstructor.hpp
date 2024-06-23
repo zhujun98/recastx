@@ -22,61 +22,40 @@
 #include "astra/CudaProjector3D.h"
 #include "astra/Float32Data3DGPU.h"
 #include "astra/Float32ProjectionData3DGPU.h"
-#include "astra/Float32VolumeData3DGPU.h"
 #include "astra/ParallelProjectionGeometry3D.h"
 #include "astra/ParallelVecProjectionGeometry3D.h"
 #include "astra/VolumeGeometry3D.h"
 
 #include "common/config.hpp"
 #include "reconstructor_interface.hpp"
+#include "recon/cuda/recon3d.cuh"
 
 namespace recastx::recon {
 
-namespace details {
-    std::string astraInfo(const astra::CConeVecProjectionGeometry3D& x);
-    std::string astraInfo(const astra::CVolumeGeometry3D& x);
-}
-
-class Uploader {
-
-    size_t start_;
-    size_t group_size_;
-
-  public:
-
-    explicit Uploader(size_t group_size);
-
-    void upload(astra::CFloat32ProjectionData3DGPU* dst, const float* src, size_t n);
-};
+class AstraMemHandleArray;
+class SinogramLoader;
 
 class AstraReconstructor : public Reconstructor {
 
 protected:
 
-    std::vector<Uploader> uploader_;
-    std::vector<std::unique_ptr<astra::CFloat32ProjectionData3DGPU>> p_data_;
-    std::vector<astraCUDA3d::MemHandle3D> p_mem_;
+    std::unique_ptr<SinogramLoader> loader_;
+
+    std::vector<std::unique_ptr<astra::CFloat32ProjectionData3DGPU>> data_;
+    std::vector<AstraMemHandleArray> mem_;
     std::unique_ptr<astra::CCudaProjector3D> projector_;
 
-    std::unique_ptr<astra::CVolumeGeometry3D> s_geom_;
-    astraCUDA3d::MemHandle3D s_mem_;
-    std::unique_ptr<astra::CFloat32VolumeData3DGPU> s_data_;
-    std::vector<std::unique_ptr<astra::CCudaBackProjectionAlgorithm3D>> s_algo_;
+    AstraReconstructable slice_recon_;
+    std::vector<std::unique_ptr<astra::CCudaBackProjectionAlgorithm3D>> slice_algo_;
 
-    std::unique_ptr<astra::CVolumeGeometry3D> v_geom_;
-    astraCUDA3d::MemHandle3D v_mem_;
-    std::unique_ptr<astra::CFloat32VolumeData3DGPU> v_data_;
-    std::vector<std::unique_ptr<astra::CCudaBackProjectionAlgorithm3D>> v_algo_;
-
-    std::unique_ptr<astra::CVolumeGeometry3D> makeVolumeGeometry(const VolumeGeometry& geom);
-    astraCUDA3d::MemHandle3D makeVolumeGeometryMemHandle(const VolumeGeometry& geom);
+    AstraReconstructable volume_recon_;
+    std::vector<std::unique_ptr<astra::CCudaBackProjectionAlgorithm3D>> volume_algo_;
 
 public:
 
     AstraReconstructor(const ProjectionGeometry& p_geom, 
                        const VolumeGeometry& s_geom, 
-                       const VolumeGeometry& v_geom,
-                       bool double_buffering);
+                       const VolumeGeometry& v_geom);
 
     virtual ~AstraReconstructor();
 
@@ -85,8 +64,8 @@ public:
 
 class ParallelBeamReconstructor : public AstraReconstructor {
 
-    std::unique_ptr<astra::CParallelVecProjectionGeometry3D> s_p_geom_;
-    std::unique_ptr<astra::CParallelVecProjectionGeometry3D> v_p_geom_;
+    std::unique_ptr<astra::CParallelVecProjectionGeometry3D> s_geom_;
+    std::unique_ptr<astra::CParallelVecProjectionGeometry3D> v_geom_;
     std::vector<astra::SPar3DProjection> vectors_;
     std::vector<astra::SPar3DProjection> original_vectors_;
     std::vector<astra::SPar3DProjection> vec_buf_;
@@ -107,8 +86,8 @@ public:
 
 class ConeBeamReconstructor : public AstraReconstructor {
 
-    std::unique_ptr<astra::CConeVecProjectionGeometry3D> s_p_geom_;
-    std::unique_ptr<astra::CConeVecProjectionGeometry3D> v_p_geom_;
+    std::unique_ptr<astra::CConeVecProjectionGeometry3D> s_geom_;
+    std::unique_ptr<astra::CConeVecProjectionGeometry3D> v_geom_;
     std::vector<astra::SConeProjection> vectors_;
     std::vector<astra::SConeProjection> vec_buf_;
 

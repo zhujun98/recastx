@@ -85,8 +85,7 @@ proj_to_vec(astra::CParallelProjectionGeometry3D* parallel_geom) {
     auto vectors = std::vector<astra::SPar3DProjection>(projs);
     auto i = 0;
     for (auto& v : vectors) {
-        auto vrd =
-            Eigen::Vector3f{std::sin(angles[i]), -std::cos(angles[i]), 0};
+        auto vrd = Eigen::Vector3f{std::sin(angles[i]), -std::cos(angles[i]), 0};
         auto vc = Eigen::Vector3f{0, 0, 0};
         auto vdx = Eigen::Vector3f{std::cos(angles[i]) * dx,
                                    std::sin(angles[i]) * dx, 0};
@@ -147,10 +146,8 @@ proj_to_vec(astra::CConeProjectionGeometry3D* cone_geom) {
 }
 
 std::tuple<Eigen::Vector3f, Eigen::Matrix3f, Eigen::Vector3f>
-slice_transform(Eigen::Vector3f base, Eigen::Vector3f axis_1,
-                Eigen::Vector3f axis_2, float k) {
-    auto rotation_onto = [](Eigen::Vector3f x,
-                            Eigen::Vector3f y) -> Eigen::Matrix3f {
+slice_transform(Eigen::Vector3f base, Eigen::Vector3f axis_1, Eigen::Vector3f axis_2, float k) {
+    auto rotation_onto = [](Eigen::Vector3f x, Eigen::Vector3f y) -> Eigen::Matrix3f {
         auto z = x.normalized();
         auto w = y.normalized();
         auto axis = z.cross(w);
