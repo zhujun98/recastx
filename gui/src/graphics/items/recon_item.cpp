@@ -56,13 +56,15 @@ void RenderComponent::renderIm() {
         static bool volume_shadow_enabled = volume_->volumeShadowEnabled();
 
         ImGui::BeginDisabled(volume_shadow_enabled);
-        if (ImGui::DragFloat("Front##RECON_VOL", &volume_front_, volume_front_step_, 0.f, 1.f, "%.3f", ImGuiSliderFlags_ClampOnInput)) {
+        if (ImGui::DragFloat("Front##RECON_VOL", &volume_front_, volume_front_step_, 0.f, 1.f, "%.3f",
+                             ImGuiSliderFlags_AlwaysClamp)) {
             volume_->setFront(volume_front_);
         }
         ImGui::EndDisabled();
 
         static float threshold = volume_->threshold();
-        if (ImGui::DragFloat("Threshold##RENDER_COMP", &threshold, volume_front_step_, 0.f, 1.f, "%.3f", ImGuiSliderFlags_ClampOnInput)) {
+        if (ImGui::DragFloat("Threshold##RENDER_COMP", &threshold, volume_front_step_, 0.f, 1.f, "%.3f",
+                             ImGuiSliderFlags_AlwaysClamp)) {
             volume_->setThreshold(threshold);
         }
 
@@ -187,7 +189,7 @@ void ReconItem::renderIm() {
                 if (policy != DISABLE_SLI) {
                     std::lock_guard lck(slice_mtx_);
                     ImPlot::PlotHistogram("##Histogram", data.data(), static_cast<int>(data.size()),
-                                          100, false, true);
+                                          100, 1.0);
                 }
                 ImPlot::EndPlot();
             }

@@ -45,16 +45,16 @@ void GeometryItem::renderIm() {
     auto state = scene_.serverState();
     ImGui::BeginDisabled(state & rpc::ServerState_State_PROCESSING);
 
-    ImGui::DragInt("Column Count##GEOMETRY", &col_count_, 16, 0, 4096, "%i", ImGuiSliderFlags_ClampOnInput);
-    ImGui::DragInt("Row Count##GEOMETRY", &row_count_, 16, 0, 4096, "%i", ImGuiSliderFlags_ClampOnInput);
+    ImGui::DragInt("Column Count##GEOMETRY", &col_count_, 16, 0, 4096, "%i", ImGuiSliderFlags_AlwaysClamp);
+    ImGui::DragInt("Row Count##GEOMETRY", &row_count_, 16, 0, 4096, "%i", ImGuiSliderFlags_AlwaysClamp);
 
-    ImGui::DragInt("Angle Count##GEOMETRY", &angle_count_, 10, 0, 4000, "%i", ImGuiSliderFlags_ClampOnInput);
+    ImGui::DragInt("Angle Count##GEOMETRY", &angle_count_, 10, 0, 4000, "%i", ImGuiSliderFlags_AlwaysClamp);
     ImGui::RadioButton("180 degree", &angle_range_, static_cast<int>(AngleRange::HALF));
     ImGui::SameLine();
     ImGui::RadioButton("360 degree", &angle_range_, static_cast<int>(AngleRange::FULL));
 
-    ImGui::DragInt("Slice Size##GEOMETRY", &slice_size_, 16, 0, 4096, "%i", ImGuiSliderFlags_ClampOnInput);
-    ImGui::DragInt("Volume Size##GEOMETRY", &volume_size_, 16, 0, 1024, "%i", ImGuiSliderFlags_ClampOnInput);
+    ImGui::DragInt("Slice Size##GEOMETRY", &slice_size_, 16, 0, 4096, "%i", ImGuiSliderFlags_AlwaysClamp);
+    ImGui::DragInt("Volume Size##GEOMETRY", &volume_size_, 16, 0, 1024, "%i", ImGuiSliderFlags_AlwaysClamp);
 
     ImGui::DragIntRange2("X range##GEOMETRY", &x_[0], &x_[1]);
     ImGui::DragIntRange2("Y range##GEOMETRY", &y_[0], &y_[1]);
