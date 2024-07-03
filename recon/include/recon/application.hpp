@@ -129,8 +129,6 @@ class Application {
     int gpu_buffer_index_ = 0;
     bool double_buffering_ = true;
     bool sino_initialized_ = false;
-    bool sino_uploaded_ = false;
-    std::condition_variable gpu_cv_;
     std::mutex gpu_mtx_;
 
     rpc::ServerState_State server_state_ = rpc::ServerState_State_UNKNOWN;
@@ -182,13 +180,6 @@ class Application {
         return false;
     };
 
-    bool waitForSinoInitialization() const {
-        if (!sino_initialized_) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            return true;
-        }
-        return false;
-    }
 
   public:
 
@@ -220,9 +211,9 @@ class Application {
 
     void startPreprocessing();
 
-    void startUploading();
-
     void startReconstructing();
+
+    void startReconstructingOnDemand();
 
     void spin();
 

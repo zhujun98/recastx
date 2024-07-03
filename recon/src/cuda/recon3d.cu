@@ -68,7 +68,7 @@ bool AstraReconstructable::copyFromDevice(float* dst, const AstraMemHandle* src,
 
     p.dstArray = nullptr;
     p.dstPos = make_cudaPos(0 * sizeof(float), 0, 0);
-    p.dstPtr = make_cudaPitchedPtr((void*)dst, pitch * sizeof(float), x * sizeof(float), y);
+    p.dstPtr = make_cudaPitchedPtr((void*)dst, pitch * sizeof(float), x, y);
 
     p.kind = cudaMemcpyDeviceToHost;
 

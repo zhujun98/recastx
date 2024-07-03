@@ -46,7 +46,7 @@ void SinogramLoader::copyToDevice(astra::CFloat32ProjectionData3DGPU* proj,
     cudaMemcpy3DParms p;
     p.srcArray = nullptr;
     p.srcPos = make_cudaPos(0, 0, 0);
-    p.srcPtr = make_cudaPitchedPtr((void *) data, x * sizeof(float), x * sizeof(float), y);
+    p.srcPtr = make_cudaPitchedPtr((void *) data, x * sizeof(float), x, y);
     assert(proj->getHandle().d->arr != nullptr);
     p.dstArray = proj->getHandle().d->arr;
     p.dstPos = make_cudaPos(0, start, 0);

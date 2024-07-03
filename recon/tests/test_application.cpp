@@ -305,8 +305,8 @@ TEST_F(ApplicationTest, TestPushProjectionUnordered) {
 TEST_F(ApplicationTest, TestReconstructing) {
     app_.startConsuming();
     app_.startPreprocessing();
-    app_.startUploading();
     app_.startReconstructing();
+    app_.startReconstructingOnDemand();
     app_.startProcessing();
 
     pushDarks(num_darks_);
