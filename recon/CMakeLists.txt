@@ -43,6 +43,22 @@ endif()
 
 set(ASTRA_INCLUDE_DIR ${CMAKE_PREFIX_PATH}/include)
 
+set(RECON_CUDA_SOURCES "src/cuda/recon3d.cu"
+                       "src/cuda/memory.cu"
+                       "src/cuda/sinogram_loader.cu")
+set(RECON_CUDA_LIB _recastx-recon-cuda)
+add_library(${RECON_CUDA_LIB} ${RECON_CUDA_SOURCES})
+target_link_libraries(${RECON_CUDA_LIB} PRIVATE spdlog::spdlog astra-toolbox)
+target_include_directories(${RECON_CUDA_LIB} PRIVATE
+        ${ASTRA_INCLUDE_DIR}
+        ${CMAKE_CURRENT_LIST_DIR}/include
+        ${CMAKE_CURRENT_LIST_DIR}/../common/include
+)
+set_target_properties(${RECON_CUDA_LIB} PROPERTIES
+        CUDA_SEPARABLE_COMPILATION ON
+        CUDA_RESOLVE_DEVICE_SYMBOLS ON
+)
+
 set(RECON_SOURCES
         "src/utils.cpp"
         "src/ramp_filter.cpp"
@@ -71,13 +87,13 @@ target_include_directories(${RECON_LIB}
 
 target_link_libraries(${RECON_LIB}
         PRIVATE
+                ${RECON_CUDA_LIB}
                 nlohmann_json::nlohmann_json
                 spdlog::spdlog
                 TBB::tbb
                 ${FFTW_FLOAT_LIB}
         PUBLIC 
                 cppzmq
-                spdlog::spdlog
                 Eigen3::Eigen
                 astra-toolbox
                 recastx_grpc_proto

@@ -178,7 +178,7 @@ void Application::startUploading() {
 
             size_t chunk_size = sino_buffer_.front().shape()[0];
             {
-                if (scan_mode_ == rpc::ScanMode_Mode_DYNAMIC) {
+                if (double_buffering_) {
                     recon_->uploadSinograms(1 - gpu_buffer_index_, sino_buffer_.front().data(), chunk_size);
 
                     std::lock_guard<std::mutex> lck(gpu_mtx_);
@@ -210,14 +210,14 @@ void Application::startReconstructing() {
                 std::unique_lock<std::mutex> lck(gpu_mtx_);
                 if (gpu_cv_.wait_for(lck, 10ms, [&] { return sino_uploaded_; })) {
                     if (volume_required_) {
-                        spdlog::debug("Reconstruction (volume and slices) - started");
+                        spdlog::debug("Reconstructing (volume and slices) - started");
 
 #if defined(BENCHMARK)
                         nvtx3::scoped_range sr("Reconstructing volume");
 #endif
                         recon_->reconstructVolume(gpu_buffer_index_, volume_buffer_.back());
                     } else {
-                        spdlog::debug("Reconstruction (slices) - started");
+                        spdlog::debug("Reconstructing (slices) - started");
                     }
 
                 } else {
@@ -238,7 +238,7 @@ void Application::startReconstructing() {
                 sino_uploaded_ = false;
             }
             
-            spdlog::debug("Reconstruction - finished");
+            spdlog::debug("Reconstructing - finished");
             
             monitor_->countTomogram();
 
@@ -486,9 +486,9 @@ void Application::init() {
     size_t col_count = orig_col_count_ / downsampling_col;
     size_t row_count = orig_row_count_ / downsampling_row;
 
-    spdlog::info("[Init] - Projection image size: {} ({}) x {} ({})",
+    spdlog::info("[Init] - Projection size: {} ({}) x {} ({})",
                  col_count, downsampling_col, row_count, downsampling_row);
-    spdlog::info("[Init] - Number of projection images per scan: {}", angle_count_);
+    spdlog::info("[Init] - Number of projections per scan: {}", angle_count_);
 
     maybeInitFlatFieldBuffer(row_count, col_count);
 
@@ -540,9 +540,9 @@ void Application::initReconstructor(uint32_t col_count, uint32_t row_count) {
     volume_buffer_.resize({volume_geom.col_count, volume_geom.row_count, volume_geom.slice_count});
     slice_mediator_->resize({slice_geom.col_count, slice_geom.row_count});
 
-    bool double_buffering = scan_mode_ == rpc::ScanMode_Mode_DYNAMIC;
+    double_buffering_ = scan_mode_ == rpc::ScanMode_Mode_DYNAMIC;
     recon_.reset();
-    recon_ = recon_factory_->create(proj_geom, slice_geom, volume_geom, double_buffering);
+    recon_ = recon_factory_->create(proj_geom, slice_geom, volume_geom, double_buffering_);
 }
 
 void Application::maybeInitFlatFieldBuffer(uint32_t row_count, uint32_t col_count) {
@@ -574,7 +574,7 @@ void Application::maybeInitFlatFieldBuffer(uint32_t row_count, uint32_t col_coun
 
 void Application::maybeInitReconBuffer(uint32_t col_count, uint32_t row_count) {
     double sino_size = col_count * row_count * angle_count_ * sizeof(ProDtype) / static_cast<double>(1024 * 1024);
-    spdlog::info("[Init] - sinogram size: {:.1f} MB", sino_size);
+    spdlog::info("[Init] - Sinogram size: {:.1f} MB", sino_size);
 
     auto shape = raw_buffer_.shape();
     if (shape[0] != group_size_ || shape[1] != row_count || shape[2] != col_count) {

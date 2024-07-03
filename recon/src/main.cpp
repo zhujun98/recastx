@@ -231,8 +231,12 @@ int main(int argc, char** argv) {
 
     app.setPipelinePolicy(pipeline_wait_on_slowness);
 
-    if (auto_processing) app.startProcessing();
-    else if (auto_acquiring) app.startAcquiring();
+    if (auto_processing) {
+        app.setScanMode(recastx::rpc::ScanMode_Mode_DYNAMIC);
+        app.startProcessing();
+    } else if (auto_acquiring) {
+        app.startAcquiring();
+    }
 
     app.spin();
 
