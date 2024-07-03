@@ -178,7 +178,7 @@ void Application::startUploading() {
 
             size_t chunk_size = sino_buffer_.front().shape()[0];
             {
-                if (scan_mode_ == rpc::ScanMode_Mode_DYNAMIC) {
+                if (double_buffering_) {
                     recon_->uploadSinograms(1 - gpu_buffer_index_, sino_buffer_.front().data(), chunk_size);
 
                     std::lock_guard<std::mutex> lck(gpu_mtx_);
@@ -243,7 +243,7 @@ void Application::startReconstructing() {
             monitor_->countTomogram();
 
             if (volume_buffer_.prepare()) {
-                spdlog::warn("Reconstructed volume dropped due to slowness of clients");
+                spdlog::debug("Reconstructed volume dropped due to slowness of clients");
             }
         }
 
@@ -540,9 +540,9 @@ void Application::initReconstructor(uint32_t col_count, uint32_t row_count) {
     volume_buffer_.resize({volume_geom.col_count, volume_geom.row_count, volume_geom.slice_count});
     slice_mediator_->resize({slice_geom.col_count, slice_geom.row_count});
 
-    bool double_buffering = scan_mode_ == rpc::ScanMode_Mode_DYNAMIC;
+    double_buffering_ = scan_mode_ == rpc::ScanMode_Mode_DYNAMIC;
     recon_.reset();
-    recon_ = recon_factory_->create(proj_geom, slice_geom, volume_geom, double_buffering);
+    recon_ = recon_factory_->create(proj_geom, slice_geom, volume_geom, double_buffering_);
 }
 
 void Application::maybeInitFlatFieldBuffer(uint32_t row_count, uint32_t col_count) {

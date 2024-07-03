@@ -127,6 +127,7 @@ class Application {
     std::unique_ptr<Reconstructor> recon_;
 
     int gpu_buffer_index_ = 0;
+    bool double_buffering_ = true;
     bool sino_initialized_ = false;
     bool sino_uploaded_ = false;
     std::condition_variable gpu_cv_;
