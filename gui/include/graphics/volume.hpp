@@ -85,14 +85,13 @@ public:
                 const glm::mat4& projection,
                 float min_v,
                 float max_v,
-                float alpha_scale,
                 const glm::vec3& view_dir,
                 const glm::vec3& view_pos,
                 const Light& light,
                 const Material& material,
                 const std::shared_ptr<Viewport>& vp);
 
-    [[nodiscard]] bool hasTexture() const { return texture_.isReady(); }
+    [[nodiscard]] bool hasTexture() const { return texture_.isInitialized(); }
 
     void clear();
 

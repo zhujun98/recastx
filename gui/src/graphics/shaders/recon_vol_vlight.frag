@@ -6,6 +6,7 @@ in vec3 texCoord;
 out vec4 fColor;
 
 uniform sampler1D colormap;
+uniform sampler1D alphamap;
 uniform sampler3D volumeData;
 
 uniform float threshold;
@@ -27,7 +28,8 @@ void main() {
     }
 
     if (value > threshold) {
-        fColor = vec4(0, 0, 0, value);
+        float alpha = texture(alphamap, value).r;
+        fColor = vec4(0, 0, 0, alpha);
     } else {
         fColor = vec4(0.f);
     }

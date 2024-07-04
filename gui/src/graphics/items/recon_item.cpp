@@ -14,13 +14,15 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui.h>
 #include <implot.h>
 
 #include "common/utils.hpp"
 #include "models/cube_model.hpp"
 #include "graphics/items/recon_item.hpp"
-#include "graphics/aesthetics.hpp"
+#include "graphics/widgets/render3d_widget.hpp"
+#include "graphics/widgets/transfer_func_widget.hpp"
 #include "graphics/camera3d.hpp"
 #include "graphics/primitives.hpp"
 #include "graphics/slice.hpp"
@@ -32,64 +34,11 @@
 
 namespace recastx::gui {
 
-RenderComponent::RenderComponent(Volume* volume) : volume_(volume) {
-}
-
-void RenderComponent::renderIm() {
-    ImGui::TextColored(Style::CTRL_SECTION_TITLE_COLOR, "3D Rendering");
-
-    static int render_quality = static_cast<int>(volume_->renderQuality());
-    if (ImGui::SliderInt("Quality", &render_quality, 1, 5)) {
-        volume_->setRenderQuality(RenderQuality(render_quality));
-    }
-
-    bool cd = false;
-    static int render_policy = static_cast<int>(volume_->renderPolicy());
-    cd |= ImGui::RadioButton("Volume##RENDER_COMP", &render_policy,
-                             static_cast<int>(RenderPolicy::VOLUME));
-    ImGui::SameLine();
-    cd |= ImGui::RadioButton("ISO Surface##RENDER_COMP", &render_policy,
-                             static_cast<int>(RenderPolicy::SURFACE));
-    if (cd) volume_->setRenderPolicy(RenderPolicy(render_policy));
-
-    if (render_policy == static_cast<int>(RenderPolicy::VOLUME)) {
-        static bool volume_shadow_enabled = volume_->volumeShadowEnabled();
-
-        ImGui::BeginDisabled(volume_shadow_enabled);
-        if (ImGui::DragFloat("Front##RECON_VOL", &volume_front_, volume_front_step_, 0.f, 1.f, "%.3f",
-                             ImGuiSliderFlags_AlwaysClamp)) {
-            volume_->setFront(volume_front_);
-        }
-        ImGui::EndDisabled();
-
-        static float threshold = volume_->threshold();
-        if (ImGui::DragFloat("Threshold##RENDER_COMP", &threshold, volume_front_step_, 0.f, 1.f, "%.3f",
-                             ImGuiSliderFlags_AlwaysClamp)) {
-            volume_->setThreshold(threshold);
-        }
-
-        if (ImGui::Checkbox("Volume Shadow##RENDER_COMP", &volume_shadow_enabled)) {
-            volume_->setVolumeShadowEnabled(volume_shadow_enabled);
-            if (volume_shadow_enabled) {
-                volume_front_ = 0.f;
-                volume_->setFront(0.f);
-            }
-        }
-
-    } else {
-        static float iso_value = 0.f;
-
-        if (ImGui::InputFloat("ISO Value##RENDER_COMP", &iso_value)) {
-            volume_->setIsoValue(iso_value);
-        }
-    }
-}
-
-
 ReconItem::ReconItem(Scene& scene)
         : GraphicsItem(scene),
           volume_(new Volume{}),
-          render_comp_(volume_.get()),
+          render3d_widget_(new Render3DWidget(volume_.get())),
+          tf_widget_(new TransferFuncWidget(cm_, am_)),
           wireframe_(new Wireframe{}) {
     scene.addItem(this);
     vp_ = std::make_shared<Viewport>();
@@ -127,16 +76,26 @@ void ReconItem::onWindowSizeChanged(int width, int /*height*/) {
 void ReconItem::renderIm() {
     ImGui::TextColored(Style::CTRL_SECTION_TITLE_COLOR, "RECONSTRUCTION");
 
-    auto& cmd = Colormap::data();
-    if (ImGui::BeginCombo("Colormap##RECON", cmd.GetName(cm_.get()))) {
-        for (auto idx : Colormap::options()) {
-            const char* name = cmd.GetName(idx);
-            if (ImGui::Selectable(name, cm_.get() == idx)) {
-                cm_.set(idx);
+    renderImSliceControl<0>("Slice 1##RECON");
+    renderImSliceControl<1>("Slice 2##RECON");
+    renderImSliceControl<2>("Slice 3##RECON");
+
+    if (ImGui::Button("Reset all slices##RECON")) {
+        {
+            std::lock_guard lck(slice_mtx_);
+            for (auto& slice : slices_) {
+                std::get<2>(slice)->reset();
             }
         }
-        ImGui::EndCombo();
+        updateServerSliceParams();
     }
+
+    renderImVolumeControl();
+
+    ImGui::Separator();
+
+    render3d_widget_->render();
+    tf_widget_->render();
 
     if (ImGui::Checkbox("Auto levels##RECON", &auto_levels_) && auto_levels_) {
         update_min_max_val_ = true;
@@ -152,25 +111,8 @@ void ReconItem::renderIm() {
                            std::numeric_limits<float>::max());
     ImGui::EndDisabled();
 
-    ImGui::BeginDisabled(volume_policy_ != SHOW_VOL);
-    ImGui::SliderFloat("alphaScale", &alpha_scale_, 0.f, 1.f);
-    ImGui::EndDisabled();
-
     ImGui::Checkbox("Show wireframe##VIEW", &show_wireframe_);
 
-    renderImSliceControl<0>("Slice 1##RECON");
-    renderImSliceControl<1>("Slice 2##RECON");
-    renderImSliceControl<2>("Slice 3##RECON");
-
-    if (ImGui::Button("Reset all slices##RECON")) {
-        {
-            std::lock_guard lck(slice_mtx_);
-            for (auto& slice : slices_) {
-                std::get<2>(slice)->reset();
-            }
-        }
-        updateServerSliceParams();
-    }
 
     if (show_statistics_) {
         ImGui::SetNextWindowPos(st_win_pos_);
@@ -198,10 +140,6 @@ void ReconItem::renderIm() {
 
         ImGui::End();
     }
-
-    renderImVolumeControl();
-    ImGui::Separator();
-    render_comp_.renderIm();
 
     scene_.setStatus("volumeUpdateFrameRate", volume_counter_.frameRate());
     scene_.setStatus("sliceUpdateFrameRate", slice_counter_.frameRate());
@@ -238,7 +176,9 @@ void ReconItem::renderGl() {
     glEnable(GL_DEPTH_TEST);
 
     vp_->use();
+
     cm_.bind();
+    am_.bind();
 
     const auto& projection = vp_->projection();
     const auto& view = scene_.cameraMatrix();
@@ -264,9 +204,11 @@ void ReconItem::renderGl() {
     volume_->unbind();
 
     if (volume_policy_ == SHOW_VOL) {
-        volume_->render(view, projection, min_val, max_val_, alpha_scale_, view_dir, view_pos, light, material, vp_);
+        volume_->render(view, projection, min_val, max_val_,
+                        view_dir, view_pos, light, material, vp_);
     }
 
+    am_.unbind();
     cm_.unbind();
 
     if (show_wireframe_) {

@@ -36,7 +36,7 @@ Slice::Slice(int slice_id, Plane plane) : id_(slice_id), plane_(plane) {
     shader_ = std::make_unique<ShaderProgram>(vert, frag);
 
     shader_->use();
-    shader_->setInt("colormap", 0);
+    shader_->setInt("colormap", 4);
     shader_->setInt("sliceData", 1);
     shader_->setInt("volumeData", 2);
     shader_->unuse();
@@ -100,7 +100,7 @@ void Slice::render(const glm::mat4& view,
     shader_->setMat4("projection", projection);
     shader_->setMat4("orientationMatrix", model);
     shader_->setVec3("normal", glm::dot(view_dir, normal_) > 0 ? -normal_: normal_);
-    shader_->setBool("useVolumeTex", !texture_.isReady() && fallback_to_preview);
+    shader_->setBool("useVolumeTex", !texture_.isInitialized() && fallback_to_preview);
 
     shader_->setVec3("viewPos", view_pos);
     shader_->setBool("light.isEnabled", light.is_enabled);
@@ -111,7 +111,7 @@ void Slice::render(const glm::mat4& view,
 
     texture_.bind();
 
-    bool sample_slice = texture_.isReady() || fallback_to_preview;
+    bool sample_slice = texture_.isInitialized() || fallback_to_preview;
     if (sample_slice) {
         shader_->setFloat("minValue", min_v);
         shader_->setFloat("maxValue", max_v);

@@ -75,7 +75,7 @@ class VolumeSlicer {
 
             glGenFramebuffers(1, &fbo_);
 
-            glActiveTexture(GL_TEXTURE3);
+            glActiveTexture(GL_TEXTURE0);
             createTexture(light_texture_);
             createTexture(eye_texture_);
 

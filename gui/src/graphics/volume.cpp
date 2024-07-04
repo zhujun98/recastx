@@ -35,8 +35,9 @@ Volume::Volume()
     shader_ = std::make_unique<ShaderProgram>(vert, frag);
 
     shader_->use();
-    shader_->setInt("colormap", 0);
     shader_->setInt("volumeData", 2);
+    shader_->setInt("colormap", 4);
+    shader_->setInt("alphamap", 5);
 
     auto vlight_vert =
 #include "shaders/recon_vol_vlight.vert"
@@ -47,8 +48,9 @@ Volume::Volume()
     vlight_shader_ = std::make_unique<ShaderProgram>(vlight_vert, vlight_frag);
 
     vlight_shader_->use();
-    vlight_shader_->setInt("colormap", 0);
     vlight_shader_->setInt("volumeData", 2);
+    vlight_shader_->setInt("colormap", 4);
+    vlight_shader_->setInt("alphamap", 5);
 
     auto vslice_vert =
 #include "shaders/recon_vol_vslice.vert"
@@ -59,9 +61,10 @@ Volume::Volume()
     vslice_shader_ = std::make_unique<ShaderProgram>(vslice_vert, vslice_frag);
 
     vslice_shader_->use();
-    vlight_shader_->setInt("colormap", 0);
+    vslice_shader_->setInt("shadowTexture", 0);
     vslice_shader_->setInt("volumeData", 2);
-    vslice_shader_->setInt("shadowTexture", 3);
+    vslice_shader_->setInt("colormap", 4);
+    vslice_shader_->setInt("alphamap", 5);
 
     auto screen_vert =
 #include "shaders/recon_vol_screen.vert"
@@ -72,7 +75,7 @@ Volume::Volume()
     screen_shader_ = std::make_unique<ShaderProgram>(screen_vert, screen_frag);
 
     screen_shader_->use();
-    screen_shader_->setInt("screenTexture", 3);
+    screen_shader_->setInt("screenTexture", 0);
 
     auto iso_vert =
 #include "shaders/recon_vol_iso.vert"
@@ -83,7 +86,7 @@ Volume::Volume()
     iso_shader_ = std::make_unique<ShaderProgram>(iso_vert, iso_frag);
 
     iso_shader_->use();
-    iso_shader_->setInt("colormap", 0);
+    iso_shader_->setInt("colormap", 4);
     iso_shader_->setInt("volumeData", 2);
 
     setRenderQuality(RenderQuality::MEDIUM);
@@ -151,13 +154,12 @@ void Volume::render(const glm::mat4& view,
                     const glm::mat4& projection,
                     float min_v,
                     float max_v,
-                    float alpha_scale,
                     const glm::vec3& view_dir,
                     const glm::vec3& view_pos,
                     const Light& light,
                     const Material& material,
                     const std::shared_ptr<Viewport>& vp) {
-    if (!texture_.isReady()) return;
+    if (!texture_.isInitialized()) return;
 
     if (render_policy_ == RenderPolicy::VOLUME) {
         const glm::mat4 light_projection = glm::perspective(45.f, 1.f, 0.1f, 100.f);
@@ -180,7 +182,6 @@ void Volume::render(const glm::mat4& view,
             vslice_shader_->setFloat("threshold", threshold_);
             vslice_shader_->setFloat("minValue", min_v);
             vslice_shader_->setFloat("maxValue", max_v);
-            vslice_shader_->setFloat("alphaScale", alpha_scale);
 
             vlight_shader_->use();
             vlight_shader_->setMat4("mvp", light_projection * light_view);
@@ -205,7 +206,6 @@ void Volume::render(const glm::mat4& view,
             shader_->setFloat("threshold", threshold_);
             shader_->setFloat("minValue", min_v);
             shader_->setFloat("maxValue", max_v);
-            shader_->setFloat("alphaScale", alpha_scale);
 
             slicer_->update(view_dir, false);
 

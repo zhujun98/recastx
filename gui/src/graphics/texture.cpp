@@ -10,97 +10,119 @@
 
 namespace recastx::gui {
 
-// SliceTexture
-
-SliceTexture::SliceTexture() : Texture(), x_(1), y_(1) {
+Texture::Texture(GLenum target, GLenum texture_unit)
+    : target_(target), texture_unit_(texture_unit) {
     glGenTextures(1, &texture_id_);
+}
 
-    std::vector<DType> data(x_ * y_, 0);
+Texture::~Texture() {
+    glDeleteTextures(1, &texture_id_);
+};
+
+Texture::Texture(Texture&& other) noexcept
+    : target_(other.target_),
+    texture_unit_(other.texture_unit_),
+    texture_id_(std::exchange(other.texture_id_, 0)) {
+}
+
+Texture& Texture::operator=(Texture&& other) noexcept {
+    target_ = other.target_;
+    texture_unit_ = std::exchange(other.texture_unit_, GL_TEXTURE0);
+    texture_id_ = std::exchange(other.texture_id_, 0);
+    return *this;
+}
+
+// ColormapTexture
+
+ColormapTexture::ColormapTexture() : Texture(GL_TEXTURE_1D, GL_TEXTURE4) {
+    std::vector<unsigned char> data(1, 0);
     genTexture(data);
 };
 
-SliceTexture::~SliceTexture() {
-    glDeleteTextures(1, &texture_id_);
+void ColormapTexture::setData(const std::vector<unsigned char>& data) {
+    genTexture(data);
+    initialized_ = true;
 }
 
-SliceTexture::SliceTexture(SliceTexture&& other) noexcept {
-    x_ = other.x_;
-    y_ = other.y_;
-    texture_id_ = other.texture_id_;
-    other.texture_id_ = -1;
+void ColormapTexture::genTexture(const std::vector<unsigned char>& data) {
+    glActiveTexture(texture_unit_);
+    glBindTexture(target_, texture_id_);
+
+    glTexParameteri(target_, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(target_, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(target_, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+
+    // 3 channels: RGB
+    glTexImage1D(target_, 0, GL_RGB32F, data.size() / 3, 0, GL_RGB, GL_UNSIGNED_BYTE, data.data());
+    glGenerateMipmap(target_);
+
+    glBindTexture(target_, 0);
 }
 
-SliceTexture& SliceTexture::operator=(SliceTexture&& other) noexcept {
-    x_ = other.x_;
-    y_ = other.y_;
-    texture_id_ = other.texture_id_;
-    other.texture_id_ = -1;
-    return *this;
+// AlphamapTexture
+
+AlphamapTexture::AlphamapTexture() : Texture(GL_TEXTURE_1D, GL_TEXTURE5) {
+    std::vector<float> data{0.f, 1.f};
+    genTexture(data);
+};
+
+void AlphamapTexture::setData(const std::vector<float>& data) {
+    genTexture(data);
+    initialized_ = true;
 }
+
+void AlphamapTexture::genTexture(const std::vector<float>& data) {
+    glActiveTexture(texture_unit_);
+    glBindTexture(target_, texture_id_);
+
+    glTexParameteri(target_, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(target_, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(target_, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+
+    glTexImage1D(target_, 0, GL_R32F, data.size(), 0, GL_RED, GL_FLOAT, data.data());
+
+    glGenerateMipmap(target_);
+
+    glBindTexture(target_, 0);
+}
+
+// SliceTexture
+
+SliceTexture::SliceTexture() : Texture(GL_TEXTURE_2D, GL_TEXTURE1), x_(1), y_(1) {
+    std::vector<DType> data(x_ * y_, 0);
+    genTexture(data);
+};
 
 void SliceTexture::setData(const std::vector<DType>& data, int x, int y) {
     x_ = x;
     y_ = y;
     assert((int)data.size() == x * y);
     genTexture(data);
-    ready_ = true;
-}
-
-void SliceTexture::bind() const {
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, texture_id_);
-}
-
-void SliceTexture::unbind() const {
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    initialized_ = true;
 }
 
 void SliceTexture::genTexture(const std::vector<DType>& data) {
     // In reference to the hack in the 3D fill_texture below, we
     // have found that 1x1 textures are supported in intel
     // integrated graphics.
-    glBindTexture(GL_TEXTURE_2D, texture_id_);
+    glActiveTexture(texture_unit_);
+    glBindTexture(target_, texture_id_);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(target_, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(target_, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, detail::InternalFormat<DType>(), x_, y_, 0,
-                 detail::DataFormat<DType>(), detail::DataType<DType>(), data.data());
-    glGenerateMipmap(GL_TEXTURE_2D);
+    glTexImage2D(target_, 0, GL_R32F, x_, y_, 0, GL_RED, GL_FLOAT, data.data());
+    glGenerateMipmap(target_);
 
-    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindTexture(target_, 0);
 }
 
 // VolumeTexture
 
-VolumeTexture::VolumeTexture() : Texture(), x_(8), y_(8), z_(8) {
-    glGenTextures(1, &texture_id_);
-
+VolumeTexture::VolumeTexture() : Texture(GL_TEXTURE_3D, GL_TEXTURE2), x_(8), y_(8), z_(8) {
     std::vector<DType> data(x_ * y_ * z_, 0);
     genTexture(data);
 };
-
-VolumeTexture::~VolumeTexture() {
-    glDeleteTextures(1, &texture_id_);
-}
-
-VolumeTexture::VolumeTexture(VolumeTexture&& other) noexcept {
-    x_ = other.x_;
-    y_ = other.y_;
-    z_ = other.z_;
-    texture_id_ = other.texture_id_;
-    other.texture_id_ = -1;
-}
-
-VolumeTexture& VolumeTexture::operator=(VolumeTexture&& other) noexcept {
-    x_ = other.x_;
-    y_ = other.y_;
-    z_ = other.z_;
-    texture_id_ = other.texture_id_;
-    other.texture_id_ = -1;
-    return *this;
-}
 
 void VolumeTexture::setData(const std::vector<DType>& data, int x, int y, int z) {
     x_ = x;
@@ -108,17 +130,7 @@ void VolumeTexture::setData(const std::vector<DType>& data, int x, int y, int z)
     z_ = z;
     assert((int)data.size() == x * y * z);
     genTexture(data);
-    ready_ = true;
-}
-
-void VolumeTexture::bind() const {
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_3D, texture_id_);
-}
-
-void VolumeTexture::unbind() const {
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_3D, 0);
+    initialized_ = true;
 }
 
 void VolumeTexture::genTexture(const std::vector<DType>& data) {
@@ -129,19 +141,19 @@ void VolumeTexture::genTexture(const std::vector<DType>& data) {
                                  "due to bugs in Intel GPU drivers");
     }
 
-    glBindTexture(GL_TEXTURE_3D, texture_id_);
+    glActiveTexture(texture_unit_);
+    glBindTexture(target_, texture_id_);
 
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(target_, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(target_, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(target_, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(target_, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(target_, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-    glTexImage3D(GL_TEXTURE_3D, 0, detail::InternalFormat<DType>(), x_, y_, z_, 0,
-                 detail::DataFormat<DType>(), detail::DataType<DType>(), data.data());
-    glGenerateMipmap(GL_TEXTURE_3D);
+    glTexImage3D(target_, 0, GL_R32F, x_, y_, z_, 0, GL_RED, GL_FLOAT, data.data());
+    glGenerateMipmap(target_);
 
-    glBindTexture(GL_TEXTURE_3D, 0);
+    glBindTexture(target_, 0);
 }
 
 } // namespace recastx::gui
