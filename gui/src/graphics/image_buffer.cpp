@@ -62,8 +62,8 @@ ImageBuffer::~ImageBuffer() {
 
 void ImageBuffer::render(int width, int height, float min_v, float max_v) {
     shader_->use();
-    shader_->setInt("colormap", 0);
-    shader_->setInt("imageTexture", 1);
+    shader_->setInt("colormap", 4);
+    shader_->setInt("imageTexture", 3);
     shader_->setFloat("minValue", min_v);
     shader_->setFloat("maxValue", max_v);
 

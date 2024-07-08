@@ -7,6 +7,7 @@ smooth in vec3 texCoords;
 smooth in vec4 shadowCoords;
 
 uniform sampler1D colormap;
+uniform sampler1D alphamap;
 uniform sampler3D volumeData;
 uniform sampler2D shadowTexture;
 uniform vec3 ambient;
@@ -15,7 +16,6 @@ uniform float threshold;
 
 uniform float minValue;
 uniform float maxValue;
-uniform float alphaScale;
 
 float remapMinMax(float x, float x0, float x1) {
     if (x > x1) return 1.f;
@@ -35,8 +35,8 @@ void main() {
 
 	if (value > threshold) {
 	    vec3 color = texture(colormap, value).rgb;
-
-		fColor = vec4(value * color * (ambient + lightIntensity * diffuse), value * alphaScale);
+        float alpha = texture(alphamap, value).r;
+		fColor = vec4(alpha * color * (ambient + lightIntensity * diffuse), alpha);
 	} else {
 	    fColor = vec4(0.f);
 	}

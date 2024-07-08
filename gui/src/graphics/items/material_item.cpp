@@ -43,8 +43,10 @@ void MaterialItem::renderIm() {
         material_.specular = glm::vec3(specular_[0], specular_[1], specular_[2]);
     }
 
-    ImGui::DragFloat("Alpha##MATERIAL", &material_.alpha, 0.005f, 0.0f, 1.0f, "%.3f", ImGuiSliderFlags_ClampOnInput);
-    ImGui::DragFloat("Shininess##MATERIAL", &material_.shininess, 1.f, 0.f, 100.f, "%.1f", ImGuiSliderFlags_ClampOnInput);
+    ImGui::DragFloat("Alpha##MATERIAL", &material_.alpha, 0.005f, 0.0f, 1.0f, "%.3f",
+                     ImGuiSliderFlags_AlwaysClamp);
+    ImGui::DragFloat("Shininess##MATERIAL", &material_.shininess, 1.f, 0.f, 100.f, "%.1f",
+                     ImGuiSliderFlags_AlwaysClamp);
 }
 
 } // namespace recastx::gui

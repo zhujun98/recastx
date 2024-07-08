@@ -27,19 +27,13 @@ class Colormap {
 
     ImPlotColormap idx_;
 
-    ColormapTexture<> texture_;
-
-public:
-
-    Colormap();
-
-    ~Colormap();
+    ColormapTexture texture_;
 
     void updateTexture();
 
-    void bind() const;
+  public:
 
-    void unbind() const;
+    Colormap();
 
     static const std::set<ImPlotColormap>& options();
 
@@ -48,6 +42,25 @@ public:
     [[nodiscard]] ImPlotColormap get() const { return idx_; }
 
     void set(ImPlotColormap idx);
+
+    void bind() const { texture_.bind(); }
+    void unbind() const { texture_.unbind(); }
+};
+
+class Alphamap {
+
+    std::vector<float> data_;
+
+    AlphamapTexture texture_;
+
+  public:
+
+    Alphamap();
+
+    void set(const std::map<float, float>& alphamap);
+
+    void bind() const { texture_.bind(); }
+    void unbind() const { texture_.unbind(); }
 };
 
 } // namespace recastx::gui

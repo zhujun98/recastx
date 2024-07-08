@@ -32,21 +32,10 @@ namespace recastx::gui {
 
 class Slice;
 class Volume;
+class Render3DWidget;
+class TransferFuncWidget;
 class Wireframe;
 
-class RenderComponent {
-
-    Volume* volume_;
-
-    float volume_front_ = 0.f;
-    const float volume_front_step_ = 0.005f;
-
-  public:
-
-    explicit RenderComponent(Volume* volume);
-
-    void renderIm();
-};
 
 class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDataItem {
 
@@ -111,19 +100,21 @@ class ReconItem : public GraphicsItem, public GraphicsGLItem, public GraphicsDat
     Slice* dragged_slice_ = nullptr;
     Slice* hovered_slice_ = nullptr;
 
-    Colormap cm_;
     bool auto_levels_ = true;
     bool clamp_negatives_ = true;
     bool update_min_max_val_ = false;
     float min_val_;
     float max_val_;
-    float alpha_scale_ = 1.0;
 
     std::mutex volume_mtx_;
     std::unique_ptr<Volume> volume_;
     int volume_policy_ = PREVIEW_VOL;
 
-    RenderComponent render_comp_;
+    std::unique_ptr<Render3DWidget> render3d_widget_;
+
+    Colormap cm_;
+    Alphamap am_;
+    std::unique_ptr<TransferFuncWidget> tf_widget_;
 
     std::unique_ptr<Wireframe> wireframe_;
     bool show_wireframe_ = true;

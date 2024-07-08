@@ -39,7 +39,7 @@ void CubeModel::genSpheres(size_t n) {
     std::uniform_int_distribution<uint32_t> dist_y(r_max, y_ - r_max - 1);
     std::uniform_int_distribution<uint32_t> dist_z(r_max, z_ - r_max - 1);
     std::uniform_int_distribution<uint32_t> dist_r(r_min, r_max);
-    std::uniform_real_distribution<float> dist_density(0.1f, 1.f);
+    std::uniform_real_distribution<float> dist_density(0.1f, MAX_DENSITY);
 
     for (size_t i = 0; i < n; ++i) {
         genSphere(dist_x(mt), dist_y(mt), dist_z(mt), dist_r(mt), dist_density(mt));
@@ -79,8 +79,12 @@ void CubeModel::genSphere(uint32_t xc, uint32_t yc, uint32_t zc, uint32_t r, Dat
     for (size_t i = xc - r; i <= xc + r; ++i) {
         for (size_t j = yc - r; j <= yc + r; ++j) {
             for (size_t k = zc - r; k <= zc + r; ++k) {
-                if ((i - xc) * (i - xc) + (j - yc) * (j - yc) + (k - zc) * (k - zc) <= r2) {
-                    data_[i * y_ * z_ + j * z_ + k] += v;
+                size_t dist2 = (i - xc) * (i - xc) + (j - yc) * (j - yc) + (k - zc) * (k - zc);
+                size_t idx = i * y_ * z_ + j * z_ + k;
+                if (dist2 <= r2 / 4) {
+                    data_[idx] = MAX_DENSITY;
+                } else if (dist2 <= r2) {
+                    data_[idx] = std::min(MAX_DENSITY, data_[idx] + v);
                 }
             }
         }

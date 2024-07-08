@@ -26,12 +26,6 @@ Colormap::Colormap() : idx_(*Colormap::options().begin()) {
     updateTexture();
 }
 
-Colormap::~Colormap() = default;
-
-void Colormap::bind() const { texture_.bind(); }
-
-void Colormap::unbind() const { texture_.unbind(); }
-
 void Colormap::updateTexture() {
     auto& cmd = Colormap::data();
     int samples = cmd.TableSizes[idx_];
@@ -43,7 +37,7 @@ void Colormap::updateTexture() {
         data.push_back(static_cast<unsigned char>(255 * rgb.y));
         data.push_back(static_cast<unsigned char>(255 * rgb.z));
     }
-    texture_.setData(data, samples);
+    texture_.setData(data);
 }
 
 const std::set<ImPlotColormap>& Colormap::options() {
@@ -60,6 +54,31 @@ void Colormap::set(ImPlotColormap idx) {
         idx_ = idx;
         updateTexture();
     }
+}
+
+
+Alphamap::Alphamap() : data_(256) {
+    set({{0.f, 0.f}, {1.f, 1.f}});
+}
+
+void Alphamap::set(const std::map<float, float>& alphamap) {
+    std::vector<float> x;
+    std::vector<float> alpha;
+    for (auto [k, v] : alphamap) {
+        x.push_back(k);
+        alpha.push_back(v);
+    }
+    size_t j = 0;
+    int n = data_.size();
+    while (j < x[0] * n && j < n) data_[j++] = alpha[0];
+    for (size_t i = 1; i < x.size(); ++i) {
+        while (j < x[i] * n) {
+            data_[j++] = alpha[i - 1] + (alpha[i] - alpha[i - 1]) * (static_cast<float>(j) / n - x[i - 1]) / (x[i] - x[i - 1]);
+        }
+    }
+    while (j < n) data_[j++] = alpha.back();
+
+    texture_.setData(data_);
 }
 
 } // namespace recastx::gui

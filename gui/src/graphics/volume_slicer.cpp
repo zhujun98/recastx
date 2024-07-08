@@ -134,7 +134,7 @@ void VolumeSlicer::drawOnScreen() {
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-    glActiveTexture(GL_TEXTURE3);
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, shadow_.eye_texture_);
 
     glBindVertexArray(shadow_.vao_);
@@ -166,7 +166,7 @@ void VolumeSlicer::drawOnBuffer(ShaderProgram* vslice_shader,
 
     glBindVertexArray(vao_);
     for (int i = num_slices_; i >= 0; --i) {
-        glActiveTexture(GL_TEXTURE3);
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, shadow_.light_texture_);
         vslice_shader->use();
         glDrawBuffer(GL_COLOR_ATTACHMENT1);

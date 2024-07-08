@@ -90,6 +90,8 @@ set(GUI_SOURCES
         "src/graphics/items/projection_item.cpp"
         "src/graphics/items/recon_item.cpp"
         "src/graphics/items/statusbar_item.cpp"
+        "src/graphics/widgets/render3d_widget.cpp"
+        "src/graphics/widgets/transfer_func_widget.cpp"
         ${IMGUI_SOURCE_FILES}
         ${IMPLOT_SOURCE_FILES}
         ${GL3W_BUILD_DIR}/src/gl3w.c

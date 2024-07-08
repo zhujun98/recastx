@@ -71,7 +71,7 @@ void LampItem::renderIm() {
         }
     }
 
-    ImGui::DragFloat3("Position##LAMP", &pos_.x, 0.02f, -10.f, 10.f, "%.2f", ImGuiSliderFlags_ClampOnInput);
+    ImGui::DragFloat3("Position##LAMP", &pos_.x, 0.02f, -10.f, 10.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
 
     if (ImGui::ColorEdit3("Color##LAMP", &light_.color.x)) {
         light_.ambient = ambient_ * light_.color;
@@ -79,13 +79,13 @@ void LampItem::renderIm() {
         light_.specular = specular_ * light_.color;
     }
 
-    if (ImGui::DragFloat("Ambient##LAMP", &ambient_, 0.005f, 0.f, 1.f, "%.3f", ImGuiSliderFlags_ClampOnInput)) {
+    if (ImGui::DragFloat("Ambient##LAMP", &ambient_, 0.005f, 0.f, 1.f, "%.3f", ImGuiSliderFlags_AlwaysClamp)) {
         light_.ambient = ambient_ * light_.color;
     }
-    if (ImGui::DragFloat("Diffuse##LAMP", &diffuse_, 0.005f, 0.f, 1.f, "%.3f", ImGuiSliderFlags_ClampOnInput)) {
+    if (ImGui::DragFloat("Diffuse##LAMP", &diffuse_, 0.005f, 0.f, 1.f, "%.3f", ImGuiSliderFlags_AlwaysClamp)) {
         light_.diffuse = diffuse_ * light_.color;
     }
-    if (ImGui::DragFloat("Specular##LAMP", &specular_, 0.005f, 0.f, 1.f, "%.3f", ImGuiSliderFlags_ClampOnInput)) {
+    if (ImGui::DragFloat("Specular##LAMP", &specular_, 0.005f, 0.f, 1.f, "%.3f", ImGuiSliderFlags_AlwaysClamp)) {
         light_.specular = specular_ * light_.color;
     }
 //
