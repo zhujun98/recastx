@@ -6,14 +6,16 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
-#include "graphics/items/lamp_item.hpp"
+#include <glm/gtc/matrix_transform.hpp>
+
+#include "graphics/items/light_item.hpp"
 #include "graphics/scene.hpp"
 #include "graphics/style.hpp"
 #include "graphics/viewport.hpp"
 
 namespace recastx::gui {
 
-LampItem::LampItem(Scene& scene)
+LightItem::LightItem(Scene& scene)
         : GraphicsItem(scene),
           show_(false),
           rel_pos_(true),
@@ -33,26 +35,26 @@ LampItem::LampItem(Scene& scene)
     light_.specular = specular_ * color;
 
     auto vert =
-#include "../shaders/lamp.vert"
+#include "../shaders/point_light.vert"
     ;
     auto frag =
-#include "../shaders/lamp.frag"
+#include "../shaders/point_light.frag"
     ;
 
     shader_ = std::make_unique<ShaderProgram>(vert, frag);
 
-    genVertices(0.03, 20);
+    genVertices(0.1);
     init();
 }
 
-LampItem::~LampItem() {
+LightItem::~LightItem() {
     glDeleteVertexArrays(1, &vao_);
     glDeleteBuffers(1, &vbo_);
 }
 
-void LampItem::onWindowSizeChanged(int /*width*/, int /*height*/) {}
+void LightItem::onWindowSizeChanged(int /*width*/, int /*height*/) {}
 
-void LampItem::renderIm() {
+void LightItem::renderIm() {
     ImGui::TextColored(Style::CTRL_SECTION_TITLE_COLOR, "LIGHTING");
 
     ImGui::Checkbox("On##LAMP", &light_.is_enabled);
@@ -88,54 +90,52 @@ void LampItem::renderIm() {
     if (ImGui::DragFloat("Specular##LAMP", &specular_, 0.005f, 0.f, 1.f, "%.3f", ImGuiSliderFlags_AlwaysClamp)) {
         light_.specular = specular_ * light_.color;
     }
-//
+
     ImGui::EndDisabled();
 }
 
-void LampItem::onFramebufferSizeChanged(int /*width*/, int /*height*/) {}
+void LightItem::onFramebufferSizeChanged(int /*width*/, int /*height*/) {}
 
-void LampItem::preRenderGl() {
+void LightItem::preRenderGl() {
     light_.pos = pos_;
     if (rel_pos_) {
         light_.pos += scene_.cameraPosition();
     }
 }
 
-void LampItem::renderGl() {
+void LightItem::renderGl() {
     if (!show_) return;
 
     vp_->use();
 
-    const glm::mat4 mvp = vp_->projection() * scene_.cameraMatrix();
-
     shader_->use();
-    shader_->setVec4("center", mvp * glm::vec4(light_.pos, 1.f));
-    shader_->setFloat("xScale", 1.f / vp_->aspectRatio());
+    shader_->setMat4("mvp", vp_->projection() * scene_.cameraMatrix() * glm::translate(glm::mat4(1.f), light_.pos));
     shader_->setVec3("color", light_.color);
 
     glEnable(GL_DEPTH_TEST);
 
     glBindVertexArray(vao_);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, vertices_.size() / 2);
+    glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(vertices_.size()));
 
     glDisable(GL_DEPTH_TEST);
 }
 
-void LampItem::genVertices(float radius, int count) {
-    float step = glm::radians(360.f) / static_cast<float>(count);
-    for (int i = 0; i < count; ++i) {
-        vertices_.push_back(radius * glm::cos(step * i));
-        vertices_.push_back(radius * glm::sin(step * i));
-    }
+void LightItem::genVertices(float radius) {
+    vertices_.emplace_back(-radius, 0.f, 0.f);
+    vertices_.emplace_back( radius, 0.f, 0.f);
+    vertices_.emplace_back(0.f, -radius, 0.f);
+    vertices_.emplace_back(0.f,  radius, 0.f);
+    vertices_.emplace_back(0.f, 0.f, -radius);
+    vertices_.emplace_back(0.f, 0.f,  radius);
 }
 
-void LampItem::init() {
+void LightItem::init() {
     glGenVertexArrays(1, &vao_);
     glGenBuffers(1, &vbo_);
     glBindVertexArray(vao_);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-    glBufferData(GL_ARRAY_BUFFER, vertices_.size() * sizeof(float), vertices_.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    glBufferData(GL_ARRAY_BUFFER, vertices_.size() * sizeof(float) * 3, vertices_.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 }
 

@@ -22,7 +22,7 @@ class AxisItem;
 class AxisCubeItem;
 class IconItem;
 class GeometryItem;
-class LampItem;
+class LightItem;
 class LoggingItem;
 class MaterialItem;
 class PreprocItem;
@@ -36,7 +36,7 @@ class Scene3d : public Scene {
     std::unique_ptr<AxisCubeItem> axiscube_item_;
     std::unique_ptr<IconItem> icon_item_;
     std::unique_ptr<GeometryItem> geometry_item_;
-    std::unique_ptr<LampItem> lamp_item_;
+    std::unique_ptr<LightItem> light_item_;
     std::unique_ptr<LoggingItem> logging_item_;
     std::unique_ptr<MaterialItem> material_item_;
     std::unique_ptr<PreprocItem> preproc_item_;

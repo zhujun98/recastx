@@ -83,7 +83,7 @@ set(GUI_SOURCES
         "src/graphics/items/axiscube_item.cpp"
         "src/graphics/items/graphics_item.cpp"
         "src/graphics/items/icon_item.cpp"
-        "src/graphics/items/lamp_item.cpp"
+        "src/graphics/items/light_item.cpp"
         "src/graphics/items/logging_item.cpp"
         "src/graphics/items/material_item.cpp"
         "src/graphics/items/preproc_item.cpp"

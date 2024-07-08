@@ -19,7 +19,7 @@
 
 namespace recastx::gui {
 
-class LampItem : public GraphicsItem, public GraphicsGLItem {
+class LightItem : public GraphicsItem, public GraphicsGLItem {
     Light light_;
 
     bool show_;
@@ -34,17 +34,17 @@ class LampItem : public GraphicsItem, public GraphicsGLItem {
     GLuint vbo_;
     std::unique_ptr<ShaderProgram> shader_;
 
-    std::vector<float> vertices_;
+    std::vector<glm::vec3> vertices_;
 
-    void genVertices(float size, int count);
+    void genVertices(float radius);
 
     void init();
 
   public:
 
-    explicit LampItem(Scene& scene);
+    explicit LightItem(Scene& scene);
 
-    ~LampItem() override;
+    ~LightItem() override;
 
     void onWindowSizeChanged(int width, int height) override;
 
