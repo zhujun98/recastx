@@ -18,6 +18,8 @@ class CubeModel {
 
     using DataType = std::vector<float>;
 
+    const float MAX_DENSITY = 1.f;
+
   private:
 
     uint32_t x_;
