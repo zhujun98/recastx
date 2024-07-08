@@ -28,18 +28,18 @@
 
 #include "common/config.hpp"
 #include "reconstructor_interface.hpp"
-#include "recon/cuda/recon3d.cuh"
+#include "cuda/recon3d.cuh"
 
 namespace recastx::recon {
 
 class AstraMemHandleArray;
-class SinogramLoader;
+class SinogramManager;
 
 class AstraReconstructor : public Reconstructor {
 
 protected:
 
-    std::unique_ptr<SinogramLoader> loader_;
+    std::unique_ptr<SinogramManager> sino_manager_;
 
     std::vector<std::unique_ptr<astra::CFloat32ProjectionData3DGPU>> data_;
     std::vector<AstraMemHandleArray> mem_;
@@ -57,9 +57,17 @@ public:
                        const VolumeGeometry& s_geom, 
                        const VolumeGeometry& v_geom);
 
-    virtual ~AstraReconstructor();
+    ~AstraReconstructor() override;
 
-    void uploadSinograms(int buffer_idx, const float* data, size_t n);
+    void uploadSinograms(int buffer_idx) override;
+
+    bool tryPrepareSinoBuffer() override;
+
+    bool fetchSinoBuffer() override;
+
+    void reshapeSinoBuffer(std::array<size_t, 3>) override;
+
+    [[nodiscard]] ProDtype* sinoBuffer() override;
 };
 
 class ParallelBeamReconstructor : public AstraReconstructor {

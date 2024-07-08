@@ -91,8 +91,6 @@ class Application {
     ProImageData reciprocal_;
     bool reciprocal_computed_ = false;
 
-    TripleTensorBuffer<ProDtype, 3> sino_buffer_;
-
     std::unique_ptr<ProjectionMediator> proj_mediator_;
     std::unique_ptr<SliceMediator> slice_mediator_;
 
@@ -256,7 +254,6 @@ class Application {
     const std::vector<RawImageData>& darks() const { return darks_; }
     const std::vector<RawImageData>& flats() const { return flats_; }
     const MemoryBuffer<float, 3>& rawBuffer() const { return raw_buffer_; }
-    const TripleTensorBuffer<float, 3>& sinoBuffer() const { return sino_buffer_; }
     const Reconstructor* reconstructor() const { return recon_.get(); }
 };
 

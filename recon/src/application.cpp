@@ -144,14 +144,14 @@ void Application::startPreprocessing() {
 #if defined(BENCHMARK)
                 nvtx3::scoped_range sr("Preprocessing projections");
 #endif
-                preproc_->process(raw_buffer_, sino_buffer_, dark_avg_, reciprocal_, imgproc_params_.offset);
+                preproc_->process(raw_buffer_, recon_->sinoBuffer(), dark_avg_, reciprocal_, imgproc_params_.offset);
             }
 
 
 #if defined(BENCHMARK)
             nvtx3::scoped_range sr("Waiting for sinogram buffer ready");
 #endif
-            while (!sino_buffer_.tryPrepare(100)) {
+            while (!recon_->tryPrepareSinoBuffer()) {
                 if (closing_) return;
             }
 
@@ -168,7 +168,7 @@ void Application::startReconstructing() {
         while (!closing_) {
             if(waitForProcessing()) continue;
 
-            if (!sino_buffer_.fetch(100)) continue;
+            if (!recon_->fetchSinoBuffer()) continue;
 
             {
                 spdlog::debug("Uploading sinograms to GPU - started");
@@ -177,16 +177,14 @@ void Application::startReconstructing() {
                 nvtx3::scoped_range sr("Uploading sinograms to GPU");
 #endif
 
-                size_t chunk_size = sino_buffer_.front().shape()[0];
-
                 if (double_buffering_) {
-                    recon_->uploadSinograms(1 - gpu_buffer_index_, sino_buffer_.front().data(), chunk_size);
+                    recon_->uploadSinograms(1 - gpu_buffer_index_);
 
                     std::lock_guard<std::mutex> lck(gpu_mtx_);
                     gpu_buffer_index_ = 1 - gpu_buffer_index_;
                 } else {
                     std::lock_guard<std::mutex> lck(gpu_mtx_);
-                    recon_->uploadSinograms(gpu_buffer_index_, sino_buffer_.front().data(), chunk_size);
+                    recon_->uploadSinograms(gpu_buffer_index_);
                 }
 
                 sino_initialized_ = true;
@@ -482,11 +480,11 @@ void Application::init() {
 
     maybeInitFlatFieldBuffer(row_count, col_count);
 
-    maybeInitReconBuffer(col_count, row_count);
-
     preproc_->init(raw_buffer_, col_count, row_count, imgproc_params_, paganin_cfg_);
 
     initReconstructor(col_count, row_count);
+
+    maybeInitReconBuffer(col_count, row_count);
 
     spdlog::info("[Init] ------------------------------------------------------------");
 }
@@ -569,7 +567,7 @@ void Application::maybeInitReconBuffer(uint32_t col_count, uint32_t row_count) {
     auto shape = raw_buffer_.shape();
     if (shape[0] != group_size_ || shape[1] != row_count || shape[2] != col_count) {
         raw_buffer_.resize({group_size_, row_count, col_count});
-        sino_buffer_.resize({group_size_, row_count, col_count});
+        recon_->reshapeSinoBuffer({group_size_, row_count, col_count});
         spdlog::debug("Reconstruction buffers resized");
     }
     raw_buffer_.reset();

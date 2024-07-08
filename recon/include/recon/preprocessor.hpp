@@ -29,7 +29,6 @@ class Preprocessor {
 public:
 
     using RawBufferType = MemoryBuffer<ProDtype, 3>;
-    using SinoBufferType = TripleTensorBuffer<ProDtype, 3>;
 
 private:
 
@@ -61,7 +60,7 @@ public:
               const std::optional<PaganinParams> &paganin_cfg);
 
     void process(RawBufferType &raw_buffer,
-                 SinoBufferType &sino_buffer,
+                 ProDtype* sino_buffer,
                  const ProImageData &dark_avg,
                  const ProImageData &reciprocal,
                  int32_t offset);

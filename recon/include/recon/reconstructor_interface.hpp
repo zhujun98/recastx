@@ -26,7 +26,15 @@ public:
 
     virtual void reconstructVolume(int buffer_idx, Tensor<float, 3>& buffer) = 0;
 
-    virtual void uploadSinograms(int buffer_idx, const float* data, size_t count) = 0;
+    virtual void uploadSinograms(int buffer_idx) = 0;
+
+    virtual bool tryPrepareSinoBuffer() = 0;
+
+    virtual bool fetchSinoBuffer() = 0;
+
+    virtual void reshapeSinoBuffer(std::array<size_t, 3>) = 0;
+
+    virtual ProDtype* sinoBuffer() = 0;
 };
 
 class ReconstructorFactory {

@@ -155,7 +155,7 @@ public:
     TripleTensorBuffer() = default;
     ~TripleTensorBuffer() override = default;
 
-    virtual void resize(const ShapeType& shape);
+    void resize(const ShapeType& shape);
 
     const ShapeType& shape() const { return this->front_.shape(); }
 
