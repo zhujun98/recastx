@@ -9,7 +9,7 @@
 #include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
 
-#include "graphics/camera3d.hpp"
+#include "graphics/camera.hpp"
 
 namespace recastx::gui {
 

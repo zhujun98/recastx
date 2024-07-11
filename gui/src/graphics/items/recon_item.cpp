@@ -23,7 +23,7 @@
 #include "graphics/items/recon_item.hpp"
 #include "graphics/widgets/render3d_widget.hpp"
 #include "graphics/widgets/transfer_func_widget.hpp"
-#include "graphics/camera3d.hpp"
+#include "graphics/camera.hpp"
 #include "graphics/primitives.hpp"
 #include "graphics/slice.hpp"
 #include "graphics/style.hpp"

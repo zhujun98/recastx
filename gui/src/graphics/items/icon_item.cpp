@@ -11,7 +11,7 @@
 #include FT_FREETYPE_H
 
 #include "graphics/items/icon_item.hpp"
-#include "graphics/camera3d.hpp"
+#include "graphics/camera.hpp"
 #include "graphics/glyph_renderer.hpp"
 #include "graphics/scene.hpp"
 #include "graphics/style.hpp"

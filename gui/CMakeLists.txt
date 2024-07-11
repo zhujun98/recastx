@@ -63,7 +63,7 @@ set(GUI_SOURCES
         "src/path.cpp"
         "src/utils.cpp"
         "src/graphics/aesthetics.cpp"
-        "src/graphics/camera3d.cpp"
+        "src/graphics/camera.cpp"
         "src/graphics/iso_surface.cpp"
         "src/graphics/scene.cpp"
         "src/graphics/glyph_renderer.cpp"

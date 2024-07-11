@@ -9,7 +9,7 @@
 #include <imgui.h>
 
 #include "graphics/scene.hpp"
-#include "graphics/camera3d.hpp"
+#include "graphics/camera.hpp"
 #include "graphics/shader_program.hpp"
 #include "graphics/style.hpp"
 #include "graphics/viewport.hpp"
