@@ -28,6 +28,18 @@ class Camera;
 struct Light;
 struct Material;
 
+class AxisItem;
+class AxisCubeItem;
+class IconItem;
+class GeometryItem;
+class LightItem;
+class LoggingItem;
+class MaterialItem;
+class PreprocItem;
+class ProjectionItem;
+class ReconItem;
+class StatusbarItem;
+
 class Scene : public GraphNode, public InputHandler {
 
 public:
@@ -67,11 +79,28 @@ protected:
     rpc::ScanMode_Mode  scan_mode_ = rpc::ScanMode_Mode_STATIC;
     uint32_t scan_update_interval_;
 
+    std::unique_ptr<AxisItem> axis_item_;
+    std::unique_ptr<AxisCubeItem> axiscube_item_;
+    std::unique_ptr<IconItem> icon_item_;
+    std::unique_ptr<GeometryItem> geometry_item_;
+    std::unique_ptr<LightItem> light_item_;
+    std::unique_ptr<LoggingItem> logging_item_;
+    std::unique_ptr<MaterialItem> material_item_;
+    std::unique_ptr<PreprocItem> preproc_item_;
+    std::unique_ptr<ProjectionItem> projection_item_;
+    std::unique_ptr<ReconItem> recon_item_;
+    std::unique_ptr<StatusbarItem> statusbar_item_;
+
     virtual void updateLayout(int width, int height);
 
     bool setScanMode();
 
     bool updateServerParams();
+
+    void renderMenubarRight();
+    void renderMainControl();
+    void renderScanModeControl();
+    void renderCameraControl();
 
 public:
 
@@ -91,15 +120,15 @@ public:
 
     [[nodiscard]] float cameraDistance() const;
 
-    [[nodiscard]] virtual const Light& light() const = 0;
+    [[nodiscard]] const Light& light() const;
 
-    [[nodiscard]] virtual const Material& material() const = 0;
+    [[nodiscard]] const Material& material() const;
 
     void onFramebufferSizeChanged(int width, int height);
 
     void onWindowSizeChanged(int width, int height);
 
-    virtual void render() = 0;
+    void render();
 
     void addItem(GraphicsItem* item);
 

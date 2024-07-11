@@ -17,7 +17,7 @@
 
 #include "application.hpp"
 #include "rpc_client.hpp"
-#include "graphics/scene3d.hpp"
+#include "graphics/scene.hpp"
 #include "graphics/style.hpp"
 
 namespace recastx::gui {
@@ -77,7 +77,7 @@ Application& Application::instance() {
 }
 
 void Application::makeScene(){
-    scene_ = std::make_unique<Scene3d>(rpc_client_.get());
+    scene_ = std::make_unique<Scene>(rpc_client_.get());
 
     glfwGetWindowSize(glfw_window_, &width_, &height_);
     scene_->onWindowSizeChanged(width_, height_);
