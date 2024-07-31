@@ -38,6 +38,11 @@ class RpcClient {
 
   public:
 
+    enum class State {
+        OK = 0,
+        ERROR = 1
+    };
+
     using DataType = std::variant<rpc::ReconData, rpc::ProjectionData>;
 
     static constexpr int min_timeout = 1;
@@ -72,7 +77,7 @@ class RpcClient {
     ThreadSafeQueue<DataType> packets_;
 
     void updateTimeout(int& timeout, const grpc::Status& status) {
-        if (checkStatus(status, false)) {
+        if (checkStatus(status, false) != State::OK) {
             std::this_thread::sleep_for(std::chrono::milliseconds(timeout));
             timeout = std::min(2 * timeout, max_timeout);
         } else {
@@ -84,7 +89,7 @@ class RpcClient {
 
     void startReadingReconStream();
 
-    [[nodiscard]] bool checkStatus(const grpc::Status& status, bool warn_on_unavailable_server = true) const;
+    [[nodiscard]] State checkStatus(const grpc::Status& status, bool warn_on_unavailable_server = true) const;
 
   public:
 
@@ -94,37 +99,37 @@ class RpcClient {
 
     ~RpcClient();
 
-    bool startAcquiring();
+    State startAcquiring();
 
-    bool stopAcquiring();
+    State stopAcquiring();
 
-    bool startProcessing();
+    State startProcessing();
 
-    bool stopProcessing();
+    State stopProcessing();
 
     std::optional<rpc::ServerState_State> getServerState();
 
-    bool setScanMode(rpc::ScanMode_Mode mode, uint32_t update_interval);
+    State setScanMode(rpc::ScanMode_Mode mode, uint32_t update_interval);
 
-    bool setDownsampling(uint32_t col, uint32_t row);
+    State setDownsampling(uint32_t col, uint32_t row);
 
-    bool setCorrection(int32_t offset, bool minus_log);
+    State setCorrection(int32_t offset, bool minus_log);
 
-    bool setRampFilter(const std::string& filter_name);
+    State setRampFilter(const std::string& filter_name);
 
-    bool setProjectionGeometry(uint32_t beam_shape,
+    State setProjectionGeometry(uint32_t beam_shape,
                                uint32_t col_count, uint32_t row_count, float pixel_width, float pixel_height,
                                float src2origin, float origin2det,
                                uint32_t angle_count, int angle_range);
 
-    bool setProjection(uint32_t id);
+    State setProjection(uint32_t id);
 
-    bool setReconGeometry(uint32_t slice_size, uint32_t volume_size,
+    State setReconGeometry(uint32_t slice_size, uint32_t volume_size,
                           std::array<int32_t, 2> x, std::array<int32_t, 2> y, std::array<int32_t, 2> z);
 
-    bool setSlice(uint64_t timestamp, const Orientation& orientation);
+    State setSlice(uint64_t timestamp, const Orientation& orientation);
 
-    bool setVolume(bool required);
+    State setVolume(bool required);
 
     std::optional<rpc::ServerState_State> shakeHand();
 
@@ -132,6 +137,9 @@ class RpcClient {
 
     void toggleProjectionStream(bool state);
 };
+
+#define CHECK_CLIENT_STATE(x) { RpcClient::State ret = x;\
+    if (ret != RpcClient::State::OK) return ret; }
 
 }  // namespace recastx::gui
 

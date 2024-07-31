@@ -1,18 +1,20 @@
 R"glsl(
+
 #version 330
 
 layout(location = 0) out vec4 fColor;
 
-smooth in vec3 texCoords;
-smooth in vec4 shadowCoords;
+in vec3 texCoords;
+in vec4 shadowCoords;
 
-uniform sampler1D colormap;
-uniform sampler1D alphamap;
-uniform sampler3D volumeData;
+uniform sampler3D volumeTexture;
+uniform sampler1D lutColor;
+uniform sampler1D lutAlpha;
 uniform sampler2D shadowTexture;
 uniform vec3 ambient;
 uniform vec3 diffuse;
 uniform float threshold;
+uniform float samplingRate;
 
 uniform float minValue;
 uniform float maxValue;
@@ -26,20 +28,21 @@ float remapMinMax(float x, float x0, float x1) {
 void main() {
     vec3 lightIntensity =  textureProj(shadowTexture, shadowCoords.xyw).xyz;
 
-    float value;
+    float density;
     if (maxValue - minValue < 0.0001f) {
-        value = 1.f;
+        density = 1.f;
     } else {
-        value = remapMinMax(texture(volumeData, texCoords).r, minValue, maxValue);
+        density = remapMinMax(texture(volumeTexture, texCoords).r, minValue, maxValue);
     }
 
-	if (value > threshold) {
-	    vec3 color = texture(colormap, value).rgb;
-        float alpha = texture(alphamap, value).r;
-		fColor = vec4(alpha * color * (ambient + lightIntensity * diffuse), alpha);
+	if (density > threshold) {
+        vec3 color = texture(lutColor, density).rgb;
+        float alpha = texture(lutAlpha, density).r;
+        alpha = 1 - pow(1 - alpha, samplingRate);
+        fColor = vec4(alpha * color * (ambient + lightIntensity * diffuse), alpha);
 	} else {
-	    fColor = vec4(0.f);
-	}
+        fColor = vec4(0.f);
+    }
 }
 
 )glsl"

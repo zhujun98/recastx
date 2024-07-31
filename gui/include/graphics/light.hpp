@@ -9,18 +9,58 @@
 #ifndef GUI_LIGHT_H
 #define GUI_LIGHT_H
 
-#include <glm/glm.hpp>
+#include <utility>
 
+#include <glm/glm.hpp>
 
 namespace recastx::gui {
 
-struct Light {
-    bool is_enabled;
-    glm::vec3 pos;
-    glm::vec3 color;
-    glm::vec3 ambient;
-    glm::vec3 diffuse;
-    glm::vec3 specular;
+using LightId = unsigned int;
+
+class Light {
+
+    inline static LightId next_id_ = 0;
+
+    LightId id_;
+
+    glm::vec3 direction_ = {0.f, 0.f, 1.f};
+
+    glm::vec3 color_ = {1.f, 1.f, 1.f};
+    float ambient_ = 0.f;
+    float diffuse_ = 0.f;
+    float specular_ = 0.f;
+
+    bool visible_ = false;
+
+    friend class LightWidget;
+
+  public:
+
+    Light() : id_(next_id_++) {}
+
+    ~Light() = default;
+
+    [[nodiscard]] LightId id() const { return id_; }
+
+    void setColor(glm::vec3 rgb) { color_ = rgb; }
+    void setAmbient(float value) { ambient_ = value; }
+    void setDiffuse(float value) { diffuse_ = value; }
+    void setSpecular(float value) { specular_ = value; }
+
+    [[nodiscard]] glm::vec3 color() const { return color_; }
+    [[nodiscard]] glm::vec3 ambient() const { return ambient_ * color_; }
+    [[nodiscard]] glm::vec3 diffuse() const { return diffuse_ * color_; }
+    [[nodiscard]] glm::vec3 specular() const { return specular_ * color_; }
+
+    [[nodiscard]] bool visible() const { return visible_; }
+
+    void setDirection(glm::vec3 value) { direction_ = glm::normalize(value); }
+    [[nodiscard]] glm::vec3 direction() const { return direction_; }
+
+    // returns (light position, light direction)
+    std::pair<glm::vec3, glm::vec3> geometry(glm::vec3 target_pos) {
+        return {target_pos - direction_, direction_};
+    }
 };
 
 } // namespace recastx::gui

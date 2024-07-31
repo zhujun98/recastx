@@ -111,8 +111,8 @@ class ProjectionTransferService final : public rpc::ProjectionTransfer::Service 
 
     Application* app_;
 
-    static constexpr uint32_t x_ = 1024;
-    static constexpr uint32_t y_ = 1024;
+    uint32_t x_;
+    uint32_t y_;
 
     uint32_t proj_id_;
 
@@ -139,12 +139,12 @@ class ReconstructionService final : public rpc::Reconstruction::Service {
 
     Application* app_;
 
-    static constexpr uint32_t slice_x_ = 1024;
-    static constexpr uint32_t slice_y_ = 512;
+    uint32_t slice_x_;
+    uint32_t slice_y_;
 
-    static constexpr uint32_t volume_x_ = 128;
-    static constexpr uint32_t volume_y_ = 128;
-    static constexpr uint32_t volume_z_ = 128;
+    uint32_t volume_x_;
+    uint32_t volume_y_;
+    uint32_t volume_z_;
 
     std::thread thread_;
 
@@ -154,7 +154,7 @@ class ReconstructionService final : public rpc::Reconstruction::Service {
 
     void setSliceData(rpc::ReconData* data, int id);
 
-    void setVolumeShardData(rpc::ReconData* data, uint32_t shard_id);
+    void setVolumeShardData(rpc::ReconData* data, uint32_t x, uint32_t y, uint32_t z, uint32_t shard_id);
 
   public:
 

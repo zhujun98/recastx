@@ -17,13 +17,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 
-#include "graphics/graph_node.hpp"
-#include "input_handler.hpp"
-#include "path.hpp"
-
 namespace recastx::gui {
 
-class Camera : public InputHandler {
+class Camera {
 
     glm::vec3 target_;
     glm::vec3 pos_;
@@ -37,8 +33,6 @@ class Camera : public InputHandler {
 
     glm::mat4 rotation_;
     std::optional<glm::mat4> view_ { std::nullopt };
-
-    bool fixed_ = false;
 
     float mouse_scroll_sensitivity_ = 0.05f;
     float mouse_move_sensitivity_ = 5.f;
@@ -58,9 +52,9 @@ class Camera : public InputHandler {
 
     Camera();
 
-    virtual ~Camera();
+    ~Camera();
 
-    [[nodiscard]] const glm::mat4& matrix();
+    [[nodiscard]] const glm::mat4& viewMatrix();
 
     [[nodiscard]] glm::vec3 viewDir();
 
@@ -68,14 +62,10 @@ class Camera : public InputHandler {
 
     [[nodiscard]] glm::vec3 pos();
 
-    void setFixed(bool fixed) { fixed_ = fixed; }
-
-    [[nodiscard]] bool fixed() const { return fixed_; }
-
-    bool handleMouseButton(int button, int action) override;
-    bool handleScroll(float offset) override;
-    bool handleMouseMoved(float x, float y) override;
-    bool handleKey(int key, int action, int mods) override;
+    bool handleMouseButton(int button, int action);
+    bool handleScroll(float offset);
+    bool handleMouseMoved(float x, float y);
+    bool handleKey(int key, int action, int mods);
 
     void setFrontView();
     void setTopView();

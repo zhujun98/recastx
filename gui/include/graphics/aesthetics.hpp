@@ -21,19 +21,19 @@
 
 namespace recastx::gui {
 
-class Colormap {
+class Colormap : public Texture {
 
     static const std::set<ImPlotColormap> options_;
 
     ImPlotColormap idx_;
 
-    ColormapTexture texture_;
-
     void updateTexture();
 
   public:
 
-    Colormap();
+    explicit Colormap();
+
+    ~Colormap() override;
 
     static const std::set<ImPlotColormap>& options();
 
@@ -42,25 +42,20 @@ class Colormap {
     [[nodiscard]] ImPlotColormap get() const { return idx_; }
 
     void set(ImPlotColormap idx);
-
-    void bind() const { texture_.bind(); }
-    void unbind() const { texture_.unbind(); }
 };
 
-class Alphamap {
+
+class Alphamap : public Texture {
 
     std::vector<float> data_;
-
-    AlphamapTexture texture_;
 
   public:
 
     Alphamap();
 
-    void set(const std::map<float, float>& alphamap);
+    ~Alphamap() override;
 
-    void bind() const { texture_.bind(); }
-    void unbind() const { texture_.unbind(); }
+    void set(const std::map<float, float>& alphamap);
 };
 
 } // namespace recastx::gui

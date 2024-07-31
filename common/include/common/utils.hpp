@@ -12,6 +12,8 @@
 #include <iostream>
 #include <limits>
 
+#include <glm/glm.hpp>
+
 #include "config.hpp"
 
 namespace recastx {
@@ -44,6 +46,13 @@ inline void arrayStat(const T& arr, std::array<size_t, 2> shape, const std::stri
         std::cout << "[" << message << "] ";
     }
     std::cout << "average: " << avg  << ", min: " << min << ", max: " << max << "\n";
+}
+
+inline void printMat4(glm::mat4 matrix) {
+    std::cout << matrix[0][0] << ", " << matrix[0][1] << ", " << matrix[0][2] << "\n"
+              << matrix[1][0] << ", " << matrix[1][1] << ", " << matrix[1][2] << "\n"
+              << matrix[2][0] << ", " << matrix[2][1] << ", " << matrix[2][2] << "\n";
+
 }
 
 } // namespace recastx

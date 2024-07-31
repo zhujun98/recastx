@@ -9,44 +9,20 @@
 #ifndef GUI_VIEWPORT_H
 #define GUI_VIEWPORT_H
 
-#include <optional>
+enum ViewportID { VIEWPORT_MAIN = 0,
+                  VIEWPORT_TOP_LEFT = 1,
+                  VIEWPORT_TOP_RIGHT = 2,
+                  VIEWPORT_SATELLITE = 3};
 
-#include <glm/glm.hpp>
+struct Viewport {
 
-namespace recastx::gui {
+    enum class Type { ORTHO, PERSPECTIVE };
 
-class Viewport {
-
-protected:
-
-    int x_ = 0;
-    int y_ = 0;
-    int w_ = 1;
-    int h_ = 1;
-    float asp_ = 1.f;
-
-    float fov_ = glm::radians(45.f);
-    bool perspective_;
-    float near_;
-    float far_;
-
-    std::optional<glm::mat4> projection_;
-
-public:
-
-    Viewport(bool perspective = true, float near = 0.1f, float far = 50.f);
-
-    virtual ~Viewport();
-
-    void update(int x, int y, int w, int h);
-
-    [[nodiscard]] float aspectRatio() const { return asp_; }
-
-    [[nodiscard]] const glm::mat4& projection();
-
-    void use() const;
+    float x;
+    float y;
+    float width;
+    float height;
+    Type type;
 };
 
-} // namespace recastx::gui
-
-#endif //GUI_VIEWPORT_H
+#endif // GUI_VIEWPORT_H

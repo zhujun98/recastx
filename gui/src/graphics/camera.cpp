@@ -6,7 +6,6 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
-#include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
 
 #include "graphics/camera.hpp"
@@ -23,7 +22,7 @@ Camera::Camera()
 
 Camera::~Camera() = default;
 
-const glm::mat4& Camera::matrix() {
+const glm::mat4& Camera::viewMatrix() {
     if (!view_) {
         view_ = glm::lookAt(pos_, target_, up_) * rotation_;
     }
@@ -31,7 +30,7 @@ const glm::mat4& Camera::matrix() {
 }
 
 glm::vec3 Camera::viewDir() {
-    const glm::mat4& view = matrix();
+    const glm::mat4& view = viewMatrix();
     return {-view[0][2], -view[1][2], -view[2][2]};
 }
 
@@ -132,7 +131,7 @@ void Camera::setFrontView() {
     view_.reset();
 
     rotation_ = glm::mat4(1.0f);
-    dist_ = 4.5f;
+    dist_ = 2.5f;
     pos_ = glm::vec3{dist_, 0.f, 0.f};
 }
 

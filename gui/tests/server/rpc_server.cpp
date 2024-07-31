@@ -104,6 +104,8 @@ grpc::Status ProjectionTransferService::SetProjectionGeometry(grpc::ServerContex
   spdlog::info("Set projection geometry");
   spdlog::info(" - Beam shape: {}", geometry->beam_shape() == 0 ? "PARALLEL" : "CONE");
   spdlog::info(" - Col count / Row count: {} / {}", geometry->col_count(), geometry->row_count());
+  x_ = geometry->col_count();
+  y_ = geometry->row_count();
   spdlog::info(" - Pixel width / Pixel height: {} / {}", geometry->pixel_width(), geometry->pixel_height());
   spdlog::info(" - Source to origin / Origin to detector: {} / {}", geometry->src2origin(), geometry->origin2det());
   spdlog::info(" - Angle count / Angle range: {} / {}", geometry->angle_count(), geometry->angle_range() == 0 ? "HALF" : "FULL");
@@ -137,10 +139,16 @@ grpc::Status ProjectionTransferService::GetProjectionData(grpc::ServerContext* c
 }
 
 void ProjectionTransferService::setProjectionData(rpc::ProjectionData *data) {
-    auto vec = generateRandomRawData(x_ * y_, 0, 1000 + 10 * proj_id_);
+    int x = 1024;
+    int y = 1024;
+    if (x_ != 0 && y_ != 0) {
+        x = x_;
+        y = y_;
+    }
+    auto vec = generateRandomRawData(x * y, 0, 1000 + 10 * proj_id_);
     data->set_id(proj_id_);
-    data->set_col_count(x_);
-    data->set_row_count(y_);
+    data->set_col_count(x);
+    data->set_row_count(y);
     data->set_data(vec.data(), vec.size() * sizeof(decltype(vec)::value_type));
 }
 
@@ -151,8 +159,16 @@ grpc::Status ReconstructionService::SetReconGeometry(grpc::ServerContext* contex
                                                      const rpc::ReconGeometry* geometry,
                                                      google::protobuf::Empty* ack) {
     spdlog::info("Set reconstruction geometry");
-    spdlog::info(" - Slice size: {}", geometry->slice_size()[0]);
-    spdlog::info(" - Volume size: {}", geometry->volume_size()[0]);
+
+    slice_x_ = geometry->slice_size()[0];
+    slice_y_ = geometry->slice_size()[1];
+    spdlog::info(" - Slice size: {} x {}", slice_x_, slice_y_);
+
+    volume_x_ = geometry->volume_size()[0];
+    volume_y_ = geometry->volume_size()[1];
+    volume_z_ = geometry->volume_size()[2];
+    spdlog::info(" - Volume size: {} x {} x {}", volume_x_, volume_y_, volume_z_);
+
     spdlog::info(" - X range: {} - {}", geometry->x_range()[0], geometry->x_range()[1]);
     spdlog::info(" - Y range: {} - {}", geometry->y_range()[0], geometry->y_range()[1]);
     spdlog::info(" - Z range: {} - {}", geometry->z_range()[0], geometry->z_range()[1]);
@@ -189,11 +205,22 @@ grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
     if (app_->serverState() == rpc::ServerState_State_PROCESSING) {
         app_->setSinoUploaded(true);
 
-        for (auto i = 0; i < volume_z_; ++i) {
-            setVolumeShardData(&data, i);
-            writer->Write(data);
+        {
+            uint32_t x = 128;
+            uint32_t y = 128;
+            uint32_t z = 128;
+            if (volume_x_ != 0 && volume_y_ != 0 && volume_z_ != 0) {
+                x = volume_x_;
+                y = volume_y_;
+                z = volume_z_;
+            }
+            for (uint32_t i = 0; i < z; ++i) {
+                setVolumeShardData(&data, x, y, z, i);
+                writer->Write(data);
+            }
+            spdlog::info("Volume data sent");
         }
-        spdlog::info("Volume data sent");
+
 
         for (int i = 0; i < timestamps_.size(); ++i) {
             setSliceData(&data, i);
@@ -213,13 +240,20 @@ grpc::Status ReconstructionService::GetReconData(grpc::ServerContext* context,
 }
 
 void ReconstructionService::setSliceData(rpc::ReconData* data, int id) {
+    uint32_t x = 1024;
+    uint32_t y = 1024;
+    if (slice_x_ != 0 && slice_y_ != 0) {
+        x = slice_x_;
+        y = slice_y_;
+    }
+
     auto slice = data->mutable_slice();
 
     auto vec = generateRandomProcData(
-            slice_x_ * slice_y_, 0.f, 1.f + (id >= 0 ? (float)id : (float)sliceIdFromTimestamp(timestamp_)));
+            x * y, 0.f, 1.f + (id >= 0 ? (float)id : (float)sliceIdFromTimestamp(timestamp_)));
     slice->set_data(vec.data(), vec.size() * sizeof(decltype(vec)::value_type));
-    slice->set_col_count(slice_x_);
-    slice->set_row_count(slice_y_);
+    slice->set_col_count(x);
+    slice->set_row_count(y);
     if (id >= 0) {
         slice->set_timestamp(timestamps_.at(id));
     } else {
@@ -227,15 +261,16 @@ void ReconstructionService::setSliceData(rpc::ReconData* data, int id) {
     }
 }
 
-void ReconstructionService::setVolumeShardData(rpc::ReconData* data, uint32_t index) {
+void ReconstructionService::setVolumeShardData(
+        rpc::ReconData* data, uint32_t x, uint32_t y, uint32_t z, uint32_t shard_id) {
     auto shard = data->mutable_volume_shard();
 
-    auto vec = generateRandomProcData(volume_x_ * volume_y_, 0.f, 0.5f);
+    auto vec = generateRandomProcData(x * y, 0.f, 0.5f);
     shard->set_data(vec.data(), vec.size() * sizeof(float));
-    shard->set_col_count(volume_x_);
-    shard->set_row_count(volume_y_);
-    shard->set_slice_count(volume_z_);
-    shard->set_pos(index * volume_x_ * volume_y_);
+    shard->set_col_count(x);
+    shard->set_row_count(y);
+    shard->set_slice_count(z);
+    shard->set_pos(shard_id * x * y);
 }
 
 RpcServer::RpcServer(int port, Application* app)

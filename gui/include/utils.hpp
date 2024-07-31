@@ -14,8 +14,8 @@
 #include <tuple>
 #include <vector>
 
-#include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
 
 namespace recastx::gui {
 
