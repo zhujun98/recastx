@@ -6,74 +6,16 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
-#ifndef RECON_CUDA_SINOGRAM_LOADER_H
-#define RECON_CUDA_SINOGRAM_LOADER_H
+#ifndef RECON_CUDA_SINOGRAM_H
+#define RECON_CUDA_SINOGRAM_H
 
 #include "astra/Float32ProjectionData3DGPU.h"
 
-#include "recon/buffer.hpp"
+#include "recon/cuda/buffer.cuh"
 
 namespace recastx::recon {
 
 class Stream;
-
-template<typename T, size_t N>
-class GpuTensor {
-  public:
-
-    using ValueType = T;
-    using ShapeType = std::array<size_t, N>;
-
-  private:
-
-    std::vector<T> data_;
-    ShapeType shape_;
-
-  public:
-
-    T* data() { return data_.data(); }
-    [[nodiscard]] const T* data() const { return data_.data(); }
-
-    void swap(GpuTensor& other) noexcept {
-        data_.swap(other.data_);
-        shape_.swap(other.shape_);
-    }
-
-    bool resize(const ShapeType& shape) {
-        data_.resize(shape[0] * shape[1] * shape[2]);
-        shape_ = shape;
-        return true;
-    }
-};
-
-template<typename T, size_t N>
-class TripleGpuTensorBuffer : public TripleBuffer<Tensor<T, N>> {
-
-  public:
-
-    using BufferType = GpuTensor<T, N>;
-    using ValueType = typename BufferType::ValueType ;
-    using ShapeType = typename BufferType::ShapeType;
-
-  public:
-
-    TripleGpuTensorBuffer() = default;
-    ~TripleGpuTensorBuffer() override = default;
-
-    void resize(const ShapeType& shape);
-
-    [[nodiscard]] const ShapeType& shape() const { return this->front_.shape(); }
-
-    [[nodiscard]] size_t size() const { return this->front_.size(); }
-};
-
-template<typename T, size_t N>
-void TripleGpuTensorBuffer<T, N>::resize(const ShapeType& shape) {
-    std::lock_guard(this->mtx_);
-    this->back_.resize(shape);
-    this->ready_.resize(shape);
-    this->front_.resize(shape);
-}
 
 class SinogramManager {
 
@@ -114,4 +56,4 @@ class SinogramManager {
 
 } // recastx::recon
 
-#endif // RECON_CUDA_SINOGRAM_LOADER_H
+#endif // RECON_CUDA_SINOGRAM_H
