@@ -6,8 +6,8 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
-#ifndef RECON_CUDA_SINOGRAM_H
-#define RECON_CUDA_SINOGRAM_H
+#ifndef RECON_CUDA_SINOGRAM_MANAGER_H
+#define RECON_CUDA_SINOGRAM_MANAGER_H
 
 #include "astra/Float32ProjectionData3DGPU.h"
 
@@ -56,4 +56,4 @@ class SinogramManager {
 
 } // recastx::recon
 
-#endif // RECON_CUDA_SINOGRAM_H
+#endif // RECON_CUDA_SINOGRAM_MANAGER_H

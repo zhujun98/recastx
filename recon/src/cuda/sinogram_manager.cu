@@ -8,7 +8,7 @@
 */
 #include "spdlog/spdlog.h"
 
-#include "recon/cuda/sinogram.cuh"
+#include "recon/cuda/sinogram_manager.cuh"
 #include "recon/cuda/utils.cuh"
 #include "recon/cuda/stream.cuh"
 

@@ -11,18 +11,18 @@
 
 namespace recastx::recon {
 
-GpuTensor::GpuTensor() = default;
+DeviceTensor::DeviceTensor() = default;
 
-GpuTensor::~GpuTensor() {
+DeviceTensor::~DeviceTensor() {
     if (data_ != nullptr) cudaFreeHost(data_);
 }
 
-void GpuTensor::swap(GpuTensor& other) noexcept {
+void DeviceTensor::swap(DeviceTensor& other) noexcept {
     std::swap(data_, other.data_);
     shape_.swap(other.shape_);
 }
 
-void GpuTensor::resize(const ShapeType& shape) {
+void DeviceTensor::resize(const ShapeType& shape) {
     if (data_ != nullptr) cudaFreeHost(data_);
     checkCudaError(cudaMallocHost((void**)&data_, shape[0] * shape[1] * shape[2] * sizeof(ValueType)));
     shape_ = shape;

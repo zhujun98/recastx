@@ -13,7 +13,7 @@
 
 namespace recastx::recon {
 
-class GpuTensor {
+class DeviceTensor {
   public:
 
     using ValueType = float;
@@ -26,27 +26,27 @@ class GpuTensor {
 
   public:
 
-    GpuTensor();
+    DeviceTensor();
 
-    ~GpuTensor();
+    ~DeviceTensor();
 
     float* data() { return data_; }
     [[nodiscard]] const float* data() const { return data_; }
 
-    void swap(GpuTensor& other) noexcept;
+    void swap(DeviceTensor& other) noexcept;
 
     void resize(const ShapeType& shape);
 
     [[nodiscard]] const ShapeType& shape() const { return shape_; }
 };
 
-class TripleGpuTensorBuffer : public TripleBuffer<GpuTensor> {
+class TripleGpuTensorBuffer : public TripleBuffer<DeviceTensor> {
 
   public:
 
-    using BufferType = GpuTensor;
-    using ValueType = typename BufferType::ValueType ;
-    using ShapeType = typename BufferType::ShapeType;
+    using BufferType = DeviceTensor;
+    using ValueType = typename DeviceTensor::ValueType ;
+    using ShapeType = typename DeviceTensor::ShapeType;
 
   public:
 
@@ -56,8 +56,6 @@ class TripleGpuTensorBuffer : public TripleBuffer<GpuTensor> {
     void resize(const ShapeType& shape);
 
     [[nodiscard]] const ShapeType& shape() const { return this->front_.shape(); }
-//
-//    [[nodiscard]] size_t size() const { return this->front_.size(); }
 };
 
 } // recastx::recon

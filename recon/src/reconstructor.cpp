@@ -14,7 +14,7 @@
 #include "recon/utils.hpp"
 #include "common/scoped_timer.hpp"
 #include "recon/cuda/memory.cuh"
-#include "recon/cuda/sinogram.cuh"
+#include "recon/cuda/sinogram_manager.cuh"
 
 namespace recastx::recon {
 
