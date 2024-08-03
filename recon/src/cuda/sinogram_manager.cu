@@ -8,19 +8,21 @@
 */
 #include "spdlog/spdlog.h"
 
-#include "recon/cuda/sinogram_loader.cuh"
+#include "recon/cuda/sinogram_manager.cuh"
 #include "recon/cuda/utils.cuh"
 #include "recon/cuda/stream.cuh"
 
 namespace recastx::recon {
 
-SinogramLoader::SinogramLoader(size_t group_size)
+SinogramManager::SinogramManager(size_t group_size)
     : start_{0}, group_size_{group_size}, stream_(new Stream) {
 }
 
-SinogramLoader::~SinogramLoader() = default;
+SinogramManager::~SinogramManager() = default;
 
-void SinogramLoader::load(astra::CFloat32ProjectionData3DGPU *dst, const float *src, size_t count) {
+void SinogramManager::load(astra::CFloat32ProjectionData3DGPU *dst) {
+    const float *src = buffer_.front().data();
+    size_t count = buffer_.front().shape()[0];
     size_t start = start_;
     size_t end = (start + count - 1) % group_size_;
 
@@ -37,8 +39,8 @@ void SinogramLoader::load(astra::CFloat32ProjectionData3DGPU *dst, const float *
     start_ = (end + 1) % group_size_;
 }
 
-void SinogramLoader::copyToDevice(astra::CFloat32ProjectionData3DGPU* proj,
-                                  const float* data, unsigned int start, unsigned int end) {
+void SinogramManager::copyToDevice(astra::CFloat32ProjectionData3DGPU* proj,
+                                   const float* data, unsigned int start, unsigned int end) {
     unsigned int x = proj->getDetectorColCount();
     unsigned int y = end - start + 1;
     unsigned int z = proj->getDetectorRowCount();
@@ -46,7 +48,7 @@ void SinogramLoader::copyToDevice(astra::CFloat32ProjectionData3DGPU* proj,
     cudaMemcpy3DParms p;
     p.srcArray = nullptr;
     p.srcPos = make_cudaPos(0, 0, 0);
-    p.srcPtr = make_cudaPitchedPtr((void *) data, x * sizeof(float), x * sizeof(float), y);
+    p.srcPtr = make_cudaPitchedPtr((void *) data, x * sizeof(float), x, y);
     assert(proj->getHandle().d->arr != nullptr);
     p.dstArray = proj->getHandle().d->arr;
     p.dstPos = make_cudaPos(0, start, 0);

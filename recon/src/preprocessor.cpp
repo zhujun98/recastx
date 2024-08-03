@@ -30,7 +30,7 @@ void Preprocessor::init(RawBufferType& buffer, size_t col_count, size_t row_coun
 }
 
 void Preprocessor::process(RawBufferType& raw_buffer,
-                           SinoBufferType& sino_buffer,
+                           ProDtype* sino_buffer,
                            const ProImageData& dark_avg,
                            const ProImageData& reciprocal,
                            int32_t offset) {
@@ -43,7 +43,6 @@ void Preprocessor::process(RawBufferType& raw_buffer,
 #endif
 
     auto& projs = raw_buffer.front();
-    auto& sinos = sino_buffer.back();
 
     using namespace oneapi;
     arena_.execute([&]{
@@ -64,7 +63,7 @@ void Preprocessor::process(RawBufferType& raw_buffer,
 
                                   // TODO: Add FDK scaler for cone beam
 
-                                  copyToSinogram(sinos, projs, i, chunk_size, row_count, col_count, offset);
+                                  copyToSinogram(sino_buffer, projs, i, chunk_size, row_count, col_count, offset);
                               }
         });
     });

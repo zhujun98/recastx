@@ -155,7 +155,7 @@ public:
     TripleTensorBuffer() = default;
     ~TripleTensorBuffer() override = default;
 
-    virtual void resize(const ShapeType& shape);
+    void resize(const ShapeType& shape);
 
     const ShapeType& shape() const { return this->front_.shape(); }
 
@@ -164,7 +164,7 @@ public:
 
 template<typename T, size_t N>
 void TripleTensorBuffer<T, N>::resize(const ShapeType& shape) {
-    std::lock_guard(this->mtx_);
+    std::lock_guard lk(this->mtx_);
     this->back_.resize(shape);
     this->ready_.resize(shape);
     this->front_.resize(shape);

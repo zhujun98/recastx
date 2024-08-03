@@ -144,14 +144,14 @@ void Application::startPreprocessing() {
 #if defined(BENCHMARK)
                 nvtx3::scoped_range sr("Preprocessing projections");
 #endif
-                preproc_->process(raw_buffer_, sino_buffer_, dark_avg_, reciprocal_, imgproc_params_.offset);
+                preproc_->process(raw_buffer_, recon_->sinoBuffer(), dark_avg_, reciprocal_, imgproc_params_.offset);
             }
 
 
 #if defined(BENCHMARK)
             nvtx3::scoped_range sr("Waiting for sinogram buffer ready");
 #endif
-            while (!sino_buffer_.tryPrepare(100)) {
+            while (!recon_->tryPrepareSinoBuffer()) {
                 if (closing_) return;
             }
 
@@ -162,32 +162,29 @@ void Application::startPreprocessing() {
     t.detach();
 }
 
-void Application::startUploading() {
+void Application::startReconstructing() {
 
     auto t = std::thread([&] {
         while (!closing_) {
             if(waitForProcessing()) continue;
 
-            if (!sino_buffer_.fetch(100)) continue;
+            if (!recon_->fetchSinoBuffer()) continue;
 
-            spdlog::debug("Uploading sinograms to GPU - started");
+            {
+                spdlog::debug("Uploading sinograms to GPU - started");
 
 #if defined(BENCHMARK)
-            nvtx3::scoped_range sr("Uploading sinograms to GPU");
+                nvtx3::scoped_range sr("Uploading sinograms to GPU");
 #endif
 
-            size_t chunk_size = sino_buffer_.front().shape()[0];
-            {
                 if (double_buffering_) {
-                    recon_->uploadSinograms(1 - gpu_buffer_index_, sino_buffer_.front().data(), chunk_size);
+                    recon_->uploadSinograms(1 - gpu_buffer_index_);
 
                     std::lock_guard<std::mutex> lck(gpu_mtx_);
                     gpu_buffer_index_ = 1 - gpu_buffer_index_;
-                    sino_uploaded_ = true;
                 } else {
                     std::lock_guard<std::mutex> lck(gpu_mtx_);
-                    recon_->uploadSinograms(gpu_buffer_index_, sino_buffer_.front().data(), chunk_size);
-                    sino_uploaded_ = true;
+                    recon_->uploadSinograms(gpu_buffer_index_);
                 }
 
                 sino_initialized_ = true;
@@ -195,58 +192,49 @@ void Application::startUploading() {
                 spdlog::debug("Uploading sinograms to GPU - finished");
             }
 
-            gpu_cv_.notify_one();
+            {
+#if defined(BENCHMARK)
+                nvtx3::scoped_range sr("Reconstructing volume and slices");
+#endif
+
+                if (volume_required_) {
+                    spdlog::debug("Reconstructing volume - started");
+
+                    recon_->reconstructVolume(gpu_buffer_index_, volume_buffer_.back());
+                }
+
+                spdlog::debug("Reconstructing slices - started");
+
+                slice_mediator_->reconAll(recon_.get(), gpu_buffer_index_);
+
+                spdlog::debug("Reconstructing - finished");
+
+                monitor_->countTomogram();
+
+                if (volume_buffer_.prepare()) {
+                    spdlog::debug("Reconstructed volume dropped due to slowness of clients");
+                }
+            }
         }
     });
 
     t.detach();
 }
 
-void Application::startReconstructing() {
+void Application::startReconstructingOnDemand() {
 
     auto t = std::thread([&] {
         while (!closing_) {
-            {
-                std::unique_lock<std::mutex> lck(gpu_mtx_);
-                if (gpu_cv_.wait_for(lck, 10ms, [&] { return sino_uploaded_; })) {
-                    if (volume_required_) {
-                        spdlog::debug("Reconstructing (volume and slices) - started");
+            if (sino_initialized_) {
 
 #if defined(BENCHMARK)
-                        nvtx3::scoped_range sr("Reconstructing volume");
+                nvtx3::scoped_range sr("Reconstructing on-demand slices");
 #endif
-                        recon_->reconstructVolume(gpu_buffer_index_, volume_buffer_.back());
-                    } else {
-                        spdlog::debug("Reconstructing (slices) - started");
-                    }
-
-                } else {
-                    if (waitForSinoInitialization()) continue;
-
-#if defined(BENCHMARK)
-                    nvtx3::scoped_range sr("Reconstructing on-demand slices");
-#endif
-                    slice_mediator_->reconOnDemand(recon_.get(), gpu_buffer_index_);
-                    continue;
-                }
-
-#if defined(BENCHMARK)
-                nvtx3::scoped_range sr("Reconstructing all slices");
-#endif
-                slice_mediator_->reconAll(recon_.get(), gpu_buffer_index_);
-
-                sino_uploaded_ = false;
+                std::lock_guard<std::mutex> lck(gpu_mtx_);
+                slice_mediator_->reconOnDemand(recon_.get(), gpu_buffer_index_);
             }
-            
-            spdlog::debug("Reconstructing - finished");
-            
-            monitor_->countTomogram();
-
-            if (volume_buffer_.prepare()) {
-                spdlog::debug("Reconstructed volume dropped due to slowness of clients");
-            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
-
     });
 
     t.detach();
@@ -295,8 +283,8 @@ void Application::consume() {
 }
 
 void Application::spin() {
+    startReconstructingOnDemand();
     startReconstructing();
-    startUploading();
     startPreprocessing();
     startConsuming();
 
@@ -492,11 +480,11 @@ void Application::init() {
 
     maybeInitFlatFieldBuffer(row_count, col_count);
 
-    maybeInitReconBuffer(col_count, row_count);
-
     preproc_->init(raw_buffer_, col_count, row_count, imgproc_params_, paganin_cfg_);
 
     initReconstructor(col_count, row_count);
+
+    maybeInitReconBuffer(col_count, row_count);
 
     spdlog::info("[Init] ------------------------------------------------------------");
 }
@@ -579,7 +567,7 @@ void Application::maybeInitReconBuffer(uint32_t col_count, uint32_t row_count) {
     auto shape = raw_buffer_.shape();
     if (shape[0] != group_size_ || shape[1] != row_count || shape[2] != col_count) {
         raw_buffer_.resize({group_size_, row_count, col_count});
-        sino_buffer_.resize({group_size_, row_count, col_count});
+        recon_->reshapeSinoBuffer({group_size_, row_count, col_count});
         spdlog::debug("Reconstruction buffers resized");
     }
     raw_buffer_.reset();

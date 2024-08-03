@@ -104,7 +104,7 @@ inline std::vector<float> defaultAngles(uint32_t n, float angle_range) {
 
 
 template<typename T1, typename T2>
-inline void copyToSinogram(T1& dst,
+inline void copyToSinogram(T1* dst,
                            const T2& src,
                            size_t chunk_idx,
                            size_t chunk_size,
