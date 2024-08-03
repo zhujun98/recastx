@@ -50,8 +50,8 @@ class TripleGpuTensorBuffer : public TripleBuffer<DeviceTensor> {
 
   public:
 
-    TripleGpuTensorBuffer() = default;
-    ~TripleGpuTensorBuffer() override = default;
+    TripleGpuTensorBuffer();
+    ~TripleGpuTensorBuffer() override;
 
     void resize(const ShapeType& shape);
 

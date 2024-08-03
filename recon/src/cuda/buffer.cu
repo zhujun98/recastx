@@ -28,8 +28,13 @@ void DeviceTensor::resize(const ShapeType& shape) {
     shape_ = shape;
 }
 
+
+TripleGpuTensorBuffer::TripleGpuTensorBuffer() = default;
+
+TripleGpuTensorBuffer::~TripleGpuTensorBuffer() = default;
+
 void TripleGpuTensorBuffer::resize(const ShapeType& shape) {
-    std::lock_guard(this->mtx_);
+    std::lock_guard lk(this->mtx_);
     this->back_.resize(shape);
     this->ready_.resize(shape);
     this->front_.resize(shape);
