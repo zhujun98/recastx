@@ -13,43 +13,38 @@
 
 namespace recastx::recon {
 
-template<typename T, size_t N>
 class GpuTensor {
   public:
 
-    using ValueType = T;
-    using ShapeType = typename Tensor<T, N>::ShapeType;
+    using ValueType = float;
+    using ShapeType = typename Tensor<float, 3>::ShapeType;
 
   private:
 
-    std::vector<T> data_;
+    float* data_ = nullptr;
     ShapeType shape_;
 
   public:
 
-    T* data() { return data_.data(); }
-    [[nodiscard]] const T* data() const { return data_.data(); }
+    GpuTensor();
 
-    void swap(GpuTensor& other) noexcept {
-        data_.swap(other.data_);
-        shape_.swap(other.shape_);
-    }
+    ~GpuTensor();
 
-    bool resize(const ShapeType& shape) {
-        data_.resize(shape[0] * shape[1] * shape[2]);
-        shape_ = shape;
-        return true;
-    }
+    float* data() { return data_; }
+    [[nodiscard]] const float* data() const { return data_; }
 
-    [[nodiscard]] ShapeType shape() const { return shape_; }
+    void swap(GpuTensor& other) noexcept;
+
+    void resize(const ShapeType& shape);
+
+    [[nodiscard]] const ShapeType& shape() const { return shape_; }
 };
 
-template<typename T, size_t N>
-class TripleGpuTensorBuffer : public TripleBuffer<GpuTensor<T, N>> {
+class TripleGpuTensorBuffer : public TripleBuffer<GpuTensor> {
 
   public:
 
-    using BufferType = GpuTensor<T, N>;
+    using BufferType = GpuTensor;
     using ValueType = typename BufferType::ValueType ;
     using ShapeType = typename BufferType::ShapeType;
 
@@ -61,17 +56,9 @@ class TripleGpuTensorBuffer : public TripleBuffer<GpuTensor<T, N>> {
     void resize(const ShapeType& shape);
 
     [[nodiscard]] const ShapeType& shape() const { return this->front_.shape(); }
-
-    [[nodiscard]] size_t size() const { return this->front_.size(); }
+//
+//    [[nodiscard]] size_t size() const { return this->front_.size(); }
 };
-
-template<typename T, size_t N>
-void TripleGpuTensorBuffer<T, N>::resize(const ShapeType& shape) {
-    std::lock_guard(this->mtx_);
-    this->back_.resize(shape);
-    this->ready_.resize(shape);
-    this->front_.resize(shape);
-}
 
 } // recastx::recon
 

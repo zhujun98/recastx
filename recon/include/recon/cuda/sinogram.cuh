@@ -19,7 +19,7 @@ class Stream;
 
 class SinogramManager {
 
-    using BufferType = TripleGpuTensorBuffer<float, 3>;
+    using BufferType = TripleGpuTensorBuffer;
 
     BufferType buffer_;
 

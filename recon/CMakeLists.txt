@@ -43,7 +43,8 @@ endif()
 
 set(ASTRA_INCLUDE_DIR ${CMAKE_PREFIX_PATH}/include)
 
-set(RECON_CUDA_SOURCES "src/cuda/recon3d.cu"
+set(RECON_CUDA_SOURCES "src/cuda/buffer.cu"
+                       "src/cuda/recon3d.cu"
                        "src/cuda/memory.cu"
                        "src/cuda/sinogram.cu")
 set(RECON_CUDA_LIB _recastx-recon-cuda)
