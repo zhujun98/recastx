@@ -34,12 +34,14 @@ namespace recastx::recon {
 
 class AstraMemHandleArray;
 class SinogramProxy;
+class VolumeProxy;
 
 class AstraReconstructor : public Reconstructor {
 
 protected:
 
     std::unique_ptr<SinogramProxy> sino_proxy_;
+    std::unique_ptr<VolumeProxy> volume_proxy_;
 
     std::vector<std::unique_ptr<astra::CFloat32ProjectionData3DGPU>> data_;
     std::vector<AstraMemHandleArray> mem_;
@@ -68,6 +70,10 @@ public:
     void reshapeSinoBuffer(std::array<size_t, 3>) override;
 
     [[nodiscard]] ProDtype* sinoBuffer() override;
+
+    bool prepareVolumeBuffer() override;
+
+    Data3D fetchVolumeData(int timeout) const override;
 };
 
 class ParallelBeamReconstructor : public AstraReconstructor {
@@ -88,7 +94,7 @@ public:
 
     void reconstructSlice(Orientation x, int buffer_idx, Tensor<float, 2>& buffer) override;
 
-    void reconstructVolume(int buffer_idx, Tensor<float, 3>& buffer) override;
+    void reconstructVolume(int buffer_idx) override;
 
 };
 
@@ -109,7 +115,7 @@ public:
 
     void reconstructSlice(Orientation x, int buffer_idx, Tensor<float, 2>& buffer) override;
 
-    void reconstructVolume(int buffer_idx, Tensor<float, 3>& buffer) override;
+    void reconstructVolume(int buffer_idx) override;
 
     std::vector<float> fdk_weights();
 };

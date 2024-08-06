@@ -24,7 +24,7 @@ class Reconstructor {
 
     virtual void reconstructSlice(Orientation x, int buffer_idx, Tensor<float, 2>& buffer) = 0;
 
-    virtual void reconstructVolume(int buffer_idx, Tensor<float, 3>& buffer) = 0;
+    virtual void reconstructVolume(int buffer_idx) = 0;
 
     virtual void uploadSinograms(int buffer_idx) = 0;
 
@@ -35,6 +35,17 @@ class Reconstructor {
     virtual void reshapeSinoBuffer(std::array<size_t, 3>) = 0;
 
     virtual ProDtype* sinoBuffer() = 0;
+
+    virtual bool prepareVolumeBuffer() = 0;
+
+    struct Data3D {
+        const ProDtype* ptr;
+        size_t x;
+        size_t y;
+        size_t z;
+    };
+
+    virtual Data3D fetchVolumeData(int timeout) const = 0;
 };
 
 class ReconstructorFactory {
