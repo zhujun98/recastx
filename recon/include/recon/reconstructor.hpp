@@ -28,7 +28,7 @@
 
 #include "common/config.hpp"
 #include "reconstructor_interface.hpp"
-#include "cuda/recon3d.cuh"
+#include "cuda/reconstructable.cuh"
 
 namespace recastx::recon {
 

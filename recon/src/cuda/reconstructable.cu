@@ -9,7 +9,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "recon/cuda/utils.cuh"
-#include "recon/cuda/recon3d.cuh"
+#include "recon/cuda/reconstructable.cuh"
 #include "recon/cuda/memory.cuh"
 #include "recon/cuda/stream.cuh"
 
