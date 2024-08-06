@@ -8,19 +8,19 @@
 */
 #include "spdlog/spdlog.h"
 
-#include "recon/cuda/sinogram_manager.cuh"
+#include "recon/cuda/sinogram_proxy.cuh"
 #include "recon/cuda/utils.cuh"
 #include "recon/cuda/stream.cuh"
 
 namespace recastx::recon {
 
-SinogramManager::SinogramManager(size_t group_size)
+SinogramProxy::SinogramProxy(size_t group_size)
     : start_{0}, group_size_{group_size}, stream_(new Stream) {
 }
 
-SinogramManager::~SinogramManager() = default;
+SinogramProxy::~SinogramProxy() = default;
 
-void SinogramManager::load(astra::CFloat32ProjectionData3DGPU *dst) {
+void SinogramProxy::copyToDevice(astra::CFloat32ProjectionData3DGPU *dst) {
     const float *src = buffer_.front().data();
     size_t count = buffer_.front().shape()[0];
     size_t start = start_;
@@ -39,8 +39,8 @@ void SinogramManager::load(astra::CFloat32ProjectionData3DGPU *dst) {
     start_ = (end + 1) % group_size_;
 }
 
-void SinogramManager::copyToDevice(astra::CFloat32ProjectionData3DGPU* proj,
-                                   const float* data, unsigned int start, unsigned int end) {
+void SinogramProxy::copyToDevice(astra::CFloat32ProjectionData3DGPU* proj,
+                                 const float* data, unsigned int start, unsigned int end) {
     unsigned int x = proj->getDetectorColCount();
     unsigned int y = end - start + 1;
     unsigned int z = proj->getDetectorRowCount();

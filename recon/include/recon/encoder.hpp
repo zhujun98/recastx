@@ -27,15 +27,13 @@ inline rpc::ReconData createSliceDataPacket(const Container& data, uint32_t x, u
     return packet;
 }
 
-template<typename Container>
-inline std::vector<rpc::ReconData> createVolumeDataPacket(const Container& data, uint32_t x, uint32_t y, uint32_t z) {
+inline std::vector<rpc::ReconData> createVolumeDataPacket(const ProDtype* ptr, uint32_t x, uint32_t y, uint32_t z) {
     std::vector<rpc::ReconData> packets;
-    auto* ptr = data.data();
     uint32_t shard_size = x * y;
     for (uint32_t i = 0; i < z; ++i) {
         rpc::ReconData packet;
         auto shard = packet.mutable_volume_shard();
-        shard->set_data(ptr, shard_size * sizeof(typename Container::value_type));
+        shard->set_data(ptr, shard_size * sizeof(ProDtype));
         shard->set_col_count(x);
         shard->set_row_count(y);
         shard->set_slice_count(z);

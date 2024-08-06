@@ -13,15 +13,16 @@
 
 namespace recastx::recon {
 
+template<typename T, size_t N>
 class DeviceTensor {
   public:
 
-    using ValueType = float;
-    using ShapeType = typename Tensor<float, 3>::ShapeType;
+    using ValueType = T;
+    using ShapeType = std::array<size_t, 3>;
 
   private:
 
-    float* data_ = nullptr;
+    T* data_ = nullptr;
     ShapeType shape_;
 
   public:
@@ -29,6 +30,9 @@ class DeviceTensor {
     DeviceTensor();
 
     ~DeviceTensor();
+
+    DeviceTensor(const DeviceTensor&) = delete;
+    DeviceTensor& operator=(const DeviceTensor&) = delete;
 
     float* data() { return data_; }
     [[nodiscard]] const float* data() const { return data_; }
@@ -40,13 +44,13 @@ class DeviceTensor {
     [[nodiscard]] const ShapeType& shape() const { return shape_; }
 };
 
-class TripleGpuTensorBuffer : public TripleBuffer<DeviceTensor> {
+class TripleGpuTensorBuffer : public TripleBuffer<DeviceTensor<ProDtype, 3>> {
 
   public:
 
-    using BufferType = DeviceTensor;
-    using ValueType = typename DeviceTensor::ValueType ;
-    using ShapeType = typename DeviceTensor::ShapeType;
+    using BufferType = DeviceTensor<ProDtype, 3>;
+    using ValueType = typename BufferType::ValueType ;
+    using ShapeType = typename BufferType::ShapeType;
 
   public:
 
@@ -57,6 +61,9 @@ class TripleGpuTensorBuffer : public TripleBuffer<DeviceTensor> {
 
     [[nodiscard]] const ShapeType& shape() const { return this->front_.shape(); }
 };
+
+using SinogramBuffer = TripleGpuTensorBuffer;
+using VolumeBuffer = TripleGpuTensorBuffer;
 
 } // recastx::recon
 

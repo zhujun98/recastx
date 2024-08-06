@@ -151,7 +151,7 @@ void Application::startPreprocessing() {
 #if defined(BENCHMARK)
             nvtx3::scoped_range sr("Waiting for sinogram buffer ready");
 #endif
-            while (!recon_->tryPrepareSinoBuffer()) {
+            while (!recon_->tryPrepareSinoBuffer(100)) {
                 if (closing_) return;
             }
 
@@ -168,7 +168,7 @@ void Application::startReconstructing() {
         while (!closing_) {
             if(waitForProcessing()) continue;
 
-            if (!recon_->fetchSinoBuffer()) continue;
+            if (!recon_->fetchSinoBuffer(100)) continue;
 
             {
                 spdlog::debug("Uploading sinograms to GPU - started");
@@ -200,7 +200,7 @@ void Application::startReconstructing() {
                 if (volume_required_) {
                     spdlog::debug("Reconstructing volume - started");
 
-                    recon_->reconstructVolume(gpu_buffer_index_, volume_buffer_.back());
+                    recon_->reconstructVolume(gpu_buffer_index_);
                 }
 
                 spdlog::debug("Reconstructing slices - started");
@@ -211,7 +211,7 @@ void Application::startReconstructing() {
 
                 monitor_->countTomogram();
 
-                if (volume_buffer_.prepare()) {
+                if (recon_->prepareVolumeBuffer()) {
                     spdlog::debug("Reconstructed volume dropped due to slowness of clients");
                 }
             }
@@ -426,10 +426,9 @@ std::optional<rpc::ProjectionData> Application::getProjectionData(int timeout) {
 }
 
 std::vector<rpc::ReconData> Application::getVolumeData(int timeout) {
-    if (volume_buffer_.fetch(timeout)) {
-        auto& data = volume_buffer_.front();
-        auto [x, y, z] = data.shape();
-        return createVolumeDataPacket(data, x, y, z);
+    auto data = recon_->fetchVolumeData(timeout);
+    if (data.ptr != nullptr) {
+        return createVolumeDataPacket(data.ptr, data.x, data.y, data.z);
     }
     return {};
 }
@@ -525,7 +524,6 @@ void Application::initReconstructor(uint32_t col_count, uint32_t row_count) {
         p_size, p_size, p_size, min_x, max_x, min_y, max_y, min_y, max_y
     };
 
-    volume_buffer_.resize({volume_geom.col_count, volume_geom.row_count, volume_geom.slice_count});
     slice_mediator_->resize({slice_geom.col_count, slice_geom.row_count});
 
     double_buffering_ = scan_mode_ == rpc::ScanMode_Mode_DYNAMIC;

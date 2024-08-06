@@ -94,8 +94,6 @@ class Application {
     std::unique_ptr<ProjectionMediator> proj_mediator_;
     std::unique_ptr<SliceMediator> slice_mediator_;
 
-    TripleTensorBuffer<ProDtype, 3> volume_buffer_;
-
     ImageprocParams imgproc_params_;
     std::optional<PaganinParams> paganin_cfg_;
     std::unique_ptr<Preprocessor> preproc_;

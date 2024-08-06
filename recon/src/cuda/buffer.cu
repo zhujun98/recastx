@@ -6,27 +6,37 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
+#include <functional>
+
 #include <recon/cuda/utils.cuh>
 #include "recon/cuda/buffer.cuh"
 
 namespace recastx::recon {
 
-DeviceTensor::DeviceTensor() = default;
+template<typename T, size_t N>
+DeviceTensor<T, N>::DeviceTensor() = default;
 
-DeviceTensor::~DeviceTensor() {
+template<typename T, size_t N>
+DeviceTensor<T, N>::~DeviceTensor() {
     if (data_ != nullptr) cudaFreeHost(data_);
 }
 
-void DeviceTensor::swap(DeviceTensor& other) noexcept {
+template<typename T, size_t N>
+void DeviceTensor<T, N>::swap(DeviceTensor& other) noexcept {
     std::swap(data_, other.data_);
     shape_.swap(other.shape_);
 }
 
-void DeviceTensor::resize(const ShapeType& shape) {
+template<typename T, size_t N>
+void DeviceTensor<T, N>::resize(const ShapeType& shape) {
     if (data_ != nullptr) cudaFreeHost(data_);
-    checkCudaError(cudaMallocHost((void**)&data_, shape[0] * shape[1] * shape[2] * sizeof(ValueType)));
+    size_t n = std::accumulate(std::begin(shape), std::end(shape), 1, std::multiplies<size_t>());
+    checkCudaError(cudaMallocHost((void**)&data_, n * sizeof(ValueType)));
     shape_ = shape;
 }
+
+template class DeviceTensor<ProDtype, 3>;
+template class DeviceTensor<ProDtype, 2>;
 
 
 TripleGpuTensorBuffer::TripleGpuTensorBuffer() = default;

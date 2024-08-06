@@ -44,9 +44,11 @@ endif()
 set(ASTRA_INCLUDE_DIR ${CMAKE_PREFIX_PATH}/include)
 
 set(RECON_CUDA_SOURCES "src/cuda/buffer.cu"
-                       "src/cuda/recon3d.cu"
+                       "src/cuda/reconstructable.cu"
                        "src/cuda/memory.cu"
-                       "src/cuda/sinogram_manager.cu")
+                       "src/cuda/sinogram_proxy.cu"
+                       "src/cuda/volume_proxy.cu"
+)
 set(RECON_CUDA_LIB _recastx-recon-cuda)
 add_library(${RECON_CUDA_LIB} ${RECON_CUDA_SOURCES})
 target_link_libraries(${RECON_CUDA_LIB} PRIVATE spdlog::spdlog astra-toolbox)

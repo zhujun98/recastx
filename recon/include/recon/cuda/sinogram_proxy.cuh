@@ -6,8 +6,8 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
-#ifndef RECON_CUDA_SINOGRAM_MANAGER_H
-#define RECON_CUDA_SINOGRAM_MANAGER_H
+#ifndef RECON_CUDA_SINOGRAM_PROXY_H
+#define RECON_CUDA_SINOGRAM_PROXY_H
 
 #include "astra/Float32ProjectionData3DGPU.h"
 
@@ -17,11 +17,9 @@ namespace recastx::recon {
 
 class Stream;
 
-class SinogramManager {
+class SinogramProxy {
 
-    using BufferType = TripleGpuTensorBuffer;
-
-    BufferType buffer_;
+    SinogramBuffer buffer_;
 
     size_t start_;
     size_t group_size_;
@@ -33,21 +31,21 @@ class SinogramManager {
 
   public:
 
-    explicit SinogramManager(size_t group_size);
+    explicit SinogramProxy(size_t group_size);
 
-    ~SinogramManager();
+    ~SinogramProxy();
 
-    void load(astra::CFloat32ProjectionData3DGPU *dst);
+    void copyToDevice(astra::CFloat32ProjectionData3DGPU *dst);
 
-    bool tryPrepareBuffer() {
-        return buffer_.tryPrepare(100);
+    bool tryPrepareBuffer(int timeout) {
+        return buffer_.tryPrepare(timeout);
     }
 
-    bool fetchBuffer() {
-        return buffer_.fetch(100);
+    bool fetchBuffer(int timeout) {
+        return buffer_.fetch(timeout);
     }
 
-    void reshapeBuffer(BufferType::ShapeType shape) {
+    void reshapeBuffer(SinogramBuffer::ShapeType shape) {
         buffer_.resize(shape);
     }
 
@@ -56,4 +54,4 @@ class SinogramManager {
 
 } // recastx::recon
 
-#endif // RECON_CUDA_SINOGRAM_MANAGER_H
+#endif // RECON_CUDA_SINOGRAM_PROXY_H
