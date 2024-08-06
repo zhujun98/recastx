@@ -33,13 +33,13 @@
 namespace recastx::recon {
 
 class AstraMemHandleArray;
-class SinogramManager;
+class SinogramProxy;
 
 class AstraReconstructor : public Reconstructor {
 
 protected:
 
-    std::unique_ptr<SinogramManager> sino_manager_;
+    std::unique_ptr<SinogramProxy> sino_proxy_;
 
     std::vector<std::unique_ptr<astra::CFloat32ProjectionData3DGPU>> data_;
     std::vector<AstraMemHandleArray> mem_;
@@ -61,9 +61,9 @@ public:
 
     void uploadSinograms(int buffer_idx) override;
 
-    bool tryPrepareSinoBuffer() override;
+    bool tryPrepareSinoBuffer(int timeout) override;
 
-    bool fetchSinoBuffer() override;
+    bool fetchSinoBuffer(int timeout) override;
 
     void reshapeSinoBuffer(std::array<size_t, 3>) override;
 

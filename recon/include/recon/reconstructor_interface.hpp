@@ -18,7 +18,7 @@ namespace recastx::recon {
 
 class Reconstructor {
 
-public:
+  public:
 
     virtual ~Reconstructor() = default;
 
@@ -28,9 +28,9 @@ public:
 
     virtual void uploadSinograms(int buffer_idx) = 0;
 
-    virtual bool tryPrepareSinoBuffer() = 0;
+    virtual bool tryPrepareSinoBuffer(int timeout) = 0;
 
-    virtual bool fetchSinoBuffer() = 0;
+    virtual bool fetchSinoBuffer(int timeout) = 0;
 
     virtual void reshapeSinoBuffer(std::array<size_t, 3>) = 0;
 

@@ -113,7 +113,7 @@ TEST(TestPreprocessing, TestCopyToSinogram) {
 
     {
         Tensor<int, 3> dst ({3, 2, 4});
-        copyToSinogram(dst, src, 0, 2, 3, 4, 0);
+        copyToSinogram(dst.data(), src, 0, 2, 3, 4, 0);
         EXPECT_THAT(dst, ElementsAreArray({1, 1, 1, 1,
                                            0, 0, 0, 0,
                                            1, 1, 1, 1,
@@ -124,7 +124,7 @@ TEST(TestPreprocessing, TestCopyToSinogram) {
 
     {
         Tensor<int, 3> dst ({3, 2, 4});
-        copyToSinogram(dst, src, 1, 2, 3, 4, 0);
+        copyToSinogram(dst.data(), src, 1, 2, 3, 4, 0);
         EXPECT_THAT(dst, ElementsAreArray({0, 0, 0, 0,
                                            1, 1, 1, 1,
                                            0, 0, 0, 0,
@@ -135,7 +135,7 @@ TEST(TestPreprocessing, TestCopyToSinogram) {
 
     {
         Tensor<int, 3> dst ({3, 2, 4});
-        copyToSinogram(dst, src, 1, 2, 3, 4, 1);
+        copyToSinogram(dst.data(), src, 1, 2, 3, 4, 1);
         EXPECT_THAT(dst, ElementsAreArray({0, 0, 0, 0,
                                            1, 1, 1, 0,
                                            0, 0, 0, 0,
@@ -146,7 +146,7 @@ TEST(TestPreprocessing, TestCopyToSinogram) {
 
     {
         Tensor<int, 3> dst ({3, 2, 4});
-        copyToSinogram(dst, src, 1, 2, 3, 4, -1);
+        copyToSinogram(dst.data(), src, 1, 2, 3, 4, -1);
         EXPECT_THAT(dst, ElementsAreArray({0, 0, 0, 0,
                                            0, 1, 1, 1,
                                            0, 0, 0, 0,

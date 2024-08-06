@@ -151,7 +151,7 @@ void Application::startPreprocessing() {
 #if defined(BENCHMARK)
             nvtx3::scoped_range sr("Waiting for sinogram buffer ready");
 #endif
-            while (!recon_->tryPrepareSinoBuffer()) {
+            while (!recon_->tryPrepareSinoBuffer(100)) {
                 if (closing_) return;
             }
 
@@ -168,7 +168,7 @@ void Application::startReconstructing() {
         while (!closing_) {
             if(waitForProcessing()) continue;
 
-            if (!recon_->fetchSinoBuffer()) continue;
+            if (!recon_->fetchSinoBuffer(100)) continue;
 
             {
                 spdlog::debug("Uploading sinograms to GPU - started");

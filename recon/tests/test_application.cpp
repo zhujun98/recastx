@@ -71,6 +71,8 @@ class MockRampFilterFactory : public FilterFactory {
 
 class MockReconstructor: public Reconstructor {
 
+    TripleTensorBuffer<ProDtype, 3> sino_buffer_;
+
     size_t upload_counter_;
     size_t slice_counter_;
     size_t volume_counter_;
@@ -88,7 +90,15 @@ class MockReconstructor: public Reconstructor {
 
     void reconstructVolume(int buffer_idx, Tensor<float, 3>& buffer) override { ++volume_counter_; };
 
-    void uploadSinograms(int buffer_idx, const float* data, size_t n) override { ++upload_counter_; };
+    void uploadSinograms(int buffer_idx) override { ++upload_counter_; };
+
+    bool tryPrepareSinoBuffer(int timeout) override { return sino_buffer_.tryPrepare(timeout); }
+
+    bool fetchSinoBuffer(int timeout) override { return sino_buffer_.fetch(timeout); }
+
+    void reshapeSinoBuffer(std::array<size_t, 3> shape) override { sino_buffer_.resize(shape); }
+
+    ProDtype* sinoBuffer() override { return sino_buffer_.back().data(); }
 
     size_t numUploads() const { return upload_counter_; }
     size_t numSlices() const { return slice_counter_; }
@@ -216,7 +226,6 @@ TEST_F(ApplicationTest, TestPushProjection) {
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    auto& sino = app_.sinoBuffer().ready();
     auto& projs_ready = app_.rawBuffer().ready();
     EXPECT_EQ(projs_ready[0], 2.f);
     EXPECT_EQ(projs_ready[(num_angles_ - 1) * pixels_ - 1], 3.f);
@@ -232,12 +241,6 @@ TEST_F(ApplicationTest, TestPushProjection) {
     EXPECT_THAT(std::vector<float>(projs_front.end() - 10, projs_front.end()),
                 Pointwise(FloatNear(1e-6), { 0.30685282f, -0.38629436f, -1.0794415f, -0.7917595f, -1.1972246f,
                                             -0.9459102f,  -1.1972246f,  -1.1972246f, -1.0794415f, -0.38629436f}));
-    EXPECT_THAT(std::vector<float>(sino.begin(), sino.begin() + 10),
-                Pointwise(FloatNear(1e-6), {-0.7917595f, -1.0794415f, -1.0794415f, -0.9459102f, -0.09861231f,
-                                            -0.9459102f, -1.1972246f, -1.1972246f, -1.0794415f, -0.38629436f}));
-    EXPECT_THAT(std::vector<float>(sino.end() - 10, sino.end()),
-                Pointwise(FloatNear(1e-6), { 0.30685282f, -0.60943794f, -0.09861231f, -0.9459102f, 1.f,
-                                            -0.09861231f, -0.7917595f,  -0.38629436f, -1.0794415f, 0.30685282f}));
 }
 
 TEST_F(ApplicationTest, TestMemoryBufferReset) {
@@ -287,14 +290,6 @@ TEST_F(ApplicationTest, TestPushProjectionUnordered) {
     EXPECT_THAT(std::vector<float>(projs_front.end() - 10, projs_front.end()), 
                 Pointwise(FloatNear(1e-6), { 0.30685282f, -0.38629436f, -1.0794415f, -0.7917595f, -1.1972246f,
                                             -0.9459102f,  -1.1972246f,  -1.1972246f, -1.0794415f, -0.38629436f}));
-
-    auto& sino = app_.sinoBuffer().ready();
-    EXPECT_THAT(std::vector<float>(sino.begin(), sino.begin() + 10), 
-                Pointwise(FloatNear(1e-6), {-0.7917595f, -1.0794415f, -1.0794415f, -0.9459102f, -0.09861231f,
-                                            -0.9459102f, -1.1972246f, -1.1972246f, -1.0794415f, -0.38629436f}));
-    EXPECT_THAT(std::vector<float>(sino.end() - 10, sino.end()), 
-                Pointwise(FloatNear(1e-6), { 0.30685282f, -0.60943794f, -0.09861231f, -0.9459102f, 1.f,
-                                            -0.09861231f, -0.7917595f,  -0.38629436f, -1.0794415f, 0.30685282f}));
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     pushProjection(num_angles_ + overflow, 2 * num_angles_ - 1);

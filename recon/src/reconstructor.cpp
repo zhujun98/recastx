@@ -14,7 +14,7 @@
 #include "recon/utils.hpp"
 #include "common/scoped_timer.hpp"
 #include "recon/cuda/memory.cuh"
-#include "recon/cuda/sinogram_manager.cuh"
+#include "recon/cuda/sinogram_proxy.cuh"
 
 namespace recastx::recon {
 
@@ -38,7 +38,7 @@ AstraReconstructor::AstraReconstructor(const ProjectionGeometry& p_geom,
                                        const VolumeGeometry& s_geom, 
                                        const VolumeGeometry& v_geom)
     : Reconstructor(),
-      sino_manager_(new SinogramManager(p_geom.angles.size())),
+      sino_proxy_(new SinogramProxy(p_geom.angles.size())),
       slice_recon_(s_geom),
       volume_recon_(v_geom) {
 }
@@ -52,23 +52,23 @@ void AstraReconstructor::uploadSinograms(int buffer_idx) {
     ScopedTimer timer("Bench", "Uploading sinograms to GPU");
 #endif
 
-    sino_manager_->load(data_[buffer_idx].get());
+    sino_proxy_->copyToDevice(data_[buffer_idx].get());
 }
 
-bool AstraReconstructor::tryPrepareSinoBuffer() {
-    return sino_manager_->tryPrepareBuffer();
+bool AstraReconstructor::tryPrepareSinoBuffer(int timeout) {
+    return sino_proxy_->tryPrepareBuffer(timeout);
 }
 
-bool AstraReconstructor::fetchSinoBuffer() {
-    return sino_manager_->fetchBuffer();
+bool AstraReconstructor::fetchSinoBuffer(int timeout) {
+    return sino_proxy_->fetchBuffer(timeout);
 }
 
 void AstraReconstructor::reshapeSinoBuffer(std::array<size_t, 3> shape) {
-    sino_manager_->reshapeBuffer(shape);
+    sino_proxy_->reshapeBuffer(shape);
 }
 
 ProDtype* AstraReconstructor::sinoBuffer() {
-    return sino_manager_->buffer();
+    return sino_proxy_->buffer();
 }
 
 // class ParallelBeamReconstructor

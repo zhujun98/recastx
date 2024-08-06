@@ -58,6 +58,8 @@ class TripleGpuTensorBuffer : public TripleBuffer<DeviceTensor> {
     [[nodiscard]] const ShapeType& shape() const { return this->front_.shape(); }
 };
 
+using SinogramBuffer = TripleGpuTensorBuffer;
+
 } // recastx::recon
 
 #endif // RECON_CUDA_BUFFER_H
