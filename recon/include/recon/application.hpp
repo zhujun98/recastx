@@ -45,6 +45,8 @@ class Preprocessor;
 class ProjectionMediator;
 class RpcServer;
 class SliceMediator;
+class SinogramProxy;
+class VolumeProxy;
 
 namespace details {
 
@@ -93,6 +95,9 @@ class Application {
 
     std::unique_ptr<ProjectionMediator> proj_mediator_;
     std::unique_ptr<SliceMediator> slice_mediator_;
+
+    std::unique_ptr<SinogramProxy> sino_proxy_;
+    std::unique_ptr<VolumeProxy> volume_proxy_;
 
     ImageprocParams imgproc_params_;
     std::optional<PaganinParams> paganin_cfg_;

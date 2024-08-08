@@ -15,7 +15,6 @@
 #include "common/scoped_timer.hpp"
 #include "recon/cuda/memory.cuh"
 #include "recon/cuda/sinogram_proxy.cuh"
-#include "recon/cuda/volume_proxy.cuh"
 
 namespace recastx::recon {
 
@@ -39,53 +38,20 @@ AstraReconstructor::AstraReconstructor(const ProjectionGeometry& p_geom,
                                        const VolumeGeometry& s_geom, 
                                        const VolumeGeometry& v_geom)
     : Reconstructor(),
-      sino_proxy_(new SinogramProxy(p_geom.angles.size())),
-      volume_proxy_(new VolumeProxy),
       slice_recon_(s_geom),
       volume_recon_(v_geom) {
-    volume_proxy_->reshapeBuffer({v_geom.col_count, v_geom.row_count, v_geom.slice_count});
 }
 
 AstraReconstructor::~AstraReconstructor() = default;
 
-void AstraReconstructor::uploadSinograms(int buffer_idx) {
+void AstraReconstructor::uploadSinograms(int buffer_idx, SinogramProxy* sino_proxy) {
     spdlog::debug("Copying sinogram to GPU buffer {}", buffer_idx);
 
 #if (VERBOSITY >= 2)
     ScopedTimer timer("Bench", "Uploading sinograms to GPU");
 #endif
 
-    sino_proxy_->copyToDevice(data_[buffer_idx].get());
-}
-
-bool AstraReconstructor::tryPrepareSinoBuffer(int timeout) {
-    return sino_proxy_->tryPrepareBuffer(timeout);
-}
-
-bool AstraReconstructor::fetchSinoBuffer(int timeout) {
-    return sino_proxy_->fetchBuffer(timeout);
-}
-
-void AstraReconstructor::reshapeSinoBuffer(std::array<size_t, 3> shape) {
-    sino_proxy_->reshapeBuffer(shape);
-}
-
-ProDtype* AstraReconstructor::sinoBuffer() {
-    return sino_proxy_->buffer();
-}
-
-bool AstraReconstructor::prepareVolumeBuffer() {
-    return volume_proxy_->prepareBuffer();
-}
-
-Reconstructor::Data3D AstraReconstructor::fetchVolumeData(int timeout) const {
-    bool has_data = volume_proxy_->fetchBuffer(timeout);
-    if (has_data) {
-        const auto* ptr = volume_proxy_->data();
-        auto [x, y, z] = volume_proxy_->shape();
-        return {ptr, x, y, z};
-    }
-    return {nullptr, 0, 0, 0};
+    sino_proxy->copyToDevice(data_[buffer_idx].get());
 }
 
 // class ParallelBeamReconstructor
@@ -184,7 +150,7 @@ void ParallelBeamReconstructor::reconstructSlice(Orientation x, int buffer_idx, 
     slice_recon_.copySlice(buffer.data());
 }
 
-void ParallelBeamReconstructor::reconstructVolume(int buffer_idx) {
+void ParallelBeamReconstructor::reconstructVolume(int buffer_idx, ProDtype* buffer) {
 
 #if (VERBOSITY >= 2)
     ScopedTimer timer("Bench", "Reconstructing volume");
@@ -193,7 +159,7 @@ void ParallelBeamReconstructor::reconstructVolume(int buffer_idx) {
     spdlog::debug("Reconstructing volume with buffer index: {}", buffer_idx);
     data_[buffer_idx]->changeGeometry(v_geom_.get());
     volume_algo_[buffer_idx]->run();
-    volume_recon_.copyVolume(volume_proxy_->buffer());
+    volume_recon_.copyVolume(buffer);
 }
 
 // class ConeBeamReconstructor
@@ -288,10 +254,10 @@ void ConeBeamReconstructor::reconstructSlice(Orientation x, int buffer_idx, Tens
     slice_recon_.copySlice(buffer.data());
 }
 
-void ConeBeamReconstructor::reconstructVolume(int buffer_idx) {
+void ConeBeamReconstructor::reconstructVolume(int buffer_idx, ProDtype* buffer) {
     data_[buffer_idx]->changeGeometry(v_geom_.get());
     volume_algo_[buffer_idx]->run();
-    volume_recon_.copyVolume(volume_proxy_->buffer());
+    volume_recon_.copyVolume(buffer);
 }
 
 std::vector<float> ConeBeamReconstructor::fdk_weights() {

@@ -437,7 +437,6 @@ void MemoryBuffer<T, N>::fill(size_t index, const char* src, const std::array<si
             registerChunk(i);
         }
     } else if (chunk_idx < chunk_indices_.front()) {
-
 #if (VERBOSITY >= 1)
         spdlog::warn("[Image buffer] Received projection with outdated chunk index: {}, data ignored!",
                      chunk_idx);

@@ -19,6 +19,13 @@ class VolumeProxy {
 
 public:
 
+    struct Data3D {
+        const ProDtype* ptr;
+        size_t x;
+        size_t y;
+        size_t z;
+    };
+
     VolumeProxy();
 
     ~VolumeProxy();
@@ -27,8 +34,14 @@ public:
         return buffer_.prepare();
     }
 
-    bool fetchBuffer(int timeout) {
-        return buffer_.fetch(timeout);
+    Data3D fetchData(int timeout) {
+        bool has_data = buffer_.fetch(timeout);
+        if (has_data) {
+            const auto* ptr = buffer_.front().data();
+            auto [x, y, z] = buffer_.shape();
+            return {ptr, x, y, z};
+        }
+        return {nullptr, 0, 0, 0};
     }
 
     void reshapeBuffer(VolumeBuffer::ShapeType shape) {
@@ -38,7 +51,6 @@ public:
     [[nodiscard]] VolumeBuffer::ShapeType shape() const { return buffer_.shape(); }
 
     [[nodiscard]] ProDtype* buffer() { return buffer_.back().data(); }
-    [[nodiscard]] const ProDtype* data() const { return buffer_.front().data(); }
 };
 
 } // recastx::recon
