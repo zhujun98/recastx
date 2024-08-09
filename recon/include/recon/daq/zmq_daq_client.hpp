@@ -37,7 +37,6 @@ class ZmqDaqClient : public DaqClientInterface {
     std::mutex mtx_;
 
     bool running_ = false;
-    bool acquiring_ = false;
 
     virtual std::optional<nlohmann::json> parseMeta(const zmq::message_t& msg);
 
@@ -48,8 +47,6 @@ class ZmqDaqClient : public DaqClientInterface {
     ZmqDaqClient(const std::string& endpoint, const std::string& socket_type, size_t concurrency);
 
     ~ZmqDaqClient() override;
-
-    void setAcquiring(bool state) override;
 
     void spin() override;
 

@@ -59,6 +59,8 @@ void Preprocessor::process(RawBufferType& raw_buffer,
                                       negativeLog(p, num_pixels);
                                   }
 
+                                  // FIXME: performance drops significantly if any dimension is not a produce of
+                                  //        powers of small primes!!!
                                   ramp_filter_->apply(p, tbb::this_task_arena::current_thread_index());
 
                                   // TODO: Add FDK scaler for cone beam

@@ -45,6 +45,8 @@ class Preprocessor;
 class ProjectionMediator;
 class RpcServer;
 class SliceMediator;
+class SinogramProxy;
+class VolumeProxy;
 
 namespace details {
 
@@ -94,6 +96,9 @@ class Application {
     std::unique_ptr<ProjectionMediator> proj_mediator_;
     std::unique_ptr<SliceMediator> slice_mediator_;
 
+    std::unique_ptr<SinogramProxy> sino_proxy_;
+    std::unique_ptr<VolumeProxy> volume_proxy_;
+
     ImageprocParams imgproc_params_;
     std::optional<PaganinParams> paganin_cfg_;
     std::unique_ptr<Preprocessor> preproc_;
@@ -124,8 +129,10 @@ class Application {
 
     int gpu_buffer_index_ = 0;
     bool double_buffering_ = true;
+    bool sino_uploaded_ = false;
     bool sino_initialized_ = false;
-    std::mutex gpu_mtx_;
+    std::mutex recon_mtx_;
+    std::condition_variable recon_cv_;
 
     rpc::ServerState_State server_state_ = rpc::ServerState_State_UNKNOWN;
     rpc::ScanMode_Mode scan_mode_;
@@ -144,7 +151,7 @@ class Application {
 
     void maybeInitFlatFieldBuffer(uint32_t row_count, uint32_t col_count);
 
-    void maybeInitReconBuffer(uint32_t col_count, uint32_t row_count);
+    void maybeInitDataBuffer(uint32_t col_count, uint32_t row_count);
 
     void maybeResetDarkAndFlatAcquisition();
 
@@ -207,9 +214,9 @@ class Application {
 
     void startPreprocessing();
 
-    void startReconstructing();
+    void startUploading();
 
-    void startReconstructingOnDemand();
+    void startReconstructing();
 
     void spin();
 

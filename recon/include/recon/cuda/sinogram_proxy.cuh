@@ -22,7 +22,7 @@ class SinogramProxy {
     SinogramBuffer buffer_;
 
     size_t start_;
-    size_t group_size_;
+    size_t angle_count_;
 
     std::unique_ptr<Stream> stream_;
 
@@ -31,9 +31,11 @@ class SinogramProxy {
 
   public:
 
-    explicit SinogramProxy(size_t group_size);
+    SinogramProxy();
 
     ~SinogramProxy();
+
+    void setAngleCount(size_t angle_count) { angle_count_ = angle_count; }
 
     void copyToDevice(astra::CFloat32ProjectionData3DGPU *dst);
 
@@ -41,7 +43,7 @@ class SinogramProxy {
         return buffer_.tryPrepare(timeout);
     }
 
-    bool fetchBuffer(int timeout) {
+    bool fetchData(int timeout) {
         return buffer_.fetch(timeout);
     }
 
@@ -50,6 +52,8 @@ class SinogramProxy {
     }
 
     [[nodiscard]] ProDtype* buffer() { return buffer_.back().data(); }
+
+    void reset() { start_ = 0; }
 };
 
 } // recastx::recon

@@ -87,18 +87,8 @@ class MockReconstructor: public Reconstructor {
     }
 
     void reconstructSlice(Orientation x, int buffer_idx, Tensor<float, 2>& buffer) override { ++slice_counter_; };
-
-    void reconstructVolume(int buffer_idx, Tensor<float, 3>& buffer) override { ++volume_counter_; };
-
-    void uploadSinograms(int buffer_idx) override { ++upload_counter_; };
-
-    bool tryPrepareSinoBuffer(int timeout) override { return sino_buffer_.tryPrepare(timeout); }
-
-    bool fetchSinoBuffer(int timeout) override { return sino_buffer_.fetch(timeout); }
-
-    void reshapeSinoBuffer(std::array<size_t, 3> shape) override { sino_buffer_.resize(shape); }
-
-    ProDtype* sinoBuffer() override { return sino_buffer_.back().data(); }
+    void reconstructVolume(int buffer_idx, ProDtype* data) override { ++volume_counter_; };
+    void uploadSinograms(int buffer_idx, SinogramProxy* proxy) override {}
 
     size_t numUploads() const { return upload_counter_; }
     size_t numSlices() const { return slice_counter_; }

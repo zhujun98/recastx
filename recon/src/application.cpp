@@ -25,6 +25,8 @@
 #include "recon/projection_mediator.hpp"
 #include "recon/rpc_server.hpp"
 #include "recon/slice_mediator.hpp"
+#include "recon/cuda/sinogram_proxy.cuh"
+#include "recon/cuda/volume_proxy.cuh"
 
 namespace recastx::recon {
 
@@ -40,7 +42,9 @@ Application::Application(size_t raw_buffer_size,
      : raw_buffer_(raw_buffer_size),
        monitor_(new Monitor()),
        proj_mediator_(new ProjectionMediator(k_PROJECTION_MEDIATOR_BUFFER_SIZE)),
-       slice_mediator_(new SliceMediator()),
+       slice_mediator_(new SliceMediator),
+       sino_proxy_(new SinogramProxy),
+       volume_proxy_(new VolumeProxy),
        imgproc_params_(imageproc_params),
        preproc_(new Preprocessor(ramp_filter_factory, imageproc_params.num_threads)),
        recon_factory_(recon_factory),
@@ -144,14 +148,14 @@ void Application::startPreprocessing() {
 #if defined(BENCHMARK)
                 nvtx3::scoped_range sr("Preprocessing projections");
 #endif
-                preproc_->process(raw_buffer_, recon_->sinoBuffer(), dark_avg_, reciprocal_, imgproc_params_.offset);
+                preproc_->process(raw_buffer_, sino_proxy_->buffer(), dark_avg_, reciprocal_, imgproc_params_.offset);
             }
 
 
 #if defined(BENCHMARK)
             nvtx3::scoped_range sr("Waiting for sinogram buffer ready");
 #endif
-            while (!recon_->tryPrepareSinoBuffer(100)) {
+            while (!sino_proxy_->tryPrepareBuffer(100)) {
                 if (closing_) return;
             }
 
@@ -162,13 +166,13 @@ void Application::startPreprocessing() {
     t.detach();
 }
 
-void Application::startReconstructing() {
+void Application::startUploading() {
 
     auto t = std::thread([&] {
         while (!closing_) {
             if(waitForProcessing()) continue;
 
-            if (!recon_->fetchSinoBuffer(100)) continue;
+            if (!sino_proxy_->fetchData(100)) continue;
 
             {
                 spdlog::debug("Uploading sinograms to GPU - started");
@@ -178,13 +182,15 @@ void Application::startReconstructing() {
 #endif
 
                 if (double_buffering_) {
-                    recon_->uploadSinograms(1 - gpu_buffer_index_);
+                    recon_->uploadSinograms(1 - gpu_buffer_index_, sino_proxy_.get());
 
-                    std::lock_guard<std::mutex> lck(gpu_mtx_);
+                    std::lock_guard<std::mutex> lck(recon_mtx_);
                     gpu_buffer_index_ = 1 - gpu_buffer_index_;
+                    sino_uploaded_ = true;
                 } else {
-                    std::lock_guard<std::mutex> lck(gpu_mtx_);
-                    recon_->uploadSinograms(gpu_buffer_index_);
+                    std::lock_guard<std::mutex> lck(recon_mtx_);
+                    recon_->uploadSinograms(gpu_buffer_index_, sino_proxy_.get());
+                    sino_uploaded_ = true;
                 }
 
                 sino_initialized_ = true;
@@ -192,49 +198,64 @@ void Application::startReconstructing() {
                 spdlog::debug("Uploading sinograms to GPU - finished");
             }
 
-            {
-#if defined(BENCHMARK)
-                nvtx3::scoped_range sr("Reconstructing volume and slices");
-#endif
-
-                if (volume_required_) {
-                    spdlog::debug("Reconstructing volume - started");
-
-                    recon_->reconstructVolume(gpu_buffer_index_);
-                }
-
-                spdlog::debug("Reconstructing slices - started");
-
-                slice_mediator_->reconAll(recon_.get(), gpu_buffer_index_);
-
-                spdlog::debug("Reconstructing - finished");
-
-                monitor_->countTomogram();
-
-                if (recon_->prepareVolumeBuffer()) {
-                    spdlog::debug("Reconstructed volume dropped due to slowness of clients");
-                }
-            }
+            recon_cv_.notify_one();
         }
     });
 
     t.detach();
 }
 
-void Application::startReconstructingOnDemand() {
+
+void Application::startReconstructing() {
 
     auto t = std::thread([&] {
         while (!closing_) {
-            if (sino_initialized_) {
+            {
+                std::unique_lock<std::mutex> lck(recon_mtx_);
+                if (recon_cv_.wait_for(lck, 10ms, [&] { return sino_uploaded_; })) {
+
+                    if (volume_required_) {
+                        spdlog::debug("Reconstructing volume - started");
 
 #if defined(BENCHMARK)
-                nvtx3::scoped_range sr("Reconstructing on-demand slices");
+                        nvtx3::scoped_range sr("Reconstructing volume");
 #endif
-                std::lock_guard<std::mutex> lck(gpu_mtx_);
-                slice_mediator_->reconOnDemand(recon_.get(), gpu_buffer_index_);
+
+                        recon_->reconstructVolume(gpu_buffer_index_, volume_proxy_->buffer());
+                    }
+
+                    spdlog::debug("Reconstructing slices - started");
+
+
+#if defined(BENCHMARK)
+                    nvtx3::scoped_range sr("Reconstructing all slices");
+#endif
+
+                    slice_mediator_->reconAll(recon_.get(), gpu_buffer_index_);
+
+                    sino_uploaded_ = false;
+
+                    monitor_->countTomogram();
+
+                    spdlog::debug("Reconstructing - finished");
+
+                    if (volume_proxy_->prepareBuffer()) {
+                        spdlog::debug("Reconstructed volume dropped due to slowness of clients");
+                    }
+
+                } else {
+                    if (sino_initialized_) {
+#if defined(BENCHMARK)
+                        nvtx3::scoped_range sr("Reconstructing on-demand slices");
+#endif
+                        slice_mediator_->reconOnDemand(recon_.get(), gpu_buffer_index_);
+                    }
+
+                    continue;
+                }
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
+
     });
 
     t.detach();
@@ -283,8 +304,8 @@ void Application::consume() {
 }
 
 void Application::spin() {
-    startReconstructingOnDemand();
     startReconstructing();
+    startUploading();
     startPreprocessing();
     startConsuming();
 
@@ -356,7 +377,7 @@ void Application::startAcquiring() {
     server_state_ = rpc::ServerState_State_ACQUIRING;
     spdlog::info("Preparing for acquiring data");
 
-    monitor_.reset(new Monitor(orig_col_count_ * orig_row_count_ * sizeof(RawDtype) * angle_count_, group_size_));
+    monitor_.reset(new Monitor(0, group_size_));
 
     daq_client_->setAcquiring(true);
 }
@@ -396,9 +417,9 @@ void Application::startProcessing() {
         spdlog::info("- Scan mode: static");
     }
 
-    monitor_.reset(new Monitor(orig_col_count_ * orig_row_count_ * sizeof(RawDtype) * angle_count_, group_size_));
+    monitor_.reset(new Monitor(orig_col_count_ * orig_row_count_ * sizeof(RawDtype) * group_size_, group_size_));
 
-    daq_client_->setAcquiring(true);
+    daq_client_->startAcquiring(orig_row_count_, orig_col_count_);
 }
 
 void Application::stopProcessing() {
@@ -420,13 +441,14 @@ std::optional<rpc::ProjectionData> Application::getProjectionData(int timeout) {
     ProjectionMediator::DataType proj;
     if (proj_mediator_->waitAndPop(proj, timeout)) {
         auto [y, x] = proj.data.shape();
-        return createProjectionDataPacket(proj.index % angle_count_, x, y, proj.data);
+        auto mod = angle_count_ == 0 ? 1 : angle_count_;
+        return createProjectionDataPacket(proj.index % mod, x, y, proj.data);
     }
     return std::nullopt;
 }
 
 std::vector<rpc::ReconData> Application::getVolumeData(int timeout) {
-    auto data = recon_->fetchVolumeData(timeout);
+    auto data = volume_proxy_->fetchData(timeout);
     if (data.ptr != nullptr) {
         return createVolumeDataPacket(data.ptr, data.x, data.y, data.z);
     }
@@ -479,11 +501,11 @@ void Application::init() {
 
     maybeInitFlatFieldBuffer(row_count, col_count);
 
-    preproc_->init(raw_buffer_, col_count, row_count, imgproc_params_, paganin_cfg_);
+    maybeInitDataBuffer(col_count, row_count);
 
     initReconstructor(col_count, row_count);
 
-    maybeInitReconBuffer(col_count, row_count);
+    preproc_->init(raw_buffer_, col_count, row_count, imgproc_params_, paganin_cfg_);
 
     spdlog::info("[Init] ------------------------------------------------------------");
 }
@@ -501,34 +523,6 @@ void Application::initParams() {
 
     sino_initialized_ = false;
     gpu_buffer_index_ = 0;
-}
-
-void Application::initReconstructor(uint32_t col_count, uint32_t row_count) {
-    auto [min_x, max_x] = details::parseReconstructedVolumeBoundary(min_x_, max_x_, col_count);
-    auto [min_y, max_y] = details::parseReconstructedVolumeBoundary(min_y_, max_y_, col_count);
-    auto [min_z, max_z] = details::parseReconstructedVolumeBoundary(min_z_, max_z_, row_count);
-
-    uint32_t s_size = slice_size_.value_or(expandDataSizeForGpu(col_count, 64));
-    uint32_t p_size = volume_size_.value_or(128);
-    float half_slice_height = 0.5f * (max_z - min_z) / p_size;
-    float z0 = 0.5f * (max_z + min_z);
-
-    ProjectionGeometry proj_geom {
-        beam_shape_, col_count, row_count, pixel_width_, pixel_height_, source2origin_, origin2detector_,
-        defaultAngles(angle_count_, angle_range_ == AngleRange::HALF ? 1.f : 2.f)
-    };
-    VolumeGeometry slice_geom {
-        s_size, s_size, 1, min_x, max_x, min_y, max_y, z0 - half_slice_height, z0 + half_slice_height
-    };
-    VolumeGeometry volume_geom {
-        p_size, p_size, p_size, min_x, max_x, min_y, max_y, min_y, max_y
-    };
-
-    slice_mediator_->resize({slice_geom.col_count, slice_geom.row_count});
-
-    double_buffering_ = scan_mode_ == rpc::ScanMode_Mode_DYNAMIC;
-    recon_.reset();
-    recon_ = recon_factory_->create(proj_geom, slice_geom, volume_geom, double_buffering_);
 }
 
 void Application::maybeInitFlatFieldBuffer(uint32_t row_count, uint32_t col_count) {
@@ -558,17 +552,52 @@ void Application::maybeInitFlatFieldBuffer(uint32_t row_count, uint32_t col_coun
     reciprocal_computed_ = false;
 }
 
-void Application::maybeInitReconBuffer(uint32_t col_count, uint32_t row_count) {
+void Application::maybeInitDataBuffer(uint32_t col_count, uint32_t row_count) {
     double sino_size = col_count * row_count * angle_count_ * sizeof(ProDtype) / static_cast<double>(1024 * 1024);
     spdlog::info("[Init] - Sinogram size: {:.1f} MB", sino_size);
 
     auto shape = raw_buffer_.shape();
     if (shape[0] != group_size_ || shape[1] != row_count || shape[2] != col_count) {
         raw_buffer_.resize({group_size_, row_count, col_count});
-        recon_->reshapeSinoBuffer({group_size_, row_count, col_count});
+        sino_proxy_->reshapeBuffer({group_size_, row_count, col_count});
         spdlog::debug("Reconstruction buffers resized");
     }
+    sino_proxy_->setAngleCount(angle_count_);
     raw_buffer_.reset();
+    sino_proxy_->reset();
+}
+
+void Application::initReconstructor(uint32_t col_count, uint32_t row_count) {
+    auto [min_x, max_x] = details::parseReconstructedVolumeBoundary(min_x_, max_x_, col_count);
+    auto [min_y, max_y] = details::parseReconstructedVolumeBoundary(min_y_, max_y_, col_count);
+    auto [min_z, max_z] = details::parseReconstructedVolumeBoundary(min_z_, max_z_, row_count);
+
+    uint32_t s_size = slice_size_.value_or(expandDataSizeForGpu(col_count, 64));
+    uint32_t p_size = volume_size_.value_or(128);
+    float half_slice_height = 0.5f * (max_z - min_z) / p_size;
+    float z0 = 0.5f * (max_z + min_z);
+
+    ProjectionGeometry proj_geom {
+            beam_shape_, col_count, row_count, pixel_width_, pixel_height_, source2origin_, origin2detector_,
+            defaultAngles(angle_count_, angle_range_ == AngleRange::HALF ? 1.f : 2.f)
+    };
+    VolumeGeometry slice_geom {
+            s_size, s_size, 1, min_x, max_x, min_y, max_y, z0 - half_slice_height, z0 + half_slice_height
+    };
+    VolumeGeometry volume_geom {
+            p_size, p_size, p_size, min_x, max_x, min_y, max_y, min_y, max_y
+    };
+
+    double_buffering_ = scan_mode_ == rpc::ScanMode_Mode_DYNAMIC;
+    recon_.reset();
+    recon_ = recon_factory_->create(proj_geom, slice_geom, volume_geom, double_buffering_);
+
+    slice_mediator_->resize({slice_geom.col_count, slice_geom.row_count});
+
+    auto shape = volume_proxy_->shape();
+    if (shape[0] != volume_geom.col_count || shape[1] != volume_geom.row_count || shape[2] != volume_geom.slice_count) {
+        volume_proxy_->reshapeBuffer({volume_geom.col_count, volume_geom.row_count, volume_geom.slice_count});
+    }
 }
 
 void Application::maybeResetDarkAndFlatAcquisition() {
@@ -586,8 +615,7 @@ void Application::pushProjection(const Projection<>& proj) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
-    raw_buffer_.fill<RawDtype>(
-        proj.index, reinterpret_cast<const char*>(proj.data.data()), proj.data.shape());
+    raw_buffer_.fill<RawDtype>(proj.index, reinterpret_cast<const char*>(proj.data.data()), proj.data.shape());
 }
 
 } // namespace recastx::recon

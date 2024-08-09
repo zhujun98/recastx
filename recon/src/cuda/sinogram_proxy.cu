@@ -14,29 +14,28 @@
 
 namespace recastx::recon {
 
-SinogramProxy::SinogramProxy(size_t group_size)
-    : start_{0}, group_size_{group_size}, stream_(new Stream) {
+SinogramProxy::SinogramProxy() : start_{0}, stream_(new Stream) {
 }
 
 SinogramProxy::~SinogramProxy() = default;
 
 void SinogramProxy::copyToDevice(astra::CFloat32ProjectionData3DGPU *dst) {
     const float *src = buffer_.front().data();
-    size_t count = buffer_.front().shape()[0];
+    size_t group_size = buffer_.front().shape()[0];
     size_t start = start_;
-    size_t end = (start + count - 1) % group_size_;
+    size_t end = (start + group_size - 1) % angle_count_;
 
     if (end > start) {
         copyToDevice(dst, src, start, end);
         spdlog::debug("Uploaded sinograms {} - {}", start, end);
     } else {
-        copyToDevice(dst, src, start, group_size_ - 1);
-        spdlog::debug("Uploaded sinograms {} - {}", start, group_size_ - 1);
+        copyToDevice(dst, src, start, angle_count_ - 1);
+        spdlog::debug("Uploaded sinograms {} - {}", start, angle_count_ - 1);
         copyToDevice(dst, src, 0, end);
         spdlog::debug("Uploaded sinograms {} - {}", 0, end);
     }
 
-    start_ = (end + 1) % group_size_;
+    start_ = (end + 1) % angle_count_;
 }
 
 void SinogramProxy::copyToDevice(astra::CFloat32ProjectionData3DGPU* proj,

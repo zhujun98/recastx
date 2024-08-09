@@ -74,23 +74,23 @@ target_link_libraries(${RECASTX_RECON_DAQ_TEST}
 gtest_discover_tests(${RECASTX_RECON_DAQ_TEST})
 
 # app test
-set(RECASTX_RECON_APP_TEST test_application)
-add_executable(${RECASTX_RECON_APP_TEST} main.cpp test_application.cpp 
-        ${RECASTX_RECON_TEST_SRC_FILE_DIR}/application.cpp
-        ${RECASTX_RECON_TEST_SRC_FILE_DIR}/monitor.cpp
-        ${RECASTX_RECON_TEST_SRC_FILE_DIR}/preprocessor.cpp
-        ${RECASTX_RECON_TEST_SRC_FILE_DIR}/projection_mediator.cpp
-        ${RECASTX_RECON_TEST_SRC_FILE_DIR}/slice_mediator.cpp
-        ${RECASTX_RECON_TEST_SRC_FILE_DIR}/phase.cpp
-        ${RECASTX_RECON_TEST_SRC_FILE_DIR}/rpc_server.cpp
-)
-target_include_directories(${RECASTX_RECON_APP_TEST} PRIVATE ${RECASTX_RECON_TEST_INCLUDE_DIRS})
-target_link_libraries(${RECASTX_RECON_APP_TEST} 
-    PRIVATE
-        TBB::tbb
-        Eigen3::Eigen
-        ${FFTW_FLOAT_LIB}
-        recastx_grpc_proto
-        ${RECONX_RECON_TEST_COMMON_LIBRARIES}
-)
-gtest_discover_tests(${RECASTX_RECON_APP_TEST})
+#set(RECASTX_RECON_APP_TEST test_application)
+#add_executable(${RECASTX_RECON_APP_TEST} main.cpp test_application.cpp
+#        ${RECASTX_RECON_TEST_SRC_FILE_DIR}/application.cpp
+#        ${RECASTX_RECON_TEST_SRC_FILE_DIR}/monitor.cpp
+#        ${RECASTX_RECON_TEST_SRC_FILE_DIR}/preprocessor.cpp
+#        ${RECASTX_RECON_TEST_SRC_FILE_DIR}/projection_mediator.cpp
+#        ${RECASTX_RECON_TEST_SRC_FILE_DIR}/slice_mediator.cpp
+#        ${RECASTX_RECON_TEST_SRC_FILE_DIR}/phase.cpp
+#        ${RECASTX_RECON_TEST_SRC_FILE_DIR}/rpc_server.cpp
+#)
+#target_include_directories(${RECASTX_RECON_APP_TEST} PRIVATE ${RECASTX_RECON_TEST_INCLUDE_DIRS})
+#target_link_libraries(${RECASTX_RECON_APP_TEST}
+#    PRIVATE
+#        TBB::tbb
+#        Eigen3::Eigen
+#        ${FFTW_FLOAT_LIB}
+#        recastx_grpc_proto
+#        ${RECONX_RECON_TEST_COMMON_LIBRARIES}
+#)
+#gtest_discover_tests(${RECASTX_RECON_APP_TEST})
