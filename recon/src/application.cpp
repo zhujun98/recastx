@@ -430,6 +430,9 @@ void Application::stopProcessing() {
 
     daq_client_->setAcquiring(false);
 
+    // TODO: find a better solution to empty the DAQ buffer
+    std::this_thread::sleep_for(std::chrono::microseconds(1000));
+
     server_state_ = rpc::ServerState_State_READY;
     spdlog::info("Stopping acquiring and processing data");
 
