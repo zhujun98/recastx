@@ -166,7 +166,7 @@ void Application::startPreprocessing() {
     t.detach();
 }
 
-void Application::startReconstructing() {
+void Application::startUploading() {
 
     auto t = std::thread([&] {
         while (!closing_) {
@@ -184,11 +184,13 @@ void Application::startReconstructing() {
                 if (double_buffering_) {
                     recon_->uploadSinograms(1 - gpu_buffer_index_, sino_proxy_.get());
 
-                    std::lock_guard<std::mutex> lck(gpu_mtx_);
+                    std::lock_guard<std::mutex> lck(recon_mtx_);
                     gpu_buffer_index_ = 1 - gpu_buffer_index_;
+                    sino_uploaded_ = true;
                 } else {
-                    std::lock_guard<std::mutex> lck(gpu_mtx_);
+                    std::lock_guard<std::mutex> lck(recon_mtx_);
                     recon_->uploadSinograms(gpu_buffer_index_, sino_proxy_.get());
+                    sino_uploaded_ = true;
                 }
 
                 sino_initialized_ = true;
@@ -196,49 +198,64 @@ void Application::startReconstructing() {
                 spdlog::debug("Uploading sinograms to GPU - finished");
             }
 
-            {
-#if defined(BENCHMARK)
-                nvtx3::scoped_range sr("Reconstructing volume and slices");
-#endif
-
-                if (volume_required_) {
-                    spdlog::debug("Reconstructing volume - started");
-
-                    recon_->reconstructVolume(gpu_buffer_index_, volume_proxy_->buffer());
-                }
-
-                spdlog::debug("Reconstructing slices - started");
-
-                slice_mediator_->reconAll(recon_.get(), gpu_buffer_index_);
-
-                spdlog::debug("Reconstructing - finished");
-
-                monitor_->countTomogram();
-
-                if (volume_proxy_->prepareBuffer()) {
-                    spdlog::debug("Reconstructed volume dropped due to slowness of clients");
-                }
-            }
+            recon_cv_.notify_one();
         }
     });
 
     t.detach();
 }
 
-void Application::startReconstructingOnDemand() {
+
+void Application::startReconstructing() {
 
     auto t = std::thread([&] {
         while (!closing_) {
-            if (sino_initialized_) {
+            {
+                std::unique_lock<std::mutex> lck(recon_mtx_);
+                if (recon_cv_.wait_for(lck, 10ms, [&] { return sino_uploaded_; })) {
+
+                    if (volume_required_) {
+                        spdlog::debug("Reconstructing volume - started");
 
 #if defined(BENCHMARK)
-                nvtx3::scoped_range sr("Reconstructing on-demand slices");
+                        nvtx3::scoped_range sr("Reconstructing volume");
 #endif
-                std::lock_guard<std::mutex> lck(gpu_mtx_);
-                slice_mediator_->reconOnDemand(recon_.get(), gpu_buffer_index_);
+
+                        recon_->reconstructVolume(gpu_buffer_index_, volume_proxy_->buffer());
+                    }
+
+                    spdlog::debug("Reconstructing slices - started");
+
+
+#if defined(BENCHMARK)
+                    nvtx3::scoped_range sr("Reconstructing all slices");
+#endif
+
+                    slice_mediator_->reconAll(recon_.get(), gpu_buffer_index_);
+
+                    sino_uploaded_ = false;
+
+                    monitor_->countTomogram();
+
+                    spdlog::debug("Reconstructing - finished");
+
+                    if (volume_proxy_->prepareBuffer()) {
+                        spdlog::debug("Reconstructed volume dropped due to slowness of clients");
+                    }
+
+                } else {
+                    if (sino_initialized_) {
+#if defined(BENCHMARK)
+                        nvtx3::scoped_range sr("Reconstructing on-demand slices");
+#endif
+                        slice_mediator_->reconOnDemand(recon_.get(), gpu_buffer_index_);
+                    }
+
+                    continue;
+                }
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
+
     });
 
     t.detach();
@@ -287,8 +304,8 @@ void Application::consume() {
 }
 
 void Application::spin() {
-    startReconstructingOnDemand();
     startReconstructing();
+    startUploading();
     startPreprocessing();
     startConsuming();
 

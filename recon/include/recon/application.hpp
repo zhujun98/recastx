@@ -129,8 +129,10 @@ class Application {
 
     int gpu_buffer_index_ = 0;
     bool double_buffering_ = true;
+    bool sino_uploaded_ = false;
     bool sino_initialized_ = false;
-    std::mutex gpu_mtx_;
+    std::mutex recon_mtx_;
+    std::condition_variable recon_cv_;
 
     rpc::ServerState_State server_state_ = rpc::ServerState_State_UNKNOWN;
     rpc::ScanMode_Mode scan_mode_;
@@ -212,9 +214,9 @@ class Application {
 
     void startPreprocessing();
 
-    void startReconstructing();
+    void startUploading();
 
-    void startReconstructingOnDemand();
+    void startReconstructing();
 
     void spin();
 
