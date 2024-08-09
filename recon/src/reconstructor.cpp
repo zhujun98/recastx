@@ -34,9 +34,7 @@ std::string astraInfo(const astra::CProjectionGeometry3D& geom) {
 
 // class Reconstructor
 
-AstraReconstructor::AstraReconstructor(const ProjectionGeometry& p_geom, 
-                                       const VolumeGeometry& s_geom, 
-                                       const VolumeGeometry& v_geom)
+AstraReconstructor::AstraReconstructor(const VolumeGeometry& s_geom, const VolumeGeometry& v_geom)
     : Reconstructor(),
       slice_recon_(s_geom),
       volume_recon_(v_geom) {
@@ -60,7 +58,7 @@ ParallelBeamReconstructor::ParallelBeamReconstructor(const ProjectionGeometry& p
                                                      const VolumeGeometry& s_geom,
                                                      const VolumeGeometry& v_geom,
                                                      bool double_buffering)
-        : AstraReconstructor(p_geom, s_geom, v_geom) {
+        : AstraReconstructor(s_geom, v_geom) {
     uint32_t col_count = p_geom.col_count;
     uint32_t row_count = p_geom.row_count;
     auto& angles = p_geom.angles;
@@ -168,7 +166,7 @@ ConeBeamReconstructor::ConeBeamReconstructor(const ProjectionGeometry& p_geom,
                                              const VolumeGeometry& s_geom,
                                              const VolumeGeometry& v_geom,
                                              bool double_buffering)
-        : AstraReconstructor(p_geom, s_geom, v_geom) {
+        : AstraReconstructor(s_geom, v_geom) {
 
     uint32_t col_count = p_geom.col_count;
     uint32_t row_count = p_geom.row_count;

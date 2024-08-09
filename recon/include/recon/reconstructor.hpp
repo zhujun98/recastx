@@ -50,9 +50,7 @@ protected:
 
 public:
 
-    AstraReconstructor(const ProjectionGeometry& p_geom, 
-                       const VolumeGeometry& s_geom, 
-                       const VolumeGeometry& v_geom);
+    AstraReconstructor(const VolumeGeometry& s_geom, const VolumeGeometry& v_geom);
 
     ~AstraReconstructor() override;
 
