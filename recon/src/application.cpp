@@ -377,7 +377,7 @@ void Application::startAcquiring() {
     server_state_ = rpc::ServerState_State_ACQUIRING;
     spdlog::info("Preparing for acquiring data");
 
-    monitor_.reset(new Monitor(orig_col_count_ * orig_row_count_ * sizeof(RawDtype) * angle_count_, group_size_));
+    monitor_.reset(new Monitor(0, group_size_));
 
     daq_client_->setAcquiring(true);
 }
@@ -417,7 +417,7 @@ void Application::startProcessing() {
         spdlog::info("- Scan mode: static");
     }
 
-    monitor_.reset(new Monitor(orig_col_count_ * orig_row_count_ * sizeof(RawDtype) * angle_count_, group_size_));
+    monitor_.reset(new Monitor(orig_col_count_ * orig_row_count_ * sizeof(RawDtype) * group_size_, group_size_));
 
     daq_client_->startAcquiring(orig_row_count_, orig_col_count_);
 }
@@ -501,7 +501,7 @@ void Application::init() {
 
     maybeInitFlatFieldBuffer(row_count, col_count);
 
-    maybeInitReconBuffer(col_count, row_count);
+    maybeInitDataBuffer(col_count, row_count);
 
     initReconstructor(col_count, row_count);
 
@@ -552,7 +552,7 @@ void Application::maybeInitFlatFieldBuffer(uint32_t row_count, uint32_t col_coun
     reciprocal_computed_ = false;
 }
 
-void Application::maybeInitReconBuffer(uint32_t col_count, uint32_t row_count) {
+void Application::maybeInitDataBuffer(uint32_t col_count, uint32_t row_count) {
     double sino_size = col_count * row_count * angle_count_ * sizeof(ProDtype) / static_cast<double>(1024 * 1024);
     spdlog::info("[Init] - Sinogram size: {:.1f} MB", sino_size);
 
@@ -562,6 +562,7 @@ void Application::maybeInitReconBuffer(uint32_t col_count, uint32_t row_count) {
         sino_proxy_->reshapeBuffer({group_size_, row_count, col_count});
         spdlog::debug("Reconstruction buffers resized");
     }
+    sino_proxy_->setAngleCount(angle_count_);
     raw_buffer_.reset();
     sino_proxy_->reset();
 }

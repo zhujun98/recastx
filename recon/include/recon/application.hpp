@@ -151,7 +151,7 @@ class Application {
 
     void maybeInitFlatFieldBuffer(uint32_t row_count, uint32_t col_count);
 
-    void maybeInitReconBuffer(uint32_t col_count, uint32_t row_count);
+    void maybeInitDataBuffer(uint32_t col_count, uint32_t row_count);
 
     void maybeResetDarkAndFlatAcquisition();
 

@@ -22,6 +22,7 @@ class SinogramProxy {
     SinogramBuffer buffer_;
 
     size_t start_;
+    size_t angle_count_;
 
     std::unique_ptr<Stream> stream_;
 
@@ -33,6 +34,8 @@ class SinogramProxy {
     SinogramProxy();
 
     ~SinogramProxy();
+
+    void setAngleCount(size_t angle_count) { angle_count_ = angle_count; }
 
     void copyToDevice(astra::CFloat32ProjectionData3DGPU *dst);
 
