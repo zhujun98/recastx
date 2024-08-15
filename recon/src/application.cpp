@@ -64,7 +64,7 @@ void Application::setProjectionGeometry(BeamShape beam_shape, uint32_t col_count
                                         float src2origin, float origin2det,
                                         uint32_t angle_count, AngleRange angle_range) {
     beam_shape_ = beam_shape;
-    orig_col_count_ = col_count == 0 ? orig_row_count_ : col_count;
+    orig_col_count_ = col_count == 0 ? orig_col_count_ : col_count;
     orig_row_count_ = row_count == 0 ? orig_row_count_ : row_count;
     pixel_width_ = pixel_width;
     pixel_height_ = pixel_height;
