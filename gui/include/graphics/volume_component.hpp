@@ -15,7 +15,7 @@
 
 #include "style.hpp"
 #include "textures.hpp"
-#include "utils.hpp"
+#include "fps_counter.hpp"
 
 #include "component.hpp"
 #include "mesh_object.hpp"

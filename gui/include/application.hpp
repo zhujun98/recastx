@@ -19,9 +19,10 @@
 #include <vector>
 
 #include "graphics/renderer.hpp"
+#include "graphics/input_handler.hpp"
 #include "graphics/scene.hpp"
 #include "rpc_client.hpp"
-#include "utils.hpp"
+#include "fps_counter.hpp"
 
 namespace recastx::gui {
 
@@ -50,6 +51,7 @@ class Application {
         std::array<float, 4> top;
         std::array<float, 4> bottom;
         std::array<float, 4> status;
+        std::array<float, 4> popup;
     };
 
     Layout layout_;
@@ -61,6 +63,7 @@ class Application {
     std::unique_ptr<RpcClient> rpc_client_;
 
     std::unique_ptr<Renderer> renderer_;
+    std::unique_ptr<InputHandler> input_handler_;
 
     std::vector<std::unique_ptr<Scene>> scenes_;
 
@@ -72,6 +75,8 @@ class Application {
     std::unique_ptr<VolumeComponent> volume_comp_;
     std::unique_ptr<SliceComponent> slice_comp_;
     std::vector<Component*> components_;
+
+    std::unordered_map<Renderable*, bool> misc_objects_;
 
     FpsCounter slice_counter_;
     FpsCounter volume_counter_;
@@ -101,10 +106,6 @@ class Application {
 
     bool consume(const RpcClient::DataType& packet);
 
-    static std::array<float, 2> normalizeCursorPos(GLFWwindow* window, double xpos, double ypos);
-
-    void initRenderer();
-
     void initCenterScene();
     void initTopLeftScene();
     void initTopRightScene();
@@ -115,6 +116,7 @@ class Application {
     void drawTopGUI();
     void drawBottomGUI();
     void drawStatusGUI();
+    void drawPopupGUI();
     void drawMainControlGUI();
 
   public:

@@ -110,6 +110,11 @@ class TransferFunc : public Material {
 
     ~TransferFunc() override = default;
 
+    // TODO: improve public interface
+    void setColormap(int index) {
+        cm_.set(index);
+    }
+
     void bind(unsigned int u1, unsigned int u2) {
         if (!alpha_enabled_) throw std::runtime_error("Alpha is disabled!");
         cm_.bind(u1);

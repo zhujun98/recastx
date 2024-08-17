@@ -6,8 +6,6 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
-#include <GLFW/glfw3.h>
-
 #include "graphics/camera.hpp"
 
 namespace recastx::gui {
@@ -42,16 +40,17 @@ glm::vec3 Camera::pos() {
     return target_ - viewDir() * dist_;
 }
 
-bool Camera::handleMouseButton(int button, int action) {
-    dragging_ = action == GLFW_PRESS && (
-            (alt_pressed_ && button == GLFW_MOUSE_BUTTON_LEFT)
-            || button == GLFW_MOUSE_BUTTON_MIDDLE
-    );
-    return true;
+bool Camera::mouseDragEvent(const MouseDragEvent& ev) {
+    if ((ev.alt_pressed && ev.button == MouseButton::LEFT) || ev.button == MouseButton::MIDDLE) {
+        rotate(ev.delta.x * mouse_move_sensitivity_, up_);
+        rotate(-ev.delta.y * mouse_move_sensitivity_, right_);
+        return true;
+    }
+    return false;
 }
 
-bool Camera::handleScroll(float offset) {
-    float delta = offset * mouse_scroll_sensitivity_;
+bool Camera::mouseScrollEvent(const MouseScrollEvent& ev) {
+    float delta = static_cast<float>(ev.delta) * mouse_scroll_sensitivity_;
 
     if (dist_ + delta > K_MAX_DIST_) {
         dist_ = K_MAX_DIST_;
@@ -66,65 +65,26 @@ bool Camera::handleScroll(float offset) {
     return true;
 }
 
-bool Camera::handleMouseMoved(float x, float y) {
-    if (!initialized_) {
-        prev_x_ = x;
-        prev_y_ = y;
-        initialized_ = true;
+bool Camera::keyEvent(const KeyEvent& ev) {
+    switch (ev.key) {
+        case KeyName::A:
+            rotate(-key_sensitivity_, up_);
+            return true;
+        case KeyName::D:
+            rotate(key_sensitivity_, up_);
+            return true;
+        case KeyName::W:
+            rotate(-key_sensitivity_, right_);
+            return true;
+        case KeyName::S:
+            rotate(key_sensitivity_, right_);
+            return true;
+        case KeyName::SPACE:
+            setPerspectiveView();
+            return true;
+        default:
+            return false;
     }
-
-    float x_offset = x - prev_x_;
-    float y_offset = prev_y_ - y;
-    prev_x_ = x;
-    prev_y_ = y;
-
-    if (dragging_) {
-        rotate(x_offset * mouse_move_sensitivity_, up_);
-        rotate(-y_offset * mouse_move_sensitivity_, right_);
-        return true;
-    }
-
-    return false;
-}
-
-bool Camera::handleKey(int key, int action, int /* mods */) {
-    if (action == GLFW_REPEAT || action == GLFW_PRESS) {
-        switch (key) {
-            case GLFW_KEY_LEFT_ALT:
-                alt_pressed_ = true;
-                return true;
-            case GLFW_KEY_A:
-                rotate(-key_sensitivity_, up_);
-                return true;
-            case GLFW_KEY_D:
-                rotate(key_sensitivity_, up_);
-                return true;
-            case GLFW_KEY_W:
-                rotate(-key_sensitivity_, right_);
-                return true;
-            case GLFW_KEY_S:
-                rotate(key_sensitivity_, right_);
-                return true;
-            default:
-                break;
-        }
-
-        if (action == GLFW_PRESS) {
-            if (key == GLFW_KEY_SPACE) {
-                setPerspectiveView();
-                return true;
-            }
-        }
-    } else if (action == GLFW_RELEASE) {
-        switch (key) {
-            case GLFW_KEY_LEFT_ALT:
-                alt_pressed_ = false;
-                return true;
-            default:
-                break;
-        }
-    }
-    return false;
 }
 
 void Camera::setFrontView() {

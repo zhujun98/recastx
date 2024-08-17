@@ -58,7 +58,7 @@ class SliceObject : public Interactable {
     void setVoxelIntensity(Texture3D* intensity) { voxel_intensity_ = intensity; }
 
     [[nodiscard]] Orientation orientation() const {
-        auto m = rotation_;
+        auto m = 2.f * rotation_;
         return {
                 m[0][0], m[0][1], m[0][2],
                 m[1][0], m[1][1], m[1][2],
@@ -66,13 +66,17 @@ class SliceObject : public Interactable {
         };
     }
 
-    [[nodiscard]] const glm::vec3& normal() const { return normal_; }
+    [[nodiscard]] std::array<glm::vec3, 3> geometry() const {
+        return {glm::vec3(rotation_[0]), glm::vec3(rotation_[1]), glm::vec3(rotation_[2]) + pos_};
+    }
 
     void setOrientation(const glm::vec3& base, const glm::vec3& x, const glm::vec3& y);
 
     void setOffset(float offset);
 
     void setSampleVolume(bool state) { sample_volume_ = state; }
+
+    bool mouseHoverEvent(const MouseHoverEvent& ev) override;
 };
 
 } // recastx::gui

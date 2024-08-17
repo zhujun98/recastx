@@ -65,7 +65,10 @@ Application::Application() : width_(1440), height_(1080) {
 
     registerCallbacks();
 
-    initRenderer();
+    renderer_ = std::make_unique<Renderer>();
+    renderer_->init(glfw_window_);
+
+    input_handler_ = std::make_unique<InputHandler>();
 }
 
 Application::~Application() {
@@ -125,6 +128,8 @@ void Application::spin(const std::string& endpoint) {
     while (!glfwWindowShouldClose(glfw_window_)) {
         glfwPollEvents();
 
+        input_handler_->handle(scenes_);
+
         for (auto comp : components_) comp->preRender();
         MaterialManager::instance().preRender();
 
@@ -139,6 +144,7 @@ void Application::spin(const std::string& endpoint) {
         drawTopGUI();
         drawBottomGUI();
         drawStatusGUI();
+        drawPopupGUI();
 
         renderer_->end();
 
@@ -223,44 +229,31 @@ void Application::registerCallbacks() {
     glfwSetKeyCallback(glfw_window_, keyCallback);
 }
 
-void Application::mouseButtonCallback(GLFWwindow*, int button, int action, int) {
-//    ImGui_ImplGlfw_MouseButtonCallback(window, button, action, 0);
+void Application::mouseButtonCallback(GLFWwindow*, int button, int action, int /*mods*/) {
     auto& io = ImGui::GetIO();
     if (!io.WantCaptureMouse) {
-        for (auto& scene : instance().scenes_) {
-            scene->handleMouseButton(button, action);
-        }
+        instance().input_handler_->registerMouseButton(button, action);
     }
 }
 
 void Application::scrollCallback(GLFWwindow*, double /*xoffset*/, double yoffset) {
-//    ImGui_ImplGlfw_ScrollCallback(window, 0.0, yoffset);
     auto& io = ImGui::GetIO();
     if (!io.WantCaptureMouse) {
-        for (auto& scene : instance().scenes_) {
-            scene->handleScroll(static_cast<float>(yoffset));
-        }
+        instance().input_handler_->registerMouseScroll(yoffset);
     }
 }
 
-void Application::cursorPosCallback(GLFWwindow* window, double xpos, double ypos) {
-//    ImGui_ImplGlfw_CursorPosCallback(window, xpos, ypos);
+void Application::cursorPosCallback(GLFWwindow*, double xpos, double ypos) {
     auto& io = ImGui::GetIO();
     if (!io.WantCaptureMouse) {
-        auto [x, y] = Application::normalizeCursorPos(window, xpos, ypos);
-        for (auto& scene : instance().scenes_) {
-            scene->handleMouseMoved(x, y);
-        }
+        instance().input_handler_->registerMouseMove(xpos, ypos);
     }
 }
 
 void Application::keyCallback(GLFWwindow*, int key, int, int action, int mods) {
-//    ImGui_ImplGlfw_KeyCallback(window, key, 0, action, 0);
     auto& io = ImGui::GetIO();
     if (!io.WantCaptureKeyboard) {
-        for (auto& scene : instance().scenes_) {
-            scene->handleKey(key, action, mods);
-        }
+        instance().input_handler_->registerKey(key, action, mods);
     }
 }
 
@@ -280,6 +273,9 @@ void Application::onWindowSizeChanged(int width, int height) {
     layout_.top = {2.f * mw + lw, mh, (float)width - 4.f * mw - lw - rw, th};
     layout_.bottom = {2.f * mw + lw, (float)height - bh - mh, (float)width - 4.f * mw - lw - rw, bh};
     layout_.status = {2.f * mw + lw, th + 2.f * mh, 180, 90};
+    layout_.popup = {(float)width - 2.f * mw - rw - 32, th + 2.f * mh, 32, 32};
+
+    input_handler_->onWindowSizeChanged(width, height);
 }
 
 void Application::onFramebufferSizeChanged(int width, int height) {
@@ -341,62 +337,14 @@ bool Application::consume(const RpcClient::DataType& packet) {
     return false;
 }
 
-std::array<float, 2> Application::normalizeCursorPos(GLFWwindow* window, double xpos, double ypos) {
-    int w = 0;
-    int h = 0;
-    glfwGetWindowSize(window, &w, &h);
-
-    xpos = (2.0 * (xpos / w) - 1.0) * w / h;
-    ypos = 2.0 * (ypos / h) - 1.0;
-    return {static_cast<float>(xpos), static_cast<float>(ypos)};
-}
-
-void Application::initRenderer() {
-
-    renderer_ = std::make_unique<Renderer>();
-    renderer_->init(glfw_window_);
-
-    renderer_->addViewport(
-            VIEWPORT_MAIN,
-            2.f * Style::MARGIN + Style::LEFT_PANEL_WIDTH,
-            2.f * Style::MARGIN + Style::TOP_PANEL_HEIGHT,
-            1.f - 4.f * Style::MARGIN - Style::LEFT_PANEL_WIDTH - Style::RIGHT_PANEL_WIDTH,
-            1.f - 4.f * Style::MARGIN - Style::TOP_PANEL_HEIGHT - Style::BOTTOM_PANEL_HEIGHT,
-            Viewport::Type::PERSPECTIVE
-    );
-
-    renderer_->addViewport(
-            VIEWPORT_SATELLITE,
-            1.f - 2 * Style::MARGIN - Style::RIGHT_PANEL_WIDTH - Style::SATELLITE_WINDOW_SIZE,
-            2 * Style::MARGIN + Style::BOTTOM_PANEL_HEIGHT,
-            Style::SATELLITE_WINDOW_SIZE,
-            Style::SATELLITE_WINDOW_SIZE,
-            Viewport::Type::ORTHO
-    );
-
-    renderer_->addViewport(
-            VIEWPORT_TOP_LEFT,
-            Style::MARGIN,
-            1.f - Style::MARGIN - Style::TOP_PANEL_HEIGHT,
-            Style::LEFT_PANEL_WIDTH,
-            Style::TOP_PANEL_HEIGHT,
-            Viewport::Type::ORTHO
-    );
-
-    renderer_->addViewport(
-            VIEWPORT_TOP_RIGHT,
-            1.f - Style::MARGIN - Style::RIGHT_PANEL_WIDTH,
-            1.f - Style::MARGIN - Style::TOP_PANEL_HEIGHT,
-            Style::RIGHT_PANEL_WIDTH,
-            Style::TOP_PANEL_HEIGHT,
-            Viewport::Type::ORTHO
-    );
-}
-
 void Application::initCenterScene() {
     scenes_.push_back(std::make_unique<Scene>());
     auto scene = scenes_.back().get();
-    scene->setViewport(VIEWPORT_MAIN);
+    scene->setViewport(2.f * Style::MARGIN + Style::LEFT_PANEL_WIDTH,
+                       2.f * Style::MARGIN + Style::TOP_PANEL_HEIGHT,
+                       1.f - 4.f * Style::MARGIN - Style::LEFT_PANEL_WIDTH - Style::RIGHT_PANEL_WIDTH,
+                       1.f - 4.f * Style::MARGIN - Style::TOP_PANEL_HEIGHT - Style::BOTTOM_PANEL_HEIGHT,
+                       Viewport::Type::PERSPECTIVE);
 
     auto light1 = scene->addLight();
     light1->setDirection({-1, -1, -1});
@@ -406,7 +354,7 @@ void Application::initCenterScene() {
     light1->setSpecular(0.8f);
 
     auto light2 = scene->addLight();
-    light2->setDirection({1, 1, 1});
+    light2->setDirection({1, -1, 1});
     light2->setColor({1.f, 1.f, 1.f});
     light2->setAmbient(0.2f);
     light2->setDiffuse(0.8f);
@@ -437,13 +385,18 @@ void Application::initCenterScene() {
     slice_comp_->setVolumeComponent(volume_comp_.get());
     volume_comp_->setSliceComponent(slice_comp_.get());
 
-    scene->addObject<SimpleObject>(SimpleObject::Type::CUBE_FRAME);
+    auto cube_frame_obj = scene->addObject<SimpleObject>(SimpleObject::Type::CUBE_FRAME);
+    misc_objects_[cube_frame_obj] = cube_frame_obj->visible();
 }
 
 void Application::initTopLeftScene() {
     scenes_.push_back(std::make_unique<Scene>());
     auto scene = scenes_.back().get();
-    scene->setViewport(VIEWPORT_TOP_LEFT);
+    scene->setViewport(Style::MARGIN,
+                       1.f - Style::MARGIN - Style::TOP_PANEL_HEIGHT,
+                       Style::LEFT_PANEL_WIDTH,
+                       Style::TOP_PANEL_HEIGHT,
+                       Viewport::Type::ORTHO);
     scene->setCameraFixed(true);
     auto glyph = scene->addObject<GlyphObject>(std::string("RECASTX"));
     glyph->setScale({0.9f, 0.9f, 1.0});
@@ -453,7 +406,11 @@ void Application::initTopLeftScene() {
 void Application::initTopRightScene() {
     scenes_.push_back(std::make_unique<Scene>());
     auto scene = scenes_.back().get();
-    scene->setViewport(VIEWPORT_TOP_RIGHT);
+    scene->setViewport(1.f - Style::MARGIN - Style::RIGHT_PANEL_WIDTH,
+                       1.f - Style::MARGIN - Style::TOP_PANEL_HEIGHT,
+                       Style::RIGHT_PANEL_WIDTH,
+                       Style::TOP_PANEL_HEIGHT,
+                       Viewport::Type::ORTHO);
     scene->setCamera(scenes_[0]->camera());
     scene->setCameraFixed(true);
     scene->addObject<SimpleObject>(SimpleObject::Type::AXIS_CUBE);
@@ -464,10 +421,15 @@ void Application::initSatelliteScene() {
     auto scene = scenes_.back().get();
     scene->camera()->setTopView();
     scene->setCameraFixed(true);
-    scene->setViewport(VIEWPORT_SATELLITE);
+    scene->setViewport(1.f - 2 * Style::MARGIN - Style::RIGHT_PANEL_WIDTH - Style::SATELLITE_WINDOW_SIZE,
+                       2 * Style::MARGIN + Style::BOTTOM_PANEL_HEIGHT,
+                       Style::SATELLITE_WINDOW_SIZE,
+                       Style::SATELLITE_WINDOW_SIZE,
+                       Viewport::Type::ORTHO);
     auto image = scene->addObject<ImageObject>();
     auto mat = MaterialManager::instance().createMaterial<TransferFunc>();
     mat->setAlphaEnabled(false);
+    mat->setColormap(15);
     image->setMaterial(mat->id());
     proj_comp_->setImageObject(image);
 }
@@ -534,6 +496,31 @@ void Application::drawStatusGUI() {
     ImGui::Text("Projection: %.1f Hz", projection_counter_.frameRate());
 
     ImGui::PopStyleColor(2);
+
+    ImGui::End();
+}
+
+void Application::drawPopupGUI() {
+    ImGui::SetNextWindowPos({layout_.popup[0], layout_.popup[1]});
+    ImGui::SetNextWindowSize({layout_.popup[2], layout_.popup[3]});
+
+    ImGui::Begin("Popup Panel", NULL, ImGuiWindowFlags_NoDecoration);
+
+    ImVec2 screen_pos = ImGui::GetCursorScreenPos();
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(1, 1));
+    if (ImGui::ArrowButton("##POPUP_BUTTON", ImGuiDir_Down)) {
+        ImGui::OpenPopup("Popup Menu##POPUP");
+    }
+    ImGui::PopStyleVar();
+
+    ImGui::SetNextWindowPos({screen_pos.x - 130, screen_pos.y + 30});
+    if (ImGui::BeginPopup("Popup Menu##POPUP")) {
+        for (auto& item : misc_objects_) {
+            if (ImGui::MenuItem("Show wireframe##POPUP", "", &item.second)) {
+                item.first->setVisible(item.second);
+            }
+        }
+    }
 
     ImGui::End();
 }

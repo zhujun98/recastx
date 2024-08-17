@@ -25,7 +25,7 @@
 #include "graphics/shader_program.hpp"
 #include "graphics/style.hpp"
 #include "graphics/textures.hpp"
-#include "utils.hpp"
+#include "fps_counter.hpp"
 
 namespace recastx::gui {
 

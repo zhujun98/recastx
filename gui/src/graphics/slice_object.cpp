@@ -8,7 +8,6 @@
 */
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/rotate_vector.hpp>
 
 #include "graphics/slice_object.hpp"
 #include "graphics/renderer.hpp"
@@ -86,8 +85,7 @@ void SliceObject::render(Renderer* renderer) {
     mat->bind(1, 2);
     voxel_intensity_->bind(3);
     glBindVertexArray(VAO_);
-
-    if (hovering_ || selected_) {
+    if (highlighting_ || hovering_ || selected_) {
         shader_->setBool("drawFrame", true);
         shader_->setVec4("frameColor", Style::K_HIGHLIGHTED_FRAME_COLOR);
 
@@ -130,6 +128,12 @@ void SliceObject::setOrientation(const glm::vec3& base, const glm::vec3& x, cons
 void SliceObject::setOffset(float offset) {
     intensity_.invalidate();
     pos_ = offset * normal_;
+}
+
+bool SliceObject::mouseHoverEvent(const MouseHoverEvent &ev) {
+    if (ev.entering) hovering_ = true;
+    else if (ev.exiting) hovering_ = false;
+    return true;
 }
 
 } // recastx::gui

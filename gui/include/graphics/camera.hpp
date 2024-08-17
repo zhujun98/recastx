@@ -17,6 +17,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 
+#include "event.hpp"
+
 namespace recastx::gui {
 
 class Camera {
@@ -38,14 +40,6 @@ class Camera {
     float mouse_move_sensitivity_ = 5.f;
     float key_sensitivity_ = 0.2f;
 
-    bool initialized_ = false;
-    float prev_x_ = 0.f;
-    float prev_y_ = 0.f;
-
-    bool dragging_ = false;
-
-    bool alt_pressed_ = false;
-
     void rotate(float angle, const glm::vec3& axis);
 
   public:
@@ -62,10 +56,9 @@ class Camera {
 
     [[nodiscard]] glm::vec3 pos();
 
-    bool handleMouseButton(int button, int action);
-    bool handleScroll(float offset);
-    bool handleMouseMoved(float x, float y);
-    bool handleKey(int key, int action, int mods);
+    bool mouseDragEvent(const MouseDragEvent& ev);
+    bool mouseScrollEvent(const MouseScrollEvent& ev);
+    bool keyEvent(const KeyEvent& ev);
 
     void setFrontView();
     void setTopView();

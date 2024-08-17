@@ -22,8 +22,6 @@ MeshMaterialWidget::MeshMaterialWidget(std::shared_ptr<MeshMaterial> material)
 MeshMaterialWidget::~MeshMaterialWidget() = default;
 
 void MeshMaterialWidget::draw() {
-    ImGui::TextUnformatted(name_.c_str());
-
     ImGui::SliderFloat(("Shininess" + id_).c_str(), &material_->shininess_, 0.f, 100.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
 
     if (!initialized_) {
@@ -65,8 +63,6 @@ TransferFuncWidget::TransferFuncWidget(std::shared_ptr<TransferFunc> material)
 TransferFuncWidget::~TransferFuncWidget() = default;
 
 void TransferFuncWidget::draw() {
-    ImGui::TextUnformatted(name_.c_str());
-
     renderSelector();
     renderColorbar();
     renderLevelsControl();

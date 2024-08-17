@@ -12,11 +12,13 @@
 #include <any>
 #include <array>
 #include <memory>
+#include <optional>
 #include <unordered_map>
 #include <vector>
 
 #include <glm/glm.hpp>
 
+#include "event.hpp"
 #include "viewport.hpp"
 
 namespace recastx::gui {
@@ -24,6 +26,7 @@ namespace recastx::gui {
 class Camera;
 class Renderer;
 class Renderable;
+class Interactable;
 class MeshObject;
 class VoxelObject;
 class SliceObject;
@@ -35,9 +38,8 @@ class Light;
 
 class Scene {
 
-    ViewportID viewport_id_;
-
-  protected:
+    Viewport viewport_;
+    glm::mat4 prev_inv_vp_ {1.f};
 
     std::shared_ptr<Camera> camera_;
     bool camera_fixed_ = false;
@@ -51,13 +53,31 @@ class Scene {
     std::vector<std::shared_ptr<SimpleObject>> simple_objects_;
     std::vector<std::shared_ptr<GlyphObject>> glyph_objects_;
 
+    Interactable* hovered_object_ { nullptr };
+    Interactable* dragged_object_ { nullptr };
+
+    [[nodiscard]] Interactable* findClosestSlice(float x, float y) const;
+
+    [[nodiscard]] std::optional<std::array<double, 2>> mapToSceneCoordinate(double x, double y) const;
+
+    template<typename T>
+    [[nodiscard]] bool mapToSceneEvent(T& ev) const {
+        auto pos = mapToSceneCoordinate(ev.pos.x, ev.pos.y);
+        if (!pos) return false;
+        auto [x_s, y_s] = pos.value();
+        ev.pos = { x_s, y_s };
+        return true;
+    }
+
   public:
 
     Scene();
 
     ~Scene();
 
-    void setViewport(ViewportID id) { viewport_id_ = id; }
+    void setViewport(float x, float y, float width, float height, Viewport::Type type) {
+        viewport_ = {x, y, width, height, type};
+    }
 
     void setCamera(std::shared_ptr<Camera> camera);
 
@@ -77,10 +97,7 @@ class Scene {
 
     void draw(Renderer* renderer);
 
-    bool handleMouseButton(int button, int action);
-    bool handleScroll(float offset);
-    bool handleMouseMoved(float x, float y);
-    bool handleKey(int key, int action, int mods);
+    bool consumeEvent(InputEvent& event);
 
     void drawLightControlGUI();
     void drawCameraControlGUI();

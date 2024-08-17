@@ -9,11 +9,6 @@
 #ifndef GUI_VIEWPORT_H
 #define GUI_VIEWPORT_H
 
-enum ViewportID { VIEWPORT_MAIN = 0,
-                  VIEWPORT_TOP_LEFT = 1,
-                  VIEWPORT_TOP_RIGHT = 2,
-                  VIEWPORT_SATELLITE = 3};
-
 struct Viewport {
 
     enum class Type { ORTHO, PERSPECTIVE };

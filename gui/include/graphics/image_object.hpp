@@ -44,7 +44,7 @@ class ImageObject : public Renderable {
 
     void render(Renderer* renderer) override;
 
-    void renderGUI();
+    void renderGUI() override;
 
     template<typename T>
     void setIntensity(const T* data, uint32_t x, uint32_t y) {

@@ -310,7 +310,7 @@ void VoxelObject::renderVolumeShadow(Renderer *renderer) {
     mat->unbind();
     intensity_.unbind();
 
-    renderer->useViewport(VIEWPORT_MAIN);
+    renderer->useViewport();
     vscreen_shader_->use();
     model_->renderFramebufferOnScreen(fb_.get());
 }

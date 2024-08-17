@@ -114,7 +114,8 @@ void Alphamap::set(const std::map<float, float>& alphamap) {
     while (static_cast<float>(j) < x[0] * static_cast<float>(n) && j < n) data_[j++] = alpha[0];
     for (size_t i = 1; i < x.size(); ++i) {
         while (static_cast<float>(j) < x[i] * static_cast<float>(n)) {
-            data_[j++] = alpha[i - 1] + (alpha[i] - alpha[i - 1]) * (static_cast<float>(j) / n - x[i - 1]) / (x[i] - x[i - 1]);
+            data_[j] = alpha[i - 1] + (alpha[i] - alpha[i - 1]) * (static_cast<float>(j) / n - x[i - 1]) / (x[i] - x[i - 1]);
+            ++j;
         }
     }
     while (j < n) data_[j++] = alpha.back();

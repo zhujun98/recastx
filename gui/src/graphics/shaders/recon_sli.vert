@@ -13,10 +13,10 @@ uniform mat4 model;
 void main() {
     sliceCoord = vPos.xy + vec2(0.5f);
 
-    fPos = (model * vec4(0.5 * vPos, 1.0f)).xyz;
+    fPos = (model * vec4(vPos, 1.0f)).xyz;
 
     volumeCoord = fPos + vec3(0.5f);
 
-    gl_Position = mvp * vec4(0.5f * vPos, 1.0f);
+    gl_Position = mvp * vec4(vPos, 1.0f);
 }
 )glsl"

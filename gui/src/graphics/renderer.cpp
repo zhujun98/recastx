@@ -101,15 +101,7 @@ void Renderer::render(const std::vector<std::shared_ptr<GlyphObject>>& objects) 
     }
 }
 
-void Renderer::addViewport(ViewportID id, float x, float y, float width, float height, Viewport::Type type) {
-    if (viewports_.find(id) != viewports_.end()) {
-        throw std::invalid_argument("Viewport " + std::to_string(id) + " already exists");
-    }
-    viewports_[id] = Viewport {x, y, width, height, type};
-}
-
-void Renderer::useViewport(ViewportID id) {
-    const auto& vp = viewports_[id];
+void Renderer::useViewport(const Viewport& vp) {
     int pixel_width = int(vp.width * (float)width_);
     int pixel_height = int(vp.height * (float)height_);
     glViewport(int(vp.x * (float)width_), int(vp.y * (float)height_), pixel_width, pixel_height);
@@ -127,6 +119,12 @@ void Renderer::useViewport(ViewportID id) {
     view_dir_ = camera_->viewDir();
 
     vp_matrix_ =  proj_matrix_ * view_matrix_;
+
+    prev_vp_ = std::make_unique<Viewport>(vp);
+}
+
+void Renderer::useViewport() {
+    if (prev_vp_ != nullptr) useViewport(*prev_vp_);
 }
 
 void Renderer::onFramebufferSizeChanged(int width, int height) {

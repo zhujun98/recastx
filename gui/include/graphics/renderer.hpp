@@ -37,7 +37,6 @@ class GlyphRenderer;
 
 class Renderer {
 
-    std::unordered_map<ViewportID, Viewport> viewports_;
     int width_;
     int height_;
 
@@ -52,11 +51,16 @@ class Renderer {
 
     std::unique_ptr<GlyphRenderer> glyph_renderer_;
 
+    std::unique_ptr<Viewport> prev_vp_;
+
   public:
 
     Renderer();
 
     ~Renderer();
+
+    Renderer(const Renderer&) = delete;
+    Renderer& operator=(const Renderer&) = delete;
 
     void init(GLFWwindow* window);
 
@@ -75,9 +79,8 @@ class Renderer {
 
     void render(const std::vector<std::shared_ptr<GlyphObject>>& objects);
 
-    void addViewport(ViewportID id, float x, float y, float width, float height, Viewport::Type type);
-
-    void useViewport(ViewportID id);
+    void useViewport(const Viewport& vp);
+    void useViewport();
 
     void onFramebufferSizeChanged(int width, int height);
 

@@ -79,15 +79,8 @@ public:
     void setVolumeComponent(VolumeComponent* ptr) { volume_comp_ = ptr; }
 
     void onShowVolume();
+
     void setSampleVolume(bool state);
-
-    //    void updateHoveringSlice(float x, float y);
-
-//    [[nodiscard]] bool transparent() const  { return hovered_ || selected_ || data_.empty(); }
-
-//    bool handleMouseButton(int button, int action);
-//
-//    bool handleMouseMoved(glm::vec2 delta);
 };
 
 } // namespace recastx::gui
