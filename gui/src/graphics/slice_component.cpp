@@ -43,15 +43,17 @@ void SliceComponent::preRender() {
     std::lock_guard lk(mtx_);
 
     for (auto& slice : slices_) {
+        if (!slice.object->visible()) continue;
+
+        auto mat = MaterialManager::instance().getMaterial<TransferFunc>(slice.object->materialID());
+        const auto &v = slice.data.minMaxVals();
+        if (v) mat->registerMinMaxVals(v.value());
+
         if (slice.update_texture) {
             if (slice.data.empty()) {
                 slice.object->resetIntensity();
             } else {
                 slice.object->setIntensity(slice.data.data(), slice.data.x(), slice.data.y());
-
-                auto mat = MaterialManager::instance().getMaterial<TransferFunc>(slice.object->materialID());
-                const auto& v = slice.data.minMaxVals();
-                if (v) mat->registerMinMaxVals(v.value());
             }
             slice.update_texture = false;
         }

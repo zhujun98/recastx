@@ -111,27 +111,29 @@ void VolumeComponent::draw(rpc::ServerState_State) {
 void VolumeComponent::preRender() {
     if (display_policy_ != DISABLE) {
         std::lock_guard lk(mtx_);
+
+        auto mat = MaterialManager::instance().getMaterial<TransferFunc>(voxel_object_->materialID());
+        const auto& v = data_.minMaxVals();
+        if (v) mat->registerMinMaxVals(v.value());
+        
         if (update_texture_) {
             if (data_.empty()) {
                 voxel_object_->resetIntensity();
             } else {
                 voxel_object_->setIntensity(data_.data(), data_.x(), data_.y(), data_.z());
-
-                auto mat = MaterialManager::instance().getMaterial<TransferFunc>(voxel_object_->materialID());
-                const auto& v = data_.minMaxVals();
-                if (v) mat->registerMinMaxVals(v.value());
             }
             update_texture_ = false;
-
-        } else if (update_mesh_ || marcher_->configChanged()) {
-            if (data_.empty()) {
-                // TODO
-            } else {
-                auto [v_min, v_max] = data_.minMaxVals().value();
-                mesh_object_->setVertices(marcher_->march(data_, v_min, v_max));
-            }
-            update_mesh_ = false;
         }
+    }
+
+    if (mesh_object_->visible() && (update_mesh_ || marcher_->configChanged())) {
+        if (data_.empty()) {
+            // TODO
+        } else {
+            auto [v_min, v_max] = data_.minMaxVals().value();
+            mesh_object_->setVertices(marcher_->march(data_, v_min, v_max));
+        }
+        update_mesh_ = false;
     }
 }
 

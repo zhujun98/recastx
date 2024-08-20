@@ -446,9 +446,9 @@ void Application::drawLeftGUI() {
     ImGui::Separator();
     geom_comp_->draw(server_state_);
     ImGui::Separator();
-    proj_comp_->draw(server_state_);
-    ImGui::Separator();
     preproc_comp_->draw(server_state_);
+    ImGui::Separator();
+    proj_comp_->draw(server_state_);
     ImGui::End();
 }
 

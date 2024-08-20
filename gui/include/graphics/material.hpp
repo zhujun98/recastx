@@ -138,8 +138,14 @@ class TransferFunc : public Material {
 
     void updateMinMaxVals() {
         if (!auto_levels_) return;
-        if (!min_vals_.empty()) min_val_ = *std::min_element(min_vals_.begin(), min_vals_.end());
-        if (!max_vals_.empty()) max_val_ = *std::max_element(max_vals_.begin(), max_vals_.end());
+        if (!min_vals_.empty()) {
+            min_val_ = *std::min_element(min_vals_.begin(), min_vals_.end());
+            min_vals_.clear();
+        }
+        if (!max_vals_.empty()) {
+            max_val_ = *std::max_element(max_vals_.begin(), max_vals_.end());
+            max_vals_.clear();
+        }
     }
 
     [[nodiscard]] std::array<float, 2> minMaxVals() const { return { min_val_, max_val_}; }

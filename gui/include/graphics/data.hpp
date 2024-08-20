@@ -107,6 +107,7 @@ class Data3D {
         assert(data.size() == x_ * y_ * sizeof(ValueType));
         assert(pos * sizeof(ValueType) + data.size() <= data_.size() * sizeof(ValueType));
         std::memcpy(data_.data() + pos, data.data(), data.size());
+        min_max_vals_.reset();
         return pos * sizeof(ValueType) + data.size() == data_.size() * sizeof(ValueType);
     }
 
