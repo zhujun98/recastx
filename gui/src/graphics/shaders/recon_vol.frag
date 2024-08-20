@@ -5,6 +5,7 @@ R"glsl(
 layout(location = 0) out vec4 fColor;
 
 in vec3 texCoords;
+in float sliceDist;
 
 uniform sampler3D volumeTexture;
 uniform sampler1D lutColor;
@@ -13,6 +14,7 @@ uniform sampler1D lutAlpha;
 uniform vec3 ambient;
 uniform vec3 diffuse;
 uniform float threshold;
+uniform float viewFront;
 uniform float samplingRate;
 
 uniform float minValue;
@@ -32,7 +34,7 @@ void main() {
         density = remapMinMax(texture(volumeTexture, texCoords).r, minValue, maxValue);
     }
 
-	if (density > threshold) {
+	if (density > threshold && sliceDist >= viewFront) {
         vec3 color = texture(lutColor, density).rgb;
         float alpha = texture(lutAlpha, density).r;
         alpha = 1 - pow(1 - alpha, samplingRate);

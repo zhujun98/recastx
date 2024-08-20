@@ -77,7 +77,8 @@ class VoxelObject : public Renderable {
 
     Texture3D intensity_;
 
-    float threshold_;
+    float threshold_ {0.f};
+    float view_front_ {0.f};
 
     std::unique_ptr<ShaderProgram> vslice_shader_;
     std::unique_ptr<ShaderProgram> vlight_shader_;

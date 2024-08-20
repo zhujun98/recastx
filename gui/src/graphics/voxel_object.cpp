@@ -21,8 +21,8 @@ VoxelObject::Framebuffer::Framebuffer(int width, int height) : width_(width), he
     const float screen_vertices[] = {
             -1.0f, 1.0f, 0.0f, 1.0f,
             -1.0f, -1.0f, 0.0f, 0.0f,
-            1.0f, -1.0f, 1.0f, 0.0f,
-            1.0f, 1.0f, 1.0f, 1.0f
+             1.0f, -1.0f, 1.0f, 0.0f,
+             1.0f, 1.0f, 1.0f, 1.0f
     };
 
     glGenVertexArrays(1, &VAO_);
@@ -96,7 +96,7 @@ void VoxelObject::Model::renderOnFramebuffer(Framebuffer *fb,
                                              ShaderProgram *vlight_shader,
                                              bool is_view_inverted) {
     glBindBuffer(GL_ARRAY_BUFFER, VBO_);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * slices_.size(), slices_.data());
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(VolumeSlicer::SliceVertex) * slices_.size(), slices_.data());
 
     fb->bind();
 
@@ -154,7 +154,7 @@ void VoxelObject::Model::renderFramebufferOnScreen(Framebuffer *fb) {
 
 void VoxelObject::Model::render() {
     glBindBuffer(GL_ARRAY_BUFFER, VBO_);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * slices_.size(), slices_.data());
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(VolumeSlicer::SliceVertex) * slices_.size(), slices_.data());
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -170,11 +170,13 @@ void VoxelObject::Model::init() {
     glBindBuffer(GL_ARRAY_BUFFER, VBO_);
 
     glBufferData(GL_ARRAY_BUFFER,
-                 sizeof(glm::vec3) * slices_.size(),
+                 sizeof(VolumeSlicer::SliceVertex) * slices_.size(),
                  0,
                  GL_DYNAMIC_DRAW);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void *) 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(3 * sizeof(float)));
 }
 
 VoxelObject::VoxelObject()
@@ -249,13 +251,12 @@ void VoxelObject::render(Renderer *renderer) {
 void VoxelObject::renderGUI() {
     std::string id = "##Object" + std::to_string(id_);
 
+    ImGui::Checkbox(("Volume shadow" + id).c_str(), &volume_shadow_);
+
     ImGui::SliderFloat(("Threshold" + id).c_str(), &threshold_, 0.f, 1.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
 
-    if (ImGui::Checkbox(("Volume shadow" + id).c_str(), &volume_shadow_)) {
-        if (volume_shadow_) {
-//                view_front = 0.f;
-//                 object->setFront(0.f);
-        }
+    if (!volume_shadow_) {
+        ImGui::SliderFloat("View front", &view_front_, 0.f, 1.f);
     }
 }
 
@@ -324,6 +325,7 @@ void VoxelObject::renderSimple(Renderer *renderer) {
     shader_->setVec3("ambient", light->ambient());
     shader_->setVec3("diffuse", light->diffuse());
     shader_->setFloat("threshold", threshold_);
+    shader_->setFloat("viewFront", view_front_);
     shader_->setFloat("samplingRate", static_cast<float>(NUM_SLICES0) / static_cast<float>(num_slices_));
 
     auto mat = MaterialManager::instance().getMaterial<TransferFunc>(mat_id_);

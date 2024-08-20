@@ -32,10 +32,11 @@ void VolumeSlicer::update(const glm::vec3& view_dir) {
     glm::vec3 vec_dir[12];
     float lambda[12];
     float lambda_inc[12];
-    float denom;
 
     float plane_dist = min_dist;
-    float plane_dist_inc = (max_dist - min_dist) / float(num_slices_);
+    float plane_dist_inc = (max_dist - min_dist) / float(num_slices_ - 1);
+    float plane_dist_inc_frac = 1.f / float(num_slices_ - 1);
+
 
     const auto& path = paths_[max_index];
     for (int e = 0; e < 12; ++e) {
@@ -44,14 +45,14 @@ void VolumeSlicer::update(const glm::vec3& view_dir) {
         vec_start[e] = vertices_[edge[0]];
         vec_dir[e] = vertices_[edge[1]] - vec_start[e];
 
-        denom = glm::dot(vec_dir[e], view_dir);
+        float norm = glm::dot(vec_dir[e], view_dir);
 
-        if (denom != 0.0) {
-            lambda_inc[e] =  plane_dist_inc / denom;
-            lambda[e]     = (plane_dist - glm::dot(vec_start[e], view_dir)) / denom;
+        if (norm != 0.0) {
+            lambda_inc[e] =  plane_dist_inc / norm;
+            lambda[e]     = (plane_dist - glm::dot(vec_start[e], view_dir)) / norm;
         } else {
-            lambda[e]     = -1.0f;
             lambda_inc[e] =  0.0f;
+            lambda[e]     = -1.0f;
         }
     }
 
@@ -59,9 +60,9 @@ void VolumeSlicer::update(const glm::vec3& view_dir) {
     float dl[12];
 
     int count = 0;
-    for (int i = num_slices_ - 1; i >= 0; --i) {
+    for (int i = int(num_slices_) - 1; i >= 0; --i) {
         for (int e = 0; e < 12; e++) {
-            dl[e] = lambda[e] + i * lambda_inc[e];
+            dl[e] = lambda[e] + (float)i * lambda_inc[e];
         }
 
         if  (dl[0] >= 0.0 && dl[0] < 1.0)	{
@@ -109,15 +110,15 @@ void VolumeSlicer::update(const glm::vec3& view_dir) {
         }
 
         for (auto idx : indices_) {
-            slices_[count++] = intersection[idx];
+            slices_[count++] = { intersection[idx], plane_dist_inc_frac * (float)i };
         }
     }
 }
 
-std::tuple<float, float, int> VolumeSlicer::sortVertices(const glm::vec3& view_dir) {
+std::tuple<float, float, size_t> VolumeSlicer::sortVertices(const glm::vec3& view_dir) {
     float max_dist = glm::dot(view_dir, vertices_[0]);;
     float min_dist = max_dist;
-    int max_index = 0;
+    size_t max_index = 0;
     for (size_t i = 1; i < sizeof(vertices_) / sizeof(glm::vec3); i++) {
         float dist = glm::dot(view_dir, vertices_[i]);
 
@@ -129,9 +130,9 @@ std::tuple<float, float, int> VolumeSlicer::sortVertices(const glm::vec3& view_d
         }
     }
 
-    static constexpr float EPSILON = 0.0001f;
-    max_dist += EPSILON;
-    min_dist -= EPSILON;
+    const float epsilon = 0.0001f * float(max_dist - min_dist);
+    max_dist -= epsilon;
+    min_dist += epsilon;
 
     return { min_dist, max_dist, max_index };
 }

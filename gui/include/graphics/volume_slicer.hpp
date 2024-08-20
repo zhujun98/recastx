@@ -21,10 +21,14 @@ namespace recastx::gui {
 
 class VolumeSlicer {
 
+  public:
+
+    using SliceVertex = glm::vec4;
+
   protected:
 
     size_t num_slices_ = 0;
-    std::vector<glm::vec3> slices_;
+    std::vector<SliceVertex> slices_;
 
     static constexpr int indices_[12] = {
             0, 1, 2,
@@ -63,7 +67,7 @@ class VolumeSlicer {
 
     bool resize(size_t num_slices);
 
-    std::tuple<float, float, int> sortVertices(const glm::vec3& view_dir);
+    std::tuple<float, float, size_t> sortVertices(const glm::vec3& view_dir);
 
   public:
 
