@@ -125,7 +125,7 @@ grpc::Status ProjectionTransferService::SetProjectionGeometry(grpc::ServerContex
 
     AngleRange angle_range;
     if (geometry->angle_range() == static_cast<int>(AngleRange::HALF)) angle_range = AngleRange::HALF;
-    else if (geometry->beam_shape() == static_cast<int>(AngleRange::FULL)) angle_range = AngleRange::FULL;
+    else if (geometry->angle_range() == static_cast<int>(AngleRange::FULL)) angle_range = AngleRange::FULL;
     else {
         spdlog::error("Unknown angle range: {}", geometry->angle_range());
         return {grpc::StatusCode::INVALID_ARGUMENT, "Unknown angle range"};
