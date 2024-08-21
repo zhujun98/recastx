@@ -2,8 +2,6 @@
  * Copyright (c) Paul Scherrer Institut
  * Author: Jun Zhu
  *
- * Algorithms for drag-and-drop slices in 3D space are originally from https://github.com/cicwi/RECAST3D.git.
- *
  * Distributed under the terms of the BSD 3-Clause License.
  *
  * The full license is in the file LICENSE, distributed with this software.
