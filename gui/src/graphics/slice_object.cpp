@@ -11,7 +11,6 @@
 
 #include "graphics/slice_object.hpp"
 #include "graphics/renderer.hpp"
-#include "graphics/light_manager.hpp"
 #include "graphics/material_manager.hpp"
 #include "graphics/style.hpp"
 #include "common/utils.hpp"
@@ -63,15 +62,11 @@ void SliceObject::render(Renderer* renderer) {
     shader_->setVec3("sliceNormal", normal_);
     shader_->setVec3("viewPos", renderer->viewPos());
 
-    auto &lights = renderer->lightManager()->lights();
-    shader_->setInt("numLights", lights.size());
-    for (size_t i = 0; i < lights.size(); ++i) {
-        auto ptr = lights[i];
-        shader_->setVec3("lights[" + std::to_string(i) + "].direction", ptr->direction());
-        shader_->setVec3("lights[" + std::to_string(i) + "].ambient", ptr->ambient());
-        shader_->setVec3("lights[" + std::to_string(i) + "].diffuse", ptr->diffuse());
-        shader_->setVec3("lights[" + std::to_string(i) + "].specular", ptr->specular());
-    }
+    auto light = renderer->light();
+    shader_->setVec3("light.position", light->position());
+    shader_->setVec3("light.ambient", light->ambient());
+    shader_->setVec3("light.diffuse", light->diffuse());
+    shader_->setVec3("light.specular", light->specular());
 
     bool sample_volume = true;
     shader_->setInt("sampleVolumeTexture", sample_volume);

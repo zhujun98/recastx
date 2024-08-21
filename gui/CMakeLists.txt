@@ -67,7 +67,6 @@ set(GUI_SOURCES
         "src/graphics/glyph_renderer.cpp"
         "src/graphics/image_object.cpp"
         "src/graphics/input_handler.cpp"
-        "src/graphics/light_manager.cpp"
         "src/graphics/light_object.cpp"
         "src/graphics/log_component.cpp"
         "src/graphics/marcher.cpp"

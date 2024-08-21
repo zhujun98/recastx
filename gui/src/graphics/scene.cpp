@@ -12,7 +12,6 @@
 #include "graphics/renderer.hpp"
 #include "graphics/camera.hpp"
 #include "graphics/style.hpp"
-#include "graphics/light_manager.hpp"
 #include "graphics/mesh_object.hpp"
 #include "graphics/voxel_object.hpp"
 #include "graphics/slice_object.hpp"
@@ -21,11 +20,11 @@
 #include "graphics/glyph_object.hpp"
 #include "graphics/light_object.hpp"
 #include "graphics/ray_caster.hpp"
+#include "graphics/widgets/light_widget.hpp"
 
 namespace recastx::gui {
 
-Scene::Scene()
-    : camera_(new Camera()), light_manager_(new LightManager) {
+Scene::Scene() : camera_(new Camera()) {
 }
 
 Scene::~Scene() = default;
@@ -79,13 +78,14 @@ template
 GlyphObject* Scene::addObject<GlyphObject>(std::string&&);
 
 Light* Scene::addLight() {
-    auto light = light_manager_->addLight();
-    addObject<LightObject>(light);
-    return light.get();
+    light_ = std::make_shared<Light>();
+    addObject<LightObject>(light_);
+    light_widget_ = std::make_unique<LightWidget>(light_);
+    return light_.get();
 }
 
 void Scene::draw(Renderer* renderer) {
-    renderer->update(camera_.get(), light_manager_.get());
+    renderer->update(camera_.get(), light_.get());
     renderer->useViewport(viewport_);
     prev_inv_vp_ = glm::inverse(renderer->vpMatrix());
 
@@ -158,7 +158,11 @@ bool Scene::consumeEvent(InputEvent& event) {
 }
 
 void Scene::drawLightControlGUI() {
-    light_manager_->renderGUI();
+    ImGui::PushStyleColor(ImGuiCol_Header, Style::COLLAPSING_HEADER_COLOR);
+    if (ImGui::CollapsingHeader("LIGHTS", ImGuiTreeNodeFlags_DefaultOpen)) {
+        light_widget_->draw();
+    }
+    ImGui::PopStyleColor();
 }
 
 void Scene::drawCameraControlGUI() {

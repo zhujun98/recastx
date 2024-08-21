@@ -23,7 +23,8 @@ class Light {
 
     LightId id_;
 
-    glm::vec3 direction_ = {0.f, 0.f, 1.f};
+    glm::vec3 rel_pos_; // relative to view position
+    glm::vec3 pos_;
 
     glm::vec3 color_ = {1.f, 1.f, 1.f};
     float ambient_ = 0.f;
@@ -54,13 +55,11 @@ class Light {
 
     [[nodiscard]] bool visible() const { return visible_; }
 
-    void setDirection(glm::vec3 value) { direction_ = glm::normalize(value); }
-    [[nodiscard]] glm::vec3 direction() const { return direction_; }
+    void setPosition(const glm::vec3& value) { pos_ = value; }
+    [[nodiscard]] glm::vec3 position() const { return pos_; }
 
-    // returns (light position, light direction)
-    std::pair<glm::vec3, glm::vec3> geometry(glm::vec3 target_pos) {
-        return {target_pos - direction_, direction_};
-    }
+    void setRelPosition(const glm::vec3& value) { rel_pos_ = value; }
+    [[nodiscard]] glm::vec3 relativePosition() const { return rel_pos_; }
 };
 
 } // namespace recastx::gui

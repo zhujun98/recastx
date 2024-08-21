@@ -24,7 +24,7 @@ void LightWidget::draw() {
 
     ImGui::Checkbox(("Show" + id_).c_str(), &light_->visible_);
 
-    ImGui::DragFloat3(("Direction" + id_).c_str(), &light_->direction_.x, 0.02f, -10.f, 10.f);
+    ImGui::DragFloat3(("Position" + id_).c_str(), &light_->rel_pos_.x, 0.01f, -1.f, 1.f);
 
     ImGui::ColorEdit3(("Color" + id_).c_str(), &light_->color_.x);
     ImGui::SliderFloat(("Ambient" + id_).c_str(), &light_->ambient_, 0.f, 1.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);

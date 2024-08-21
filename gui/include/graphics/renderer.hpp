@@ -21,12 +21,12 @@
 #include <implot.h>
 #include <glm/glm.hpp>
 
+#include "light.hpp"
 #include "viewport.hpp"
 
 namespace recastx::gui {
 
 class Camera;
-class LightManager;
 class MeshObject;
 class VoxelObject;
 class SliceObject;
@@ -41,7 +41,8 @@ class Renderer {
     int height_;
 
     Camera* camera_;
-    LightManager* light_manager_;
+    Light* light_;
+
     glm::mat4 view_matrix_;
     glm::mat4 proj_matrix_;
     glm::mat4 vp_matrix_;
@@ -84,7 +85,7 @@ class Renderer {
 
     void onFramebufferSizeChanged(int width, int height);
 
-    void update(Camera* camera, LightManager* light_manager);
+    void update(Camera* camera, Light* light);
 
     [[nodiscard]] const glm::mat4& vpMatrix() const { return vp_matrix_; }
     [[nodiscard]] const glm::mat4& view() const { return view_matrix_; }
@@ -93,7 +94,7 @@ class Renderer {
     [[nodiscard]] const glm::vec3& viewDir() const { return view_dir_; }
     [[nodiscard]] float aspectRatio() const { return aspect_ratio_; }
 
-    [[nodiscard]] LightManager* lightManager() { return light_manager_; }
+    [[nodiscard]] Light* light() { return light_; }
 
     [[nodiscard]] GlyphRenderer* glyph() const { return glyph_renderer_.get(); }
 };

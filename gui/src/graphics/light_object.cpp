@@ -24,7 +24,7 @@ LightObject::~LightObject() = default;
 void LightObject::render(Renderer* renderer) {
     if (!light_->visible()) return;
 
-    pos_ = -light_->direction();
+    pos_ = light_->position();
 
     shader_->use();
     shader_->setMat4("mvp", renderer->vpMatrix() * model());
@@ -39,11 +39,11 @@ void LightObject::setLightModel() {
     model_.num_vertices = 6;
     model_.vertices = {
             -.1f,  .0f,  .0f,
-            .1f,  .0f,  .0f,
-            .0f, -.1f,  .0f,
-            .0f,  .1f,  .0f,
-            .0f,  .0f, -.1f,
-            .0f,  .0f,  .1f
+             .1f,  .0f,  .0f,
+             .0f, -.1f,  .0f,
+             .0f,  .1f,  .0f,
+             .0f,  .0f, -.1f,
+             .0f,  .0f,  .1f
     };
     model_.indices = { 0, 1, 2, 3, 4, 5 };
     model_.mode = Mode::LINE;

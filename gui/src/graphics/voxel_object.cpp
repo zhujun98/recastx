@@ -11,7 +11,6 @@
 #include "graphics/voxel_object.hpp"
 #include "graphics/renderer.hpp"
 #include "graphics/material_manager.hpp"
-#include "graphics/light_manager.hpp"
 #include "graphics/widgets/widget.hpp"
 
 namespace recastx::gui {
@@ -271,10 +270,8 @@ void VoxelObject::renderVolumeShadow(Renderer *renderer) {
     const glm::mat4 bias = glm::scale(glm::translate(glm::mat4(1), glm::vec3(0.5, 0.5, 0.5)),
                                       glm::vec3(0.5, 0.5, 0.5));
 
-    auto light = renderer->lightManager()->lights()[0];
-    auto [light_pos, light_dir] = light->geometry(target_pos);
-
-    glm::vec3 light_vec = glm::normalize(-light_dir);
+    auto light = renderer->light();
+    auto light_pos = light->position();
 
     glm::mat4 light_view = glm::lookAt(light_pos, target_pos, light_up);
     glm::mat4 light_mvp = light_projection * light_view;
@@ -300,9 +297,10 @@ void VoxelObject::renderVolumeShadow(Renderer *renderer) {
     vlight_shader_->setFloat("minValue", min_v);
     vlight_shader_->setFloat("maxValue", max_v);
 
-    auto &view_dir = renderer->viewDir();
-    bool is_view_inverted = glm::dot(view_dir, light_vec) < 0;
-    const glm::vec3 &half_vec = glm::normalize((is_view_inverted ? -view_dir : view_dir) + light_vec);
+    auto light_vec = glm::normalize(target_pos - light_pos);
+    auto view_vec = glm::normalize(target_pos - renderer->viewPos());
+    bool is_view_inverted = glm::dot(light_vec, view_vec) < 0;
+    const glm::vec3 &half_vec = glm::normalize((is_view_inverted ? -view_vec : view_vec) + light_vec);
     model_->update(half_vec);
 
     intensity_.bind(0);
@@ -318,7 +316,7 @@ void VoxelObject::renderVolumeShadow(Renderer *renderer) {
 
 void VoxelObject::renderSimple(Renderer *renderer) {
     model_->update(renderer->viewDir());
-    auto light = renderer->lightManager()->lights()[0];
+    auto light = renderer->light();
 
     shader_->use();
     shader_->setMat4("mvp", renderer->vpMatrix());

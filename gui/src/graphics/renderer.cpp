@@ -13,7 +13,6 @@
 #include "graphics/slice_object.hpp"
 #include "graphics/image_object.hpp"
 #include "graphics/simple_object.hpp"
-#include "graphics/light_manager.hpp"
 #include "graphics/glyph_object.hpp"
 #include "graphics/glyph_renderer.hpp"
 #include "graphics/camera.hpp"
@@ -132,9 +131,14 @@ void Renderer::onFramebufferSizeChanged(int width, int height) {
     height_ = height;
 }
 
-void Renderer::update(Camera* camera, LightManager* light_manager) {
+void Renderer::update(Camera* camera, Light* light) {
     camera_ = camera;
-    light_manager_ = light_manager;
+    light_ = light;
+
+    if (light != nullptr) {
+        glm::vec4 pos = glm::inverse(camera_->viewMatrix()) * glm::vec4{light_->relativePosition(), 1.f};
+        light->setPosition(glm::vec3(pos));
+    }
 }
 
 } // namespace recastx::gui

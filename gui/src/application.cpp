@@ -346,19 +346,12 @@ void Application::initCenterScene() {
                        1.f - 4.f * Style::MARGIN - Style::TOP_PANEL_HEIGHT - Style::BOTTOM_PANEL_HEIGHT,
                        Viewport::Type::PERSPECTIVE);
 
-    auto light1 = scene->addLight();
-    light1->setDirection({-1, -1, -1});
-    light1->setColor({1.f, 1.f, 1.f});
-    light1->setAmbient(0.2f);
-    light1->setDiffuse(0.8f);
-    light1->setSpecular(0.8f);
-
-    auto light2 = scene->addLight();
-    light2->setDirection({1, -1, 1});
-    light2->setColor({1.f, 1.f, 1.f});
-    light2->setAmbient(0.2f);
-    light2->setDiffuse(0.8f);
-    light2->setSpecular(0.8f);
+    auto light = scene->addLight();
+    light->setRelPosition({0.1, 0.1, 0.1});
+    light->setColor({1.f, 1.f, 1.f});
+    light->setAmbient(0.5f);
+    light->setDiffuse(0.8f);
+    light->setSpecular(0.5f);
 
     auto voxel_obj = scene->addObject<VoxelObject>();
     auto voxel_mat = MaterialManager::instance().createMaterial<TransferFunc>();
@@ -520,6 +513,7 @@ void Application::drawPopupGUI() {
                 item.first->setVisible(item.second);
             }
         }
+        ImGui::EndPopup();
     }
 
     ImGui::End();

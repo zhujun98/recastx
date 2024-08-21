@@ -33,8 +33,8 @@ class SliceObject;
 class ImageObject;
 class SimpleObject;
 class GlyphObject;
-class LightManager;
 class Light;
+class LightWidget;
 
 class Scene {
 
@@ -44,7 +44,8 @@ class Scene {
     std::shared_ptr<Camera> camera_;
     bool camera_fixed_ = false;
 
-    std::unique_ptr<LightManager> light_manager_;
+    std::shared_ptr<Light> light_;
+    std::unique_ptr<LightWidget> light_widget_;
 
     std::vector<std::shared_ptr<MeshObject>> mesh_objects_;
     std::vector<std::shared_ptr<VoxelObject>> voxel_objects_;
