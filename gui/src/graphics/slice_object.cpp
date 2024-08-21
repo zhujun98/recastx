@@ -6,6 +6,8 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
+#include <algorithm>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -107,6 +109,8 @@ void SliceObject::render(Renderer* renderer) {
     voxel_intensity_->unbind();
     mat->unbind();
     intensity_.unbind();
+
+    matrix_ = renderer->vpMatrix();
 }
 
 void SliceObject::setOrientation(const glm::vec3& base, const glm::vec3& x, const glm::vec3& y) {
@@ -122,12 +126,34 @@ void SliceObject::setOrientation(const glm::vec3& base, const glm::vec3& x, cons
 
 void SliceObject::setOffset(float offset) {
     intensity_.invalidate();
+
+    offset_ = offset;
     pos_ = offset * normal_;
+}
+
+void SliceObject::translate(float delta) {
+    intensity_.invalidate();
+
+    offset_ += delta;
+    offset_ = std::clamp(offset_, MIN_OFFSET, MAX_OFFSET);
+    pos_ = offset_ * normal_;
 }
 
 bool SliceObject::mouseHoverEvent(const MouseHoverEvent &ev) {
     if (ev.entering) hovering_ = true;
     else if (ev.exiting) hovering_ = false;
+    return true;
+}
+
+bool SliceObject::mouseDragEvent(const MouseDragEvent& ev) {
+    if (ev.entering) {
+        dragging_ = true;
+    } else if (ev.exiting) {
+        dragging_ = false;
+        return true;
+    }
+
+    translate(glm::dot(0.5f * glm::vec2(matrix_ * glm::vec4(normal_, 1.f)), ev.delta));
     return true;
 }
 

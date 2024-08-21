@@ -186,7 +186,10 @@ void SliceComponent::renderSliceControl(size_t index, const char* header) {
         }
 
         {
-            auto ret = ImGui::SliderFloat(OFFSET[index], &slice.offset, -1.f, 1.f, "%.3f",
+            slice.offset = slice.object->offset(); // synchronize
+
+            auto ret = ImGui::SliderFloat(OFFSET[index], &slice.offset,
+                                          SliceObject::MIN_OFFSET, SliceObject::MAX_OFFSET, "%.3f",
                                           ImGuiSliderFlags_AlwaysClamp);
             highlighting |= ImGui::IsItemHovered();
 

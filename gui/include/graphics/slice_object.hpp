@@ -20,6 +20,13 @@ class Renderer;
 
 class SliceObject : public Interactable {
 
+  public:
+
+    static constexpr float MAX_OFFSET =  1.f;
+    static constexpr float MIN_OFFSET = -1.f;
+
+  private:
+
     GLuint VAO_;
     GLuint VBO_;
 
@@ -30,7 +37,9 @@ class SliceObject : public Interactable {
              0.5f, -0.5f, 0.0f
     };
 
+    float offset_;
     glm::vec3 normal_;
+    glm::mat4 matrix_;
 
     Texture2D intensity_;
     Texture3D* voxel_intensity_ { nullptr };
@@ -74,9 +83,15 @@ class SliceObject : public Interactable {
 
     void setOffset(float offset);
 
+    void translate(float delta);
+
+    [[nodiscard]] float offset() const { return offset_; }
+
     void setSampleVolume(bool state) { sample_volume_ = state; }
 
     bool mouseHoverEvent(const MouseHoverEvent& ev) override;
+
+    bool mouseDragEvent(const MouseDragEvent& ev) override;
 };
 
 } // recastx::gui
