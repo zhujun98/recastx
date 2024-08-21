@@ -127,7 +127,7 @@ void InputHandler::registerKey(int key, int action, int /*mods*/) {
                 ev.key = KeyName::SPACE;
                 break;
             default:
-                break;
+                return;
         }
 
         events_.emplace(std::move(ev));
@@ -138,7 +138,7 @@ void InputHandler::registerKey(int key, int action, int /*mods*/) {
                 alt_pressed_ = false;
                 break;
             default:
-                break;
+                return;
         }
     }
 }

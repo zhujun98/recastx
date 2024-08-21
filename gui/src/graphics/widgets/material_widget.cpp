@@ -165,6 +165,7 @@ void TransferFuncWidget::renderAlphaEditor() {
 
         // select and press D to delete a point
         // cannot delete the first and last points
+        ImGui::SetNextFrameWantCaptureKeyboard(true);
         if (selected != alpha_.end() && selected != alpha_.begin() && selected != std::prev(alpha_.end())
             && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_D))) {
             alpha_.erase(selected);
