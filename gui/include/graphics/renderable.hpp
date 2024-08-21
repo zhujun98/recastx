@@ -53,6 +53,9 @@ class Renderable {
 
     virtual ~Renderable() = 0;
 
+    Renderable(const Renderable&) = delete;
+    Renderable& operator=(const Renderable&) = delete;
+
     virtual void render(Renderer* renderer) = 0;
 
     virtual void renderGUI() {};

@@ -41,6 +41,9 @@ class Light {
 
     ~Light() = default;
 
+    Light(const Light&) = delete;
+    Light& operator=(const Light&) = delete;
+
     [[nodiscard]] LightId id() const { return id_; }
 
     void setColor(glm::vec3 rgb) { color_ = rgb; }
