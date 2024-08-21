@@ -186,6 +186,7 @@ void SliceComponent::renderSliceControl(size_t index, const char* header) {
         }
 
         {
+            ImGui::BeginDisabled(slice.display_policy == DISABLE);
             slice.offset = slice.object->offset(); // synchronize
 
             auto ret = ImGui::SliderFloat(OFFSET[index], &slice.offset,
@@ -203,6 +204,7 @@ void SliceComponent::renderSliceControl(size_t index, const char* header) {
                 client_->setSlice(slice.timestamp, slice.object->orientation());
                 slice.object->setDragging(false);
             }
+            ImGui::EndDisabled();
         }
     }
 
