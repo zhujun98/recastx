@@ -6,57 +6,53 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
-#include <glm/glm.hpp>
-
 #include "graphics/volume_slicer.hpp"
-#include "graphics/primitives.hpp"
-#include "graphics/shader_program.hpp"
-#include "graphics/viewport.hpp"
 
 namespace recastx::gui {
 
-VolumeSlicer::VolumeSlicer(size_t num_slices)
-        : shadow_(800, 800), num_slices_(num_slices), front_(0.f) {
-    glGenVertexArrays(1, &vao_);
-    glGenBuffers(1, &vbo_);
+VolumeSlicer::VolumeSlicer(size_t num_slices) {
+    resize(num_slices);
 }
 
-VolumeSlicer::~VolumeSlicer() {
-    glDeleteVertexArrays(1, &vao_);
-    glDeleteBuffers(1, &vbo_);
-}
+VolumeSlicer::~VolumeSlicer() = default;
 
-void VolumeSlicer::update(const glm::vec3& view_dir, bool inverted) {
-    if (slices_.size() != num_slices_ * 12) {
-        slices_.resize(num_slices_ * 12);
-        initBufferData();
+bool VolumeSlicer::resize(size_t num_slices) {
+    if (num_slices_ != num_slices) {
+        num_slices_ = num_slices;
+        slices_.resize(12 * num_slices);
+        return true;
     }
+    return false;
+}
 
+void VolumeSlicer::update(const glm::vec3& view_dir) {
     auto [min_dist, max_dist, max_index] = sortVertices(view_dir);
-    float cutoff = min_dist + (max_dist - min_dist) * front_;
 
     glm::vec3 vec_start[12];
     glm::vec3 vec_dir[12];
     float lambda[12];
     float lambda_inc[12];
-    float denom;
 
     float plane_dist = min_dist;
-    float plane_dist_inc = (max_dist - min_dist) / float(num_slices_);
+    float plane_dist_inc = (max_dist - min_dist) / float(num_slices_ - 1);
+    float plane_dist_inc_frac = 1.f / float(num_slices_ - 1);
 
-    for (int e = 0; e < 12; e++) {
-        auto edge = egs_[pts_[max_index][e]];
 
-        vec_start[e] = vts_[edge[0]];
-        vec_dir[e] = vts_[edge[1]] - vec_start[e];
+    const auto& path = paths_[max_index];
+    for (int e = 0; e < 12; ++e) {
+        auto edge = edges_[path[e]];
 
-        denom = glm::dot(vec_dir[e], view_dir);
-        if (denom != 0.0) {
-            lambda_inc[e] =  plane_dist_inc / denom;
-            lambda[e]     = (plane_dist - glm::dot(vec_start[e], view_dir)) / denom;
+        vec_start[e] = vertices_[edge[0]];
+        vec_dir[e] = vertices_[edge[1]] - vec_start[e];
+
+        float norm = glm::dot(vec_dir[e], view_dir);
+
+        if (norm != 0.0) {
+            lambda_inc[e] =  plane_dist_inc / norm;
+            lambda[e]     = (plane_dist - glm::dot(vec_start[e], view_dir)) / norm;
         } else {
-            lambda[e]     = -1.0f;
             lambda_inc[e] =  0.0f;
+            lambda[e]     = -1.0f;
         }
     }
 
@@ -64,11 +60,10 @@ void VolumeSlicer::update(const glm::vec3& view_dir, bool inverted) {
     float dl[12];
 
     int count = 0;
-    for (int i = num_slices_ - 1; i >= 0; --i) {
-        if (!inverted && i * plane_dist_inc + min_dist < cutoff) continue;
-        else if (inverted && max_dist - i * plane_dist_inc < cutoff) continue;
-
-        for (int e = 0; e < 12; e++) dl[e] = lambda[e] + i * lambda_inc[e];
+    for (int i = int(num_slices_) - 1; i >= 0; --i) {
+        for (int e = 0; e < 12; e++) {
+            dl[e] = lambda[e] + (float)i * lambda_inc[e];
+        }
 
         if  (dl[0] >= 0.0 && dl[0] < 1.0)	{
             intersection[0] = vec_start[0] + dl[0] * vec_dir[0];
@@ -114,119 +109,32 @@ void VolumeSlicer::update(const glm::vec3& view_dir, bool inverted) {
             intersection[5] = intersection[4];
         }
 
-        for (auto id : ids_) slices_[count++] = intersection[id];
-    }
-}
-
-void VolumeSlicer::draw() {
-    glEnable(GL_BLEND);
-
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * slices_.size(), slices_.data());
-
-    glBindVertexArray(vao_);
-    glDrawArrays(GL_TRIANGLES, 0, static_cast<int>(slices_.size()));
-
-    glDisable(GL_BLEND);
-}
-
-void VolumeSlicer::drawOnScreen() {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, shadow_.eye_texture_);
-
-    glBindVertexArray(shadow_.vao_);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    glBindVertexArray(0);
-
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    glDisable(GL_BLEND);
-}
-
-void VolumeSlicer::drawOnBuffer(ShaderProgram* vslice_shader,
-                                ShaderProgram* vlight_shader,
-                                bool is_view_inverted) {
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * slices_.size(), slices_.data());
-
-    shadow_.bind();
-
-    glDrawBuffer(GL_COLOR_ATTACHMENT0);
-    glClearColor(1, 1, 1, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    glDrawBuffer(GL_COLOR_ATTACHMENT1);
-    glClearColor(0, 0, 0, 0);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    glEnable(GL_BLEND);
-
-    glBindVertexArray(vao_);
-    for (int i = num_slices_; i >= 0; --i) {
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, shadow_.light_texture_);
-        vslice_shader->use();
-        glDrawBuffer(GL_COLOR_ATTACHMENT1);
-        if(is_view_inverted) {
-            glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-        } else {
-            glBlendFunc(GL_ONE_MINUS_DST_ALPHA, GL_ONE);
+        for (auto idx : indices_) {
+            slices_[count++] = { intersection[idx], plane_dist_inc_frac * (float)i };
         }
-        glDrawArrays(GL_TRIANGLES, 12 * i, 12);
-
-        glDrawBuffer(GL_COLOR_ATTACHMENT0);
-        vlight_shader->use();
-        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-        glDrawArrays(GL_TRIANGLES, 12 * i, 12);
     }
-
-    glDisable(GL_BLEND);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void VolumeSlicer::initBufferData() {
-    glBindVertexArray(vao_);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-
-    glBufferData(GL_ARRAY_BUFFER,
-                 sizeof(glm::vec3) * slices_.size(),
-                 0,
-                 GL_DYNAMIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-}
-
-std::tuple<float, float, int> VolumeSlicer::sortVertices(const glm::vec3& view_dir) {
-    float max_dist = 0;
+std::tuple<float, float, size_t> VolumeSlicer::sortVertices(const glm::vec3& view_dir) {
+    float max_dist = glm::dot(view_dir, vertices_[0]);;
     float min_dist = max_dist;
-    int max_index = 0;
-    for (size_t i = 0; i < sizeof(vts_) / sizeof(glm::vec3); i++) {
-        float dist = glm::dot(view_dir, vts_[i]);
+    size_t max_index = 0;
+    for (size_t i = 1; i < sizeof(vertices_) / sizeof(glm::vec3); i++) {
+        float dist = glm::dot(view_dir, vertices_[i]);
 
-        if(dist > max_dist) {
+        if (dist > max_dist) {
             max_dist = dist;
             max_index = i;
+        } else if (dist < min_dist) {
+            min_dist = dist;
         }
-
-        if (dist < min_dist) min_dist = dist;
     }
 
-    static constexpr float EPSILON = 0.0001f;
-    max_dist += EPSILON;
-    min_dist -= EPSILON;
+    const float epsilon = 0.0001f * float(max_dist - min_dist);
+    max_dist -= epsilon;
+    min_dist += epsilon;
 
-    return {min_dist, max_dist, max_index};
-}
-
-void VolumeSlicer::setFront(float front) {
-    if (front > front_) {
-        for (size_t i = 0; i < slices_.size(); ++i) slices_[i] = glm::vec3{};
-    }
-    front_ = front;
+    return { min_dist, max_dist, max_index };
 }
 
 } // namespace recastx::gui

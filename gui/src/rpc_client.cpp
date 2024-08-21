@@ -37,7 +37,7 @@ RpcClient::~RpcClient() {
     if (thread_recon_.joinable()) thread_recon_.join();
 }
 
-bool RpcClient::startAcquiring() {
+RpcClient::State RpcClient::startAcquiring() {
     google::protobuf::Empty request;
     google::protobuf::Empty reply;
 
@@ -46,7 +46,7 @@ bool RpcClient::startAcquiring() {
     return checkStatus(status);
 }
 
-bool RpcClient::stopAcquiring() {
+RpcClient::State RpcClient::stopAcquiring() {
     google::protobuf::Empty request;
     google::protobuf::Empty reply;
 
@@ -55,7 +55,7 @@ bool RpcClient::stopAcquiring() {
     return checkStatus(status);
 }
 
-bool RpcClient::startProcessing() {
+RpcClient::State RpcClient::startProcessing() {
     google::protobuf::Empty request;
     google::protobuf::Empty reply;
 
@@ -64,7 +64,7 @@ bool RpcClient::startProcessing() {
     return checkStatus(status);
 }
 
-bool RpcClient::stopProcessing() {
+RpcClient::State RpcClient::stopProcessing() {
     google::protobuf::Empty request;
     google::protobuf::Empty reply;
 
@@ -80,11 +80,11 @@ std::optional<rpc::ServerState_State> RpcClient::getServerState() {
 
     grpc::ClientContext context;
     grpc::Status status = control_stub_->GetServerState(&context, request, &reply);
-    if (checkStatus(status)) return std::nullopt;
+    if (checkStatus(status) != State::OK) return std::nullopt;
     return reply.state();
 }
 
-bool RpcClient::setScanMode(rpc::ScanMode_Mode mode, uint32_t update_interval) {
+RpcClient::State RpcClient::setScanMode(rpc::ScanMode_Mode mode, uint32_t update_interval) {
     rpc::ScanMode request;
     request.set_mode(mode);
     request.set_update_interval(update_interval);
@@ -97,7 +97,7 @@ bool RpcClient::setScanMode(rpc::ScanMode_Mode mode, uint32_t update_interval) {
     return checkStatus(status);
 }
 
-bool RpcClient::setDownsampling(uint32_t col, uint32_t row) {
+RpcClient::State RpcClient::setDownsampling(uint32_t col, uint32_t row) {
     rpc::DownsamplingParams request;
     request.set_col(col);
     request.set_row(row);
@@ -110,7 +110,7 @@ bool RpcClient::setDownsampling(uint32_t col, uint32_t row) {
     return checkStatus(status);
 }
 
-bool RpcClient::setCorrection(int32_t offset, bool minus_log) {
+RpcClient::State RpcClient::setCorrection(int32_t offset, bool minus_log) {
     rpc::CorrectionParams request;
     request.set_offset(offset);
     request.set_minus_log(minus_log);
@@ -123,7 +123,7 @@ bool RpcClient::setCorrection(int32_t offset, bool minus_log) {
     return checkStatus(status);
 }
 
-bool RpcClient::setRampFilter(const std::string& filter_name) {
+RpcClient::State RpcClient::setRampFilter(const std::string& filter_name) {
     rpc::RampFilterParams request;
     request.set_name(filter_name);
 
@@ -135,10 +135,10 @@ bool RpcClient::setRampFilter(const std::string& filter_name) {
     return checkStatus(status);
 }
 
-bool RpcClient::setProjectionGeometry(uint32_t beam_shape, uint32_t col_count, uint32_t row_count,
-                                      float pixel_width, float pixel_height,
-                                      float src2origin, float origin2det,
-                                      uint32_t angle_count, int angle_range) {
+RpcClient::State RpcClient::setProjectionGeometry(uint32_t beam_shape, uint32_t col_count, uint32_t row_count,
+                                                  float pixel_width, float pixel_height,
+                                                  float src2origin, float origin2det,
+                                                  uint32_t angle_count, int angle_range) {
     rpc::ProjectionGeometry request;
     request.set_beam_shape(beam_shape);
     request.set_col_count(col_count);
@@ -159,7 +159,7 @@ bool RpcClient::setProjectionGeometry(uint32_t beam_shape, uint32_t col_count, u
 }
 
 
-bool RpcClient::setProjection(uint32_t id) {
+RpcClient::State RpcClient::setProjection(uint32_t id) {
     rpc::Projection request;
     request.set_id(id);
 
@@ -171,10 +171,16 @@ bool RpcClient::setProjection(uint32_t id) {
     return checkStatus(status);
 }
 
-bool RpcClient::setReconGeometry(uint32_t slice_size, uint32_t volume_size,
-                                 std::array<int32_t, 2> x, std::array<int32_t, 2> y, std::array<int32_t, 2> z) {
+RpcClient::State RpcClient::setReconGeometry(uint32_t slice_size,
+                                             uint32_t volume_size,
+                                             std::array<int32_t, 2> x,
+                                             std::array<int32_t, 2> y,
+                                             std::array<int32_t, 2> z) {
     rpc::ReconGeometry request;
     request.add_slice_size(slice_size);
+    request.add_slice_size(slice_size);
+    request.add_volume_size(volume_size);
+    request.add_volume_size(volume_size);
     request.add_volume_size(volume_size);
     request.add_x_range(x[0]);
     request.add_x_range(x[1]);
@@ -191,7 +197,7 @@ bool RpcClient::setReconGeometry(uint32_t slice_size, uint32_t volume_size,
     return checkStatus(status);
 }
 
-bool RpcClient::setSlice(uint64_t timestamp, const Orientation& orientation) {
+RpcClient::State RpcClient::setSlice(uint64_t timestamp, const Orientation& orientation) {
     rpc::Slice request;
     request.set_timestamp(timestamp);
     for (auto v : orientation) request.add_orientation(v);
@@ -204,7 +210,7 @@ bool RpcClient::setSlice(uint64_t timestamp, const Orientation& orientation) {
     return checkStatus(status);
 }
 
-bool RpcClient::setVolume(bool required) {
+RpcClient::State RpcClient::setVolume(bool required) {
     rpc::Volume request;
     request.set_required(required);
 
@@ -283,9 +289,9 @@ void RpcClient::startReadingProjectionStream() {
     });
 }
 
-bool RpcClient::checkStatus(const grpc::Status& status, bool warn_on_unavailable_server) const {
+RpcClient::State RpcClient::checkStatus(const grpc::Status& status, bool warn_on_unavailable_server) const {
     auto code = status.error_code();
-    if (!code) return false;
+    if (code == grpc::StatusCode::OK) return State::OK;
 
     const std::string& msg = status.error_message();
     if (code == grpc::StatusCode::UNAVAILABLE) {
@@ -302,7 +308,7 @@ bool RpcClient::checkStatus(const grpc::Status& status, bool warn_on_unavailable
         log::error("Unexpected RPC error {}: {}", code, msg);
         std::exit(EXIT_FAILURE);
     }
-    return true;
+    return State::ERROR;
 }
 
 } // namespace recastx::gui

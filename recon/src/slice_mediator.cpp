@@ -24,6 +24,10 @@ void SliceMediator::resize(const SliceBuffer<float>::ShapeType& shape) {
 }
 
 void SliceMediator::update(size_t timestamp, const Orientation& orientation) {
+    spdlog::debug("Update slice ({}) orientation: {}, {}, {}, {}, {}, {}, {}, {}, {}", timestamp,
+                  orientation[0], orientation[1], orientation[2],
+                  orientation[3], orientation[4], orientation[5],
+                  orientation[6], orientation[7], orientation[8]);
     std::lock_guard<std::mutex> lck(mtx_);
     size_t sid = sliceIdFromTimestamp(timestamp);
     auto [it, inserted] = params_.insert_or_assign(sid, std::make_pair(timestamp, orientation));

@@ -10,12 +10,9 @@
 #define GUI_STYLE_HPP
 
 #include <imgui.h>
+#include <glm/glm.hpp>
 
 namespace recastx::gui {
-
-enum class RenderQuality { VERY_LOW = 1, LOW = 2, MEDIUM = 3, HIGH = 4, VERY_HIGH = 5 };
-
-enum class RenderPolicy { VOLUME = 0, SURFACE = 1 };
 
 static const char KarlaRegular_compressed_data_base85[15900+1] =
     "7])#######5Z9sf'/###I),##bw9hLQXH##j$1S:'>pgLZvaAd668X%QUQl;*31Qg3R9s/N@4',:a`T9n&)Seo$,p8ZW%q/^6se=K9C[HP>JeE';G##Uu/>8i1i86<CDmLg@AS@'Tx-3"
@@ -1675,13 +1672,16 @@ static const char CousineRegular_compressed_data_base85[47040+1] =
     "";
 
 struct Style {
+    static constexpr int MIN_WINDOW_WIDTH = 800;
+    static constexpr int MIN_WINDOW_HEIGHT = 600;
+
     static constexpr float MARGIN = 0.006f;
     static constexpr int MARGIN_MAX = 5;
     static constexpr float LEFT_PANEL_WIDTH = 0.215f;
     static constexpr float RIGHT_PANEL_WIDTH = 0.215f;
     static constexpr float TOP_PANEL_HEIGHT = 0.15f;
     static constexpr float BOTTOM_PANEL_HEIGHT = 0.15f;
-    static constexpr float SATELLITE_WINDOW_HEIGHT = 0.15f;
+    static constexpr float SATELLITE_WINDOW_SIZE = 0.15f;
 
     static void init() {
 
@@ -1707,13 +1707,16 @@ struct Style {
         colors[ImGuiCol_ScrollbarGrab]          = ImVec4(0.50f, 0.50f, 0.50f, 0.60f);
         colors[ImGuiCol_ScrollbarGrabHovered]   = ImVec4(0.55f, 0.55f, 0.55f, 0.60f);
         colors[ImGuiCol_ScrollbarGrabActive]    = ImVec4(0.60f, 0.60f, 0.60f, 0.60f);
-        colors[ImGuiCol_PopupBg]                = ImVec4(0.30f, 0.30f, 0.30f, 1.00f);
+        colors[ImGuiCol_PopupBg]                = ImVec4(0.20f, 0.20f, 0.20f, 0.30f);
     }
 
     static constexpr ImVec4 BG_COLOR = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
-    static constexpr ImVec4 IMAGE_BUFFER_BG_COLOR = ImVec4(0.60f, 0.60f, 0.60f, 1.00f);
+
+    static constexpr glm::vec4 K_EMPTY_FRAME_COLOR { 1.0f, 1.0f, 1.0f, 0.5f };
+    static constexpr glm::vec4 K_HIGHLIGHTED_FRAME_COLOR { 0.8f, 0.8f, 0.0f, 1.f };
 
     static constexpr ImVec4 CTRL_SECTION_TITLE_COLOR = ImVec4(1.0f, 1.0f, 0.0f, 1.0f);
+    static constexpr ImVec4 COLLAPSING_HEADER_COLOR = ImVec4(0.25f, 0.60f, 0.60f, 1.0f);
     // TODO: improve
     static constexpr float LINE_HEIGHT = 25.f;
 };

@@ -7,17 +7,16 @@ out vec3 fPos;
 out vec2 sliceCoord;
 out vec3 volumeCoord;
 
-uniform mat4 view;
-uniform mat4 projection;
-uniform mat4 orientationMatrix;
+uniform mat4 mvp;
+uniform mat4 model;
 
 void main() {
-    sliceCoord = vec2(vPos.xy);
+    sliceCoord = vPos.xy + vec2(0.5f);
 
-    fPos = (orientationMatrix * vec4(vPos, 1.0f)).xyz;
+    fPos = (model * vec4(vPos, 1.0f)).xyz;
 
-    volumeCoord = 0.5f * (fPos + vec3(1.0f));
+    volumeCoord = fPos + vec3(0.5f);
 
-    gl_Position = projection * view * vec4(fPos, 1.0f);
+    gl_Position = mvp * vec4(vPos, 1.0f);
 }
 )glsl"

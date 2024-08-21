@@ -8,13 +8,7 @@
 */
 #include <iostream>
 
-#include <spdlog/spdlog.h>
 #include <boost/program_options.hpp>
-
-#include <GL/gl3w.h>
-#include <GLFW/glfw3.h>
-#include <glm/gtx/transform.hpp>
-#include <imgui.h>
 
 #include "application.hpp"
 

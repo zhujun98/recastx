@@ -10,128 +10,98 @@
 #define GUI_SCENE_H
 
 #include <any>
+#include <array>
 #include <memory>
+#include <optional>
 #include <unordered_map>
 #include <vector>
 
-#include <GL/gl3w.h>
 #include <glm/glm.hpp>
 
-#include "graphics/items/graphics_item.hpp"
-#include "graphics/graph_node.hpp"
-#include "rpc_client.hpp"
+#include "event.hpp"
+#include "viewport.hpp"
 
 namespace recastx::gui {
 
-class ShaderProgram;
 class Camera;
-struct Light;
-struct Material;
+class Renderer;
+class Renderable;
+class Interactable;
+class MeshObject;
+class VoxelObject;
+class SliceObject;
+class ImageObject;
+class SimpleObject;
+class GlyphObject;
+class Light;
+class LightWidget;
 
-class Scene : public GraphNode, public InputHandler {
+class Scene {
 
-public:
+    Viewport viewport_;
+    glm::mat4 prev_inv_vp_ {1.f};
 
-    using SceneStatus = std::unordered_map<std::string, std::any>;
+    std::shared_ptr<Camera> camera_;
+    bool camera_fixed_ = false;
 
-protected:
+    std::shared_ptr<Light> light_;
+    std::unique_ptr<LightWidget> light_widget_;
 
-    struct Layout {
-        int w;
-        int h;
-        double sw;
-        double sh;
-        int mw;
-        int mh;
-        int lw;
-        int rw;
-        int th;
-        int bh;
-    };
+    std::vector<std::shared_ptr<MeshObject>> mesh_objects_;
+    std::vector<std::shared_ptr<VoxelObject>> voxel_objects_;
+    std::vector<std::shared_ptr<SliceObject>> slice_objects_;
+    std::vector<std::shared_ptr<ImageObject>> image_objects_;
+    std::vector<std::shared_ptr<SimpleObject>> simple_objects_;
+    std::vector<std::shared_ptr<GlyphObject>> glyph_objects_;
 
-    Layout layout_;
+    Interactable* hovered_object_ { nullptr };
+    Interactable* dragged_object_ { nullptr };
 
-    std::unique_ptr<Camera> camera_;
-    std::unique_ptr<ShaderProgram> program_;
+    [[nodiscard]] Interactable* findClosestSlice(float x, float y) const;
 
-    RpcClient* client_;
+    [[nodiscard]] std::optional<std::array<double, 2>> mapToSceneCoordinate(double x, double y) const;
 
-    std::vector<GraphicsItem*> items_;
-    std::vector<GraphicsGLItem*> gl_items_;
-    std::vector<GraphicsDataItem*> data_items_;
-
-    SceneStatus scene_status_;
-
-    rpc::ServerState_State server_state_ = rpc::ServerState_State_UNKNOWN;
-
-    rpc::ScanMode_Mode  scan_mode_ = rpc::ScanMode_Mode_STATIC;
-    uint32_t scan_update_interval_;
-
-    virtual void updateLayout(int width, int height);
-
-    bool setScanMode();
-
-    bool updateServerParams();
-
-public:
-
-    explicit Scene(RpcClient* client);
-
-    ~Scene() override;
-
-    RpcClient* client() { return client_; }
-
-    [[nodiscard]] const Layout& layout() const { return layout_; }
-
-    [[nodiscard]] const glm::mat4& cameraMatrix() const;
-
-    [[nodiscard]] glm::vec3 cameraDir() const;
-
-    [[nodiscard]] glm::vec3 cameraPosition() const;
-
-    [[nodiscard]] float cameraDistance() const;
-
-    [[nodiscard]] virtual const Light& light() const = 0;
-
-    [[nodiscard]] virtual const Material& material() const = 0;
-
-    void onFramebufferSizeChanged(int width, int height);
-
-    void onWindowSizeChanged(int width, int height);
-
-    virtual void render() = 0;
-
-    void addItem(GraphicsItem* item);
-
-    bool handleMouseButton(int button, int action) override;
-
-    bool handleScroll(float offset) override;
-
-    bool handleMouseMoved(float x, float y) override;
-
-    bool handleKey(int key, int action, int mods) override;
-
-    bool consume(const RpcClient::DataType& data);
-
-    void setStatus(const std::string& key, const std::any& value) {
-        scene_status_[key] = value;
-    };
-
-    const std::any& getStatus(const std::string& key) {
-        return scene_status_.at(key);
+    template<typename T>
+    [[nodiscard]] bool mapToSceneEvent(T& ev) const {
+        auto pos = mapToSceneCoordinate(ev.pos.x, ev.pos.y);
+        if (!pos) return false;
+        auto [x_s, y_s] = pos.value();
+        ev.pos = { x_s, y_s };
+        return true;
     }
 
-    rpc::ServerState_State serverState() const { return server_state_; }
+  public:
 
-    void connectServer();
+    Scene();
 
-    void startAcquiring();
+    ~Scene();
 
-    void stopAcquiring();
+    void setViewport(float x, float y, float width, float height, Viewport::Type type) {
+        viewport_ = {x, y, width, height, type};
+    }
 
-    void startProcessing();
+    void setCamera(std::shared_ptr<Camera> camera);
 
-    void stopProcessing();
+    template<typename T, typename ...Args,
+            typename = std::enable_if_t<std::is_base_of_v<Camera, T>>>
+    T* setCamera(Args&&... args);
+
+    [[nodiscard]] std::shared_ptr<Camera> camera() { return camera_; }
+
+    void setCameraFixed(bool state) { camera_fixed_ = state; }
+
+    template<typename T, typename... Args,
+            typename = std::enable_if_t<std::is_base_of_v<Renderable, T>>>
+    T* addObject(Args&&... args);
+
+    Light* addLight();
+
+    void draw(Renderer* renderer);
+
+    bool consumeEvent(InputEvent& event);
+
+    void drawLightControlGUI();
+    void drawCameraControlGUI();
 };
 
 }  // namespace recastx::gui

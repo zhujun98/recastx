@@ -18,44 +18,73 @@
 #include <unordered_map>
 #include <vector>
 
-#include "imgui.h"
-
-#include "graphics/style.hpp"
-
-struct GLFWwindow;
+#include "graphics/renderer.hpp"
+#include "graphics/input_handler.hpp"
+#include "graphics/scene.hpp"
+#include "rpc_client.hpp"
+#include "fps_counter.hpp"
 
 namespace recastx::gui {
 
-class Scene;
-class RpcClient;
+class Component;
+class ScanComponent;
+class LogComponent;
+class GeometryComponent;
+class PreprocComponent;
+class ProjectionComponent;
+class VolumeComponent;
+class SliceComponent;
 
 class Application {
 
-    static constexpr int min_width_ = 800;
-    static constexpr int min_height_ = 600;
-
-    int width_ = 1440;
-    int height_ = 1080;
+    int width_;
+    int height_;
     const std::string title_ = "RECASTX - REConstruction of Arbitrary Slabs in Tomography X";
 
-    static constexpr ImVec4 bg_color_ { Style::BG_COLOR };
-
     GLFWwindow* glfw_window_ = nullptr;
+
+    struct Layout {
+        int w;
+        int h;
+        std::array<float, 4> left;
+        std::array<float, 4> right;
+        std::array<float, 4> top;
+        std::array<float, 4> bottom;
+        std::array<float, 4> status;
+        std::array<float, 4> popup;
+    };
+
+    Layout layout_;
 
     std::atomic_bool running_ = false;
     std::thread consumer_thread_;
 
-    // Caveat: sequence
-    std::unique_ptr<Scene> scene_;
+    rpc::ServerState_State server_state_ = rpc::ServerState_State_UNKNOWN;
     std::unique_ptr<RpcClient> rpc_client_;
+
+    std::unique_ptr<Renderer> renderer_;
+    std::unique_ptr<InputHandler> input_handler_;
+
+    std::vector<std::unique_ptr<Scene>> scenes_;
+
+    std::unique_ptr<ScanComponent> scan_comp_;
+    std::unique_ptr<LogComponent> log_comp_;
+    std::unique_ptr<GeometryComponent> geom_comp_;
+    std::unique_ptr<PreprocComponent> preproc_comp_;
+    std::unique_ptr<ProjectionComponent> proj_comp_;
+    std::unique_ptr<VolumeComponent> volume_comp_;
+    std::unique_ptr<SliceComponent> slice_comp_;
+    std::vector<Component*> components_;
+
+    std::unordered_map<Renderable*, bool> misc_objects_;
+
+    FpsCounter slice_counter_;
+    FpsCounter volume_counter_;
+    FpsCounter projection_counter_;
 
     inline static std::unique_ptr<Application> instance_;
 
     Application();
-
-    void initImgui();
-
-    void shutdownImgui();
 
     void registerCallbacks();
 
@@ -67,23 +96,46 @@ class Application {
 
     static void keyCallback(GLFWwindow* window, int key, int, int action, int mods);
 
-    static void charCallback(GLFWwindow* window, unsigned int c);
+    void onWindowSizeChanged(int width, int height);
 
-    void render();
+    void onFramebufferSizeChanged(int width, int height);
+
+    RpcClient::State updateServerParams();
 
     void startConsumer();
 
-    static std::array<float, 2> normalizeCursorPos(GLFWwindow* window, double xpos, double ypos);
+    bool consume(const RpcClient::DataType& packet);
 
-public:
+    void initCenterScene();
+    void initTopLeftScene();
+    void initTopRightScene();
+    void initSatelliteScene();
+
+    void drawLeftGUI();
+    void drawRightGUI();
+    void drawTopGUI();
+    void drawBottomGUI();
+    void drawStatusGUI();
+    void drawPopupGUI();
+    void drawMainControlGUI();
+
+  public:
 
     ~Application();
 
     static Application& instance();
 
-    void makeScene();
-
     void spin(const std::string& endpoint);
+
+    void connectServer();
+
+    void startAcquiring();
+
+    void stopAcquiring();
+
+    void startProcessing();
+
+    void stopProcessing();
 };
 
 }  // namespace recastx::gui
