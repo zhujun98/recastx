@@ -37,7 +37,7 @@ class SliceObject : public Interactable {
              0.5f, -0.5f, 0.0f
     };
 
-    float offset_;
+    float offset_ { 0.f };
     glm::vec3 normal_;
     glm::mat4 matrix_;
 

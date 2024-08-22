@@ -34,6 +34,9 @@ class Material {
 
     virtual ~Material() = default;
 
+    Material(const Material&) = delete;
+    Material& operator=(const Material&) = delete;
+
     [[nodiscard]] MaterialID id() const { return id_; }
 };
 
