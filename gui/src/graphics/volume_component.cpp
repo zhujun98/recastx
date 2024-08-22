@@ -108,6 +108,23 @@ void VolumeComponent::draw(rpc::ServerState_State) {
     }
 }
 
+bool VolumeComponent::drawStatistics(rpc::ServerState_State) const {
+    if (display_policy_ == SHOW) {
+        std::lock_guard lk(mtx_);
+        if (ImPlot::BeginPlot("Volume##Histogram", ImVec2(-1.f, -1.f))) {
+            ImPlot::SetupAxes("Pixel value", "Density", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+            ImPlot::PlotHistogram("##Histogram_Volume",
+                                  data_.data(),
+                                  static_cast<int>(data_.size()),
+                                  120,
+                                  1.0);
+            ImPlot::EndPlot();
+        }
+        return true;
+    }
+    return false;
+}
+
 void VolumeComponent::preRender() {
     if (display_policy_ != DISABLE) {
         std::lock_guard lk(mtx_);

@@ -461,7 +461,7 @@ void Application::drawTopGUI() {
     ImGui::SetNextWindowPos({layout_.top[0], layout_.top[1]});
     ImGui::SetNextWindowSize({layout_.top[2], layout_.top[3]});
     ImGui::Begin("Control Panel Top", NULL, ImGuiWindowFlags_NoDecoration);
-    slice_comp_->drawStatistics(server_state_);
+    if (!volume_comp_->drawStatistics(server_state_)) slice_comp_->drawStatistics(server_state_);
     ImGui::End();
 }
 

@@ -47,7 +47,7 @@ public:
 private:
 
     std::vector<Slice> slices_;
-    std::mutex mtx_;
+    mutable std::mutex mtx_;
 
     static constexpr glm::vec4 K_EMPTY_FRAME_COLOR_{1.0f, 1.0f, 1.0f, 0.5f};
     static constexpr glm::vec4 K_HIGHLIGHTED_FRAME_COLOR_{0.8f, 0.8f, 0.0f, 1.f};
@@ -70,7 +70,7 @@ public:
 
     void draw(rpc::ServerState_State state) override;
 
-    void drawStatistics(rpc::ServerState_State state);
+    void drawStatistics(rpc::ServerState_State state) const;
 
     RpcClient::State updateServerParams() const override;
 

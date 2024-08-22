@@ -43,7 +43,7 @@ class VolumeComponent : public Component {
     DataType data_;
     DataType buffer_;
 
-    std::mutex mtx_;
+    mutable std::mutex mtx_;
 
     VoxelObject* voxel_object_ = nullptr;
     bool update_texture_ = true;
@@ -73,6 +73,8 @@ class VolumeComponent : public Component {
     void setVoxelObject(VoxelObject* obj);
 
     void draw(rpc::ServerState_State state) override;
+
+    bool drawStatistics(rpc::ServerState_State state) const;
 
     void preRender() override;
 
