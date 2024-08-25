@@ -78,19 +78,18 @@ void SliceComponent::draw(rpc::ServerState_State) {
     }
 }
 
-void SliceComponent::drawStatistics(rpc::ServerState_State) {
-    ImPlot::BeginSubplots("##Histograms", 1, MAX_NUM_SLICES, ImVec2(-1.f, -1.f));
+void SliceComponent::drawStatistics(rpc::ServerState_State) const {
+    ImPlot::BeginSubplots("##Histogram_SLICES", 1, MAX_NUM_SLICES, ImVec2(-1.f, -1.f));
     std::lock_guard lk(mtx_);
     for (auto& slice: slices_) {
-        if (ImPlot::BeginPlot(("Slice " + std::to_string(slice.id)).c_str(),
-                              ImVec2(-1.f, -1.f))) {
-            ImPlot::SetupAxes("Pixel value", "Density",
-                              ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+        std::string name = "Slice-" + std::to_string(slice.id);
+        if (ImPlot::BeginPlot(name.c_str(), ImVec2(-1.f, -1.f))) {
+            ImPlot::SetupAxes("Pixel value", "Density", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
             if (slice.object->visible()) {
-                ImPlot::PlotHistogram("##Histogram",
+                ImPlot::PlotHistogram(("##Histogram_" + name).c_str(),
                                       slice.data.data(),
                                       static_cast<int>(slice.data.size()),
-                                      100,
+                                      120,
                                       1.0);
             }
             ImPlot::EndPlot();
