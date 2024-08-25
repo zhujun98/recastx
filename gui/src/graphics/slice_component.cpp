@@ -186,7 +186,13 @@ void SliceComponent::renderSliceControl(size_t index, const char* header) {
 
         {
             ImGui::BeginDisabled(slice.display_policy == DISABLE);
-            slice.offset = slice.object->offset(); // synchronize
+
+            float curr_offset = slice.object->offset();
+            if (std::abs(slice.offset - curr_offset) >= 0.0001) {
+                slice.timestamp += MAX_NUM_SLICES;
+                client_->setSlice(slice.timestamp, slice.object->orientation());
+            }
+            slice.offset = curr_offset; // synchronize
 
             auto ret = ImGui::SliderFloat(OFFSET[index], &slice.offset,
                                           SliceObject::MIN_OFFSET, SliceObject::MAX_OFFSET, "%.3f",
