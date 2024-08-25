@@ -10,23 +10,6 @@
 
 namespace recastx::gui {
 
-namespace details {
-
-template<typename T>
-void initTexture1D(TextureId texture, T* data, int x, int num_channels, bool initialized) {
-    glBindTexture(GL_TEXTURE_1D, texture);
-
-    auto fmt = details::getTextureFormat<T>(num_channels);
-    if (!initialized) {
-        glTexImage1D(GL_TEXTURE_1D, 0, fmt.internal_format, x, 0, fmt.format, fmt.type, data);
-    } else {
-        glTexSubImage1D(GL_TEXTURE_1D, 0, 0, x, fmt.format, fmt.type, data);
-    }
-}
-
-} // details
-
-
 const std::set<ImPlotColormap> Colormap::options_ {
     static_cast<ImPlotColormap>(ImPlotColormap_::ImPlotColormap_Viridis), // 4
     static_cast<ImPlotColormap>(ImPlotColormap_::ImPlotColormap_Plasma), // 5
@@ -39,13 +22,10 @@ const std::set<ImPlotColormap> Colormap::options_ {
 
 };
 
-Colormap::Colormap()
-        : Texture(GL_TEXTURE_1D), idx_(*Colormap::options().begin()) {
+Colormap::Colormap() : idx_(*Colormap::options().begin()) {
     glBindTexture(target_, texture_);
-    glTexParameteri(target_, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(target_, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(target_, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
     updateTexture();
     initialized_ = true;
 }
@@ -65,7 +45,7 @@ void Colormap::updateTexture() {
         data.push_back(static_cast<unsigned char>(255 * rgb.z));
     }
 
-    details::initTexture1D(texture_, data.data(), size, 3, initialized_);
+    setData(data.data(), size, 3);
 }
 
 const std::set<ImPlotColormap>& Colormap::options() {
@@ -85,12 +65,7 @@ void Colormap::set(ImPlotColormap idx) {
 }
 
 
-Alphamap::Alphamap() : Texture(GL_TEXTURE_1D), data_(256) {
-    glBindTexture(target_, texture_);
-    glTexParameteri(target_, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(target_, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(target_, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
+Alphamap::Alphamap() : data_(256) {
     set({{0.f, 0.f}, {1.f, 1.f}});
     initialized_ = true;
 }
@@ -117,7 +92,7 @@ void Alphamap::set(const std::map<float, float>& alphamap) {
     }
     while (j < n) data_[j++] = alpha.back();
 
-    details::initTexture1D(texture_, data_.data(), data_.size(), 1, initialized_);
+    setData(data_.data(), data_.size(), 1);
 }
 
 } // namespace recastx::gui
