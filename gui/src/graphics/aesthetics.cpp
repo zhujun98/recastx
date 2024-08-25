@@ -12,27 +12,16 @@ namespace recastx::gui {
 
 namespace details {
 
-inline TextureId createTexture1D(GLint wrap, GLint filter) {
-    TextureId texture_id;
-    glGenTextures(1, &texture_id);
-    glBindTexture(GL_TEXTURE_1D, texture_id);
-
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, wrap);
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, filter);
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, filter);
-
-    return texture_id;
-}
-
 template<typename T>
-inline void initTexture1D(TextureId texture, T* data, int x, int num_channels) {
+void initTexture1D(TextureId texture, T* data, int x, int num_channels, bool initialized) {
     glBindTexture(GL_TEXTURE_1D, texture);
 
     auto fmt = details::getTextureFormat<T>(num_channels);
-    glTexImage1D(GL_TEXTURE_1D, 0, fmt.internal_format, x, 0, fmt.format, fmt.type, data);
-    glGenerateMipmap(GL_TEXTURE_1D);
-
-    glBindTexture(GL_TEXTURE_1D, 0);
+    if (!initialized) {
+        glTexImage1D(GL_TEXTURE_1D, 0, fmt.internal_format, x, 0, fmt.format, fmt.type, data);
+    } else {
+        glTexSubImage1D(GL_TEXTURE_1D, 0, 0, x, fmt.format, fmt.type, data);
+    }
 }
 
 } // details
@@ -52,9 +41,13 @@ const std::set<ImPlotColormap> Colormap::options_ {
 
 Colormap::Colormap()
         : Texture(GL_TEXTURE_1D), idx_(*Colormap::options().begin()) {
-    texture_ = details::createTexture1D(GL_CLAMP_TO_EDGE, GL_NEAREST);
-    initialized_ = true;
+    glBindTexture(target_, texture_);
+    glTexParameteri(target_, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(target_, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(target_, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
     updateTexture();
+    initialized_ = true;
 }
 
 Colormap::~Colormap() = default;
@@ -72,7 +65,7 @@ void Colormap::updateTexture() {
         data.push_back(static_cast<unsigned char>(255 * rgb.z));
     }
 
-    details::initTexture1D(texture_, data.data(), size, 3);
+    details::initTexture1D(texture_, data.data(), size, 3, initialized_);
 }
 
 const std::set<ImPlotColormap>& Colormap::options() {
@@ -93,9 +86,13 @@ void Colormap::set(ImPlotColormap idx) {
 
 
 Alphamap::Alphamap() : Texture(GL_TEXTURE_1D), data_(256) {
-    texture_ = details::createTexture1D(GL_CLAMP_TO_EDGE, GL_LINEAR);
-    initialized_ = true;
+    glBindTexture(target_, texture_);
+    glTexParameteri(target_, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(target_, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(target_, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
     set({{0.f, 0.f}, {1.f, 1.f}});
+    initialized_ = true;
 }
 
 Alphamap::~Alphamap() = default;
@@ -120,7 +117,7 @@ void Alphamap::set(const std::map<float, float>& alphamap) {
     }
     while (j < n) data_[j++] = alpha.back();
 
-    details::initTexture1D(texture_, data_.data(), data_.size(), 1);
+    details::initTexture1D(texture_, data_.data(), data_.size(), 1, initialized_);
 }
 
 } // namespace recastx::gui
