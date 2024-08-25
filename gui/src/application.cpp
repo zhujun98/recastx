@@ -135,16 +135,16 @@ void Application::spin(const std::string& endpoint) {
 
         renderer_->begin();
 
-        for (auto& scene : scenes_) {
-            scene->draw(renderer_.get());
-        }
-
         drawLeftGUI();
         drawRightGUI();
         drawTopGUI();
         drawBottomGUI();
         drawStatusGUI();
         drawPopupGUI();
+
+        for (auto& scene : scenes_) {
+            scene->draw(renderer_.get());
+        }
 
         renderer_->end();
 
