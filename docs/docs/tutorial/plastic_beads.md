@@ -29,7 +29,7 @@ foamstream-tomo --datafile <Your/folder/2_plastic_beeds_RGB.h5> --pdata tomo --p
 
 Open another terminal and run:
 ```bash
-recastx-recon --rows 400 --cols 130 --angles 200 --angle-range 360 --minx -256 --maxx 256 --miny -256 --maxy 256 --volume-size 512
+recastx-recon
 ```
 
 You can find the shapes of the DARK, FLAT and PROJECTION data from the output of foamstream.
@@ -49,7 +49,13 @@ Open a terminal and run:
 recastx-gui
 ```
 
-Make sure the `SCAN MODE` is set to `Discrete` and click the `Process` button.
+Set the following parameters in the GUI:
+- Set `Column Count`, `Row Count` and `Angle Count` to 130, 400 and 200, respectively.
+- Tick `360 degree` radio button.
+- Set `Volume Size` to 512.
+- Set `X range` and `Y range` to [-256, 256].
+
+- Make sure the `SCAN MODE` is set to `Discrete` and click the `Process` button.
 
 <figure markdown>
   ![Beads slices](../recastx-docs-supplement/kblt_beads_slices.png){ width="480" }

@@ -6,12 +6,12 @@ conda activate recastx-recon
 
 For a local data source:
 ```bash
-recastx-recon  --rows 800 --cols 384 --angles 400
+recastx-recon
 ```
 
 For a remote data source (e.g. DAQ node):
 ```bash
-recastx-recon --rows 800 --cols 384 --angles 400 --daq-address <hostname:port> 
+recastx-recon --daq-address <hostname:port> 
 ```
 
 For more information, type

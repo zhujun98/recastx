@@ -29,7 +29,7 @@ foamstream-tomo --datafile <Your/folder/dk_MCFG_1_p_s1_.h5>
 
 Open another terminal and run:
 ```bash
-recastx-recon --rows 1800 --cols 2016 --angles 300
+recastx-recon
 ```
 
 You can find the shapes of the DARK, FLAT and PROJECTION data from the output of foamstream.
@@ -40,6 +40,9 @@ Open a terminal and run:
 ```bash
 recastx-gui
 ```
+
+Set the following parameters in the GUI:
+- Set `Column Count`, `Row Count` and `Angle Count` to 2016, 1800 and 300, respectively.
 
 Make sure the `SCAN MODE` is set to `Discrete` and click the `Process` button.
 
