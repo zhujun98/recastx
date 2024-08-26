@@ -50,12 +50,13 @@ recastx-gui
 ```
 
 Set the following parameters in the GUI:
+
 - Set `Column Count`, `Row Count` and `Angle Count` to 130, 400 and 200, respectively.
 - Tick `360 degree` radio button.
 - Set `Volume Size` to 512.
 - Set `X range` and `Y range` to [-256, 256].
 
-- Make sure the `SCAN MODE` is set to `Discrete` and click the `Process` button.
+Make sure the `SCAN MODE` is set to `Discrete` and click the `Process` button.
 
 <figure markdown>
   ![Beads slices](../recastx-docs-supplement/kblt_beads_slices.png){ width="480" }
