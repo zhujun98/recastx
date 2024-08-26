@@ -40,6 +40,7 @@ public:
         float offset = 0;
         Data2D<ProDtype> data;
         bool update_texture = false;
+        bool dragging = false;
         Plane plane;
         int display_policy = SHOW;
     };
