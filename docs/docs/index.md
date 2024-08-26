@@ -46,7 +46,7 @@ information which could lead to scientific discoveries.
         <div class="content">
             <h3 class="card-title">High-throughput</h3>
             <p class="card-text">
-                Throughput reaches up to 3 GB/s of 16-bit raw pixel data (a few tomograms/s) on an ordinary GPU node.
+                Throughput reaches up to 3 GB/s of 16-bit raw pixel data (a few tomograms/s) on a middle-end GPU node.
             </p>
         </div>
     </div>
