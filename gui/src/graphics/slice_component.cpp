@@ -78,19 +78,20 @@ void SliceComponent::draw(rpc::ServerState_State) {
     }
 }
 
-void SliceComponent::drawStatistics(rpc::ServerState_State) const {
+void SliceComponent::drawStatistics(rpc::ServerState_State) {
     ImPlot::BeginSubplots("##Histogram_SLICES", 1, MAX_NUM_SLICES, ImVec2(-1.f, -1.f));
     std::lock_guard lk(mtx_);
     for (auto& slice: slices_) {
         std::string name = "Slice-" + std::to_string(slice.id);
         if (ImPlot::BeginPlot(name.c_str(), ImVec2(-1.f, -1.f))) {
             ImPlot::SetupAxes("Pixel value", "Density", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
-            if (slice.object->visible()) {
-                ImPlot::PlotHistogram(("##Histogram_" + name).c_str(),
-                                      slice.data.data(),
-                                      static_cast<int>(slice.data.size()),
-                                      120,
-                                      1.0);
+            if (slice.object->visible() && !slice.data.empty()) {
+                const auto& [bin_centers, bin_counts] = slice.data.histogram();
+                float bin_width = 1.f;
+                if (bin_centers.size() > 1) bin_width = bin_centers[1] - bin_centers[0];
+
+                ImPlot::PlotBars(("##Histogram_" + name).c_str(),
+                                 bin_centers.data(), bin_counts.data(), bin_centers.size(), 0.5f * bin_width);
             }
             ImPlot::EndPlot();
         }
@@ -115,6 +116,7 @@ bool SliceComponent::setData(size_t timestamp, const std::string& data, uint32_t
         {
             std::lock_guard lck(mtx_);
             slice.data.setData(data, x, y);
+            if (slice.object->visible()) slice.data.histogram();
             slice.update_texture = true;
         }
 

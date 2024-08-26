@@ -108,16 +108,19 @@ void VolumeComponent::draw(rpc::ServerState_State) {
     }
 }
 
-bool VolumeComponent::drawStatistics(rpc::ServerState_State) const {
+bool VolumeComponent::drawStatistics(rpc::ServerState_State) {
     if (display_policy_ == SHOW) {
         std::lock_guard lk(mtx_);
         if (ImPlot::BeginPlot("Volume##Histogram", ImVec2(-1.f, -1.f))) {
             ImPlot::SetupAxes("Pixel value", "Density", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
-            ImPlot::PlotHistogram("##Histogram_Volume",
-                                  data_.data(),
-                                  static_cast<int>(data_.size()),
-                                  120,
-                                  1.0);
+            if (!data_.empty()) {
+                const auto& [bin_centers, bin_counts] = data_.histogram();
+                float bin_width = 1.f;
+                if (bin_centers.size() > 1) bin_width = bin_centers[1] - bin_centers[0];
+
+                ImPlot::PlotBars("##Histogram_Volume",
+                                 bin_centers.data(), bin_counts.data(), bin_centers.size(), 0.5f * bin_width);
+            }
             ImPlot::EndPlot();
         }
         return true;
@@ -169,6 +172,7 @@ bool VolumeComponent::setShard(uint32_t pos, const std::string& data, uint32_t x
         {
             std::lock_guard lck(mtx_);
             buffer_.swap(data_);
+            if (voxel_object_->visible()) data_.histogram();
             update_texture_ = true;
             update_mesh_ = true;
         }
