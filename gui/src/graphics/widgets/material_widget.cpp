@@ -8,6 +8,7 @@
 */
 #include "graphics/widgets/material_widget.hpp"
 #include "graphics/material.hpp"
+#include "logger.hpp"
 
 namespace recastx::gui {
 
@@ -175,7 +176,7 @@ void TransferFuncWidget::renderAlphaEditor() {
         if (selected == alpha_.end() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
             if (G.IO.KeyCtrl) {
                 if (alpha_.size() > max_num_points_) {
-                    std::cout << "Maximum number of points reached!\n";
+                    log::warn("Maximum number of points reached!");
                 } else {
                     alpha_[m_pos_x] = m_pos_y;
                     alpha_changed = true;
