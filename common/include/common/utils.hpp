@@ -12,8 +12,6 @@
 #include <iostream>
 #include <limits>
 
-#include <glm/glm.hpp>
-
 #include "config.hpp"
 
 namespace recastx {
