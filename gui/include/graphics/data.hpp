@@ -10,6 +10,7 @@
 #define GUI_VOLUME_DATA_H
 
 #include <algorithm>
+#include <cassert>
 #include <cstring>
 #include <optional>
 #include <string>
