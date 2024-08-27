@@ -115,23 +115,24 @@ inline TextureFormat getTextureFormat(int num_channels) {
 
 } // namespace details
 
+
 class Texture2D : public Texture {
-    int x_ {0};
-    int y_ {0};
+    int num_channels_;
 
-    void configureTexture() {
-        glBindTexture(target_, texture_);
-
-        glTexParameteri(target_, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(target_, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(target_, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(target_, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    }
+    int x_;
+    int y_;
 
     template<typename T>
-    void initTexture(T* data, int num_channels) {
+    void initTexture(const T* data) {
         glBindTexture(target_, texture_);
-        auto fmt = details::getTextureFormat<T>(num_channels);
+        if (std::is_same_v<std::remove_const_t<T>, uint16_t>) {
+            glTexParameteri(target_, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(target_, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        } else {
+            glTexParameteri(target_, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(target_, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        }
+        auto fmt = details::getTextureFormat<T>(num_channels_);
         glTexImage2D(target_, 0, fmt.internal_format, x_, y_, 0, fmt.format, fmt.type, data);
     }
 
@@ -144,38 +145,42 @@ class Texture2D : public Texture {
             data[i * 4 + 3] = static_cast<unsigned char>(color[3] * 255.f);
         }
 
-        initTexture(data.data(), 4);
+        initTexture(data.data());
     }
 
   public:
 
-    Texture2D() : Texture(GL_TEXTURE_2D), x_(1), y_(1) {
-        configureTexture();
+    Texture2D() : Texture(GL_TEXTURE_2D), num_channels_(4), x_(1), y_(1) {
+        glBindTexture(target_, texture_);
+        glTexParameteri(target_, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(target_, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         initTexture({0.f, 0.f, 0.f, 1.f});
     }
 
-    explicit Texture2D(const glm::vec3& color) : Texture(GL_TEXTURE_2D), x_(1), y_(1) {
-        configureTexture();
+    explicit Texture2D(const glm::vec3& color) : Texture(GL_TEXTURE_2D), num_channels_(4), x_(1), y_(1) {
+        glBindTexture(target_, texture_);
+        glTexParameteri(target_, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(target_, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         initTexture(glm::vec4(color, 1.f));
         initialized_ = true;
     }
 
     template<typename T>
     void setData(const T* data, int x, int y, int num_channels) {
-        if (x != x_ || y != y_) {
+        if (x != x_ || y != y_ || num_channels != num_channels_) {
             x_ = x;
             y_ = y;
-            initTexture(data, num_channels);
+            num_channels_ = num_channels;
+            initTexture(data);
         } else {
             glBindTexture(target_, texture_);
-            auto fmt = details::getTextureFormat<T>(num_channels);
+            auto fmt = details::getTextureFormat<T>(num_channels_);
             glTexSubImage2D(target_, 0, 0, 0, x_, y_, fmt.format, fmt.type, data);
         }
 
         initialized_ = true;
     }
 };
-
 
 class Texture3D : public Texture {
     int x_;
@@ -193,7 +198,7 @@ class Texture3D : public Texture {
     }
 
     template<typename T>
-    void initTexture(T* data) {
+    void initTexture(const T* data) {
         glBindTexture(target_, texture_);
         auto fmt = details::getTextureFormat<T>(1);
         glTexImage3D(target_, 0, fmt.internal_format, x_, y_, z_, 0, fmt.format, fmt.type, data);
@@ -203,7 +208,7 @@ class Texture3D : public Texture {
 
     Texture3D() : Texture(GL_TEXTURE_3D), x_(1), y_(1), z_(1) {
         configureTexture();
-        std::vector<unsigned char> data(1);
+        std::vector<float> data(x_ * y_ * z_, 0);
         initTexture(data.data());
     }
 

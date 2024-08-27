@@ -71,7 +71,7 @@ public:
 
     void draw(rpc::ServerState_State state) override;
 
-    void drawStatistics(rpc::ServerState_State state) const;
+    void drawStatistics(rpc::ServerState_State state);
 
     RpcClient::State updateServerParams() const override;
 

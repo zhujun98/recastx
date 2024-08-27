@@ -46,6 +46,46 @@ inline void arrayStat(const T& arr, std::array<size_t, 2> shape, const std::stri
     std::cout << "average: " << avg  << ", min: " << min << ", max: " << max << "\n";
 }
 
+template<typename T>
+void computeHistogram(const std::vector<T>& data, double left, double right, size_t num_bins,
+                      std::pair<std::vector<T>, std::vector<T>>& output) {
+    auto& bin_centers = output.first;
+    auto& bin_counts = output.second;
+
+    bin_centers.resize(num_bins);
+    bin_counts.resize(num_bins);
+
+    if (left == right) {
+        left -= 0.5;
+        right += 0.5;
+    }
+
+    double norm = 1 / (right - left);
+    size_t counted = 0;
+    for (size_t i = 0; i < data.size(); ++i) {
+        auto v = static_cast<double>(data[i]);
+        if (v >= left && v < right) {
+            auto i_bin = static_cast<size_t>(static_cast<double>(num_bins) * (v - left) * norm);
+            ++bin_counts[i_bin];
+            ++counted;
+        } else if (v == right) {
+            ++bin_counts[num_bins - 1];
+            ++counted;
+        }
+    }
+
+    double bin_width = (right - left) / num_bins;
+    bin_centers[0] = left + 0.5 * bin_width;
+    for (size_t i = 1; i < bin_centers.size(); ++i) {
+        bin_centers[i] += bin_centers[i - 1] + bin_width;
+    }
+
+    double scale = 1.f / (counted * bin_width);
+    for (size_t i = 0; i < num_bins; ++i) {
+        bin_counts[i] *= scale;
+    }
+}
+
 } // namespace recastx
 
 #endif // COMMON_UTILS_H

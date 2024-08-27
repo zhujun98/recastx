@@ -26,7 +26,6 @@ ImageObject::ImageObject() {
     shader_->use();
     shader_->setInt("imageTexture", 0);
     shader_->setInt("lutColor", 1);
-
     shader_->setVec4("frameColor", Style::K_EMPTY_FRAME_COLOR);
 
     glGenVertexArrays(1, &VAO_);

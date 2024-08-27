@@ -10,10 +10,13 @@
 #define GUI_VOLUME_DATA_H
 
 #include <algorithm>
+#include <cassert>
 #include <cstring>
 #include <optional>
 #include <string>
 #include <vector>
+
+#include "common/utils.hpp"
 
 namespace recastx::gui {
 
@@ -31,6 +34,7 @@ class Data2D {
     std::vector<ValueType> data_;
 
     std::optional<std::array<ValueType, 2>> min_max_vals_;
+    std::pair<std::vector<T>, std::vector<T>> histogram_;
 
   public:
 
@@ -45,7 +49,10 @@ class Data2D {
 
         assert(data.size() == x * y * sizeof(ValueType));
         std::memcpy(data_.data(), data.data(), data.size());
+
         min_max_vals_.reset();
+        histogram_.first.clear();
+        histogram_.second.clear();
     }
 
     [[nodiscard]] const std::optional<std::array<T, 2>>& minMaxVals() {
@@ -54,6 +61,14 @@ class Data2D {
             min_max_vals_ = {*v_min, *v_max};
         }
         return min_max_vals_;
+    }
+
+    const std::pair<std::vector<T>, std::vector<T>>& histogram() {
+        if (histogram_.first.empty() && !data_.empty()) {
+            auto [v_min, v_max] = minMaxVals().value();
+            computeHistogram(data_, v_min, v_max, 120, histogram_);
+        }
+        return histogram_;
     }
 
     [[nodiscard]] bool empty() const { return data_.empty(); }
@@ -80,6 +95,7 @@ class Data3D {
     std::vector<ValueType> data_;
 
     std::optional<std::array<ValueType, 2>> min_max_vals_;
+    std::pair<std::vector<T>, std::vector<T>> histogram_;
 
   public:
 
@@ -101,13 +117,22 @@ class Data3D {
         assert(data.size() == x * y * z * sizeof(ValueType));
         std::memcpy(data_.data(), data.data(), data.size());
         min_max_vals_.reset();
+
+        histogram_.first.clear();
+        histogram_.second.clear();
     }
 
     bool setShard(const std::string& data, uint32_t pos) {
         assert(data.size() == x_ * y_ * sizeof(ValueType));
         assert(pos * sizeof(ValueType) + data.size() <= data_.size() * sizeof(ValueType));
         std::memcpy(data_.data() + pos, data.data(), data.size());
-        min_max_vals_.reset();
+
+        if (pos == 0) {
+            min_max_vals_.reset();
+            histogram_.first.clear();
+            histogram_.second.clear();
+        }
+
         return pos * sizeof(ValueType) + data.size() == data_.size() * sizeof(ValueType);
     }
 
@@ -117,6 +142,14 @@ class Data3D {
             min_max_vals_ = {*v_min, *v_max};
         }
         return min_max_vals_;
+    }
+
+    const std::pair<std::vector<T>, std::vector<T>>& histogram() {
+        if (histogram_.first.empty() && !data_.empty()) {
+            auto [v_min, v_max] = minMaxVals().value();
+            computeHistogram(data_, v_min, v_max, 120, histogram_);
+        }
+        return histogram_;
     }
 
     [[nodiscard]] bool empty() const { return data_.empty(); }
@@ -133,6 +166,7 @@ class Data3D {
         std::swap(y_, other.y_);
         std::swap(z_, other.z_);
         min_max_vals_.swap(other.min_max_vals_);
+        histogram_.swap(other.histogram_);
     }
 
     void clear() {

@@ -74,7 +74,7 @@ class VolumeComponent : public Component {
 
     void draw(rpc::ServerState_State state) override;
 
-    bool drawStatistics(rpc::ServerState_State state) const;
+    bool drawStatistics(rpc::ServerState_State state);
 
     void preRender() override;
 
