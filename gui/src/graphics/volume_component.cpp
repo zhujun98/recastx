@@ -40,7 +40,7 @@ void VolumeComponent::setVoxelObject(VoxelObject* obj) {
 
 void VolumeComponent::draw(rpc::ServerState_State) {
     ImGui::PushStyleColor(ImGuiCol_Header, Style::COLLAPSING_HEADER_COLOR);
-    bool expand = ImGui::CollapsingHeader("Volume##VOLUME_COMP", ImGuiTreeNodeFlags_DefaultOpen);
+    bool expand = ImGui::CollapsingHeader("VOLUME##VOLUME_COMP", ImGuiTreeNodeFlags_DefaultOpen);
     ImGui::PopStyleColor();
 
     if (expand) {

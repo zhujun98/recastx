@@ -159,7 +159,7 @@ bool Scene::consumeEvent(InputEvent& event) {
 
 void Scene::drawLightControlGUI() {
     ImGui::PushStyleColor(ImGuiCol_Header, Style::COLLAPSING_HEADER_COLOR);
-    if (ImGui::CollapsingHeader("LIGHTS", ImGuiTreeNodeFlags_DefaultOpen)) {
+    if (ImGui::CollapsingHeader("LIGHTING", ImGuiTreeNodeFlags_DefaultOpen)) {
         light_widget_->draw();
     }
     ImGui::PopStyleColor();

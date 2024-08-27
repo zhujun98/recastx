@@ -1,6 +1,8 @@
 ## Reconstruction
 
-TBD
+Currently, the bottleneck of the data processing pipeline is the preprocessing part, which 
+is still implemented in CPU. The total number of threads of the current benchmark machine is 
+only 32. We expect a significant performance boost on a GPU node with a decent number of threads.
 
 ## Visualization
 
