@@ -61,9 +61,9 @@ void SliceComponent::preRender() {
 }
 
 void SliceComponent::draw(rpc::ServerState_State) {
-    renderSliceControl(0, "Slice 1##RECON");
-    renderSliceControl(1, "Slice 2##RECON");
-    renderSliceControl(2, "Slice 3##RECON");
+    renderSliceControl(0, "SLICE 1##RECON");
+    renderSliceControl(1, "SLICE 2##RECON");
+    renderSliceControl(2, "SLICE 3##RECON");
 
     if (ImGui::Button("Reset all slices##RECON")) {
         for (auto& slice : slices_) reset(slice);
