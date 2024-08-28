@@ -111,6 +111,63 @@ TEST(SliceBufferTest, TestOnDemand) {
     for (auto& [k, slice] : sbf.front()) ASSERT_FALSE(std::get<0>(slice));
 }
 
+TEST(MemoryBufferTestUtils, TestCopyToBuffer) {
+    {
+        ProDtype dst[6];
+        std::array<size_t, 2> dst_shape {2, 3};
+        auto src = _produceRawData({1, 2, 3, 4, 5, 6});
+        details::copyToBuffer<ProDtype, RawDtype>(dst, dst_shape, src.data(), {2, 3}, {1, 1});
+        EXPECT_THAT(dst, Pointwise(FloatNear(1e-6), {1., 2., 3., 4., 5., 6.}));
+    }
+    {
+        ProDtype dst[6];
+        std::array<size_t, 2> dst_shape {2, 3};
+        auto src = _produceRawData({1, 1, 2, 1, 3, 1,
+                                                  1, 1, 2, 1, 3, 1,
+                                                  4, 1, 5, 1, 6, 1,
+                                                  4, 1, 5, 1, 6, 1});
+        details::copyToBuffer<ProDtype, RawDtype>(dst, dst_shape, src.data(), {4, 6}, {2, 2});
+        EXPECT_THAT(dst, Pointwise(FloatNear(1e-6), {1., 2., 3., 4., 5., 6.}));
+    }
+    {
+        ProDtype dst[16] = {0.f};
+        std::array<size_t, 2> dst_shape {4, 4};
+        auto src = _produceRawData({1, 1, 2, 1, 3, 1,
+                                                  1, 1, 2, 1, 3, 1,
+                                                  4, 1, 5, 1, 6, 1,
+                                                  4, 1, 5, 1, 6, 1});
+        details::copyToBuffer<ProDtype, RawDtype>(dst, dst_shape, src.data(), {4, 6}, {2, 2});
+        EXPECT_THAT(dst, Pointwise(FloatNear(1e-6), {0., 0., 0., 0.,
+                                                     1., 2., 3., 0.,
+                                                     4., 5., 6., 0.,
+                                                     0., 0., 0., 0.}));
+    }
+    {
+        ProDtype dst[20] = {0.f};
+        std::array<size_t, 2> dst_shape {4, 5};
+        auto src = _produceRawData({1, 1, 2, 1, 3, 1,
+                                                  1, 1, 2, 1, 3, 1,
+                                                  4, 1, 5, 1, 6, 1,
+                                                  4, 1, 5, 1, 6, 1});
+        details::copyToBuffer<ProDtype, RawDtype>(dst, dst_shape, src.data(), {4, 6}, {2, 2});
+        EXPECT_THAT(dst, Pointwise(FloatNear(1e-6), {0., 0., 0., 0., 0.,
+                                                     0., 1., 2., 3., 0.,
+                                                     0., 4., 5., 6., 0.,
+                                                     0., 0., 0., 0., 0.}));
+    }
+    {
+        ProDtype dst[6];
+        std::array<size_t, 2> dst_shape {2, 3};
+        auto src = _produceRawData({6, 1, 5, 1, 4, 1, 1,
+                                                  6, 1, 5, 1, 4, 1, 1,
+                                                  3, 1, 2, 1, 1, 1, 1,
+                                                  3, 1, 2, 1, 1, 1, 1,
+                                                  1, 1, 1, 1, 1, 1, 1});
+        details::copyToBuffer<ProDtype, RawDtype>(dst, dst_shape, src.data(), {5, 7}, {2, 2});
+        EXPECT_THAT(dst, Pointwise(FloatNear(1e-6), {6., 5., 4., 3., 2., 1.}));
+    }
+}
+
 
 class MemoryBufferTest : public testing::Test {
 
@@ -139,22 +196,15 @@ TEST_F(MemoryBufferTest, TestGeneral) {
     ASSERT_EQ(buffer_.occupied(), 0);
     EXPECT_THROW(buffer_.ready(), std::out_of_range);
 
-    buffer_.fill<RawDtype>(0, _produceRawData({1, 2, 3, 4, 5, 6}).data());
+    buffer_.fill<RawDtype>(0, _produceRawData({1, 2, 3, 4, 5, 6}).data(), {2, 3}, {1, 1});
     ASSERT_EQ(buffer_.occupied(), 1);
-    buffer_.fill<RawDtype>(1, _produceRawData({6, 1, 5, 1, 4, 1, 
-                                               3, 1, 2, 1, 1, 1}).data(), {2, 6});
-    buffer_.fill<RawDtype>(2, _produceRawData({1, 1, 2, 1, 3, 1, 
-                                               1, 1, 2, 1, 3, 1,
-                                               4, 1, 5, 1, 6, 1,
-                                               4, 1, 5, 1, 6, 1}).data(), {4, 6});
-    buffer_.fill<RawDtype>(3, _produceRawData({6, 1, 5, 1, 4, 1, 1,
-                                               6, 1, 5, 1, 4, 1, 1,
-                                               3, 1, 2, 1, 1, 1, 1,
-                                               3, 1, 2, 1, 1, 1, 1,
-                                               1, 1, 1, 1, 1, 1, 1}).data(), {5, 7});
+    buffer_.fill<RawDtype>(1, _produceRawData({6, 5, 4, 3, 2, 1}).data(), {2, 3}, {1, 1});
+    buffer_.fill<RawDtype>(2, _produceRawData({1, 2, 3, 4, 5, 6}).data(), {2, 3}, {1, 1});
+    buffer_.fill<RawDtype>(3, _produceRawData({6, 5, 4, 3, 2, 1}).data(), {2, 3}, {1, 1});
+
     ASSERT_TRUE(buffer_.fetch(-1));
-    EXPECT_THAT(buffer_.front(), 
-                Pointwise(FloatNear(1e-6), {1., 2., 3., 4., 5., 6., 
+    EXPECT_THAT(buffer_.front(),
+                Pointwise(FloatNear(1e-6), {1., 2., 3., 4., 5., 6.,
                                             6., 5., 4., 3., 2., 1.,
                                             1., 2., 3., 4., 5., 6.,
                                             6., 5., 4., 3., 2., 1.}));
@@ -164,36 +214,36 @@ TEST_F(MemoryBufferTest, TestGeneral) {
 
 TEST_F(MemoryBufferTest, TestBufferFull) {
     for (size_t j = 0; j < shape_[0]; ++j) {
-        buffer_.fill<RawDtype>(j, _produceRawData({1, 2, 3, 4, 5, 6}).data()); 
+        buffer_.fill<RawDtype>(j, _produceRawData({1, 2, 3, 4, 5, 6}).data(), {2, 3}, {1, 1});
     }
     ASSERT_EQ(buffer_.occupied(), 1);
 
     for (size_t j = 0; j < shape_[0]; ++j) {
-        buffer_.fill<RawDtype>(4 + j, _produceRawData({6, 5, 4, 3, 2, 1}).data()); 
+        buffer_.fill<RawDtype>(4 + j, _produceRawData({6, 5, 4, 3, 2, 1}).data(), {2, 3}, {1, 1});
     }
     ASSERT_EQ(buffer_.occupied(), 1); // group 0 was dropped
-    EXPECT_THAT(buffer_.ready(), 
-                Pointwise(FloatNear(1e-6), {6., 5., 4., 3., 2., 1., 
+    EXPECT_THAT(buffer_.ready(),
+                Pointwise(FloatNear(1e-6), {6., 5., 4., 3., 2., 1.,
                                             6., 5., 4., 3., 2., 1.,
                                             6., 5., 4., 3., 2., 1.,
                                             6., 5., 4., 3., 2., 1.}));
 
     // group 1 was dropped; group 2 was added first and then dropped
     for (size_t j = 0; j < shape_[0] - 1; ++j) {
-        buffer_.fill<RawDtype>(4 * (capacity_ + 2) + j, _produceRawData({4, 5, 6, 7, 8, 9}).data()); 
+        buffer_.fill<RawDtype>(4 * (capacity_ + 2) + j, _produceRawData({4, 5, 6, 7, 8, 9}).data(), {2, 3}, {1, 1});
     }
     ASSERT_EQ(buffer_.occupied(), 3);
 
     for (size_t j = 0; j < shape_[0]-1; ++j) {
-        buffer_.fill<RawDtype>(4 * (capacity_ + 1) + j, _produceRawData({1, 3, 5, 7, 9, 11}).data()); 
+        buffer_.fill<RawDtype>(4 * (capacity_ + 1) + j, _produceRawData({1, 3, 5, 7, 9, 11}).data(), {2, 3}, {1, 1});
     }
     ASSERT_EQ(buffer_.occupied(), 3);
 
-    buffer_.fill<RawDtype>(4 * (capacity_ + 2) + shape_[0] - 1, _produceRawData({9, 8, 7, 6, 5, 4}).data()); 
+    buffer_.fill<RawDtype>(4 * (capacity_ + 2) + shape_[0] - 1, _produceRawData({9, 8, 7, 6, 5, 4}).data(), {2, 3}, {1, 1});
     ASSERT_EQ(buffer_.occupied(), 1); // group 3 was dropped
     buffer_.fetch(-1);
-    EXPECT_THAT(buffer_.front(), 
-                Pointwise(FloatNear(1e-6), {4., 5., 6., 7., 8., 9., 
+    EXPECT_THAT(buffer_.front(),
+                Pointwise(FloatNear(1e-6), {4., 5., 6., 7., 8., 9.,
                                             4., 5., 6., 7., 8., 9.,
                                             4., 5., 6., 7., 8., 9.,
                                             9., 8., 7., 6., 5., 4.}));
@@ -203,13 +253,13 @@ TEST_F(MemoryBufferTest, TestSameDataReceivedRepeatedly) {
     for (size_t i = 0; i < 8; ++i) {
         // Attempt to fill the 1st group.
         for (size_t j = 0; j < shape_[0]; ++j) {
-            buffer_.fill<RawDtype>(j, _produceRawData({1, 2, 3}).data()); 
+            buffer_.fill<RawDtype>(j, _produceRawData({1, 2, 3, 4, 5, 6}).data(), {2, 3}, {1, 1});
         }
         if (i % 2 == 0) buffer_.fetch(-1);
 
         // Attempt to fill half of the second group.
         for (size_t j = 0; j < shape_[0] / 2; ++j) {
-            buffer_.fill<RawDtype>(4 + j, _produceRawData({1, 2, 3}).data()); 
+            buffer_.fill<RawDtype>(4 + j, _produceRawData({1, 2, 3, 4, 5, 6}).data(), {2, 3}, {1, 1});
         }
         if (i % 2 == 1) {
             buffer_.fetch(-1);
@@ -222,7 +272,7 @@ TEST_F(MemoryBufferTest, TestSameDataReceivedRepeatedly) {
 
 TEST_F(MemoryBufferTest, TestReshape) {
     for (size_t j = 0; j < shape_[0]; ++j) {
-        buffer_.fill<RawDtype>(j, _produceRawData({1, 2, 3, 4, 5, 6}).data()); 
+        buffer_.fill<RawDtype>(j, _produceRawData({1, 2, 3, 4, 5, 6}).data(), {2, 3}, {1, 1});
     }
     ASSERT_EQ(buffer_.occupied(), 1);
     EXPECT_THAT(buffer_.shape(), ElementsAre(4, 2, 3));
@@ -235,7 +285,7 @@ TEST_F(MemoryBufferTest, TestReshape) {
     EXPECT_THAT(buffer_.shape(), ElementsAre(4, 3, 4));
     ASSERT_EQ(buffer_.size(), 48);
     for (size_t j = 0; j < new_shape[0]; ++j) {
-        buffer_.fill<RawDtype>(j, _produceRawData({1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6}).data()); 
+        buffer_.fill<RawDtype>(j, _produceRawData({1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6}).data(), {3, 4}, {1, 1});
     }
     ASSERT_EQ(buffer_.occupied(), 1);
 
@@ -254,19 +304,19 @@ TEST(MemoryBufferTest2, TestMWSR) {
 
     auto w1 = std::thread([&] {
         for (int i = 0; i < chunk_size * capacity; i += 3) {
-            buffer.fill<RawDtype>(i, _produceRawData({1, 2, 3, 4, 5, 6}).data());
+            buffer.fill<RawDtype>(i, _produceRawData({1, 2, 3, 4, 5, 6}).data(), {2, 3}, {1, 1});
             std::this_thread::sleep_for(std::chrono::microseconds(1));
         }
     });
     auto w2 = std::thread([&] {
         for (int i = 1; i < chunk_size * capacity; i += 3) {
-            buffer.fill<RawDtype>(i, _produceRawData({1, 2, 3, 4, 5, 6}).data());
+            buffer.fill<RawDtype>(i, _produceRawData({1, 2, 3, 4, 5, 6}).data(), {2, 3}, {1, 1});
             std::this_thread::sleep_for(std::chrono::microseconds(1));
         }
     });
     auto w3 = std::thread([&] {
         for (int i = 2; i < chunk_size * capacity; i += 3) {
-            buffer.fill<RawDtype>(i, _produceRawData({1, 2, 3, 4, 5, 6}).data());
+            buffer.fill<RawDtype>(i, _produceRawData({1, 2, 3, 4, 5, 6}).data(), {2, 3}, {1, 1});
             std::this_thread::sleep_for(std::chrono::microseconds(1));
         }
     });

@@ -230,10 +230,11 @@ void SliceBuffer<T, OD>::resize(const ShapeType& shape) {
     shape_ = shape;
 }
 
+
 namespace details {
 
 template<typename T, typename D>
-inline void copyBuffer(T* dst, const char* src, const std::array<size_t, 2>& shape) {
+inline void copyToBuffer(T *dst, const char *src, const std::array<size_t, 2> &shape) {
     D v;
     for (size_t size = sizeof(D), i = 0; i < shape[0] * shape[1]; ++i) {
         memcpy(&v, src, size);
@@ -243,29 +244,40 @@ inline void copyBuffer(T* dst, const char* src, const std::array<size_t, 2>& sha
 }
 
 template<typename T, typename D>
-inline void copyBuffer(T* dst, 
-                       const std::array<size_t, 2>& dst_shape,
-                       const char* src,
-                       const std::array<size_t, 2>& src_shape) {
-    if (src_shape == dst_shape) copyBuffer<T, D>(dst, src, dst_shape);
+inline void copyToBuffer(T *dst,
+                         const std::array<size_t, 2> &dst_shape,
+                         const char *src,
+                         const std::array<size_t, 2> &src_shape,
+                         const std::array<size_t, 2> &downsampling) {
+    if (src_shape == dst_shape) {
+        assert(downsampling == (std::array < size_t, 2 > {1, 1}));
+        copyToBuffer<T, D>(dst, src, dst_shape);
+        return;
+    }
 
-    size_t ds_r = src_shape[0] / dst_shape[0];
-    size_t ds_c = src_shape[1] / dst_shape[1];
+    auto [ds_r, ds_c] = downsampling;
+
+    auto rows_ds = src_shape[0] / ds_r;
+    auto cols_ds = src_shape[1] / ds_c;
+
+    assert(dst_shape[0] >= rows_ds);
+    assert(dst_shape[1] >= cols_ds);
+
     D v;
-    for (size_t size = sizeof(D), 
-             rstep = ds_r * size * src_shape[1], 
-             cstep = ds_c * size, i = 0; i < dst_shape[0]; ++i) {
-        char* ptr = const_cast<char*>(src) + i * rstep;
-        for (size_t j = 0; j < dst_shape[1]; ++j) {
-            memcpy(&v, ptr, size);
-            ptr += cstep;
-            *(dst++) = static_cast<T>(v);
+    size_t padding_r = (dst_shape[0] - rows_ds) / 2;
+    size_t padding_c = (dst_shape[1] - cols_ds) / 2;
+    for (size_t size = sizeof(D), i = 0; i < rows_ds; ++i) {
+        char* ptr_src = const_cast<char *>(src) + i * ds_r * size * src_shape[1];
+        T *ptr_dst = dst + dst_shape[1] * (i + padding_r) + padding_c;
+        for (size_t j = 0; j < cols_ds; ++j) {
+            memcpy(&v, ptr_src, size);
+            ptr_src += ds_c * size;
+            *(ptr_dst++) = static_cast<T>(v);
         }
     }
 }
 
 } // details
-
 
 template<typename T, size_t N>
 class MemoryBuffer {
@@ -301,7 +313,8 @@ class MemoryBuffer {
     void fillImp(size_t buffer_idx, 
                  size_t data_idx,
                  const char* src,
-                 const std::array<size_t, N-1>& src_shape);
+                 const std::array<size_t, N-1>& src_shape,
+                 const std::array<size_t, N-1>& downsampling);
 
     void registerChunk(size_t idx);
 
@@ -316,10 +329,10 @@ class MemoryBuffer {
     void reset();
 
     template<typename D>
-    void fill(size_t index, const char* src);
-
-    template<typename D>
-    void fill(size_t index, const char* src, const std::array<size_t, N-1>& shape);
+    void fill(size_t index,
+              const char* src,
+              const std::array<size_t, N-1>& shape,
+              const std::array<size_t, N-1>& downsampling);
 
     bool fetch(int timeout);
 
@@ -379,8 +392,8 @@ void MemoryBuffer<T, N>::resize(const std::array<size_t, N>& shape) {
     reset();
 
     std::lock_guard lck(data_mtx_);
-    for (size_t i = 0; i < capacity_; ++i) buffer_[i].resize(shape);
-    front_.resize(shape);
+    for (size_t i = 0; i < capacity_; ++i) buffer_[i].resize(shape, 0);
+    front_.resize(shape, 0);
 }
 
 template<typename T, size_t N>
@@ -407,14 +420,10 @@ void MemoryBuffer<T, N>::reset() {
 
 template<typename T, size_t N>
 template<typename D>
-void MemoryBuffer<T, N>::fill(size_t index, const char* src) {
-    auto& shape = front_.shape();
-    fill<D>(index, src, {shape[1], shape[2]});
-}
-
-template<typename T, size_t N>
-template<typename D>
-void MemoryBuffer<T, N>::fill(size_t index, const char* src, const std::array<size_t, N-1>& shape) {
+void MemoryBuffer<T, N>::fill(size_t index,
+                              const char* src,
+                              const std::array<size_t, N-1>& shape,
+                              const std::array<size_t, N-1>& downsampling) {
     size_t chunk_size = front_.shape()[0];
     size_t chunk_idx = index / chunk_size;
     size_t data_idx = index % chunk_size;
@@ -450,7 +459,7 @@ void MemoryBuffer<T, N>::fill(size_t index, const char* src, const std::array<si
 
     {
         std::shared_lock data_lk(data_mtx_);
-        fillImp<D>(buffer_idx, data_idx, src, shape);
+        fillImp<D>(buffer_idx, data_idx, src, shape, downsampling);
     }
 
     lk.lock();
@@ -493,13 +502,14 @@ template<typename D>
 void MemoryBuffer<T, N>::fillImp(size_t buffer_idx, 
                                  size_t data_idx,
                                  const char* src,
-                                 const std::array<size_t, N-1>& src_shape) {
+                                 const std::array<size_t, N-1>& src_shape,
+                                 const std::array<size_t, N-1>& downsampling) {
     float* data = buffer_[buffer_idx].data();
     std::array<size_t, N-1> dst_shape;
     auto& buffer_shape = front_.shape();
     std::copy(buffer_shape.begin() + 1, buffer_shape.end(), dst_shape.begin());
     size_t data_size = std::accumulate(dst_shape.begin(), dst_shape.end(), 1, std::multiplies<>());
-    details::copyBuffer<T, D>(&data[data_idx * data_size], dst_shape, src, src_shape);
+    details::copyToBuffer<T, D>(&data[data_idx * data_size], dst_shape, src, src_shape, downsampling);
 }
 
 template<typename T, size_t N>

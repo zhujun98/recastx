@@ -101,6 +101,7 @@ public:
 
     void resize(const ShapeType& shape, T value) {
         data_.resize(size(shape), value);
+        shape_ = shape;
     }
 
     T& operator[](size_t pos) { return data_[pos]; }

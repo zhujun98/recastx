@@ -18,11 +18,11 @@ using testing::FloatNear;
 namespace recastx::recon::utils::test {
 
 TEST(TestUtils, TestExpandDataSize) {
-    ASSERT_EQ(expandDataSizeForGpu(63, 64), 64);
-    ASSERT_EQ(expandDataSizeForGpu(64, 64), 64);
-    ASSERT_EQ(expandDataSizeForGpu(65, 64), 128);
+    ASSERT_EQ(expandDataSize(63, 64), 64);
+    ASSERT_EQ(expandDataSize(64, 64), 64);
+    ASSERT_EQ(expandDataSize(65, 64), 128);
     
-    ASSERT_EQ(expandDataSizeForGpu(64, 128), 128);
+    ASSERT_EQ(expandDataSize(64, 128), 128);
 }
 
 TEST(TestUtils, TestComputeHistogram) {
