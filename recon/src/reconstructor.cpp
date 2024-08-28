@@ -135,7 +135,10 @@ void ParallelBeamReconstructor::reconstructSlice(Orientation x, int buffer_idx, 
         py = scale.cwiseProduct(rot * py);
         d -= 0.5f * (num_cols * px + num_rows * py);
 
-        vec_buf_[i] = {r[0],  r[1],  r[2],  d[0],  d[1],  d[2], px[0], px[1], px[2], py[0], py[1], py[2]};
+        vec_buf_[i] = {r[0],   r[1],  r[2],
+                       d[0],   d[1],  d[2],
+                       px[0], px[1], px[2],
+                       py[0], py[1], py[2]};
         ++i;
     }
 
@@ -234,7 +237,10 @@ void ConeBeamReconstructor::reconstructSlice(Orientation x, int buffer_idx, Tens
         t1 = scale.cwiseProduct(rot * t1);
         t2 = scale.cwiseProduct(rot * t2);
 
-        vec_buf_[i] = {s[0],  s[1],  s[2],  d[0],  d[1],  d[2], t1[0], t1[1], t1[2], t2[0], t2[1], t2[2]};
+        vec_buf_[i] = {s[0],   s[1],  s[2],
+                       d[0],   d[1],  d[2],
+                       t1[0], t1[1], t1[2],
+                       t2[0], t2[1], t2[2]};
         ++i;
     }
 

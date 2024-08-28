@@ -32,6 +32,8 @@ make -j12 && make install
 
 - Windows
 
+TBD
+
 #### Installing the GUI client
 
 - Linux / MacOS
@@ -50,6 +52,8 @@ make -j12 && make install
 ```
 
 - Windows
+
+TBD
 
 ## Package managers
 
