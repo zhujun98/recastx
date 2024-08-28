@@ -87,6 +87,7 @@ TEST(TensorTest, TestReshape) {
 
     t2f.resize({2, 3}, 6);
     EXPECT_THAT(t2f, ElementsAre(1, 1, 1, 2, 6, 6));
+    ASSERT_THAT(t2f.shape(), ElementsAre(2, 3));
 }
 
 TEST(TestTensor, TestScalarArithmetic) {

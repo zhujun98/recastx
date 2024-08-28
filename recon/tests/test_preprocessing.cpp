@@ -9,8 +9,8 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include "recon/buffer.hpp"
 #include "recon/preprocessing.hpp"
-
 
 namespace recastx::recon::test {
 
@@ -19,7 +19,7 @@ using ::testing::Pointwise;
 using ::testing::FloatNear;
 
 
-TEST(TestPreprocessing, TestDownsample) {
+TEST(TestPreprocessing, TestCopyToBuffer) {
     {
         ProImageData src ({4, 4}, {
             0, 1, 2, 3,
@@ -28,7 +28,7 @@ TEST(TestPreprocessing, TestDownsample) {
             3, 4, 5, 6
         });
         ProImageData dst ({2, 2});
-        downsample(src, dst);
+        details::copyToBuffer(dst, src, {2, 2});
         EXPECT_THAT(dst, ElementsAreArray({
             0, 2,
             2, 4
@@ -45,11 +45,50 @@ TEST(TestPreprocessing, TestDownsample) {
             6, 7, 8, 9, 10,
         });
         ProImageData dst ({3, 2});
-        downsample(src, dst);
+        details::copyToBuffer(dst, src, {2, 2});
         EXPECT_THAT(dst, ElementsAreArray({
             0, 2, 
             2, 4,
             4, 6
+        }));
+    }
+    {
+        ProImageData src ({7, 5}, {
+            0, 1, 2, 3, 4,
+            1, 2, 3, 4, 5,
+            2, 3, 4, 5, 6,
+            3, 4, 5, 6, 7,
+            4, 5, 6, 7, 8,
+            5, 6, 7, 8, 9,
+            6, 7, 8, 9, 10,
+        });
+        ProImageData dst ({4, 3});
+        details::copyToBuffer(dst, src, {2, 2});
+        EXPECT_THAT(dst, ElementsAreArray({
+            0, 2, 0,
+            2, 4, 0,
+            4, 6, 0,
+            0, 0, 0
+        }));
+    }
+    {
+        ProImageData src ({7, 5}, {
+            0, 1, 2, 3, 4,
+            1, 2, 3, 4, 5,
+            2, 3, 4, 5, 6,
+            3, 4, 5, 6, 7,
+            4, 5, 6, 7, 8,
+            5, 6, 7, 8, 9,
+            6, 7, 8, 9, 10,
+        });
+        ProImageData dst ({5, 4});
+        details::copyToBuffer(dst, src, {2, 2});
+        EXPECT_THAT(dst, ElementsAreArray({
+            0, 0, 0, 0,
+            0, 0, 2, 0,
+            0, 2, 4, 0,
+            0, 4, 6, 0,
+            0, 0, 0, 0
         }));
     }
 }
@@ -69,7 +108,9 @@ TEST(TestPreprocessing, TestComputeReciprocal) {
         flats.emplace_back(shape, std::vector<ValueType>{2, 4, 8, 1, 3, 9, 5, 6, 1, 1, 1, 7});
         flats.emplace_back(shape, std::vector<ValueType>{9, 9, 4, 1, 6, 8, 6, 9, 2, 4, 9, 4});
 
-        auto [dark_avg, reciprocal] = computeReciprocal(darks, flats);
+        ProImageData dark_avg(shape);
+        ProImageData reciprocal(shape);
+        computeReciprocal(darks, flats, dark_avg, reciprocal, {1, 1});
 
         EXPECT_THAT(dark_avg, ElementsAreArray({
             2.33333333, 4.,        3.33333333,
@@ -89,7 +130,9 @@ TEST(TestPreprocessing, TestComputeReciprocal) {
         std::vector<RawImageData> flats;
         flats.emplace_back(shape, std::vector<ValueType>(6, 2));
 
-        auto [dark_avg, reciprocal] = computeReciprocal(darks, flats);
+        ProImageData dark_avg(shape);
+        ProImageData reciprocal(shape);
+        computeReciprocal(darks, flats, dark_avg, reciprocal, {1, 1});
         EXPECT_THAT(dark_avg, ElementsAreArray({0., 0., 0., 0., 0., 0.}));
         EXPECT_THAT(reciprocal, ElementsAreArray({0.5, 0.5, 0.5, 0.5, 0.5, 0.5}));
     }
@@ -100,7 +143,9 @@ TEST(TestPreprocessing, TestComputeReciprocal) {
 
         std::vector<RawImageData> flats;
 
-        auto [dark_avg, reciprocal] = computeReciprocal(darks, flats);
+        ProImageData dark_avg(shape);
+        ProImageData reciprocal(shape);
+        computeReciprocal(darks, flats, dark_avg, reciprocal, {1, 1});
         EXPECT_THAT(dark_avg, ElementsAreArray({2., 2., 2., 2., 2., 2.}));
         EXPECT_THAT(reciprocal, ElementsAreArray({1., 1., 1., 1., 1., 1.}));
     }

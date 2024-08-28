@@ -23,60 +23,83 @@
 
 namespace recastx::recon {
 
-inline void downsample(const ProImageData &src, ProImageData &dst) {
-    auto &src_shape = src.shape();
-    auto &dst_shape = dst.shape();
-    size_t ds_row = src_shape[0] / dst_shape[0];
-    size_t ds_col = src_shape[1] / dst_shape[1];
+namespace details {
 
-    if (ds_row == 0 || ds_col == 0) {
-        spdlog::critical("Shape of the destination is large than shape of the source: {} x {}, dst: {} x {}",
-                         src_shape[0], src_shape[1], dst_shape[0], dst_shape[1]);
-        throw std::runtime_error("Downsampling with illegal shapes");
+template<typename T>
+inline void copyToBuffer(Tensor<T, 2> &dst, const Tensor<T, 2> &src) {
+    assert(dst.shape() == src.shape());
+    memcpy(dst.data(), src.data(), src.size() * sizeof(T));
+}
+
+template<typename T>
+inline void copyToBuffer(Tensor<T, 2> &dst, const Tensor<T, 2> &src, const std::array<size_t, 2> &downsampling) {
+    const auto &src_shape = src.shape();
+    const auto &dst_shape = dst.shape();
+    if (dst_shape == src_shape) {
+        assert(downsampling == (std::array < size_t, 2 > {1, 1}));
+        copyToBuffer(dst, src);
+        return;
     }
 
-    for (size_t i = 0; i < dst_shape[0]; ++i) {
-        for (size_t j = 0; j < dst_shape[1]; ++j) {
-            dst[i * dst_shape[1] + j] = src[i * src_shape[1] * ds_row + ds_col * j];
+    auto [ds_r, ds_c] = downsampling;
+
+    auto rows_ds = src_shape[0] / ds_r;
+    auto cols_ds = src_shape[1] / ds_c;
+
+    assert(dst_shape[0] >= rows_ds);
+    assert(dst_shape[1] >= cols_ds);
+
+    size_t padding_r = (dst_shape[0] - rows_ds) / 2;
+    size_t padding_c = (dst_shape[1] - cols_ds) / 2;
+    T* ptr_src = const_cast<T*>(src.data());
+    T* ptr_dst = dst.data() + dst_shape[1] * padding_r;
+    for (size_t i = 0; i < rows_ds; ++i) {
+        for (size_t j = 0; j < cols_ds; ++j) {
+            ptr_dst[j + padding_c] = ptr_src[ds_c * j];
         }
+        ptr_src += ds_r * src_shape[1];
+        ptr_dst += dst_shape[1];
     }
 }
 
-namespace details {
-    inline ProImageData computeReciprocal(const ProImageData &dark_avg, const ProImageData &flat_avg) {
-        const auto &shape = dark_avg.shape();
-        ProImageData reciprocal{shape};
-        for (size_t i = 0; i < shape[0] * shape[1]; ++i) {
-            if (dark_avg[i] == flat_avg[i]) {
-                reciprocal[i] = 1.0f;
-            } else {
-                reciprocal[i] = 1.0f / (flat_avg[i] - dark_avg[i]);
-            }
+inline ProImageData computeReciprocal(const ProImageData &dark_avg, const ProImageData &flat_avg) {
+    const auto &shape = dark_avg.shape();
+    ProImageData reciprocal{shape};
+    for (size_t i = 0; i < shape[0] * shape[1]; ++i) {
+        if (dark_avg[i] == flat_avg[i]) {
+            reciprocal[i] = 1.0f;
+        } else {
+            reciprocal[i] = 1.0f / (flat_avg[i] - dark_avg[i]);
         }
-        return reciprocal;
     }
+    return reciprocal;
+}
+
 } // namespace details
 
-inline std::pair<ProImageData, ProImageData> computeReciprocal(
-        const std::vector<RawImageData> &darks, const std::vector<RawImageData> &flats) {
+inline void computeReciprocal(const std::vector<RawImageData> &darks,
+                              const std::vector<RawImageData> &flats,
+                              ProImageData& dark_avg,
+                              ProImageData& reciprocal,
+                              const std::array<size_t, 2>& downsampling) {
     assert(!darks.empty() || !flats.empty());
 
+    Tensor<float, 2> flat_averaged;
+    Tensor<float, 2> dark_averaged;
     if (darks.empty()) {
-        auto flat_avg = math::average<ProDtype>(flats);
-        auto dark_avg = flat_avg * 0;
-        return {dark_avg, details::computeReciprocal(dark_avg, flat_avg)};
+        flat_averaged = math::average<ProDtype>(flats);
+        dark_averaged = flat_averaged * 0;
+    } else if (flats.empty()) {
+        dark_averaged = math::average<ProDtype>(darks);
+        flat_averaged = dark_averaged + 1;
+    } else {
+        dark_averaged = math::average<ProDtype>(darks);
+        flat_averaged = math::average<ProDtype>(flats);
     }
 
-    if (flats.empty()) {
-        auto dark_avg = math::average<ProDtype>(darks);
-        auto flat_avg = dark_avg + 1;
-        return {dark_avg, details::computeReciprocal(dark_avg, flat_avg)};
-    }
-
-    auto dark_avg = math::average<ProDtype>(darks);
-    auto flat_avg = math::average<ProDtype>(flats);
-    return {dark_avg, details::computeReciprocal(dark_avg, flat_avg)};
-
+    auto reciprocal_orig = details::computeReciprocal(dark_averaged, flat_averaged);
+    details::copyToBuffer(dark_avg, dark_averaged, downsampling);
+    details::copyToBuffer(reciprocal, reciprocal_orig, downsampling);
 }
 
 inline void flatField(float *data,
@@ -102,10 +125,9 @@ inline std::vector<float> defaultAngles(uint32_t n, float angle_range) {
     return angles;
 }
 
-
 template<typename T1, typename T2>
-inline void copyToSinogram(T1* dst,
-                           const T2& src,
+inline void copyToSinogram(T1 *dst,
+                           const T2 &src,
                            size_t chunk_idx,
                            size_t chunk_size,
                            size_t row_count,

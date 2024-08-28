@@ -30,6 +30,9 @@
 
 namespace recastx::recon {
 
+#define PROJECTION_EXPANSION 32
+#define SLICE_EXPANSION 32
+
 using namespace std::chrono_literals;
 using namespace std::string_literals;
 
@@ -104,12 +107,8 @@ bool Application::tryComputeReciprocal() {
         ScopedTimer timer("Bench", "Computing reciprocal");
 #endif
 
-        auto [dark_avg, reciprocal] = recastx::recon::computeReciprocal(darks_, flats_);
-
-        spdlog::debug("Downsampling dark ... ");
-        downsample(dark_avg, dark_avg_);
-        spdlog::debug("Downsampling reciprocal ... ");
-        downsample(reciprocal, reciprocal_);
+        recastx::recon::computeReciprocal(darks_, flats_, dark_avg_, reciprocal_,
+                                          {imgproc_params_.downsampling_row, imgproc_params_.downsampling_col});
     }
 
     reciprocal_computed_ = true;
@@ -493,13 +492,19 @@ void Application::init() {
 
     initParams();
 
-    uint32_t downsampling_col = imgproc_params_.downsampling_col;
-    uint32_t downsampling_row = imgproc_params_.downsampling_row;
-    size_t col_count = orig_col_count_ / downsampling_col;
-    size_t row_count = orig_row_count_ / downsampling_row;
+    uint32_t ds_col = imgproc_params_.downsampling_col;
+    uint32_t ds_row = imgproc_params_.downsampling_row;
 
-    spdlog::info("[Init] - Projection size: {} ({}) x {} ({})",
-                 col_count, downsampling_col, row_count, downsampling_row);
+#if defined(PROJECTION_EXPANSION)
+    size_t col_count = expandDataSize(orig_col_count_ / ds_col, PROJECTION_EXPANSION);
+    size_t row_count = expandDataSize(orig_row_count_ / ds_row, PROJECTION_EXPANSION);
+#else
+    size_t col_count = orig_col_count_ / ds_col;
+    size_t row_count = orig_row_count_ / ds_row;
+#endif
+
+    spdlog::info("[Init] - Projection size: {} ({}/{}) x {} ({}/{})",
+                 col_count, orig_col_count_, ds_col, row_count, orig_row_count_, ds_row);
     spdlog::info("[Init] - Number of projections per scan: {}", angle_count_);
 
     maybeInitFlatFieldBuffer(row_count, col_count);
@@ -575,7 +580,11 @@ void Application::initReconstructor(uint32_t col_count, uint32_t row_count) {
     auto [min_y, max_y] = details::parseReconstructedVolumeBoundary(min_y_, max_y_, col_count);
     auto [min_z, max_z] = details::parseReconstructedVolumeBoundary(min_z_, max_z_, row_count);
 
-    uint32_t s_size = slice_size_.value_or(expandDataSizeForGpu(col_count, 64));
+    uint32_t s_size = slice_size_.value_or(col_count);
+#if defined(SLICE_EXPANSION)
+    s_size = expandDataSize(s_size, SLICE_EXPANSION);
+#endif
+
     uint32_t p_size = volume_size_.value_or(128);
     float half_slice_height = 0.5f * (max_z - min_z) / p_size;
     float z0 = 0.5f * (max_z + min_z);
@@ -613,12 +622,29 @@ void Application::maybeResetDarkAndFlatAcquisition() {
     }
 }
 
+void Application::pushDark(Projection<>&& proj) {
+    darks_.emplace_back(std::move(proj.data));
+    if (darks_.size() > k_MAX_NUM_DARKS) {
+        spdlog::warn("Maximum number of dark images received. Data ignored!");
+    }
+}
+
+void Application::pushFlat(Projection<>&& proj) {
+    flats_.emplace_back(std::move(proj.data));
+    if (flats_.size() > k_MAX_NUM_FLATS) {
+        spdlog::warn("Maximum number of flat images received. Data ignored!");
+    }
+}
+
 void Application::pushProjection(const Projection<>& proj) {
     if (pipeline_wait_on_slowness_ && raw_buffer_.isReady()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
-    raw_buffer_.fill<RawDtype>(proj.index, reinterpret_cast<const char*>(proj.data.data()), proj.data.shape());
+    raw_buffer_.fill<RawDtype>(proj.index,
+                               reinterpret_cast<const char*>(proj.data.data()),
+                               proj.data.shape(),
+                               {imgproc_params_.downsampling_row, imgproc_params_.downsampling_col});
 }
 
 } // namespace recastx::recon

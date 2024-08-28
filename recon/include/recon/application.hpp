@@ -155,19 +155,9 @@ class Application {
 
     void maybeResetDarkAndFlatAcquisition();
 
-    void pushDark(Projection<>&& proj) {
-        darks_.emplace_back(std::move(proj.data));
-        if (darks_.size() > k_MAX_NUM_DARKS) {
-            spdlog::warn("Maximum number of dark images received. Data ignored!");
-        }
-    }
+    void pushDark(Projection<>&& proj);
 
-    void pushFlat(Projection<>&& proj) {
-        flats_.emplace_back(std::move(proj.data));
-        if (flats_.size() > k_MAX_NUM_FLATS) {
-            spdlog::warn("Maximum number of flat images received. Data ignored!");
-        }
-    }
+    void pushFlat(Projection<>&& proj);
 
     void pushProjection(const Projection<>& proj);
 
@@ -242,11 +232,11 @@ class Application {
 
     void stopProcessing();
 
-    rpc::ServerState_State getServerState() const { return server_state_; }
+    [[nodiscard]] rpc::ServerState_State getServerState() const { return server_state_; }
 
     std::optional<rpc::ProjectionData> getProjectionData(int timeout);
 
-    bool hasVolume() const { return volume_required_; }
+    [[nodiscard]] bool hasVolume() const { return volume_required_; }
 
     std::vector<rpc::ReconData> getVolumeData(int timeout);
 
@@ -256,10 +246,10 @@ class Application {
 
     // for unittest
 
-    const std::vector<RawImageData>& darks() const { return darks_; }
-    const std::vector<RawImageData>& flats() const { return flats_; }
-    const MemoryBuffer<float, 3>& rawBuffer() const { return raw_buffer_; }
-    const Reconstructor* reconstructor() const { return recon_.get(); }
+    [[nodiscard]] const std::vector<RawImageData>& darks() const { return darks_; }
+    [[nodiscard]] const std::vector<RawImageData>& flats() const { return flats_; }
+    [[nodiscard]] const MemoryBuffer<ProDtype, 3>& rawBuffer() const { return raw_buffer_; }
+    [[nodiscard]] const Reconstructor* reconstructor() const { return recon_.get(); }
 };
 
 } // namespace recastx::recon

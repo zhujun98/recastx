@@ -101,6 +101,7 @@ public:
 
     void resize(const ShapeType& shape, T value) {
         data_.resize(size(shape), value);
+        shape_ = shape;
     }
 
     T& operator[](size_t pos) { return data_[pos]; }
@@ -233,33 +234,6 @@ inline auto average(const std::vector<Tensor<T, N>>& src) {
 } 
 
 } // namespace math
-
-namespace details {
-
-template<typename T>
-inline void copyBuffer(T* dst, const char* src, size_t count) {
-    std::memcpy(dst, src, count * sizeof(T));
-}
-
-template<typename T>
-inline void copyBuffer(T* dst,
-                       const std::array<size_t, 2>& dst_shape,
-                       const char* src,
-                       const std::array<size_t, 2>& src_shape) {
-    size_t ds_r = src_shape[0] / dst_shape[0];
-    size_t ds_c = src_shape[1] / dst_shape[1];
-    for (size_t size = sizeof(T), 
-             rstep = ds_r * size * src_shape[1], 
-             cstep = ds_c * size, i = 0; i < dst_shape[0]; ++i) {
-        char* ptr = const_cast<char*>(src) + i * rstep;
-        for (size_t j = 0; j < dst_shape[1]; ++j) {
-            memcpy(dst++, ptr, size);
-            ptr += cstep;
-        }
-    }
-}
-
-} // details
 
 } // namespace recastx::recon
 
