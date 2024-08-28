@@ -528,9 +528,6 @@ void Application::initParams() {
     group_size_ = (scan_mode_ == rpc::ScanMode_Mode_CONTINUOUS || angle_count_ == 0)
             ? scan_update_interval_ : angle_count_;
     proj_mediator_->setFilter(group_size_);
-
-    sino_initialized_ = false;
-    gpu_buffer_index_ = 0;
 }
 
 void Application::maybeInitFlatFieldBuffer(uint32_t row_count, uint32_t col_count) {
@@ -601,6 +598,13 @@ void Application::initReconstructor(uint32_t col_count, uint32_t row_count) {
     };
 
     double_buffering_ = scan_mode_ == rpc::ScanMode_Mode_DYNAMIC;
+
+    std::lock_guard lck(recon_mtx_);
+
+    sino_uploaded_ = false;
+    sino_initialized_ = false;
+    gpu_buffer_index_ = 0;
+
     recon_.reset();
     recon_ = recon_factory_->create(proj_geom, slice_geom, volume_geom, double_buffering_);
 
