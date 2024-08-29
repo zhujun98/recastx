@@ -7,7 +7,8 @@
 #### SCAN MODE
 
 - *Mode*
-    - *Static*: The intention is to use it for static experiments (TBD).
+    - *Static*: The intention is to use it for static experiments (TBD). Currently, the only difference between the *Static* and *Dynamics*
+                modes is that *Static* mode does not enable double buffering on GPU for sinogram. 
     - *Dynamic*: Reconstruction takes place only after all the projections in a scan have arrived.
     - *Continuous*: Reconstruction takes place continuously at a given interval.
 - *Update interval*: Reconstruction in the *Continuous* mode will take place each time after receiving the specified number of projections.

@@ -60,4 +60,10 @@ void SinogramProxy::copyToDevice(astra::CFloat32ProjectionData3DGPU* proj,
     }
 }
 
+void SinogramProxy::reset() {
+    start_ = 0;
+    buffer_.reset();
+}
+
+
 } // recastx::recon

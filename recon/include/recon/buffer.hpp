@@ -86,6 +86,11 @@ public:
 
     virtual bool tryPrepare(int timeout);
 
+    void reset() {
+        std::lock_guard lk(this->mtx_);
+        is_ready_ = false;
+    }
+
     const T& ready() const { return ready_; }
 
     T& back() { return back_; };
@@ -435,22 +440,15 @@ void MemoryBuffer<T, N>::fill(size_t index,
     } else if (chunk_idx > chunk_indices_.back()) {
         for (size_t i = chunk_indices_.back() + 1; i <= chunk_idx; ++i) {
             if (unoccupied_.empty()) {
-#if (VERBOSITY >= 1)
                 int idx = chunk_indices_.front();
-#endif
                 popChunk();
-#if (VERBOSITY >= 1)
                 spdlog::warn("[Image buffer] Memory buffer is full! Chunk {} dropped!", idx);
-#endif
             }
             registerChunk(i);
         }
     } else if (chunk_idx < chunk_indices_.front()) {
-#if (VERBOSITY >= 1)
         spdlog::warn("[Image buffer] Received projection with outdated chunk index: {}, data ignored!",
                      chunk_idx);
-#endif
-
         return;
     }
 
@@ -532,10 +530,8 @@ void MemoryBuffer<T, N>::update(size_t buffer_idx, size_t chunk_idx) {
         size_t idx = chunk_indices_.front();
         while (chunk_idx != idx) {
             popChunk();
-#if (VERBOSITY >= 1)
             spdlog::warn("[Image buffer] Chunk {} is ready! Earlier chunks {} ({}/{}) dropped!",
                          chunk_idx, idx, counter_[map_[idx]], front_.shape()[0]);
-#endif
             idx = chunk_indices_.front();
         }
         is_ready_ = true;

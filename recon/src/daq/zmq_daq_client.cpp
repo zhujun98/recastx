@@ -23,6 +23,7 @@ ZmqDaqClient::ZmqDaqClient(const std::string& endpoint, const std::string& socke
           context_(1),
           socket_(context_, parseSocketType(socket_type)) {
     socket_.set(zmq::sockopt::rcvtimeo, 100);
+    socket_.set(zmq::sockopt::rcvhwm, 1);
     socket_.connect(endpoint);
 
     if(socket_.get(zmq::sockopt::type) == static_cast<int>(zmq::socket_type::sub)) {
@@ -94,6 +95,18 @@ void ZmqDaqClient::spin() {
 
 bool ZmqDaqClient::next(Projection<>& proj) {
     return buffer_.waitAndPop(proj, 100);
+}
+
+void ZmqDaqClient::setAcquiring(bool state) {
+    DaqClientInterface::setAcquiring(state);
+    if (state) buffer_.reset();
+    spdlog::debug("Zmq buffer reset!");
+}
+
+void ZmqDaqClient::startAcquiring(uint32_t num_rows, uint32_t num_cols) {
+    DaqClientInterface::startAcquiring(num_rows, num_cols);
+    buffer_.reset();
+    spdlog::debug("Zmq buffer reset!");
 }
 
 std::optional<nlohmann::json> ZmqDaqClient::parseMeta(const zmq::message_t& msg) {

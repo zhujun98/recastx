@@ -53,7 +53,7 @@ class SinogramProxy {
 
     [[nodiscard]] ProDtype* buffer() { return buffer_.back().data(); }
 
-    void reset() { start_ = 0; }
+    void reset();
 };
 
 } // recastx::recon
