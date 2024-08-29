@@ -72,8 +72,6 @@ Application::Application() : width_(1440), height_(1080) {
 }
 
 Application::~Application() {
-    running_ = false;
-
     rpc_client_.reset();
     consumer_thread_.join();
 
@@ -150,6 +148,8 @@ void Application::spin(const std::string& endpoint) {
 
         glfwSwapBuffers(glfw_window_);
     }
+
+    stopConsumer();
 }
 
 void Application::connectServer() {
@@ -302,6 +302,10 @@ void Application::startConsumer() {
             }
         }
     });
+}
+
+void Application::stopConsumer() {
+    running_ = false;
 }
 
 bool Application::consume(const RpcClient::DataType& packet) {

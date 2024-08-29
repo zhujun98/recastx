@@ -103,6 +103,7 @@ class Application {
     RpcClient::State updateServerParams();
 
     void startConsumer();
+    void stopConsumer();
 
     bool consume(const RpcClient::DataType& packet);
 
