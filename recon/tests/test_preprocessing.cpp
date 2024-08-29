@@ -154,16 +154,21 @@ TEST(TestPreprocessing, TestComputeReciprocal) {
 TEST(TestPreprocessing, TestCopyToSinogram) {
 
     // (chunk_idx, rows, cols) -> (rows, chunk_idx, cols).
-    Tensor<int, 3> src ({2, 3, 4}, std::vector<int>(24, 1));
+    Tensor<int, 3> src ({2, 3, 4}, {1, 2, 3, 4,
+                                    5, 6, 7, 8,
+                                    9, 0, 9, 8,
+                                    7, 6, 5, 4,
+                                    3, 2, 1, 0,
+                                    1, 2, 3, 4});
 
     {
         Tensor<int, 3> dst ({3, 2, 4});
         copyToSinogram(dst.data(), src, 0, 2, 3, 4, 0);
-        EXPECT_THAT(dst, ElementsAreArray({1, 1, 1, 1,
+        EXPECT_THAT(dst, ElementsAreArray({9, 0, 9, 8,
                                            0, 0, 0, 0,
-                                           1, 1, 1, 1,
+                                           5, 6, 7, 8,
                                            0, 0, 0, 0,
-                                           1, 1, 1, 1,
+                                           1, 2, 3, 4,
                                            0, 0, 0, 0}));
     }
 
@@ -171,33 +176,55 @@ TEST(TestPreprocessing, TestCopyToSinogram) {
         Tensor<int, 3> dst ({3, 2, 4});
         copyToSinogram(dst.data(), src, 1, 2, 3, 4, 0);
         EXPECT_THAT(dst, ElementsAreArray({0, 0, 0, 0,
-                                           1, 1, 1, 1,
+                                           1, 2, 3, 4,
                                            0, 0, 0, 0,
-                                           1, 1, 1, 1,
+                                           3, 2, 1, 0,
                                            0, 0, 0, 0,
-                                           1, 1, 1, 1}));
+                                           7, 6, 5, 4}));
     }
 
     {
         Tensor<int, 3> dst ({3, 2, 4});
-        copyToSinogram(dst.data(), src, 1, 2, 3, 4, 1);
-        EXPECT_THAT(dst, ElementsAreArray({0, 0, 0, 0,
-                                           1, 1, 1, 0,
+        copyToSinogram(dst.data(), src, 0, 2, 3, 4, 2);
+        EXPECT_THAT(dst, ElementsAreArray({0, 0, 9, 0,
                                            0, 0, 0, 0,
-                                           1, 1, 1, 0,
+                                           0, 0, 5, 6,
                                            0, 0, 0, 0,
-                                           1, 1, 1, 0}));
+                                           0, 0, 1, 2,
+                                           0, 0, 0, 0}));
     }
 
     {
         Tensor<int, 3> dst ({3, 2, 4});
-        copyToSinogram(dst.data(), src, 1, 2, 3, 4, -1);
+        copyToSinogram(dst.data(), src, 1, 2, 3, 4, 2);
         EXPECT_THAT(dst, ElementsAreArray({0, 0, 0, 0,
-                                           0, 1, 1, 1,
+                                           0, 0, 1, 2,
                                            0, 0, 0, 0,
-                                           0, 1, 1, 1,
+                                           0, 0, 3, 2,
                                            0, 0, 0, 0,
-                                           0, 1, 1, 1}));
+                                           0, 0, 7, 6}));
+    }
+
+    {
+        Tensor<int, 3> dst ({3, 2, 4});
+        copyToSinogram(dst.data(), src, 0, 2, 3, 4, -2);
+        EXPECT_THAT(dst, ElementsAreArray({9, 8, 0, 0,
+                                           0, 0, 0, 0,
+                                           7, 8, 0, 0,
+                                           0, 0, 0, 0,
+                                           3, 4, 0, 0,
+                                           0, 0, 0, 0}));
+    }
+
+    {
+        Tensor<int, 3> dst ({3, 2, 4});
+        copyToSinogram(dst.data(), src, 1, 2, 3, 4, -2);
+        EXPECT_THAT(dst, ElementsAreArray({0, 0, 0, 0,
+                                           3, 4, 0, 0,
+                                           0, 0, 0, 0,
+                                           1, 0, 0, 0,
+                                           0, 0, 0, 0,
+                                           5, 4, 0, 0}));
     }
 }
 
