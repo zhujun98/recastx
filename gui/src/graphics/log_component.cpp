@@ -33,7 +33,7 @@ void LogComponent::draw(rpc::ServerState_State) {
 //    ImGui::PushItemWidth(100);
 //    ImGui::Combo("Log levels##LOG_COMP", &current_level_, log_levels_.data(), log_levels_.size());
 //    ImGui::PopItemWidth();
-    ImGui::SameLine();
+//    ImGui::SameLine();
     filter_.Draw("Filter", -200.f);
     ImGui::SameLine();
     bool clear_text = ImGui::Button("Clear##LOG_COMP");

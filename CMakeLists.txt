@@ -8,7 +8,7 @@
 # -----------------------------------------------------------------------------
 cmake_minimum_required(VERSION 3.25)
 
-project(recastx LANGUAGES C CXX)
+project(recastx LANGUAGES C CXX VERSION 0.0.0)
 
 include(CheckLanguage)
 check_language(CUDA)
@@ -22,6 +22,8 @@ message(STATUS "CUDA architectures: ${CMAKE_CUDA_ARCHITECTURES}")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+configure_file(version.in ${PROJECT_SOURCE_DIR}/common/include/common/version.hpp @ONLY)
 
 option(BUILD_GUI "Build OpenGL GUI only" OFF)
 option(BUILD_TEST "Build unit test" OFF)
