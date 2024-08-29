@@ -649,6 +649,7 @@ void Application::pushProjection(const Projection<>& proj) {
                                reinterpret_cast<const char*>(proj.data.data()),
                                proj.data.shape(),
                                {imgproc_params_.downsampling_row, imgproc_params_.downsampling_col});
+    spdlog::debug("Projection {} copied to the memory buffer", proj.index);
 }
 
 } // namespace recastx::recon

@@ -51,6 +51,10 @@ class ZmqDaqClient : public DaqClientInterface {
     void spin() override;
 
     [[nodiscard]] bool next(Projection<>& proj) override;
+
+    void setAcquiring(bool state) override;
+
+    void startAcquiring(uint32_t num_rows, uint32_t num_cols) override;
 };
 
 } // namespace recastx::recon

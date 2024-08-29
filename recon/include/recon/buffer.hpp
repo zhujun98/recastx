@@ -86,6 +86,11 @@ public:
 
     virtual bool tryPrepare(int timeout);
 
+    void reset() {
+        std::lock_guard lk(this->mtx_);
+        is_ready_ = false;
+    }
+
     const T& ready() const { return ready_; }
 
     T& back() { return back_; };
