@@ -5,9 +5,10 @@ is still implemented in CPU. The total number of threads of the current benchmar
 only 32. We expect a significant performance boost on a GPU node with a decent number of threads.
 
 The 3 GB/s throughput was measured using a projection size of 512 x 512 pixels and 500 projections per scan.
-The throughput will decrease as the total size of data per scan increases since the performance does
-not scale linearly. If you need a high throughput with large projections sizes and/or large numbers of projections per
-scan, it is recommended to down-sample the projections, which can be configured in the GUI.
+The throughput will decrease as the total size of data per scan increases since the performance (in particular 
+the preprocessing part on CPU) does not scale linearly. If you need a high throughput with large projections 
+sizes and/or large numbers of projections per scan, it is recommended to down-sample the projections, which can 
+be configured in the GUI.
 
 ## Visualization
 
