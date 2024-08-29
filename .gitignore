@@ -5,6 +5,8 @@
 
 version.hpp
 
+imgui.ini
+
 *__pycache__*
 *.so
 *.egg-info
