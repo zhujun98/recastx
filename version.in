@@ -1,0 +1,17 @@
+#include <string>
+
+
+inline std::string getRecastxVersion()
+{
+  return "@recastx_VERSION@";
+}
+
+inline unsigned getRecastxVersionMajor()
+{
+  return @recastx_VERSION_MAJOR@;
+}
+
+inline unsigned getRecastxVersionMinor()
+{
+  return @recastx_VERSION_MINOR@ +0;
+}

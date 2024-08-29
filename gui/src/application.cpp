@@ -7,6 +7,7 @@
  * The full license is in the file LICENSE, distributed with this software.
 */
 #include "application.hpp"
+#include "common/version.hpp"
 #include "graphics/camera.hpp"
 #include "graphics/light.hpp"
 #include "graphics/voxel_object.hpp"
@@ -47,7 +48,7 @@ Application::Application() : width_(1440), height_(1080) {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    glfw_window_ = glfwCreateWindow(width_, height_, title_.c_str(), NULL, NULL);
+    glfw_window_ = glfwCreateWindow(width_, height_, (title_ + " v" + getRecastxVersion()).c_str(), NULL, NULL);
     if (glfw_window_ == NULL) {
         glfwTerminate();
         throw std::runtime_error("Failed to create GLFW window");

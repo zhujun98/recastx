@@ -3,6 +3,8 @@
 .idea
 .vscode
 
+version.hpp
+
 *__pycache__*
 *.so
 *.egg-info
