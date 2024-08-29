@@ -13,6 +13,7 @@
 #include <spdlog/spdlog.h>
 #include <boost/program_options.hpp>
 
+#include "common/version.hpp"
 #include "recon/application.hpp"
 #include "recon/ramp_filter.hpp"
 #include "recon/reconstructor.hpp"
@@ -37,6 +38,10 @@ recastx::AngleRange parseAngleRange(const po::variable_value& value) {
 }
 
 int main(int argc, char** argv) {
+
+    spdlog::info(std::string(80, '='));
+    spdlog::info(std::string(30, ' ') + "RECASTX v{}", getRecastxVersion());
+    spdlog::info(std::string(80, '='));
 
     spdlog::set_pattern("[%Y-%m-%d %T.%e] [%^%l%$] %v");
 #ifndef NDEBUG
