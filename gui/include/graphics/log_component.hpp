@@ -38,7 +38,7 @@ public:
 
     explicit LogComponent(RpcClient* client);
 
-    ~LogComponent();
+    ~LogComponent() override;
 
     void clear();
 
