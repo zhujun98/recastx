@@ -13,7 +13,10 @@
 namespace recastx::gui {
 
 LogComponent::LogComponent(RpcClient* client) :
-        Component(client), log_levels_({"Debug", "Info" ,"Warn", "Error"}){
+        Component(client),
+        log_levels_({"Debug", "Info" ,"Warn", "Error"}),
+        current_level_(1),
+        buf_(GuiLogger::BUFFER_SIZE) {
     GuiLogger::init(buf_);
     log::info("Logging initialized");
 }
@@ -26,9 +29,10 @@ void LogComponent::clear() {
 
 void LogComponent::draw(rpc::ServerState_State) {
     ImGui::AlignTextToFramePadding();
-    ImGui::PushItemWidth(100);
-    ImGui::Combo("Log levels##LOG_COMP", &current_level_, log_levels_.data(), log_levels_.size());
-    ImGui::PopItemWidth();
+    // TODO:
+//    ImGui::PushItemWidth(100);
+//    ImGui::Combo("Log levels##LOG_COMP", &current_level_, log_levels_.data(), log_levels_.size());
+//    ImGui::PopItemWidth();
     ImGui::SameLine();
     filter_.Draw("Filter", -200.f);
     ImGui::SameLine();

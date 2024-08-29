@@ -9,10 +9,9 @@
 #ifndef TOMCAT_LOGGER_HPP
 #define TOMCAT_LOGGER_HPP
 
-#include <tuple>
+#include <boost/circular_buffer.hpp>
 
 #include <spdlog/spdlog.h>
-
 #include <spdlog/details/null_mutex.h>
 #include <spdlog/sinks/base_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -51,7 +50,8 @@ class GuiLogger {
 
 public:
 
-    using BufferType = std::vector<std::tuple<spdlog::level::level_enum, std::string>>;
+    using BufferType = boost::circular_buffer<std::tuple<spdlog::level::level_enum, std::string>>;
+    static constexpr size_t BUFFER_SIZE = 100;
 
 private:
 
@@ -65,7 +65,7 @@ public:
     inline static void init(BufferType& buf) {
         auto callback_sink = std::make_shared<details::CallbackSinkMt>(
                 [&buf](const spdlog::details::log_msg &msg) {
-                    buf.emplace_back(msg.level, std::string(msg.payload.begin(), msg.payload.end()));
+                    buf.push_back({msg.level, std::string(msg.payload.begin(), msg.payload.end())});
                 });
 
         auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
