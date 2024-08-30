@@ -54,6 +54,7 @@ TransferFuncWidget::TransferFuncWidget(std::shared_ptr<TransferFunc> material)
         : Widget("Material " + std::to_string(material->id())),
           material_(std::move(material)),
           alpha_{{0.f, 0.f}, {1.f, 1.f}},
+          dragged_point_(alpha_.end()),
           max_num_points_(10) {
     material_->am_.set(alpha_);
     id_ = "##MAT" + std::to_string(material_->id());
@@ -125,12 +126,6 @@ void TransferFuncWidget::renderLevelsControl() {
 }
 
 void TransferFuncWidget::renderAlphaEditor() {
-    const ImColor frame_color_ {180, 180, 180, 255};
-    const ImColor point_color_ {180, 180, 90, 255};
-    const ImColor line_color_ {180, 180, 120, 255};
-    const float   line_width_ = 2.f;
-    const ImColor highlight_color_ {255, 0, 0, 255};
-
     if (ImGui::GetCurrentWindow()->SkipItems) return;
 
     ImGui::Text("Alphamap");
@@ -144,36 +139,51 @@ void TransferFuncWidget::renderAlphaEditor() {
     ImDrawList *draw_list = ImGui::GetWindowDrawList();
     draw_list->AddRect(canvas_pos, {canvas_pos.x + canvas_size.x, canvas_pos.y + canvas_size.y}, frame_color_);
 
+    float radius_p = std::max(4.f / canvas_size.x, 0.008f);
+    float radius_s = 2 * radius_p;
+    bool alpha_changed = false;
+
+    auto hovered = alpha_.end();
+
     auto m_pos = G.IO.MousePos;
     float m_pos_x = static_cast<float>(m_pos.x - canvas_pos.x) / canvas_size.x;
     float m_pos_y = 1.f - static_cast<float>(m_pos.y - canvas_pos.y) / canvas_size.y;
-    bool is_hovered = m_pos_x >= 0.f && m_pos_x <= 1.f && m_pos_y >= 0.f && m_pos_y <= 1.f;
-
-    float point_r = std::max(4.f / canvas_size.x, 0.008f);
-    float select_r = 2 * point_r;
-    auto selected = alpha_.end();
-    bool alpha_changed = false;
-    if (is_hovered) {
+    if (m_pos_x >= 0.f && m_pos_x <= 1.f && m_pos_y >= 0.f && m_pos_y <= 1.f) {
         auto it = alpha_.upper_bound(m_pos_x);
         auto prev_it = std::prev(it);
-        if (it->first - m_pos_x < select_r && std::abs(it->second - m_pos_x) < select_r) {
-            selected = it;
-        } else if (m_pos_x - prev_it->first < select_r && std::abs(prev_it->second - m_pos_y) < select_r) {
-            selected = prev_it;
+        if (it->first - m_pos_x < radius_s && std::abs(it->second - m_pos_x) < radius_s) {
+            hovered = it;
+        } else if (m_pos_x - prev_it->first < radius_s && std::abs(prev_it->second - m_pos_y) < radius_s) {
+            hovered = prev_it;
         }
 
-        // select and press D to delete a point
+        bool mouse_down = ImGui::IsMouseDown(0);
+        // The first point is not allowed to be dragged since alpha must be 0 if the density is 0.
+        if (mouse_down && !dragging_ && hovered != alpha_.end() && hovered != alpha_.begin()) {
+            dragging_ = true;
+            dragged_point_ = hovered;
+        } else if (dragging_ && !mouse_down) {
+            dragging_ = false;
+            dragged_point_ = alpha_.end();
+        }
+
+        if (dragging_ && ImGui::IsMouseDragging(0)) {
+            dragged_point_->second = m_pos_y;
+            alpha_changed = true;
+        }
+
+        // select and press x to delete a point
         // cannot delete the first and last points
         ImGui::SetNextFrameWantCaptureKeyboard(true);
-        if (selected != alpha_.end() && selected != alpha_.begin() && selected != std::prev(alpha_.end())
-            && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_D))) {
-            alpha_.erase(selected);
-            selected = alpha_.end();
+        if (hovered != alpha_.end() && hovered != alpha_.begin() && hovered != std::prev(alpha_.end())
+            && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_X))) {
+            alpha_.erase(hovered);
+            hovered = alpha_.end();
             alpha_changed = true;
         }
 
         // ctrl + left mouse click to add a new point
-        if (selected == alpha_.end() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+        if (hovered == alpha_.end() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
             if (G.IO.KeyCtrl) {
                 if (alpha_.size() > max_num_points_) {
                     log::warn("Maximum number of points reached!");
@@ -198,12 +208,13 @@ void TransferFuncWidget::renderAlphaEditor() {
 
     draw_list->AddPolyline(points.data(), (int)points.size(), line_color_, false, line_width_);
     for (auto& point : points) {
-        draw_list->AddCircleFilled(point, point_r * scale.x, point_color_);
+        draw_list->AddCircleFilled(point, radius_p * scale.x, point_color_);
     }
 
-    if (selected != alpha_.end()) {
-        const ImVec2 pos = { selected->first * scale.x + offset.x, selected->second * scale.y + offset.y };
-        draw_list->AddCircle(pos, select_r * scale.x, highlight_color_);
+    auto highlighted = dragging_? dragged_point_ : hovered;
+    if (highlighted != alpha_.end()) {
+        const ImVec2 pos = { highlighted->first * scale.x + offset.x, highlighted->second * scale.y + offset.y };
+        draw_list->AddCircle(pos, radius_s * scale.x, highlight_color_);
     }
 
     if (alpha_changed) material_->am_.set(alpha_);
