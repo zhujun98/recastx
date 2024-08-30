@@ -4,6 +4,8 @@
 
 ---
 
+![Overview](docs/docs/media/Overview.png)
+
 [comment]: # (Any modification to the following content should also be implemented in 'docs/docs/index.md')
 
 RECASTX is a GPU-accelerated software written in modern C++(17). 
