@@ -81,7 +81,7 @@ information which could lead to scientific discoveries.
             <p>Rich graphical user interface</p>
         </div>
         <div class="feature-image-container">
-            <img src="recastx-docs-supplement/overview.png"/>
+            <img src="media/Overview.png"/>
         </div>
     </div>
     <div class="feature-section left">

@@ -8,7 +8,7 @@
 # -----------------------------------------------------------------------------
 cmake_minimum_required(VERSION 3.25)
 
-project(recastx LANGUAGES C CXX VERSION 0.0.0)
+project(recastx LANGUAGES C CXX VERSION 1.0.0)
 
 include(CheckLanguage)
 check_language(CUDA)
