@@ -90,6 +90,7 @@
     - *Alphamap*:
         - <kbd>Ctrl</kbd> + Left mouse button: Add a new point.
         - <kbd>d</kbd>: Delete a point while hovering it (the point will be highlighted).
+        - Left mouse button: Press to drag a point vertically. It is not allowed to drag the first point.
 
 
 - *ISO Surface*: Check to render the volume as meshes. It is still an experimental feature.

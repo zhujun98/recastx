@@ -47,7 +47,15 @@ class TransferFuncWidget : public Widget {
     std::shared_ptr<TransferFunc> material_;
 
     std::map<float, float> alpha_;
+    bool dragging_ {false};
+    std::map<float, float>::iterator dragged_point_;
     const size_t max_num_points_;
+
+    const ImColor frame_color_ {180, 180, 180, 255};
+    const ImColor point_color_ {180, 180, 90, 255};
+    const ImColor line_color_ {180, 180, 120, 255};
+    const float   line_width_ = 2.f;
+    const ImColor highlight_color_ {255, 0, 0, 255};
 
     void renderSelector();
 
