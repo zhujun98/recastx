@@ -1,6 +1,7 @@
 #### MAIN CONTROL
 
-- *Acquire*: Click to only start acquiring the raw projection images and meta data.
+- *Acquire*: Click to only start acquiring the raw projection images and meta data. You can use this feature
+             to check whether the data streaming is working properly and the projection image is expected.
 - *Process*: Click to start acquiring and processing data.
 - *Stop*: Click to stop acquiring and processing data.
 
@@ -32,8 +33,8 @@
 #### PREPROCESSING
 
 - *Downsample*
-    - *Col*: Downsampling factor of columns of the raw projection image.
-    - *Row*: Downsampling factor of rows of the raw projection image.
+    - *Col*: Down-sampling factor of columns of the raw projection image.
+    - *Row*: Down-sampling factor of rows of the raw projection image.
 - *Minus Log*: Uncheck if the data is already linearized.
 - *Offset*: Offset of the rotation center.
 - *Ramp filter*: Select the ramp filter applied before FBP reconstruction.
@@ -49,15 +50,19 @@
     - *Min*: Minimum colormap value.
     - *Max*: Maximum colormap value.
 - *Keep Aspect Ratio*: Uncheck to not keep the aspect ratio of the image. It can
-                       be used to improve the visualization if the image has a large
-                       aspect ratio.
+                       be used to improve the visualization if images which have large
+                       aspect ratios.
 
 #### SLICE 1/2/3
 
-- *2D*: Check to display the 2D high-resolution slice.
-- *3D*: Check to display the 3D high-resolution slab (TBD).
+- *Show*: Check to display the 2D high-resolution slice.
 - *Disable*: Check to hide the slice.
-- *Reset all slices*: Click to reset the positions and orientations of all the slices.
+- *Offset*: Translation of the slice. You can also drag a slice object with mouse.
+
+
+- *Reset all slices*: Click to reset the translations and orientations of all the slices.
+
+
 - *Colormap*: Colormap for rendering the slices.
 - *Auto Levels*: Check to enable automatically setting color levels of the displayed objects.
     - *Min*: Minimum colormap value.
@@ -68,22 +73,38 @@
 - *Preview*: Check to use the 3D reconstructed volume as preview.
 - *Show*: Check to display the 3D reconstructed volume.
 - *Disable*: Check to disable the reconstruction of the 3D volume. As a result, 
-             there will be no preview when moving a slice.
-  
+             there will be no preview when dragging a slice.
+
+
 - *Quality*: Volume rendering quality. 1 is the worst and 5 is the best.
-- *Volume Shadow*: Check to enable volumetric lighting effect.
-- *Threshold*: Voxels with intensities smaller than the threshold will not be rendered.
-- *View front*: Relative position of the front plane of the volume along the view direction.
-- *Colormap*: Colormap for rendering the volume (shared with the slices).
-- *Auto Levels*: Check to enable automatically setting color levels of the displayed objects (shared with the slices).
-    - *Min*: Minimum colormap value (shared with the slices).
-    - *Max*: Maximum colormap value (shared with the slices).
+
+
+- *Voxel*: Check to render the volume as voxels.
+    - *Volume Shadow*: Check to enable volumetric lighting effect.
+    - *Threshold*: Voxels with intensities smaller than the threshold will not be rendered.
+    - *View front*: Relative position of the front plane of the volume along the view direction.
+    - *Colormap*: Colormap for rendering the volume (shared with the slices).
+    - *Auto Levels*: Check to enable automatically setting color levels of the displayed objects (shared with the slices).
+        - *Min*: Minimum colormap value (shared with the slices).
+        - *Max*: Maximum colormap value (shared with the slices).
+    - *Alphamap*:
+        - <kbd>Ctrl</kbd> + Left mouse button: Add a new point.
+        - <kbd>d</kbd>: Delete a point while hovering it (the point will be highlighted).
+
+
+- *ISO Surface*: Check to render the volume as meshes. It is still an experimental feature.
+    - *ISO Value*: ISO value for finding ISO surfaces.
+    - *Show Mesh*: Render the ISO surfaces as meshes instead of surfaces.
+    - *Shininess*: Shininess of the material.
+    - *Ambient*: Ambient property of the material.
+    - *Diffuse*: Diffuse property of the material.
+    - *Specular*: Specular property of the material.
 
 #### LIGHTING
 
 - *Show*: Check to display the light source object.
-- *Position*: The position of the point light source.
-- *Color*: The light color.
+- *Position*: Position of the point light source.
+- *Color*: Color of lighting.
 - *Ambient*: Ambient component of lighting.
 - *Diffuse*: Diffuse component of lighting.
 - *Specular*: Specular component of lighting.
@@ -94,7 +115,6 @@
 
     - Select a slice on *mouse hover* (the selected slice will be highlighted).
     - Move the selected slice along its normal direction by *dragging the left mouse button*.
-    - Rotate the selected slice around a highlighted axis by *dragging the right mouse button*.
 
 - Camera
 

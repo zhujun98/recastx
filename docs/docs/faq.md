@@ -21,7 +21,7 @@ See [Performance Consideration](./performance_consideration.md)
 
 Use a GPU node with a decent number (>72) of CPU threads.
 
-### Why do we get the warning message "Received projection with outdated chunk index: ?, data ignored!"
+### Why do we get the warning message like "Received projection with outdated chunk index: 1234, data ignored!"
 
 As mentioned in [Data Protocol](./data_protocol.md), the data pipeline relies on the "frame" parameter to sort
 the incoming projections. If the received frame is believed to be an outdated frame, it will be dropped.

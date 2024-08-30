@@ -29,3 +29,5 @@ visualization of the 3D data and more flexible control of the reconstruction pip
 Learn more about RECASTX, please check the [documentation](https://zhujun98.github.io/recastx/).
 
 The official PSI repository can be found [here](https://gitlab.psi.ch/zhu_j1/recastx).
+
+The Github repository can be found [here](https://github.com/zhujun98/recastx).
