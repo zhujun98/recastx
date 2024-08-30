@@ -24,6 +24,7 @@ Open a terminal and run:
 ```bash
 foamstream-tomo --datafile <Your/folder/2_plastic_beeds_RGB.h5> --pdata tomo --pflat flat
 ```
+You can find the shapes of the Dark, Flat and Projection images from the output of foamstream.
 
 ### Starting the reconstruction server
 
@@ -31,8 +32,6 @@ Open another terminal and run:
 ```bash
 recastx-recon
 ```
-
-You can find the shapes of the DARK, FLAT and PROJECTION data from the output of foamstream.
 
 !!! note
     The `volume-size`, which defines the resolution of the "low-resolution" 

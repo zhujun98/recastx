@@ -24,6 +24,7 @@ Open a terminal and run:
 ```bash
 foamstream-tomo --datafile <Your/folder/dk_MCFG_1_p_s1_.h5>
 ```
+You can find the shapes of the Dark, Flat and Projection images from the output of foamstream.
 
 ### Starting the reconstruction server
 
@@ -31,8 +32,6 @@ Open another terminal and run:
 ```bash
 recastx-recon
 ```
-
-You can find the shapes of the DARK, FLAT and PROJECTION data from the output of foamstream.
 
 ### Starting the GUI client
 
@@ -55,7 +54,7 @@ Make sure the `SCAN MODE` is set to `Discrete` and click the `Process` button.
 !!! note
     We turned off the volume reconstruction in order to save the network bandwidth 
     for visualization. See [Performance consideration](../performance_consideration.md) for more details. Therefore, 
-    there is no preview while moving the slice.
+    there is no preview while dragging the slice.
 
 [//]: # (<figure markdown>)
 
