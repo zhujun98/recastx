@@ -45,6 +45,7 @@ void Renderer::begin() {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
+    glEnable(GL_MULTISAMPLE);
     glEnable(GL_DEPTH_TEST);
 
     glClearColor(Style::BG_COLOR.x, Style::BG_COLOR.y, Style::BG_COLOR.z, Style::BG_COLOR.w);
