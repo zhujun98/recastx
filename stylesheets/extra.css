@@ -1,0 +1,9 @@
+.md-grid {
+    max-width: 1240px;
+}
+
+:root {
+    --md-primary-fg-color:        #3876BF;
+
+    --md-footer-bg-color:         #192655;
+}
