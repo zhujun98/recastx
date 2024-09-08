@@ -48,6 +48,8 @@ Application::Application() : width_(1440), height_(1080) {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
+    glfwWindowHint(GLFW_SAMPLES, 4);
+
     glfw_window_ = glfwCreateWindow(width_, height_, (title_ + " v" + getRecastxVersion()).c_str(), NULL, NULL);
     if (glfw_window_ == NULL) {
         glfwTerminate();
