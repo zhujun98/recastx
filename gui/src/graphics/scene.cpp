@@ -195,7 +195,7 @@ Interactable* Scene::findClosestSlice(float x, float y) const {
     auto point2 = prev_inv_vp_ * glm::vec4(x, y,  1.f, 1.f);
     point2 /= point2[3];
 
-    float min_dist = std::numeric_limits<float>::max();
+    float min_dist = (std::numeric_limits<float>::max)();
     SliceObject* found = nullptr;
     for (const auto& object : slice_objects_) {
         if (!object->visible()) continue;

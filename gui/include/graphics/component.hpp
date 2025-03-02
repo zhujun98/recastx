@@ -33,7 +33,7 @@ class Component {
 
     virtual void draw(rpc::ServerState_State state) = 0;
 
-    virtual RpcClient::State updateServerParams() const { return RpcClient::State::OK; };
+    virtual RpcClient::State updateServerParams() const { return RpcClient::State::SUCCESS; };
 
     virtual void preRender() {}
 };

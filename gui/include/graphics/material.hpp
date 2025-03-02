@@ -9,6 +9,7 @@
 #ifndef GUI_MATERIAL_H
 #define GUI_MATERIAL_H
 
+#include <array>
 #include <optional>
 
 #include <glm/glm.hpp>

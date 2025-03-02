@@ -121,7 +121,7 @@ void TransferFuncWidget::renderLevelsControl() {
     if (step_size < 0.01f) step_size = 0.01f; // avoid a tiny step size
     ImGui::DragFloatRange2(("Min / Max" + id_).c_str(), &material_->min_val_, &material_->max_val_, step_size,
                            std::numeric_limits<float>::lowest(), // min() does not work
-                           std::numeric_limits<float>::max());
+                           (std::numeric_limits<float>::max)());
     ImGui::EndDisabled();
 }
 
@@ -139,7 +139,7 @@ void TransferFuncWidget::renderAlphaEditor() {
     ImDrawList *draw_list = ImGui::GetWindowDrawList();
     draw_list->AddRect(canvas_pos, {canvas_pos.x + canvas_size.x, canvas_pos.y + canvas_size.y}, frame_color_);
 
-    float radius_p = std::max(4.f / canvas_size.x, 0.008f);
+    float radius_p = (std::max)(4.f / canvas_size.x, 0.008f);
     float radius_s = 2 * radius_p;
     bool alpha_changed = false;
 

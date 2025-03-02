@@ -6,8 +6,8 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
-#ifndef GUI_VOLUME_H
-#define GUI_VOLUME_H
+#ifndef GUI_VOLUME_COMPONENT_H
+#define GUI_VOLUME_COMPONENT_H
 
 #include <array>
 #include <memory>
@@ -91,4 +91,4 @@ class VolumeComponent : public Component {
 
 } // namespace recastx::gui
 
-#endif // GUI_VOLUME_H
+#endif // GUI_VOLUME_COMPONENT_H

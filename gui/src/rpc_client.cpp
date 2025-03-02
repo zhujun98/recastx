@@ -80,7 +80,7 @@ std::optional<rpc::ServerState_State> RpcClient::getServerState() {
 
     grpc::ClientContext context;
     grpc::Status status = control_stub_->GetServerState(&context, request, &reply);
-    if (checkStatus(status) != State::OK) return std::nullopt;
+    if (checkStatus(status) != State::SUCCESS) return std::nullopt;
     return reply.state();
 }
 
@@ -291,7 +291,7 @@ void RpcClient::startReadingProjectionStream() {
 
 RpcClient::State RpcClient::checkStatus(const grpc::Status& status, bool warn_on_unavailable_server) const {
     auto code = status.error_code();
-    if (code == grpc::StatusCode::OK) return State::OK;
+    if (code == grpc::StatusCode::OK) return State::SUCCESS;
 
     const std::string& msg = status.error_message();
     if (code == grpc::StatusCode::UNAVAILABLE) {
@@ -308,7 +308,7 @@ RpcClient::State RpcClient::checkStatus(const grpc::Status& status, bool warn_on
         log::error("Unexpected RPC error {}: {}", code, msg);
         std::exit(EXIT_FAILURE);
     }
-    return State::ERROR;
+    return State::FAILURE;
 }
 
 } // namespace recastx::gui

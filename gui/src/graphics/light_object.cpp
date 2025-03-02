@@ -32,7 +32,7 @@ void LightObject::render(Renderer* renderer) {
     shader_->setVec3("color", light_->color()); // the only difference from SimpleObject::render(Renderer*)
 
     glBindVertexArray(VAO_);
-    glDrawElements(GL_LINES, model_.indices.size(), GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_LINES, static_cast<GLsizei>(model_.indices.size()), GL_UNSIGNED_INT, 0);
 }
 
 void LightObject::setLightModel() {

@@ -176,19 +176,19 @@ void Application::connectServer() {
 }
 
 void Application::startAcquiring() {
-    if (updateServerParams() != RpcClient::State::OK) {
+    if (updateServerParams() != RpcClient::State::SUCCESS) {
         server_state_ = rpc::ServerState_State_UNKNOWN;
         return;
     }
 
-    if (rpc_client_->startAcquiring() == RpcClient::State::OK) {
+    if (rpc_client_->startAcquiring() == RpcClient::State::SUCCESS) {
         server_state_ = rpc::ServerState_State_ACQUIRING;
         log::info("Started acquiring data");
     }
 }
 
 void Application::stopAcquiring() {
-    if (rpc_client_->stopAcquiring() == RpcClient::State::OK) {
+    if (rpc_client_->stopAcquiring() == RpcClient::State::SUCCESS) {
         server_state_ = rpc::ServerState_State_READY;
         log::info("Stopped acquiring data");
     } else {
@@ -197,19 +197,19 @@ void Application::stopAcquiring() {
 }
 
 void Application::startProcessing() {
-    if (updateServerParams() != RpcClient::State::OK) {
+    if (updateServerParams() != RpcClient::State::SUCCESS) {
         server_state_ = rpc::ServerState_State_UNKNOWN;
         return;
     }
 
-    if (rpc_client_->startProcessing() == RpcClient::State::OK) {
+    if (rpc_client_->startProcessing() == RpcClient::State::SUCCESS) {
         server_state_ = rpc::ServerState_State_PROCESSING;
         log::info("Started acquiring & processing data");
     }
 }
 
 void Application::stopProcessing() {
-    if (rpc_client_->stopProcessing() == RpcClient::State::OK) {
+    if (rpc_client_->stopProcessing() == RpcClient::State::SUCCESS) {
         server_state_ = rpc::ServerState_State_READY;
         log::info("Stopped acquiring & processing data");
     } else {
@@ -289,7 +289,7 @@ RpcClient::State Application::updateServerParams() {
     for (auto comp : components_) {
         CHECK_CLIENT_STATE(comp->updateServerParams())
     }
-    return RpcClient::State::OK;
+    return RpcClient::State::SUCCESS;
 }
 
 void Application::startConsumer() {

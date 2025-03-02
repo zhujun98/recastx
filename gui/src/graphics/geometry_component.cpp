@@ -66,7 +66,7 @@ RpcClient::State GeometryComponent::updateServerParams() const {
                                                       static_cast<int>(angle_range_)))
     CHECK_CLIENT_STATE(client_->setReconGeometry(slice_size_, volume_size_,
                                                  {x_[0], x_[1]}, {y_[0], y_[1]}, {z_[0], z_[1]}))
-    return RpcClient::State::OK;
+    return RpcClient::State::SUCCESS;
 }
 
 } // namespace recastx::gui

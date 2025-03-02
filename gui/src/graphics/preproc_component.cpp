@@ -82,7 +82,7 @@ RpcClient::State PreprocComponent::updateServerParams() const {
     CHECK_CLIENT_STATE(client_->setDownsampling(downsampling_col_, downsampling_row_))
     CHECK_CLIENT_STATE(client_->setCorrection(offset_, minus_log_))
     CHECK_CLIENT_STATE(client_->setRampFilter(ramp_filter_name_))
-    return RpcClient::State::OK;
+    return RpcClient::State::SUCCESS;
 }
 
 } // namespace recastx::gui

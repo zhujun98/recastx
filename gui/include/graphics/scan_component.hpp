@@ -6,8 +6,8 @@
  *
  * The full license is in the file LICENSE, distributed with this software.
 */
-#ifndef RECASTX_SCAN_COMPONENT_HPP
-#define RECASTX_SCAN_COMPONENT_HPP
+#ifndef RECASTX_SCAN_COMPONENT_H
+#define RECASTX_SCAN_COMPONENT_H
 
 #include <map>
 #include <string>
@@ -34,4 +34,4 @@ class ScanComponent : public Component {
 
 } // namespace recastx::gui
 
-#endif //RECASTX_SCAN_COMPONENT_HPP
+#endif //RECASTX_SCAN_COMPONENT_H

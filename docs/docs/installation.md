@@ -36,15 +36,17 @@ TBD
 
 #### Installing the GUI client
 
-- Linux / MacOS
-
-```bash
+```sh
 git clone --recursive https://github.com/<repo>/recastx.git
 cd recastx
 
 conda env create -f environment-gui.yml
 conda activate recastx-gui
+```
 
+- Linux / MacOS
+
+```sh
 mkdir build-gui && cd build-gui
 cmake .. -DCMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"} \
          -DBUILD_GUI=ON
@@ -53,7 +55,12 @@ make -j12 && make install
 
 - Windows
 
-TBD
+```sh
+
+cmake -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH=C:\Users\Jun\miniconda3\envs\recastx-gui -DBUILD_GUI=ON ..
+
+cmake --build . --config Release --parallel 12
+```
 
 ## Package managers
 
