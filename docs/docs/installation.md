@@ -26,13 +26,9 @@ make -j12 && make install
 
 #### Installing prerequisites (optional)
 
-- Linux / MaxOS
+- Linux
 
   *X11*
-
-- Windows
-
-TBD
 
 #### Installing the GUI client
 
@@ -55,13 +51,11 @@ make -j12 && make install
 
 - Windows
 
-```sh
+```powershell
+mkdir build-gui
+cd build-gui
 
-cmake -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH=C:\Users\Jun\miniconda3\envs\recastx-gui -DBUILD_GUI=ON ..
-
+cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH=C:\Users\Jun\miniconda3\envs\recastx-gui `
+                                           -DBUILD_GUI=ON
 cmake --build . --config Release --parallel 12
 ```
-
-## Package managers
-
-TBD
